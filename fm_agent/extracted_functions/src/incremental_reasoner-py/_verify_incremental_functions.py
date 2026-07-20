@@ -1,3 +1,103 @@
+# [SPEC]
+# Unit: src/incremental_reasoner.py
+#
+# _verify_incremental_functions(proj_dir, work_dir, changed_functions,
+#                                updated_spec_files, submodules=None)
+#   -> list[str]
+#
+# Pre-condition:
+#   - proj_dir is a path to an existing directory under version control.
+#   - work_dir is a writable directory whose subdirectory
+#     extracted_functions/ contains per-function extracted source files
+#     (possibly with [SPEC] blocks) and whose subdirectories
+#     logic_verification_results/ and bug_validation/ exist and are writable.
+#   - changed_functions is a dict mapping absolute source-file paths to dicts
+#     with keys "added", "modified", "removed", each mapping to a list of
+#     function names.
+#   - updated_spec_files is a list of extracted-function relative paths (from
+#     work_dir/extracted_functions/) whose [SPEC] or [INFO] blocks were
+#     modified in the spec-update stage.
+#   - submodules, when not None, is a list of relative directory paths within
+#     proj_dir.
+#
+# Post-condition:
+#   - Returns a sorted list of extracted-function relative paths for which the
+#     reasoner produced a MISMATCH verdict and bug validation subsequently
+#     confirmed the violation (confirmation_status equal to "confirmed").
+#   - The set of functions verified is the union of:
+#       a) Functions whose extracted files exist under work_dir and whose
+#          names appear in changed_functions entries with status "added" or
+#          "modified".
+#       b) Functions whose extracted files exist under work_dir and whose
+#          relative paths appear in updated_spec_files.
+#     A function satisfying both conditions is verified once.
+#   - When submodules is not None, a function is verified only if its
+#     extracted relative path (with "/" separators) starts with one of the
+#     submodule paths.
+#   - When the resulting verification set is empty, returns an empty list
+#     without invoking the reasoner or bug validation.
+#   - Before reasoning begins, every pre-existing verification result file
+#     under work_dir/logic_verification_results/ corresponding to a function
+#     in the verification set is removed, so the reasoner produces a fresh
+#     verdict against the current code and (possibly updated) spec.
+#   - Every function in the verification set is submitted to the reasoner.
+#     Functions whose verification raises an exception do not contribute to
+#     the MISMATCH collection and do not prevent other functions from being
+#     verified.
+#   - Every function that receives a MISMATCH verdict is submitted to bug
+#     validation. Functions whose bug validation raises an exception do not
+#     contribute to the confirmed-bug collection and do not prevent other
+#     functions from being validated.
+#   - A bug_validation/summary.json file is written to work_dir aggregating
+#     the confirmation status of all submitted bug validations, regardless of
+#     whether any bugs were confirmed.
+#   - The returned list is empty when no confirmed bugs exist.
+#   - Does not modify any file outside of work_dir/.
+# [SPEC]
+
+# [INFO]
+# _modified_function_targets(proj_dir, changed_functions, classes=(...))
+#   -> dict
+#   Pre-condition: changed_functions maps source-file paths to status dicts
+#     with keys "added", "modified", "removed". classes is a tuple of status
+#     names to include.
+#   Post-condition: Returns a dict whose values are absolute paths to
+#     extracted-function files for functions whose status matches one of the
+#     given classes.
+# [SPLIT]
+# _is_under_submodules(rel, submodules) -> bool
+#   Pre-condition: rel is a relative path string with "/" separators.
+#     submodules is a list of directory path strings.
+#   Post-condition: Returns True when rel starts with any path in
+#     submodules, False otherwise.
+# [SPLIT]
+# _verify_single_file(fpath, extracted_dir, output_dir, language, work_dir=...)
+#   -> (str, str)
+#   Pre-condition: fpath is an absolute path to an extracted-function file
+#     that may contain a [SPEC] block. extracted_dir is the root of the
+#     extracted-functions tree. output_dir is a writable directory for
+#     verification results.
+#   Post-condition: Runs the reasoner on the function at fpath and writes
+#     the verdict JSON to output_dir at a mirrored relative path. Returns a
+#     tuple of (relative path from extracted_dir, verdict) where verdict is
+#     one of "MATCH", "MISMATCH", "ERROR", or "SKIPPED".
+# [SPLIT]
+# _validate_single_bug(result_json_rel, proj_dir, work_dir) -> None
+#   Pre-condition: result_json_rel is a path (relative to proj_dir) to a
+#     reasoner result JSON file whose verdict is "MISMATCH".
+#   Post-condition: Runs bug validation via opencode on the MISMATCH result
+#     and writes the validation outcome to
+#     work_dir/bug_validation/<bug_id>.result.json, where bug_id is derived
+#     by replacing path separators in the result-relative path with "--".
+# [SPLIT]
+# _generate_validation_summary(work_dir) -> None
+#   Pre-condition: work_dir/bug_validation/ contains zero or more
+#     <bug_id>.result.json files, each with a confirmation_status field.
+#   Post-condition: Writes work_dir/bug_validation/summary.json aggregating
+#     the count of total, confirmed, not-confirmed, and error-validation
+#     results across all result files present.
+# [INFO]
+
 def _verify_incremental_functions(
     proj_dir, work_dir, changed_functions, updated_spec_files, submodules=None
 ):

@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--extract_existing_specs",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent__ro_f_c_/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/extract_existing_specs.py",
+  "function_name": "extract_existing_specs",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--extract_existing_specs.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--extract_existing_specs.md",
+  "probe_stdout": "CONFIRMED — actual: '# [INFO]\\n# info line one\\n   # info line two\\n# [INFO]' | expected: '   # [INFO]\\n   # info line one\\n   # info line two\\n   # [INFO]'",
+  "trigger_summary": "When extracted function files use indented comment markers, extract_existing_specs reconstructs INFO blocks with .strip() losing leading whitespace on markers and first body line"
+}

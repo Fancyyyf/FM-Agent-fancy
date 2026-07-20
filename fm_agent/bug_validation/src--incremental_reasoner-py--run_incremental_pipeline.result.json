@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--run_incremental_pipeline",
+  "source_file": "src/incremental_reasoner.py",
+  "function_name": "run_incremental_pipeline",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--run_incremental_pipeline.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--run_incremental_pipeline.md",
+  "probe_stdout": "NOT CONFIRMED — stale_artifact_globs (['select_relevant_modules.md', 'relevant_modules.json', 'select_relevant_files_*.md', 'relevant_files_*.json', 'spec_update_*.md', 'spec_update_*.json']) covers all required prefixes ['select_relevant_', 'relevant_', 'spec_update_']. Spec-compliant and patterns match expected.",
+  "trigger_summary": "Claimed cleanup loop at line 77 only removes directories, but lines 666-678 contain a second cleanup block that deletes all select_relevant_*, relevant_*, and spec_update_* artifacts — false positive."
+}

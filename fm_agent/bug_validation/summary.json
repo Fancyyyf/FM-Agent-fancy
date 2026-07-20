@@ -1,7 +1,7 @@
 {
-  "total_reported": 254,
-  "total_confirmed": 215,
-  "total_not_confirmed": 39,
+  "total_reported": 265,
+  "total_confirmed": 222,
+  "total_not_confirmed": 43,
   "total_error": 0,
   "bugs": [
     {
@@ -1039,6 +1039,17 @@
       "trigger_summary": "When git is not on PATH, _git raises FileNotFoundError instead of CalledProcessError, violating the spec which only allows CalledProcessError for nonzero exit codes."
     },
     {
+      "id": "src--incremental_reasoner-py--_llm_check_caller_info_update",
+      "source_file": "src/incremental_reasoner.py",
+      "function_name": "_llm_check_caller_info_update",
+      "confirmation_status": "confirmed",
+      "attempts": "1",
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_llm_check_caller_info_update.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_llm_check_caller_info_update.md",
+      "probe_stdout": "CONFIRMED — actual: {'info_updated': True, 'new_info': 'arbitrary garbage, not a valid [INFO] block'} | expected: 'ValueError raised — new_info must be a complete [INFO] block'\\n",
+      "trigger_summary": "_validate_caller_info_update only enforces JSON types (dict, bool, non-empty string) on the LLM response but does not validate the semantic content of new_info, allowing arbitrary strings through when the spec requires a complete [INFO] block with markers and preserved callee entries."
+    },
+    {
       "id": "src--incremental_reasoner-py--_modified_function_targets",
       "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_modified_function_targets.py",
       "function_name": "_modified_function_targets",
@@ -1048,6 +1059,17 @@
       "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_modified_function_targets.md",
       "probe_stdout": "CONFIRMED — actual FQN last component: '.hidden' | expected (spec) last component: '-hidden' | actual path: /tmp/probe_jh1n4jz_/fm_agent/extracted_functions/src/.hidden/myfunc\n",
       "trigger_summary": "Dotfiles like .hidden have the dot at index 0, so last_dot > 0 is false and the code treats them as having no dot, but the spec applies the dot-to-hyphen replacement for any basename containing a dot."
+    },
+    {
+      "id": "src--incremental_reasoner-py--_opencode_generate_spec",
+      "source_file": "/tmp/fm_agent_wt_FM-Agent__ro_f_c_/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_opencode_generate_spec.py",
+      "function_name": "_opencode_generate_spec",
+      "confirmation_status": "confirmed",
+      "attempts": 1,
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_opencode_generate_spec.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_opencode_generate_spec.md",
+      "probe_stdout": "CONFIRMED — actual: {'unexpected': 'dict'} | expected: None\n",
+      "trigger_summary": "_opencode_select_json returns valid JSON without the expected keys (spec_updated, new_spec, info_updated, new_info, updated_callees), but _opencode_generate_spec passes it through instead of returning None as required by its specification."
     },
     {
       "id": "src--incremental_reasoner-py--_opencode_select_json",
@@ -1072,6 +1094,28 @@
       "trigger_summary": "Specification requires returning False when the git command fails for any reason, but the code raises an OSError (e.g., FileNotFoundError) if git cannot be started, giving no return value."
     },
     {
+      "id": "src--incremental_reasoner-py--_plan_spec_update",
+      "source_file": "/tmp/fm_agent_wt_FM-Agent__ro_f_c_/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_plan_spec_update.py",
+      "function_name": "_plan_spec_update",
+      "confirmation_status": "confirmed",
+      "attempts": "1",
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_plan_spec_update.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_plan_spec_update.md",
+      "probe_stdout": "CONFIRMED — actual (raw pass-through, FQNs): ['src::network::http::send_request', 'src::database::pool::_get_connection', 'src::utils::parse_config', 'short_name_only'] | expected (short names per spec): ['send_request', '_get_connection', 'parse_config', 'short_name_only']\n",
+      "trigger_summary": "LLM returns FQNs in updated_callees but line 1708 passes them through without extracting short names via split('::')[-1] as required by the specification."
+    },
+    {
+      "id": "src--incremental_reasoner-py--_reapply_existing_specs",
+      "source_file": "src/incremental_reasoner-py/_reapply_existing_specs.py",
+      "function_name": "_reapply_existing_specs",
+      "confirmation_status": "confirmed",
+      "attempts": 1,
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_reapply_existing_specs.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_reapply_existing_specs.md",
+      "probe_stdout": "CONFIRMED — actual: None | expected: 2\n",
+      "trigger_summary": "Function returns None instead of the integer count of modified files for any valid input where files are modified"
+    },
+    {
       "id": "src--incremental_reasoner-py--_reconcile_caller",
       "source_file": "src/incremental_reasoner-py/_reconcile_caller.py",
       "function_name": "_reconcile_caller",
@@ -1092,6 +1136,17 @@
       "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_resolve_callee_fqns.md",
       "probe_stdout": "CONFIRMED -- actual: set() | expected: {'path::to::  foo  '}\n",
       "trigger_summary": "callee_names contains whitespace-padded strings; code strips whitespace causing mismatched comparison against stems with whitespace"
+    },
+    {
+      "id": "src--incremental_reasoner-py--_split_spec_and_info",
+      "source_file": "src/incremental_reasoner-py/_split_spec_and_info.py",
+      "function_name": "_split_spec_and_info",
+      "confirmation_status": "confirmed",
+      "attempts": 1,
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_split_spec_and_info.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_split_spec_and_info.md",
+      "probe_stdout": "CONFIRMED — actual: 'extra\\n[SPEC]\\ncontent\\n[SPEC]' | expected: '[SPEC]\\ncontent\\n[SPEC]'",
+      "trigger_summary": "When block has text before the first [SPEC] delimiter and two [SPEC] delimiters, lines[:spec_end+1] includes leading non-spec lines instead of starting from spec_idxs[0]."
     },
     {
       "id": "src--incremental_reasoner-py--_topdown_ordered_fqns",
@@ -1116,6 +1171,17 @@
       "trigger_summary": "The spec says _validate produces/overwrites a result JSON file at a path derived from rel, but the code only reads it — no JSON is ever produced or overwritten at the specified path."
     },
     {
+      "id": "src--incremental_reasoner-py--_verify_incremental_functions",
+      "source_file": "/tmp/fm_agent_wt_FM-Agent__ro_f_c_/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_verify_incremental_functions.py",
+      "function_name": "_verify_incremental_functions",
+      "confirmation_status": "confirmed",
+      "attempts": 1,
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_verify_incremental_functions.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_verify_incremental_functions.md",
+      "probe_stdout": "CONFIRMED — Boolean mismatch: spec requires 'is not None' check (evaluates True for []), code uses truthiness check (evaluates False for []). spec_check=True, code_check=False",
+      "trigger_summary": "submodules=[] is not None per spec but falsy per code — submodule filter is skipped when passed an empty list."
+    },
+    {
       "id": "src--incremental_reasoner-py--check_last_run_existence",
       "source_file": "src/incremental_reasoner.py",
       "function_name": "check_last_run_existence",
@@ -1125,6 +1191,17 @@
       "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--check_last_run_existence.md",
       "probe_stdout": "CONFIRMED — actual: False | expected: True\n",
       "trigger_summary": "A stray non-function file without [SPEC]/[INFO] markers in extracted_functions/ causes the function to incorrectly return False; the spec requires ignoring non-function files."
+    },
+    {
+      "id": "src--incremental_reasoner-py--extract_existing_specs",
+      "source_file": "/tmp/fm_agent_wt_FM-Agent__ro_f_c_/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/extract_existing_specs.py",
+      "function_name": "extract_existing_specs",
+      "confirmation_status": "confirmed",
+      "attempts": 1,
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--extract_existing_specs.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--extract_existing_specs.md",
+      "probe_stdout": "CONFIRMED — actual: '# [INFO]\\n# info line one\\n   # info line two\\n# [INFO]' | expected: '   # [INFO]\\n   # info line one\\n   # info line two\\n   # [INFO]'",
+      "trigger_summary": "When extracted function files use indented comment markers, extract_existing_specs reconstructs INFO blocks with .strip() losing leading whitespace on markers and first body line"
     },
     {
       "id": "src--incremental_reasoner-py--flush",
@@ -2513,6 +2590,17 @@
       "trigger_summary": "Call clear_test_file_exemptions() after adding test file exemptions via add_test_file_exemption(); the set should be empty per spec but the reasoning engine claimed it would retain contents."
     },
     {
+      "id": "src--file_utils-py--is_file_ready",
+      "source_file": "src/file_utils.py",
+      "function_name": "is_file_ready",
+      "confirmation_status": "not_confirmed",
+      "attempts": 1,
+      "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--is_file_ready.py",
+      "detail_file": "fm_agent/bug_validation/src--file_utils-py--is_file_ready.md",
+      "probe_stdout": "NOT CONFIRMED — actual matched expected: True\n",
+      "trigger_summary": "Leading whitespace on marker lines — the regex already permits it via ^\\s*"
+    },
+    {
       "id": "src--generate_batch_prompts-py--build_prompt",
       "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/generate_batch_prompts-py/build_prompt.py",
       "function_name": "build_prompt",
@@ -2590,6 +2678,17 @@
       "trigger_summary": "Code claim that submodules parameter is ignored in files list comprehension is false; _is_under_submodules(f, submodules) IS present and correctly filters files."
     },
     {
+      "id": "src--incremental_reasoner-py--_llm_check_spec_update",
+      "source_file": "/tmp/fm_agent_wt_FM-Agent__ro_f_c_/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_llm_check_spec_update.py",
+      "function_name": "_llm_check_spec_update",
+      "confirmation_status": "not_confirmed",
+      "attempts": 1,
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_llm_check_spec_update.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_llm_check_spec_update.md",
+      "probe_stdout": "NOT CONFIRMED — knowledge_section IS present in prompt_content; TEST_KNOWLEDGE_STRING found in prompt. The code at line 130 f\"{knowledge_section}\" does interpolate knowledge_section into the LLM prompt. Result valid: True\n",
+      "trigger_summary": "The specification requires domain knowledge to be included in the LLM prompt; code_evidence claims knowledge_section is computed but never used, but line 130 f\"{knowledge_section}\" does interpolate it into prompt_content — the bug is not confirmed."
+    },
+    {
       "id": "src--incremental_reasoner-py--_order_key",
       "source_file": "src/incremental_reasoner-py/_order_key.py",
       "function_name": "_order_key",
@@ -2634,6 +2733,17 @@
       "trigger_summary": "The code assumes _StdoutTee exposes _console as a direct instance attribute, which it does (set in __init__); Python's attribute lookup finds it before __getattr__ is invoked, so repeated calls always resolve the real console correctly."
     },
     {
+      "id": "src--incremental_reasoner-py--_update_specs_for_intent",
+      "source_file": "src/incremental_reasoner-py/_update_specs_for_intent.py",
+      "function_name": "_update_specs_for_intent",
+      "confirmation_status": "not_confirmed",
+      "attempts": "1",
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_update_specs_for_intent.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_update_specs_for_intent.md",
+      "probe_stdout": "NOT CONFIRMED — both empty-seed and non-empty-seed paths returned a list (actual: ['src/incremental_reasoner-py/_update_specs_for_intent.py'])",
+      "trigger_summary": "The spec requires a list return but the code evidence shows return None inside _plan_spec_update (an inner nested function), not the outer _update_specs_for_intent which always returns a list."
+    },
+    {
       "id": "src--incremental_reasoner-py--collect_relevent_function_scope",
       "source_file": "src/incremental_reasoner.py",
       "function_name": "collect_relevent_function_scope",
@@ -2643,6 +2753,17 @@
       "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--collect_relevent_function_scope.md",
       "probe_stdout": "NOT CONFIRMED — result is non-empty (1 function(s)): ['src/foo-py/bar.py']\nThe function correctly selected the module via the changed_functions criterion (the 'or any(...)' clause on line 142-146), even though the LLM returned no modules by description assessment.\n",
       "trigger_summary": "LLM-based module description assessment returns no modules, but a module containing a file in changed_functions should still be selected via the OR clause at lines 142-146."
+    },
+    {
+      "id": "src--incremental_reasoner-py--run_incremental_pipeline",
+      "source_file": "src/incremental_reasoner.py",
+      "function_name": "run_incremental_pipeline",
+      "confirmation_status": "not_confirmed",
+      "attempts": 1,
+      "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--run_incremental_pipeline.py",
+      "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--run_incremental_pipeline.md",
+      "probe_stdout": "NOT CONFIRMED — stale_artifact_globs (['select_relevant_modules.md', 'relevant_modules.json', 'select_relevant_files_*.md', 'relevant_files_*.json', 'spec_update_*.md', 'spec_update_*.json']) covers all required prefixes ['select_relevant_', 'relevant_', 'spec_update_']. Spec-compliant and patterns match expected.",
+      "trigger_summary": "Claimed cleanup loop at line 77 only removes directories, but lines 666-678 contain a second cleanup block that deletes all select_relevant_*, relevant_*, and spec_update_* artifacts — false positive."
     },
     {
       "id": "src--languages--c-py--call_edges",

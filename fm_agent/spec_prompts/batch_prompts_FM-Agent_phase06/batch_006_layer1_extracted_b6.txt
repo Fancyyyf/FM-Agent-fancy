@@ -1,0 +1,131 @@
+You are generating behavioral specifications for Phase 6, Layer 1.
+
+Language: python. Spec comment style: `# [SPEC]`.
+
+Read fm_agent/spec_prompts/system_prompt.md FIRST for the mandatory spec format rules.
+Read: fm_agent/spec_prompts/domain_context/engine_overview.txt
+Read: fm_agent/spec_prompts/domain_context/phase_06_types.txt
+
+## KEY RULES
+- Describe WHAT the function guarantees, NOT HOW it implements it
+- Do NOT name internal helper calls, loop structure, or data layout decisions
+- Do NOT enumerate members of sets - describe the GOVERNING RULE
+- Specs describe INTENDED CORRECT behavior per the domain (see domain files)
+- ALL files below exist in fm_agent/extracted_functions/ - read and process each one
+
+## EARLIER-LAYER CALLER SPECS
+#### src::incremental_reasoner-py::run_incremental_pipeline
+
+# [SPEC]
+# Unit: src/incremental_reasoner-py/run_incremental_pipeline.py
+#
+# run_incremental_pipeline(proj_dir, intent_file_path, old_commit_id,
+#                          domain_knowledge_files=None, submodules=None,
+#                          one_phase=False, extra_call_edges_path=None)
+#   -> list[str] | None
+#
+# Pre-condition:
+#   - proj_dir is a path to an existing directory containing source code under
+#     version control; fm_agent/ is a writable subdirectory within it.
+#   - intent_file_path is a string; when non-empty and pointing to a regular
+#     file, its content describes the developer's modification goal.
+#   - old_commit_id is a string identifying a prior commit in proj_dir's git
+#     repository.
+#   - domain_knowledge_files, when not None, is a list of paths to Markdown
+#     files providing project-specific domain context.
+#   - submodules, when not None, is a list of subdirectory paths within proj_dir
+#     to scope analysis to.
+#   - one_phase is a bool (default False) controlling whether all source files
+#     are placed into a single phase.
+#   - extra_call_edges_path, when not None, is a path to a JSON file defining
+#     supplemental call-graph edges.
+#
+# Post-condition:
+#   - If proj_dir has no previous full-run baseline (fm_agent/phases.json absent
+#     or fm_agent/extracted_functions/ incomplete given submodules), delegates
+#     the entire pipeline to a full run via run_pipeline() with the same
+#     arguments and returns None.
+#   - If intent_file_path does not refer to an existing regular file, or the
+#     file content is empty after whitespace stripping, logs an error and
+#     returns None without modifying any project or fm_agent/ file.
+#   - Before producing any new output, removes all files under
+#     fm_agent/logic_verification_results/ and fm_agent/bug_validation/, and
+#     removes incremental scope-selection and spec-update artifacts prefixed
+#     with "select_relevant_", "relevant_", and "spec_update_" from fm_agent/.
+#   - Regenerates fm_agent/phases.json from the current working tree.
+#   - Re-extracts every function from the current code, then restores the
+#     captured [SPEC] and [INFO] blocks from the prior run onto each function
+#     whose body is identical between old_commit_id and the current working
+#     tree.
+#   - Produces a mapping from each changed source-file path to the sets of
+#     function names added, modified, or removed since old_commit_id; deletes
+#     extracted-function files for removed functions.
+#   - Produces a ranked list of extracted-function relative paths whose
+#     implementations are judged relevant to the developer intent.
+#   - For every function that is either changed (added or modified) or appears
+#     in the relevance-ranked list, re-evaluates whether its [SPEC] and/or
+#     [INFO] blocks need updating to reflect the current code and intent;
+#     when a callee's [SPEC] changes, propagates the update to every caller's
+#     [INFO] block. Writes the set of files whose specs were modified to
+#     fm_agent/incremental_updated_specs.json.
+#   - Runs verification on the affected subset: every changed function, every
+#     function with an updated spec, and every function that calls a callee
+#     whose spec was updated. Returns a sorted list of extracted-function
+#     relative paths for which the reasoner reported a spec-to-code mismatch
+#     (MISMATCH verdict) and bug validation subsequently confirmed the
+#     violation. Returns an empty list when no such violations are confirmed.
+#   - Does not modify any file under proj_dir outside of fm_agent/.
+# [SPEC]
+
+## CALLEE EXPECTATIONS FROM CALLERS
+### What callers expect from src::incremental_reasoner-py::_verify_incremental_functions:
+#### According to src::incremental_reasoner-py::run_incremental_pipeline:
+# _verify_incremental_functions(proj_dir, work_dir, changed_functions,
+#                               updated_spec_files, submodules=None) -> list[str]
+#   Pre-condition: updated_spec_files lists functions whose [SPEC] or [INFO]
+#     blocks were modified in the spec-update stage
+#   Post-condition: Returns a list of extracted-function relative paths where
+#     the reasoner produced a MISMATCH verdict and bug validation confirmed the
+#     violation. Verification scope is limited to: changed functions, functions
+#     with updated specs, and functions that call a callee whose spec was
+#     updated.
+
+## FUNCTIONS (1 total - process ALL)
+### 1. fm_agent/extracted_functions/src/incremental_reasoner-py/_verify_incremental_functions.py
+  Earlier-layer callers: src::incremental_reasoner-py::run_incremental_pipeline
+
+## SPEC FORMAT (prepend to file, preserving source code below)
+
+The exact format every specced file must start with:
+
+# [SPEC]
+# Unit: <file path relative to repo root>
+#
+# <FunctionName>(<params>) -> <ReturnType>
+#
+# Pre-condition:
+#   - ...
+#
+# Post-condition:
+#   - ...
+# [SPEC]
+
+# [INFO]
+# <callee_name>(<params>) -> <ReturnType>
+#   Pre-condition: ...
+#   Post-condition: ...
+# [SPLIT]
+# <another_callee>(<params>) -> <ReturnType>
+#   Pre-condition: ...
+#   Post-condition: ...
+# [INFO]
+
+If the function has no callees: '<comment> (no callees)' between the [INFO] markers.
+
+## PROCESS
+For each function:
+1. Read the extracted file
+2. Read caller expectations above - what do callers NEED from this function?
+3. Write a behavioral spec describing WHAT it guarantees (not HOW)
+4. Write the COMPLETE file with [SPEC] and [INFO] blocks prepended, then UNCHANGED source
+5. Use the Write tool to save the complete file

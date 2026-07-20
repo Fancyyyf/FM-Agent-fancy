@@ -1,3 +1,93 @@
+# [SPEC]
+# Unit: src/incremental_reasoner.py
+#
+# _opencode_generate_spec(proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+#                          developer_intent, callee_names, source, caller_context)
+#   -> dict | None
+#
+# Pre-condition:
+#   - proj_dir is a path to an existing directory under version control
+#   - work_dir is an absolute path to the fm_agent workspace directory,
+#     which must exist and be writable
+#   - idx is an integer used for naming intermediate output files uniquely
+#   - fqn is a non-empty fully-qualified function name string
+#     (e.g., "src::module::func")
+#   - lang_key is a lowercase string identifying the programming language
+#     (e.g., "python", "cpp", "rust")
+#   - comment_prefix is the single-line comment marker for lang_key
+#     (e.g., "#" for Python, "//" for C-family languages)
+#   - developer_intent is a non-empty string describing the developer's
+#     modification goal
+#   - callee_names is a list of short callee name strings (the last
+#     component of each callee FQN); it may be empty when the function
+#     has no recorded callees
+#   - source is a string containing the complete, non-empty source code
+#     of the function
+#   - caller_context is a list of (caller_fqn, spec_block, info_expectation)
+#     tuples; each spec_block is the caller's full [SPEC] block text (may be
+#     empty/absent), and each info_expectation is the text from the caller's
+#     [INFO] entry describing what that caller needs from this function (may
+#     be empty/absent); caller_context may be an empty list
+#
+# Post-condition:
+#   - Writes a structured Markdown prompt to fm_agent/spec_generate_{idx}.md
+#     whose content includes the function source, developer intent, callee
+#     names, step-by-step instructions to read system_prompt.md and produce a
+#     [SPEC] block (and, when callee_names is non-empty, an [INFO] block), and
+#     the caller context sections (caller specs and caller expectations) when
+#     caller_context is non-empty
+#   - When staged domain knowledge files exist under work_dir, the prompt
+#     includes an additional step instructing OpenCode to read and use those
+#     files as context
+#   - Delegates execution to _opencode_select_json, which writes the prompt
+#     to disk, invokes OpenCode as a subprocess, and blocks until the
+#     subprocess terminates
+#   - When the subprocess terminates successfully and writes valid JSON to
+#     fm_agent/spec_generate_{idx}.json, returns a dict with exactly these keys:
+#       "spec_updated": bool — True if and only if a [SPEC] block was produced
+#       "new_spec": string — the generated [SPEC] block text including its
+#         opening and closing markers, or "" when no block was produced
+#       "info_updated": bool — True if and only if an [INFO] block was produced
+#       "new_info": string — the generated [INFO] block text, or ""
+#       "updated_callees": list of strings — callee names recorded in the
+#         generated [INFO] block, or an empty list
+#   - Returns None when the subprocess exits with a non-zero status or when
+#     the file at the result path cannot be parsed as a valid JSON object
+#     containing the expected keys
+#   - Does not modify the source code of any function; all writes go to
+#     fm_agent/ workspace files
+# [SPEC]
+
+# [INFO]
+# list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+#   Pre-condition: work_dir is an absolute path to an existing, readable
+#     subdirectory under proj_dir
+#   Post-condition: Returns a list of relative path strings (using "/"
+#     separators) for domain knowledge Markdown files that have been staged
+#     under the workspace; returns an empty list when no files are staged
+# [SPLIT]
+# format_domain_knowledge_bullets(paths) -> str
+#   Pre-condition: paths is a list of relative file path strings (may be empty)
+#   Post-condition: Returns a single string where each path is rendered as
+#     a bullet item suitable for embedding in a Markdown prompt; returns an
+#     empty string when paths is empty
+# [SPLIT]
+# _opencode_select_json(proj_dir, work_dir, prompt_relpath, prompt_content,
+#                       result_relpath, stage, input_files)
+#   -> dict | None
+#   Pre-condition: all arguments are non-None; prompt_content is a non-empty
+#     string; prompt_relpath and result_relpath are relative paths within
+#     proj_dir whose parent directories exist; input_files is a list of
+#     relative file paths to make available to the subprocess
+#   Post-condition: Writes prompt_content to the file at prompt_relpath,
+#     invokes OpenCode as a subprocess with proj_dir as the working directory
+#     and with input_files declared as context files, blocks until the
+#     subprocess terminates, reads the file at result_relpath, and returns
+#     the parsed JSON dict from that file; returns None when the subprocess
+#     exits with a non-zero status or when result_relpath does not contain
+#     valid JSON after the subprocess terminates
+# [INFO]
+
 def _opencode_generate_spec(proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
                             developer_intent, callee_names, source, caller_context):
     """

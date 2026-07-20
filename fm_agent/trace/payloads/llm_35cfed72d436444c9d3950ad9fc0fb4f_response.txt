@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code block correctly returns an empty list when the seed set is empty, matching the specification. For non-empty seed, it defines variables and continues, without producing any output or side effects that would violate the specification; the subsequent processing is not shown, but no violation is present in the shown lines."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_llm_check_spec_update",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent__ro_f_c_/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_llm_check_spec_update.py",
+  "function_name": "_llm_check_spec_update",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_llm_check_spec_update.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_llm_check_spec_update.md",
+  "probe_stdout": "NOT CONFIRMED — knowledge_section IS present in prompt_content; TEST_KNOWLEDGE_STRING found in prompt. The code at line 130 f\"{knowledge_section}\" does interpolate knowledge_section into the LLM prompt. Result valid: True\n",
+  "trigger_summary": "The specification requires domain knowledge to be included in the LLM prompt; code_evidence claims knowledge_section is computed but never used, but line 130 f\"{knowledge_section}\" does interpolate it into prompt_content — the bug is not confirmed."
+}

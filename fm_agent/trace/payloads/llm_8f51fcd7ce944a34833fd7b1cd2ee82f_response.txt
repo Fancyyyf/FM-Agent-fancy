@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "work_dir='/path/to/project' where the expected domain knowledge file(s) exist; proj_dir, idx, fqn, lang_key, comment_prefix, developer_intent, spec_block, info_block, callee_names, source can be any valid values (e.g., proj_dir='/tmp', idx=0, fqn='foo', lang_key='py', comment_prefix='#', developer_intent='intent', spec_block='', info_block='', callee_names=[], source='').",
+  "offending_statements": "Line 31: knowledge_section = _domain_knowledge_prompt_section(work_dir) (computed but never used); Line 32-40: prompt_content = ( ... ) (constructed without knowledge_section)",
+  "reason": "The specification requires that domain knowledge files from under work_dir are included in the LLM prompt. The code computes knowledge_section but never inserts it into prompt_content, so the prompt sent to the LLM will lack this required context."
+}

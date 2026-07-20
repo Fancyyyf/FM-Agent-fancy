@@ -1,3 +1,54 @@
+# [SPEC]
+# Unit: src/incremental_reasoner.py
+#
+# _reapply_existing_specs(proj_dir, specs) -> int
+#
+# Pre-condition:
+#   - proj_dir is a path to an existing directory containing
+#     fm_agent/extracted_functions/ populated with freshly re-extracted
+#     function files that contain only raw source code (no [SPEC] or
+#     [INFO] headers)
+#   - specs is a dict mapping relative path strings (from the root of
+#     fm_agent/extracted_functions/, using "/" separators) to dicts with
+#     the following keys:
+#       "spec": a string containing the full [SPEC] block text including its
+#         opening and closing markers (each line comment-prefixed), or an
+#         empty/falsy value when no spec was previously recorded
+#       "info" (optional): a string containing the full [INFO] block text
+#         including its opening and closing markers (each line
+#         comment-prefixed), or absent when no [INFO] block was previously
+#         recorded
+#
+# Post-condition:
+#   - For each (rel_path, entry) in specs where entry["spec"] is truthy:
+#       • If the file at fm_agent/extracted_functions/<rel_path> does not
+#         exist as a regular file, the entry is skipped (the function was
+#         removed or renamed since specs was captured)
+#       • If the file already contains the substring "[SPEC]" in its first
+#         line, the file is left unchanged (idempotent — the spec header
+#         already present)
+#       • Otherwise, the file is overwritten with, in order: the spec_block
+#         string with trailing whitespace stripped; a single blank line; the
+#         info_block string with leading/trailing whitespace stripped
+#         (appended only when the entry contains an "info" key whose value
+#         is not None); a single blank line; and the original file content
+#         with leading newlines removed
+#   - The resulting file content begins with a comment-prefixed [SPEC] marker
+#     on the first line; when an [INFO] block exists, it appears after the
+#     [SPEC] block, separated by exactly one blank line; the source code
+#     follows after exactly one blank line
+#   - Returns the count of files for which the spec header was written
+#     (i.e., the number of files modified by this call)
+#   - Does not read, write, or modify any file outside
+#     fm_agent/extracted_functions/
+#   - The original source code content in each modified file is preserved
+#     byte-for-byte (only the leading spec header is prepended)
+# [SPEC]
+
+# [INFO]
+# (no callees)
+# [INFO]
+
 def _reapply_existing_specs(proj_dir, specs):
     """
     Prepend previously captured [SPEC]/[INFO] header blocks back onto the freshly

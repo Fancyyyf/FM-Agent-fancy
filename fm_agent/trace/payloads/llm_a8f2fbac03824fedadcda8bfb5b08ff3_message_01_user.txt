@@ -1,0 +1,196 @@
+Programming language: Python
+
+Code block:
+```python
+Line 81:             source = content
+Line 82:             old_spec, old_info = None, None
+Line 83:             caller_context = _collect_caller_context(
+Line 84:                 fqn, callers_map, file_map, edge_aliases_map
+Line 85:             )
+Line 86:             result = _opencode_generate_spec(
+Line 87:                 proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+Line 88:                 developer_intent, callee_names, source, caller_context,
+Line 89:             )
+Line 90:         else:
+Line 91:             source = content[len(leading):]
+Line 92:             old_spec, old_info = _split_spec_and_info(leading, comment_prefix, spec_marker)
+Line 93:             result = _llm_check_spec_update(
+Line 94:                 proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+Line 95:                 developer_intent, old_spec, old_info, callee_names, source,
+Line 96:             )
+Line 97:         if not result or not result.get("spec_updated"):
+Line 98:             return None
+Line 99:         new_spec = (result.get("new_spec") or "").strip()
+Line 100:         if not new_spec:
+Line 101:             return None
+Line 102:         if leading is None:
+Line 103:             # Freshly generated: take the [INFO] block opencode produced (if any). Treat it as
+Line 104:             # "updated" so its recorded callee expectations propagate downward below.
+Line 105:             new_info = (result.get("new_info") or "").strip()
+Line 106:             info_block = new_info or None
+Line 107:             info_updated = bool(new_info)
+Line 108:         else:
+Line 109:             # Keep the existing [INFO] block unless opencode rewrote it. A modified function may
+Line 110:             # now call a different set of callees, so a fresh [INFO] block can legitimately be
+Line 111:             # created even when the function previously had none (old_info is None) — gate on
+Line 112:             # whether opencode produced a block, not on a prior block existing.
+Line 113:             info_block = old_info
+Line 114:             info_updated = False
+Line 115:             if result.get("info_updated"):
+Line 116:                 new_info = (result.get("new_info") or "").strip()
+Line 117:                 if new_info:
+Line 118:                     info_block = new_info
+Line 119:                     info_updated = True
+Line 120:         # Splice the new block(s) back in, leaving the function source unchanged (mirrors the
+```
+
+Condition A (what the code actually does):
+If an exception is raised during the execution of lines 81–120, the exception propagates out of the block and no files under `work_dir/extracted_functions/` are modified. Otherwise, if the block executes without exceptions, one of two outcomes occurs:
+1. Early return: if `result` is null, or `result.get("spec_updated")` is falsy, or the stripped `new_spec` is empty, then the outer function returns `None`. No files are modified.
+2. Normal flow‑through: after line 120, the local variables reflect the update decision; `new_spec` is a non‑empty string, and the new info block and update flag are set as follows:
+   - When `leading is None`: `new_info` is the stripped value from `result["new_info"]` (empty string if missing); `info_block` is `new_info` if non‑empty, else `None`; `info_updated` is `True` iff `new_info` is non‑empty.
+   - When `leading is not None`: `old_spec` and `old_info` hold the result of `_split_spec_and_info` on the original leading block; initially `info_block = old_info` and `info_updated = False`. If `result.get("info_updated")` is true and the corresponding `new_info` string is non‑empty after stripping, then `info_block` takes the new info and `info_updated` becomes `True`; otherwise they remain unchanged.
+In all normal paths the contents of all extracted‑function files remain identical to the state before the block. No file‑system writes, LLM side effects, or modifications to the work directory are performed by the block itself; any side effects of the called external functions are not rolled back, but their specifications guarantee no file modifications.
+
+Formally:
+Let C₀ be the set of all paths under `work_dir/extracted_functions/` and `initial_content(r)` the file content at entry. Let `exception` be the event that an exception is thrown inside the block. Let `early_return` be the event that the function reaches `return None` at line 98 or 101. Let `finished` be the event that execution reaches after line 120 without early return and without exception.
+
+```
+(exception ⇒ ∀ r ∈ C₀ : final_content(r) = initial_content(r))
+∧ (¬exception ∧ early_return ⇒ 
+      (result_value = None) ∧ (∀ r ∈ C₀ : final_content(r) = initial_content(r)))
+∧ (¬exception ∧ finished ⇒
+      (result ≠ None ∧ result["spec_updated"] = True ∧ new_spec ≠ "")
+    ∧ ( (leading = None  ⇒ (new_info = strip(result.get("new_info",""))) ∧ (info_block = (new_info if new_info else None)) ∧ (info_updated = (new_info ≠ "")) )
+      ∨ (leading ≠ None ⇒
+          (info_block = ( (result.get("info_updated") ∧ strip(result.get("new_info","")) ≠ "") ? strip(result["new_info"]) : old_info ))
+          ∧ (info_updated = (result.get("info_updated") ∧ strip(result.get("new_info","")) ≠ "")) ) )
+    ∧ (∀ r ∈ C₀ : final_content(r) = initial_content(r))
+    ∧ (source, old_spec, old_info, caller_context, result, new_spec, new_info, info_block, info_updated are bound as described)
+)
+```
+
+Condition B (what the specification requires):
+- Returns a list of extracted-function relative paths (relative to the
+    extracted_functions/ directory) whose [SPEC] block, [INFO] block, or both were
+    created or modified by this call; the list is sorted lexicographically
+  - Returns an empty list when the combined seed set — all function names from the
+    "added" and "modified" classifications in changed_functions, plus all FQNs
+    derived from relevant_rel_files — is empty
+  - For every function whose FQN belongs to the seed set:
+      * If the function's extracted file has no pre-existing [SPEC] block, a new
+        behavioral [SPEC] block (and optionally an [INFO] callee-expectations block)
+        is generated by an external process informed by the developer intent and
+        caller context, then prepended to the file; the original function source
+        code following the block is preserved unchanged
+      * If a pre-existing [SPEC] block exists, it is re-evaluated against
+        developer_intent by an external process; if the evaluation determines the
+        spec must change, the [SPEC] block is replaced (and the [INFO] block may
+        optionally be replaced if it too must change); the source code is preserved
+        identical to its input form
+  - Functions are processed in caller-before-callee topological rounds: within each
+    round, only functions whose callers (per the call graph) are either already
+    processed or absent from the current pending set are eligible; a function is
+    deferred to a subsequent round if any of its callers remains pending
+  - When a function's [SPEC] is newly generated or updated:
+      * Every caller of that function has its [INFO] entry for the function
+        reconciled against the new [SPEC] by an external process; the caller file
+        is overwritten only if the reconciliation produces an [INFO] block that
+        differs from the existing one
+      * Callees listed in the function's updated [INFO] block that match previously
+        unchecked FQNs are added to the pending frontier and will be spec-checked
+        in subsequent rounds
+  - Under cycle conditions where every pending function has at least one also-pending
+    caller, exactly one pending function is selected to break the cycle and guarantee
+    forward progress
+  - Every written file has its source-code portion (everything after the leading
+    [SPEC] and [INFO] comment blocks) byte-for-byte identical to the source code
+    that was read from that file before modification
+  - No file outside of work_dir/extracted_functions/ is created, deleted, or modified
+
+Additional context:
+_project_call_graph(work_dir, extra_call_edges=None) -> tuple[dict, dict, dict, dict]
+Pre-condition: work_dir contains an extracted_functions/ subdirectory whose file
+    naming follows the FQN derivation convention
+  Post-condition: Returns four dicts: callees_map mapping each FQN to a set of its
+    callee FQNs, callers_map mapping each FQN to a set of its caller FQNs, file_map
+    mapping each FQN to its absolute extracted-function file path, and
+    edge_aliases_map mapping callee FQNs to alias name strings for cross-identity
+    caller-context matching; all known FQNs are present as keys in file_map
+
+_modified_function_targets(proj_dir, changed_functions, classes=...) -> dict[str, str]
+Pre-condition: changed_functions maps source-file paths to per-file dicts with
+    "added" and "modified" keys; classes is a tuple of classification labels to include
+  Post-condition: Returns a dict mapping each extracted-function relative path (for
+    functions in the requested classes) to its FQN; functions classified only as
+    "removed" are excluded from the result
+
+_file_to_fqn(extracted_path, work_dir) -> str
+Pre-condition: extracted_path is an absolute path under work_dir/extracted_functions/
+    whose directory components follow the FQN naming convention
+  Post-condition: Returns the FQN derived by stripping the extracted_functions/ prefix
+    and the file extension, then joining remaining directory components with "::"
+
+_topdown_ordered_fqns(work_dir, extra_call_edges=None) -> list[str]
+Pre-condition: work_dir contains layer-ordering metadata produced by a prior
+    top-down layer-organization phase
+  Post-condition: Returns a list of all known FQNs ordered such that every caller
+    appears before each of its callees; FQNs that are absent from the layer graph
+    appear at the end of the list in lexicographic order
+
+_extract_leading_spec_comments(content, comment_prefix, spec_marker) -> str | None
+Pre-condition: content is the full text of an extracted function file;
+    comment_prefix and spec_marker are non-empty strings
+  Post-condition: Returns the contiguous leading comment block (starting at the first
+    character of content) that contains the [SPEC] delimiter and optionally the
+    [INFO] delimiter, or None when no such leading block is recognized; the returned
+    string stops before any source code line
+
+_collect_caller_context(fqn, callers_map, file_map, edge_aliases_map) -> str
+Pre-condition: fqn is a non-empty FQN; callers_map, file_map, and edge_aliases_map
+    are the corresponding dicts returned by _project_call_graph
+  Post-condition: Returns a single string aggregating the [SPEC] blocks of every
+    caller of fqn, formatted as context suitable for an LLM-based spec-generation
+    invocation
+
+_opencode_generate_spec(proj_dir, work_dir, idx, fqn, lang_key, comment_prefix, developer_intent, callee_names, source, caller_context) -> dict | None
+Pre-condition: source is the function source code (without any leading [SPEC]/[INFO]
+    block); idx is a non-negative integer; callee_names is a list of short callee names
+  Post-condition: Returns a dict containing at least the key "spec_updated"; when
+    spec_updated is true, the dict also contains "new_spec" (the generated [SPEC]
+    block string) and may contain "new_info" (the generated [INFO] block string)
+    and "updated_callees" (a list of callee short names); returns None or a dict
+    with a falsy spec_updated value on failure or when no spec was produced
+
+_llm_check_spec_update(proj_dir, work_dir, idx, fqn, lang_key, comment_prefix, developer_intent, old_spec, old_info, callee_names, source) -> dict | None
+Pre-condition: old_spec is the existing [SPEC] block string or None; old_info
+    is the existing [INFO] block string or None; source is the function source
+    code without leading spec comments
+  Post-condition: Returns a dict with the key "spec_updated" (bool); when spec_updated
+    is true, also contains "new_spec" (the replacement [SPEC] block) and may contain
+    "info_updated" (bool), "new_info" (the replacement [INFO] block), and
+    "updated_callees" (a list of callee short names newly referenced in the spec)
+
+_split_spec_and_info(block, comment_prefix, spec_marker) -> (str | None, str | None)
+Pre-condition: block is a non-None string containing a leading spec-comment block
+  Post-condition: Returns a (spec_block, info_block) 2-tuple; spec_block is the
+    [SPEC]-delimited substring of block; info_block is the [INFO]-delimited substring
+    or None when no [INFO] section is present; both strings include their delimiter
+    lines when non-None
+
+_llm_check_caller_info_update(proj_dir, work_dir, idx, caller_fqn, callee_name, lang_key, comment_prefix, callee_new_spec, caller_info, source) -> dict | None
+Pre-condition: callee_new_spec is the updated [SPEC] block of a callee whose
+    spec changed; caller_info is the current [INFO] block of the caller file;
+    source is the caller's function body
+  Post-condition: Returns a dict with keys "info_updated" (bool) and "new_info"
+    (str); info_updated is true when the caller's [INFO] entry for callee_name
+    must change to remain consistent with callee_new_spec; new_info contains the
+    replacement [INFO] block text
+
+_resolve_callee_fqns(caller_fqn, callee_names, callees_map, edge_aliases_map) -> list[str]
+Pre-condition: callee_names is a list of short callee names (the last "::"-delimited
+    component of an FQN); callees_map maps each FQN to its callee FQN set
+  Post-condition: Returns a list of full FQNs from the callee set of caller_fqn whose
+    short names match entries in callee_names, resolving aliased identities through
+    edge_aliases_map; each returned FQN is a valid key in callees_map
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

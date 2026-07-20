@@ -1,0 +1,152 @@
+Programming language: Python
+
+Pre-condition:
+- fqn is a non-empty fully-qualified function name string (e.g., "src::module::func")
+  - idx is a non-negative integer used only for correlation with output trace entries
+  - The following module-level state must be initialized before any call:
+    file_map: maps each known FQN to its extracted-function file path on disk
+    EXT_TO_LANG: maps file extensions (without leading dot) to language keys
+    LANG_CONFIG: maps each language key to a dict containing at least the keys
+      "comment_prefix" (the single-line comment marker for that language) and
+      "spec_marker" (the delimiter string that marks spec blocks, e.g., "[SPEC]")
+    callees_map: maps each FQN to a set of callee FQNs (may be empty)
+    callers_map: maps each FQN to a set of caller FQNs (may be empty)
+    edge_aliases_map: maps callee FQNs to alias name strings used for caller-context
+      matching across differently-named call sites
+    proj_dir: absolute path to the project root directory
+    work_dir: absolute path to the fm_agent workspace directory
+    developer_intent: a non-empty string describing the developer's intent for
+      the incremental change
+
+Code block:
+```python
+Line 1:     def _plan_spec_update(fqn, idx):
+Line 2:         """
+Line 3:         Decide fqn's new [SPEC]/[INFO] and return an apply-plan, or None to skip.
+Line 4:         Makes the opencode LLM call (the slow part) but performs NO file writes, so a batch of
+Line 5:         mutually independent functions can run this concurrently. The returned plan carries the
+Line 6:         exact file content to write plus what the serial apply phase needs for downward
+Line 7:         propagation; None means the function does not exist, is an unsupported language, or its
+Line 8:         spec did not change.
+Line 9:         """
+Line 10:         fpath = file_map.get(fqn)
+Line 11:         if not fpath or not os.path.isfile(fpath):
+Line 12:             return None
+Line 13:         ext = fpath.rsplit(".", 1)[-1] if "." in os.path.basename(fpath) else ""
+Line 14:         lang_key = EXT_TO_LANG.get(ext)
+Line 15:         if not lang_key:
+Line 16:             return None
+Line 17:         lang_cfg = LANG_CONFIG[lang_key]
+Line 18:         comment_prefix = lang_cfg["comment_prefix"]
+Line 19:         spec_marker = lang_cfg["spec_marker"]
+Line 20:         with open(fpath, "r", errors="replace") as f:
+Line 21:             content = f.read()
+Line 22:         leading = _extract_leading_spec_comments(content, comment_prefix, spec_marker)
+Line 23:         callee_names = sorted({c.split("::")[-1] for c in callees_map.get(fqn, ())})
+Line 24:         if leading is None:
+Line 25:             # No existing specification (e.g. a freshly added, unspecced function) — generate
+Line 26:             # one from scratch the way the full run does, rather than skipping the function.
+Line 27:             source = content
+Line 28:             old_spec, old_info = None, None
+Line 29:             caller_context = _collect_caller_context(
+Line 30:                 fqn, callers_map, file_map, edge_aliases_map
+Line 31:             )
+Line 32:             result = _opencode_generate_spec(
+Line 33:                 proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+Line 34:                 developer_intent, callee_names, source, caller_context,
+Line 35:             )
+Line 36:         else:
+Line 37:             source = content[len(leading):]
+Line 38:             old_spec, old_info = _split_spec_and_info(leading, comment_prefix, spec_marker)
+Line 39:             result = _llm_check_spec_update(
+Line 40:                 proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+Line 41:                 developer_intent, old_spec, old_info, callee_names, source,
+Line 42:             )
+Line 43:         if not result or not result.get("spec_updated"):
+Line 44:             return None
+Line 45:         new_spec = (result.get("new_spec") or "").strip()
+Line 46:         if not new_spec:
+Line 47:             return None
+Line 48:         if leading is None:
+Line 49:             # Freshly generated: take the [INFO] block opencode produced (if any). Treat it as
+Line 50:             # "updated" so its recorded callee expectations propagate downward below.
+Line 51:             new_info = (result.get("new_info") or "").strip()
+Line 52:             info_block = new_info or None
+Line 53:             info_updated = bool(new_info)
+Line 54:         else:
+Line 55:             # Keep the existing [INFO] block unless opencode rewrote it. A modified function may
+Line 56:             # now call a different set of callees, so a fresh [INFO] block can legitimately be
+Line 57:             # created even when the function previously had none (old_info is None) — gate on
+Line 58:             # whether opencode produced a block, not on a prior block existing.
+Line 59:             info_block = old_info
+Line 60:             info_updated = False
+Line 61:             if result.get("info_updated"):
+Line 62:                 new_info = (result.get("new_info") or "").strip()
+Line 63:                 if new_info:
+Line 64:                     info_block = new_info
+Line 65:                     info_updated = True
+Line 66:         # Splice the new block(s) back in, leaving the function source unchanged (mirrors the
+Line 67:         # full run's specced-file layout: [SPEC], blank line, optional [INFO], blank line, source).
+Line 68:         new_block = new_spec.rstrip("\n")
+Line 69:         if info_block is not None:
+Line 70:             new_block += "\n\n" + info_block.strip("\n")
+Line 71:         return {
+Line 72:             "fqn": fqn,
+Line 73:             "fpath": fpath,
+Line 74:             "write_content": new_block + "\n\n" + source.lstrip("\n"),
+Line 75:             "new_spec": new_spec,
+Line 76:             "info_updated": info_updated,
+Line 77:             "updated_callees": result.get("updated_callees") or [],
+Line 78:         }
+```
+
+Additional context:
+_extract_leading_spec_comments(content, comment_prefix, spec_marker)
+Pre-condition: content is a non-empty string (the complete file contents);
+    comment_prefix is the language's single-line comment marker;
+    spec_marker is the delimiter (e.g., "[SPEC]") that identifies spec blocks
+  Post-condition: Returns the prefix of content that begins at byte 0 and ends
+    at the last line containing a spec comment (delimited by spec_marker), or
+    None when no spec comment lines are present; the returned string preserves
+    all line terminators of the original
+
+_split_spec_and_info(leading, comment_prefix, spec_marker)
+Pre-condition: leading is the non-None string returned by _extract_leading_spec_comments
+  Post-condition: Returns a 2-tuple (spec_block, info_block); spec_block is the
+    [SPEC]-delimited portion of leading; info_block is the [INFO]-delimited
+    portion of leading, or None when no [INFO] section exists; both strings
+    include their delimiter lines
+
+_collect_caller_context(fqn, callers_map, file_map, edge_aliases_map)
+Pre-condition: fqn is a non-empty FQN; callers_map maps FQNs to sets of caller
+    FQNs; file_map maps FQNs to file paths; edge_aliases_map maps callee FQNs to
+    alias name strings
+  Post-condition: Returns a formatted string containing the [SPEC]-delimited
+    pre- and post-conditions of every direct caller of fqn whose spec has been
+    written to disk; returns an empty string when fqn has no callers or no
+    caller has an available spec; the returned string includes the FQN of each
+    contributing caller for traceability
+
+_opencode_generate_spec(proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+developer_intent, callee_names, source, caller_context)
+  Pre-condition: All arguments are non-None; source is the complete source code
+    of the function; callee_names is a sorted list of short callee names (may be
+    empty); caller_context is the formatted caller-expectation string produced by
+    _collect_caller_context (may be empty)
+  Post-condition: Blocks until the OpenCode subprocess terminates, then returns
+    a JSON dict with at least the keys "spec_updated" (bool, True when a new
+    spec was written) and "new_spec" (string, the generated [SPEC] block);
+    optionally includes "new_info" (string), "info_updated" (bool), and
+    "updated_callees" (list of strings); returns None when the subprocess exits
+    non-zero or produces output that cannot be parsed as valid JSON
+
+_llm_check_spec_update(proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+developer_intent, old_spec, old_info, callee_names, source)
+  Pre-condition: old_spec is the existing [SPEC] block text or None; old_info is
+    the existing [INFO] block text or None; all other arguments follow the same
+    contract as _opencode_generate_spec
+  Post-condition: Blocks until the LLM call completes, then returns a JSON dict
+    with the same key contract as _opencode_generate_spec, but evaluating whether
+    an existing spec must be rewritten rather than generating from scratch;
+    returns None on LLM failure or unparseable output
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

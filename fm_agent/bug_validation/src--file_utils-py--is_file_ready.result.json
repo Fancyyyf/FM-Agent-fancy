@@ -1,0 +1,11 @@
+{
+  "id": "src--file_utils-py--is_file_ready",
+  "source_file": "src/file_utils.py",
+  "function_name": "is_file_ready",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--is_file_ready.py",
+  "detail_file": "fm_agent/bug_validation/src--file_utils-py--is_file_ready.md",
+  "probe_stdout": "NOT CONFIRMED — actual matched expected: True\n",
+  "trigger_summary": "Leading whitespace on marker lines — the regex already permits it via ^\\s*"
+}

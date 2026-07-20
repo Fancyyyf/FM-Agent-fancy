@@ -1,0 +1,81 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a path to an existing directory.
+  - fm_agent/extracted_functions/ MAY or MAY NOT exist as a subdirectory
+    of proj_dir.
+
+Code block:
+```python
+Line 1: def extract_existing_specs(proj_dir):
+Line 2:     """
+Line 3:     Collect the leading [SPEC]/[INFO] blocks from every specced file produced by a
+Line 4:     previous full run (the extracted_functions tree that _run_setup_extract +
+Line 5:     extraction/spec-generation leaves behind under proj_dir/fm_agent/).
+Line 6:     Each extracted function file begins with a behavioral specification block, in the
+Line 7:     Spec Format from md/system_prompt.md: a `<comment> [SPEC]` ... `<comment> [SPEC]`
+Line 8:     block optionally followed by a `<comment> [INFO]` ... `<comment> [INFO]` block, and
+Line 9:     then the (unchanged) function source. This walks fm_agent/extracted_functions/ and,
+Line 10:     for every file that carries a [SPEC] block, records that header text so a caller can
+Line 11:     reuse the previous run's specs instead of re-deriving them.
+Line 12:     Returns a dict mapping each file's path (relative to the extracted_functions dir,
+Line 13:     matching the convention used elsewhere in this module) to a
+Line 14:     {"spec": <spec block>, "info": <info block or None>} entry. The "spec" string is the
+Line 15:     full `[SPEC]` ... `[SPEC]` block (markers included); "info" is the full
+Line 16:     `[INFO]` ... `[INFO]` block (markers included), or None when the file has no [INFO]
+Line 17:     block. Files without a [SPEC] block are skipped. Returns an empty dict when the
+Line 18:     extracted_functions directory does not exist.
+Line 19:     """
+Line 20:     extracted_dir = os.path.join(proj_dir, "fm_agent", "extracted_functions")
+Line 21:     if not os.path.isdir(extracted_dir):
+Line 22:         return {}
+Line 23:     specs = {}
+Line 24:     for root, _, files in os.walk(extracted_dir):
+Line 25:         for fname in files:
+Line 26:             file_path = Path(root) / fname
+Line 27:             spec_block = extract_spec_block(file_path)
+Line 28:             info_block = extract_info_block(file_path)
+Line 29:             if spec_block is None:
+Line 30:                 continue
+Line 31:             rel_path = os.path.relpath(str(file_path), extracted_dir)
+Line 32:             # extract_info_block returns only the content between the [INFO]
+Line 33:             # markers; re-wrap it with the markers so we record the entire
+Line 34:             # info block (ready to prepend verbatim).
+Line 35:             full_info_block = None
+Line 36:             if info_block is not None:
+Line 37:                 prefix = _detect_comment_prefix(spec_block) or ""
+Line 38:                 info_tag = f"{prefix} [INFO]".strip()
+Line 39:                 full_info_block = f"{info_tag}\n{info_block}\n{info_tag}"
+Line 40:             specs[rel_path] = {
+Line 41:                 "spec": spec_block,
+Line 42:                 "info": full_info_block,
+Line 43:             }
+Line 44:     return specs
+```
+
+Additional context:
+extract_spec_block(file_path) -> str | None
+Pre-condition: file_path is an absolute or relative path to a regular
+    file that may contain [SPEC] markers.
+  Post-condition: Returns the full text of the first [SPEC] block in the
+    file (from the opening `[SPEC]` marker through the closing `[SPEC]`
+    marker, inclusive) when such a block is present and syntactically
+    well-formed; returns None when the file does not contain a recognizable
+    [SPEC] block.
+
+extract_info_block(file_path) -> str | None
+Pre-condition: file_path is an absolute or relative path to a regular
+    file that may contain [INFO] markers.
+  Post-condition: Returns the body content between the opening `[INFO]`
+    marker and the closing `[INFO]` marker (excluding the markers
+    themselves) when both markers are present; returns None when either
+    marker is absent or the block is not well-formed.
+
+_detect_comment_prefix(spec_block) -> str
+Pre-condition: spec_block is a non-empty string containing at least one
+    comment line using a supported language comment convention.
+  Post-condition: Returns the comment prefix string (e.g., "#", "//", "%")
+    deduced from the first non-empty line of spec_block, with no trailing
+    whitespace. Returns an empty string when the comment convention cannot
+    be determined.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

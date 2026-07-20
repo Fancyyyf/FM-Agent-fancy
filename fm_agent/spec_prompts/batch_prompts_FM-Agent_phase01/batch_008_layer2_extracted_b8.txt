@@ -1,0 +1,116 @@
+You are generating behavioral specifications for Phase 1, Layer 2.
+
+Language: python. Spec comment style: `# [SPEC]`.
+
+Read fm_agent/spec_prompts/system_prompt.md FIRST for the mandatory spec format rules.
+Read: fm_agent/spec_prompts/domain_context/engine_overview.txt
+Read: fm_agent/spec_prompts/domain_context/phase_01_types.txt
+
+## KEY RULES
+- Describe WHAT the function guarantees, NOT HOW it implements it
+- Do NOT name internal helper calls, loop structure, or data layout decisions
+- Do NOT enumerate members of sets - describe the GOVERNING RULE
+- Specs describe INTENDED CORRECT behavior per the domain (see domain files)
+- ALL files below exist in fm_agent/extracted_functions/ - read and process each one
+
+## EARLIER-LAYER CALLER SPECS
+#### main-py::_get_pending_batches
+
+# [SPEC]
+# Unit: main.py
+#
+# _get_pending_batches(batches, proj_dir) -> list
+#
+# Pre-condition:
+#   - batches is a list of dictionaries, each containing a key "functions" whose value is a list of relative file-path strings
+#   - proj_dir is a string referencing an existing directory
+#
+# Post-condition:
+#   - Returns a list of batch dictionaries from batches, preserving the original order
+#   - A batch is included in the returned list if and only if at least one function file in that batch, resolved by joining proj_dir with the relative path, is not ready according to is_file_ready
+#   - A batch for which every function file, when resolved to a full path, satisfies is_file_ready is excluded from the result
+#   - A batch whose "functions" key is missing or whose function list is empty is excluded from the result (vacuously, all zero functions are ready)
+#   - Returns an empty list when every function file in every input batch resolves to a path where is_file_ready returns True
+# [SPEC]
+
+#### main-py::run_pipeline
+
+# [SPEC]
+# Unit: main.py
+#
+# run_pipeline(proj_dir, resume, required_source_files, domain_knowledge_files, submodules, one_phase, extra_call_edges_path, only_spec) -> None
+#
+# Pre-condition:
+#   - proj_dir is a non-None string; if it does not reference an existing directory, the function prints a diagnostic and calls sys.exit(1)
+#   - If proj_dir is a directory but contains no files with an extension recognized by the pipeline, the function prints a diagnostic and calls sys.exit(1)
+#   - resume is a truthy/falsy value; when truthy and fm_agent/ exists under proj_dir, previously completed pipeline work is preserved and only remaining work executes
+#   - domain_knowledge_files is None or an iterable of path strings pointing to existing markdown files
+#   - submodules is None or a non-empty iterable of subdirectory names relative to proj_dir; when provided, only those subdirectories are processed
+#   - one_phase is a truthy/falsy value
+#   - extra_call_edges_path is None or a path to a JSON file defining supplemental call-graph edges in the format specified by engine conventions
+#   - only_spec is a truthy/falsy value
+#
+# Post-condition:
+#   - On success (normal return): the full pipeline has executed across all source files under proj_dir
+#   - If only_spec is truthy: every function in the extracted call graph has a behavioral spec ([SPEC] block) prepended to its extracted-function file; no verification or bug validation runs
+#   - If only_spec is falsy: specs are generated, then each specced function has a verification result in fm_agent/logic_verification_results/, and each MISMATCH has a bug validation report in fm_agent/bug_validation/
+#   - The fm_agent/ work directory under proj_dir is created and populated; no file outside fm_agent/ under proj_dir is modified
+#   - If resume is truthy and fm_agent/ exists, previously completed stages are not re-executed; if resume is falsy or fm_agent/ is absent, all prior fm_agent/ contents are removed before starting
+#   - User domain knowledge files are staged into fm_agent/spec_prompts/domain_context/user_knowledge/ before any pipeline stage executes
+#   - If no functions are found for verification (empty file_list), the function returns early without generating specs
+#   - On unrecoverable stage failure after all configured retries: prints a diagnostic identifying the failed stage and the trace directory, then calls sys.exit(1)
+#   - Pipeline stages execute sequentially: phases.json generation → domain context generation → function extraction → spec generation → (optionally) verification → bug validation
+#   - The function outputs status messages to stdout for each major stage transition
+#   - In only_spec mode, the final summary does not print a confirmed-bug count
+# [SPEC]
+
+## CALLEE EXPECTATIONS FROM CALLERS
+### What callers expect from src::file_utils-py::is_file_ready:
+#### According to main-py::_get_pending_batches:
+# is_file_ready(file_path) -> bool
+#   Pre-condition: file_path is a string path that may or may not reference an existing file
+#   Post-condition: returns True if the file at file_path exists, is readable, and contains the specification artifacts indicating processing is complete; returns False if the file does not exist, is unreadable, or lacks those artifacts
+#### According to main-py::run_pipeline:
+# is_file_ready(extracted_path) -> bool
+#   Pre-condition: extracted_path references an existing extracted-function file
+#   Post-condition: returns True if the file contains at least two lines matching [SPEC] and at least two lines matching [INFO]; returns False otherwise
+
+## FUNCTIONS (1 total - process ALL)
+### 1. fm_agent/extracted_functions/src/file_utils-py/is_file_ready.py
+  Earlier-layer callers: main-py::_get_pending_batches, main-py::run_pipeline
+
+## SPEC FORMAT (prepend to file, preserving source code below)
+
+The exact format every specced file must start with:
+
+# [SPEC]
+# Unit: <file path relative to repo root>
+#
+# <FunctionName>(<params>) -> <ReturnType>
+#
+# Pre-condition:
+#   - ...
+#
+# Post-condition:
+#   - ...
+# [SPEC]
+
+# [INFO]
+# <callee_name>(<params>) -> <ReturnType>
+#   Pre-condition: ...
+#   Post-condition: ...
+# [SPLIT]
+# <another_callee>(<params>) -> <ReturnType>
+#   Pre-condition: ...
+#   Post-condition: ...
+# [INFO]
+
+If the function has no callees: '<comment> (no callees)' between the [INFO] markers.
+
+## PROCESS
+For each function:
+1. Read the extracted file
+2. Read caller expectations above - what do callers NEED from this function?
+3. Write a behavioral spec describing WHAT it guarantees (not HOW)
+4. Write the COMPLETE file with [SPEC] and [INFO] blocks prepended, then UNCHANGED source
+5. Use the Write tool to save the complete file

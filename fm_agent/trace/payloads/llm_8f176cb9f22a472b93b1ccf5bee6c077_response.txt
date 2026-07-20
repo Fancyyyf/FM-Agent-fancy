@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "submodules = [] (empty list), changed_functions contains at least one function that yields an existing extracted file under work_dir, updated_spec_files is empty or yields no additional targets. For example: submodules=[], changed_functions={'src/example.c': {'added': ['example_func']}} with the corresponding extracted file at /path/to/work_dir/extracted_functions/src/example.c/example_func.ext existing. The code block will compute a non-empty file_list and proceed to verify the function, violating the specification that requires no function to be verified when submodules is not None but no submodule paths exist.",
+  "offending_statements": "Line 46:     if submodules:",
+  "reason": "The specification says 'When submodules is not None, a function is verified only if its extracted relative path (with \"/\" separators) starts with one of the submodule paths.' An empty list [] is not None, so the condition applies. However, the code uses 'if submodules:' which evaluates to False for an empty list, causing the submodule filter to be skipped entirely. Consequently, all functions that exist are verified, even though no submodule path matches, violating the intended restriction."
+}

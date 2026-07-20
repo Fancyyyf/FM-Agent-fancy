@@ -1,0 +1,3 @@
+{
+  "post_condition": "If the function terminates normally, it returns the result of `_llm_select_json`, which is either a dict `{'info_updated': bool, 'new_info': str}` satisfying `_validate_caller_info_update` or `None`. All input arguments remain unchanged. If `_llm_select_json` raises an exception, that exception propagates; no return value is produced."
+}

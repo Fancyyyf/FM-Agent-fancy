@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "block='extra\\n[SPEC]\\ncontent\\n[SPEC]\\nmore', spec_marker='[SPEC]', comment_prefix='// '",
+  "offending_statements": "Line 17: spec_end = spec_idxs[1] and Line 22: spec_block = '\\n'.join(lines[: spec_end + 1]).strip('\\n')",
+  "reason": "When block contains two spec delimiters, the code incorrectly includes all lines from the start of block up to the second spec delimiter, instead of starting from the first spec delimiter as required by the specification. For the given counterexample, the code returns spec_block='extra\\n[SPEC]\\ncontent\\n[SPEC]' but the specification requires '[SPEC]\\ncontent\\n[SPEC]'."
+}

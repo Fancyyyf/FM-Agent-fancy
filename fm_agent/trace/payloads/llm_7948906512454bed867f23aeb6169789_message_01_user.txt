@@ -1,0 +1,99 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a path to an existing directory under version control
+  - work_dir is an absolute path to the fm_agent workspace directory,
+    which must exist and be writable
+  - idx is an integer used for naming intermediate output files uniquely
+  - fqn is a non-empty fully-qualified function name string
+    (e.g., "src::module::func")
+  - lang_key is a lowercase string identifying the programming language
+    (e.g., "python", "cpp", "rust")
+  - comment_prefix is the single-line comment marker for lang_key
+    (e.g., "#" for Python, "//" for C-family languages)
+  - developer_intent is a non-empty string describing the developer's
+    modification goal
+  - callee_names is a list of short callee name strings (the last
+    component of each callee FQN); it may be empty when the function
+    has no recorded callees
+  - source is a string containing the complete, non-empty source code
+    of the function
+  - caller_context is a list of (caller_fqn, spec_block, info_expectation)
+    tuples; each spec_block is the caller's full [SPEC] block text (may be
+    empty/absent), and each info_expectation is the text from the caller's
+    [INFO] entry describing what that caller needs from this function (may
+    be empty/absent); caller_context may be an empty list
+
+Code block:
+```python
+Line 1: def _opencode_generate_spec(proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+Line 2:                             developer_intent, callee_names, source, caller_context):
+Line 3:     """
+Line 4:     Ask opencode to generate a brand-new [SPEC] (and, when the function has callees, [INFO])
+Line 5:     block from scratch for a function that has no existing specification — e.g. a function
+Line 6:     freshly added by the modification.
+Line 7:     Mirrors the full run's spec generation (run_pipeline Stage 6) but for a single function:
+Line 8:     opencode reads the project's spec format rules (fm_agent/spec_prompts/system_prompt.md),
+Line 9:     is given the same caller context the full run provides (each caller's [SPEC] block and what
+Line 10:     that caller's [INFO] block expects from this function, in caller_context as returned by
+Line 11:     _collect_caller_context), and produces the block(s) directly. Returns the parsed decision
+Line 12:     in the SAME shape as _opencode_check_spec_update so the caller can splice and propagate it
+Line 13:     identically.
+Line 14:     Returns the parsed result dict — keys: "spec_updated" (bool, true when a [SPEC] block was
+Line 15:     produced), "new_spec" (str), "info_updated" (bool), "new_info" (str), "updated_callees"
+Line 16:     (list[str]) — or None when opencode produced nothing usable.
+Line 17:     """
+Line 18:     result_relpath = os.path.join("fm_agent", f"spec_generate_{idx}.json")
+Line 19:     prompt_relpath = os.path.join("fm_agent", f"spec_generate_{idx}.md")
+Line 20:     # Caller context (callers' own specs + what each caller's [INFO] expects from this
+Line 21:     # function), mirroring run_pipeline's "EARLIER-LAYER CALLER SPECS" / "CALLEE EXPECTATIONS
+Line 22:     # FROM CALLERS" sections so the generated spec satisfies what callers depend on.
+Line 23:     caller_specs = [
+Line 24:         (cfqn, spec) for cfqn, spec, _ in caller_context if spec
+Line 25:     ]
+Line 26:     caller_expectations = [
+Line 27:         (cfqn, exp) for cfqn, _, exp in caller_context if exp
+Line 28:     ]
+Line 29:     caller_section = ""
+Line 30:     if caller_specs:
+Line 31:         caller_section += "## Specs of this function's callers\n\n"
+Line 32:         for cfqn, spec in caller_specs:
+Line 33:             caller_section += f"
+Line 34:     if caller_expectations:
+Line 35:         caller_section += (
+Line 36:             "## What callers expect from this function (from their [INFO] blocks)\n\n"
+Line 37:             "Your generated [SPEC] must be consistent with these expectations.\n\n"
+Line 38:         )
+Line 39:         for cfqn, exp in caller_expectations:
+Line 40:             caller_section += f"### According to {cfqn}\n\n{exp.strip()}\n\n"
+```
+
+Additional context:
+list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+Pre-condition: work_dir is an absolute path to an existing, readable
+    subdirectory under proj_dir
+  Post-condition: Returns a list of relative path strings (using "/"
+    separators) for domain knowledge Markdown files that have been staged
+    under the workspace; returns an empty list when no files are staged
+
+format_domain_knowledge_bullets(paths) -> str
+Pre-condition: paths is a list of relative file path strings (may be empty)
+  Post-condition: Returns a single string where each path is rendered as
+    a bullet item suitable for embedding in a Markdown prompt; returns an
+    empty string when paths is empty
+
+_opencode_select_json(proj_dir, work_dir, prompt_relpath, prompt_content,
+result_relpath, stage, input_files)
+  -> dict | None
+  Pre-condition: all arguments are non-None; prompt_content is a non-empty
+    string; prompt_relpath and result_relpath are relative paths within
+    proj_dir whose parent directories exist; input_files is a list of
+    relative file paths to make available to the subprocess
+  Post-condition: Writes prompt_content to the file at prompt_relpath,
+    invokes OpenCode as a subprocess with proj_dir as the working directory
+    and with input_files declared as context files, blocks until the
+    subprocess terminates, reads the file at result_relpath, and returns
+    the parsed JSON dict from that file; returns None when the subprocess
+    exits with a non-zero status or when result_relpath does not contain
+    valid JSON after the subprocess terminates
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

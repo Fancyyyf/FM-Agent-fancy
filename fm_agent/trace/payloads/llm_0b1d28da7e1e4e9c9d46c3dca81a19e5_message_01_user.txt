@@ -1,0 +1,95 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir and work_dir are valid directory paths on disk
+  - idx is a non-negative integer used only for trace-event labeling
+  - caller_fqn is a non-empty FQN string identifying the caller function
+  - callee_name is a non-empty string naming the callee whose [SPEC] was updated
+  - lang_key is a valid language identifier for which comment_prefix is the
+    single-line comment marker
+  - comment_prefix is the single-line comment prefix for the source language
+  - callee_new_spec is a non-empty string containing the callee's updated
+    [SPEC] block, including its opening and closing marker lines
+  - caller_info_block is a non-empty string containing the caller's full
+    current [INFO] block, including its opening and closing marker lines
+  - caller_source is a non-empty string containing the caller's complete source
+    code, inclusive of any leading [SPEC] and [INFO] comment blocks
+
+Code block:
+```python
+Line 1: def _llm_check_caller_info_update(proj_dir, work_dir, idx, caller_fqn, callee_name,
+Line 2:                                   lang_key, comment_prefix, callee_new_spec,
+Line 3:                                   caller_info_block, caller_source):
+Line 4:     """
+Line 5:     Ask the LLM whether a caller's [INFO] block must change to stay consistent with a callee
+Line 6:     whose [SPEC] block was just updated.
+Line 7:     The caller's [INFO] block records the expected specs of the callees it depends on. This
+Line 8:     asks the model to reconcile only the entry for callee_name with the callee's new spec —
+Line 9:     consistency, not equality: the entry must merely not conflict with the new spec, and the
+Line 10:     entries for other callees are left untouched. The prompt inlines the callee's new spec
+Line 11:     and the caller's source/[INFO], so it is issued as a direct LLM call (via
+Line 12:     _llm_select_json) rather than an opencode run; idx only labels the traced exchange.
+Line 13:     Returns the parsed result dict — keys "info_updated" (bool) and "new_info" (str) — or
+Line 14:     None when the LLM produced nothing usable.
+Line 15:     """
+Line 16:     knowledge_section = _domain_knowledge_prompt_section(work_dir)
+Line 17:     prompt_content = (
+Line 18:         "# Reconcile a Caller's [INFO] Block with a Changed Callee\n\n"
+Line 19:         f"The callee `{callee_name}`'s behavioral specification was just updated. The caller "
+Line 20:         f"`{caller_fqn}` (language `{lang_key}`) records the expected specs of the callees it "
+Line 21:         "depends on in its [INFO] block. Update that block so its entry for the callee is "
+Line 22:         "CONSISTENT with the callee's new spec — it need NOT be identical, it only must not "
+Line 23:         "conflict (no contradictory pre/post-conditions). Leave the entries for every other "
+Line 24:         "callee unchanged.\n\n"
+Line 25:         f"Comment prefix for this language: `{comment_prefix}`.\n\n"
+Line 26:         f"{knowledge_section}"
+Line 27:         "## Callee's updated [SPEC] block\n\n"
+Line 28:         f"{callee_new_spec}\n\n"
+Line 29:         "## Caller's current source\n\n"
+Line 30:         f"```{lang_key}\n{caller_source.strip()}\n```\n\n"
+Line 31:         "## Caller's current [INFO] block (the expected specs of its callees)\n\n"
+Line 32:         f"{caller_info_block}\n\n"
+Line 33:         "## Steps\n\n"
+Line 34:         f"1. Decide whether the caller's [INFO] entry for `{callee_name}` already is consistent "
+Line 35:         "with the callee's new spec. If it is, no update is needed.\n"
+Line 36:         f"2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... "
+Line 37:         f"`[INFO]` block only, markers included, every line prefixed with `{comment_prefix}`), "
+Line 38:         f"adjusting only the `{callee_name}` entry to be consistent and leaving the other "
+Line 39:         "entries as-is.\n"
+Line 40:         "3. Return ONLY a JSON object with keys:\n"
+Line 41:         '   - "info_updated": boolean.\n'
+Line 42:         '   - "new_info": string — the full replacement [INFO] block, or "" if not updated.\n'
+Line 43:         "   Do not include Markdown, tags, or prose outside the JSON object.\n"
+Line 44:     )
+Line 45:     return _llm_select_json(
+Line 46:         work_dir,
+Line 47:         prompt_content,
+Line 48:         stage="update_caller_info",
+Line 49:         validator=_validate_caller_info_update,
+Line 50:         schema_description='{"info_updated": boolean, "new_info": string}',
+Line 51:         trace_meta={"caller_fqn": caller_fqn, "callee_name": callee_name, "idx": idx},
+Line 52:     )
+```
+
+Additional context:
+_domain_knowledge_prompt_section(work_dir) -> str
+Pre-condition: work_dir is a valid directory path
+  Post-condition: Returns a string containing the concatenated contents of all
+    domain knowledge files found under the expected subdirectory, formatted
+    with appropriate section headers; returns an empty string when no such
+    files exist at the expected location
+
+_llm_select_json(work_dir, prompt_content, stage, validator,
+schema_description, trace_meta) -> dict | None
+  Pre-condition: work_dir is a valid directory path; prompt_content is a
+    non-empty string; stage is a non-empty pipeline-stage identifier;
+    validator is a callable that validates the parsed JSON dict against the
+    expected schema; schema_description is a non-empty string describing the
+    expected JSON shape; trace_meta is a dict
+  Post-condition: Sends prompt_content to an LLM and collects the response
+    until completion. Validates the parsed JSON response against the expected
+    schema using the validator. Returns the parsed dict when the response is
+    valid JSON satisfying the validator. Returns None when the LLM call fails,
+    produces no response, or returns output that cannot be parsed as valid
+    JSON satisfying the validator
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.
