@@ -1,13 +1,13 @@
 # FM-Agent 自验证 mismatch 审计与 Bug 清单
 
-> 生成口径：`fm_agent/audit_mismatches.py` 对本目录现有产物做静态复核；后续恢复重跑解决 3 个 ERROR 后，本文已按新产物增量更新。
+> 生成口径：`fm_agent/audit_mismatches.py` 对本目录现有产物做静态复核；后续 restore 重跑解决 3 个 ERROR 并补齐 10 个无结果函数后，本文已按新产物增量更新。
 > “confirmed”仅表示 probe 观察到实现与生成 SPEC 不同，不等于确认了产品 bug。
 
 ## 总括
 
-本次 FM-Agent 对自身代码的验证产物明显失真。共发现 **380** 个 extracted-function 文件，其中 **380** 个已有完整 `[SPEC]/[INFO]`；生成 **370** 份逻辑结果，覆盖全部 extracted 文件的 **97.37%**，覆盖 ready 文件的 **97.37%**。恢复重跑后结果为 **116 MATCH / 254 MISMATCH / 0 ERROR**。原始 mismatch 率为 **68.65%**，这与一个可用的自验证器不相称。
+本次 FM-Agent 对自身代码的验证产物明显失真。共发现 **380** 个 extracted-function 文件，其中 **380** 个已有完整 `[SPEC]/[INFO]`；恢复重跑后已生成 **380** 份逻辑结果，对 extracted/ready 文件的覆盖率均为 **100.00%**。最终结果为 **115 MATCH / 265 MISMATCH / 0 ERROR**，原始 mismatch 率为 **69.74%**，这与一个可用的自验证器不相称。
 
-内置 bug validator 覆盖了全部 254 条 MISMATCH，并报告 215 confirmed、39 not_confirmed：按它自己的口径，直接误判率至少为 **15.35%**（占全部结果 10.54%）。但 confirmed probe 的 expected 值通常直接来自同一份 LLM SPEC，因此存在循环论证。
+内置 bug validator 覆盖了全部 265 条 MISMATCH，并报告 222 confirmed、43 not_confirmed：按它自己的口径，直接误判率至少为 **16.23%**（占全部结果 11.32%）。但 confirmed probe 的 expected 值通常直接来自同一份 LLM SPEC，因此存在循环论证。
 
 恢复重跑前后的 3 项变化如下。这说明原 ERROR 是可恢复的 LLM 连接故障，不是对三个函数的逻辑判定；重跑后仍需分别审查新 verdict。
 
@@ -21,18 +21,18 @@
 
 | 审计类别 | 数量 | 占 MISMATCH | 含义 |
 |---|---:|---:|---|
-| 推理误判 | 87 | 34.25% | 代码理解错误、反例违反前置条件/Schema、错误 mock/callee 语义；包含 validator 已 not_confirmed 的项目 |
-| SPEC 错误 | 91 | 35.83% | 差异可能真实，但 SPEC 自造、过强、自相矛盾或与仓库文档相反 |
-| 契约待确认 | 26 | 10.24% | 实现与 SPEC 确有差异，现有仓库证据不能决定期望行为 |
-| 实现缺陷候选 | 50 | 19.69% | 有独立仓库不变量/调用影响支持，值得修复或补测试 |
+| 推理误判 | 93 | 35.09% | 代码理解错误、反例违反前置条件/Schema、错误 mock/callee 语义；包含 validator 已 not_confirmed 的项目 |
+| SPEC 错误 | 92 | 34.72% | 差异可能真实，但 SPEC 自造、过强、自相矛盾或与仓库文档相反 |
+| 契约待确认 | 26 | 9.81% | 实现与 SPEC 确有差异，现有仓库证据不能决定期望行为 |
+| 实现缺陷候选 | 54 | 20.38% | 有独立仓库不变量/调用影响支持，值得修复或补测试 |
 
-因此，**高置信度误报下界**（推理误判 + SPEC 错误）为 **178/254 = 70.08%**。若把尚无产品契约支持的“契约待确认”也按不可直接报 bug 处理，当前可直接进入修复队列的只有 **50/254 = 19.69%**。这些数字是静态审计结果，不是假装拥有外部 ground truth。
+因此，**高置信度误报下界**（推理误判 + SPEC 错误）为 **185/265 = 69.81%**。若把尚无产品契约支持的“契约待确认”也按不可直接报 bug 处理，当前可直接进入修复队列的只有 **54/265 = 20.38%**。这些数字是静态审计结果，不是假装拥有外部 ground truth。
 
-另外仍有 10 个 ready function 没有逻辑结果。原有 3 个 ERROR 均为 LLM 连接重试耗尽，已通过恢复重跑清零；当前 370 份结果均已得到 MATCH 或 MISMATCH 逻辑结论，但仍不代表结论正确。统计已排除 probe import 产生的 `__pycache__/*.pyc`。
+原先无 result 的 10 个 ready function 已全部补跑，均生成 MISMATCH；原有 3 个 ERROR 也已通过恢复重跑清零。当前 380 份结果均已得到 MATCH 或 MISMATCH 逻辑结论，但仍不代表结论正确。统计已排除 probe import 产生的 `__pycache__/*.pyc`。
 
 ## 优先排查的具体 bug 报告
 
-以下是 50 个“实现缺陷候选”中影响面最大的项目；编号仍以逐条清单中的原始 bug id 为准。
+以下是 54 个“实现缺陷候选”中影响面最大的项目；编号仍以逐条清单中的原始 bug id 为准。
 
 | 优先级 | bug id / 具体报告 | 独立影响判断 |
 |---|---|---|
@@ -58,7 +58,7 @@
 2. **checker 没有强制反例满足 Pre-condition。** 字符串 token、负 duration、缺失 State 字段、None proj_dir、非整数 LSP position、被删除的模块全局变量、畸形 JSON schema 等仍被当成 valid input。
 3. **POST 推理是自然语言近似，不是 strongest post-condition。** 它会把 Python 字符下标当 byte offset、漏看 stdin 中的文件列表、误判缩进/return 位置、忽略 deque(maxlen) 语义，再由第二个 LLM 对错误 POST 作蕴含检查。
 4. **[INFO]/domain context 会级联污染。** 最明显的是层序方向：engine overview 写“callee 在低层”，而 `_compute_layers` 代码和 caller-driven 生成顺序是 caller-first；错误 callee contract 继续污染 `_topdown_ordered_fqns` 等下游函数。
-5. **bug validator 使用自指 oracle。** probe 通常构造 `expected = spec_claim`，只证明实现不同于 SPEC；它不检查 SPEC 是否来自文档、调用者或测试。因此 84.65% 的“confirmed”不能解释成真实 bug 精度。
+5. **bug validator 使用自指 oracle。** probe 通常构造 `expected = spec_claim`，只证明实现不同于 SPEC；它不检查 SPEC 是否来自文档、调用者或测试。因此 83.77% 的“confirmed”不能解释成真实 bug 精度。
 6. **缺少独立测试/双向验证。** 仓库中没有可作为 ground truth 的测试集；validator 也未执行“反例是否满足 precondition”“SPEC 是否与 caller/README 冲突”“actual POST 是否可由运行结果支持”三道门。
 
 ## 建议的验证器修正顺序
@@ -1269,6 +1269,21 @@
 
 </details>
 
+#### FMA-MISMATCH-255 — `src--file_utils-py--is_file_ready`
+
+- 结论：**推理误判**；内置 validator：`not_confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/file_utils-py/is_file_ready.py) · [推导 POST / result](logic_verification_results/src/file_utils-py/is_file_ready.json) · [具体 bug 报告](bug_validation/src--file_utils-py--is_file_ready.md) · [probe](bug_validation/probe_src--file_utils-py--is_file_ready.py)
+- 触发/冲突：原推理声称标记行前有空白时，`fullmatch()` 会因为行首空白而失败；实际正则以 `^\s*` 开头，probe 对带缩进标记的文件实测返回 `True`。
+- 成因复核：推理器只看到 `fullmatch(line)` 就忽略了 `_READY_MARKER_RE` 本身允许行首空白；这正是本分支修复 SPEC 匹配后用来回归的误报样本。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- file_path is a string that may reference an existing file or be any other string value
+- FMA SPEC post-condition：- 文件仅在开头依次出现 `SPEC → SPEC → INFO → INFO`、四个标记使用同一语言注释前缀，且标记之间没有非注释内容时返回 `True`；行首空白可被接受。
+- FMA 推导 actual POST：推导的总体逻辑其实已正确写出“`_READY_MARKER_RE` 匹配即消费下一标记”，但 code evidence 又错误断言带空白的标记无法 full-match，前后自相矛盾。
+
+</details>
+
 #### FMA-MISMATCH-227 — `src--file_utils-py--clear_test_file_exemptions`
 
 - 结论：**推理误判**；内置 validator：`not_confirmed`。
@@ -2039,6 +2054,156 @@
 - Pre-condition：- proj_dir is a path to a project directory whose fm_agent/ subdirectory contains phases.json (with a "phases" list of phase objects, each containing a "modules" list) and extracted_functions/ - developer_intent is a non-empty string describing the modification goal - changed_functions is a dict mapping absolute source file paths to dicts with string-list values under at least the keys "added", "modified", and "remo…
 - FMA SPEC post-condition：- Returns a list of paths, each relative to the extracted_functions/ directory, ordered by descending relevance to developer_intent; paths with equal relevance are ordered lexicographically - Every returned path refers to an existing regular file under extracted_functions/ - When range is not None, the returned list has length range - Returns an empty list when phases.json defines no modules, or when no module is selected by the relevance assessment - A module is selected when EITHER its natural-language description (as recorded in phases.json) is assessed as relevant to the developer intent, OR the module contains at least one source file whose path, relativized against proj_dir, matches a key in changed_functions - Within each selected module, a s…
 - FMA 推导 actual POST：The function returns a list of strings. If the flattened module list from phases.json is empty, the returned list is empty. Otherwise, the list is formed by identifying the most relevant functions via a three-pass process: (1) LLM selects relevant modules based on module descriptions; (2) for each relevant module, its source files are examined to select relevant files; (3) within each relevant file, rank_functions_in_file is called to score and rank functions by relevance to developer_intent, yielding a set of function entries each with a score. All such entries are collected, sorted by descending score, and converted to relative file paths (matching the naming convention under proj_dir/fm_agent/extracted_functions/). If the parameter range is a non…
+
+</details>
+
+#### FMA-MISMATCH-256 — `src--incremental_reasoner-py--_llm_check_caller_info_update`
+
+- 结论：**实现缺陷候选**；内置 validator：`confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/_llm_check_caller_info_update.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/_llm_check_caller_info_update.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--_llm_check_caller_info_update.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--_llm_check_caller_info_update.py)
+- 触发/冲突：`_validate_caller_info_update` 只检查 `info_updated: bool` 和非空 `new_info: str`，因此 `new_info="arbitrary garbage"` 也会通过并返回。
+- 成因复核：这不只是 SPEC 的语义理想化；下游 `_reconcile_caller` 会把 `new_info` 直接覆写到 extracted-function 文件。完整语义一致性难以用本地 validator 证明，但至少应校验完整 `[INFO]` 标记和基本块结构，否则 LLM 的合法 JSON 可直接损坏后续验证输入。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- caller_info_block 是含开闭标记的完整 `[INFO]` 块；callee_new_spec 是完整 `[SPEC]` 块；路径和语言参数有效。
+- FMA SPEC post-condition：- LLM 结果必须包含 `info_updated` 和 `new_info`；更新时 `new_info` 是含标记的完整替换块，保留其他 callee 条目。
+- FMA 推导 actual POST：- 返回 `_llm_select_json` 经 `_validate_caller_info_update` 处理的 dict 或 `None`；现有 validator 只能保证字段类型和非空性。
+
+</details>
+
+#### FMA-MISMATCH-257 — `src--incremental_reasoner-py--_llm_check_spec_update`
+
+- 结论：**推理误判**；内置 validator：`not_confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/_llm_check_spec_update.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/_llm_check_spec_update.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--_llm_check_spec_update.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--_llm_check_spec_update.py)
+- 触发/冲突：原 code evidence 声称 `knowledge_section` “计算了但未使用”，实际 `prompt_content` 的 f-string 明确包含 `f"{knowledge_section}"`。
+- 成因复核：probe 向 domain knowledge 注入唯一字符串，并在发送给 LLM 的 prompt 中找到该字符串；该 mismatch 是漏读字符串拼接项。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- 路径、FQN、语言、developer intent 和现有 SPEC/INFO 块均符合函数声明的输入域。
+- FMA SPEC post-condition：- prompt 包含当前源码、SPEC/INFO、callee 列表、developer intent 以及 work_dir 下的 domain knowledge。
+- FMA 推导 actual POST：- 推导的返回结构与实现基本一致，但错误断言 `knowledge_section` 未被插入 prompt。
+
+</details>
+
+#### FMA-MISMATCH-258 — `src--incremental_reasoner-py--_opencode_generate_spec`
+
+- 结论：**实现缺陷候选**；内置 validator：`confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/_opencode_generate_spec.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/_opencode_generate_spec.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--_opencode_generate_spec.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--_opencode_generate_spec.py)
+- 触发/冲突：当 `_opencode_select_json` 返回可解析但缺少预期字段的 `{"unexpected": "dict"}` 时，本函数不校验 schema，而是原样返回。
+- 成因复核：函数 docstring 明确声称与 `_opencode_check_spec_update` 返回相同 shape，后续 `_plan_spec_update` 也依赖这些字段。`_opencode_select_json` 只保证 JSON 可解析，此处缺少与 `_validate_spec_update` 等价的边界校验。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- 项目/workspace 可读写，FQN、语言、intent 和源码有效，callee_names/caller_context 符合声明结构。
+- FMA SPEC post-condition：- 成功时返回含 `spec_updated/new_spec/info_updated/new_info/updated_callees` 五个字段的 dict；无法解析为该结构时返回 `None`。
+- FMA 推导 actual POST：- 实际仅透传 `_opencode_select_json` 的返回值，所以任意合法 JSON 值都可能逃过本函数。
+
+</details>
+
+#### FMA-MISMATCH-259 — `src--incremental_reasoner-py--_plan_spec_update`
+
+- 结论：**实现缺陷候选**；内置 validator：`confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/_plan_spec_update.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/_plan_spec_update.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--_plan_spec_update.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--_plan_spec_update.py)
+- 触发/冲突：LLM 若在 `updated_callees` 中返回 FQN，计划会原样透传，没有归一化为最后一段短名。
+- 成因复核：下游 `_resolve_callee_fqns` 仅将该值与 callee stem/别名匹配，FQN 会导致更新传播静默丢失。prompt 给出的 known callees 是短名，但 LLM 输出是不可信边界；应在 validator、plan 或 resolver 中统一归一化。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- 嵌套 plan 函数所需的 file_map/call graph/语言配置和路径状态已初始化。
+- FMA SPEC post-condition：- 成功时 plan 的 `updated_callees` 是 callee FQN 最后一段的短名列表，供下游传播。
+- FMA 推导 actual POST：- `"updated_callees": result.get("updated_callees") or []` 未做任何短名转换。
+
+</details>
+
+#### FMA-MISMATCH-260 — `src--incremental_reasoner-py--_reapply_existing_specs`
+
+- 结论：**实现缺陷候选**；内置 validator：`confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/_reapply_existing_specs.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/_reapply_existing_specs.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--_reapply_existing_specs.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--_reapply_existing_specs.py)
+- 触发/冲突：对 2 个实际写入 SPEC 头的文件，函数返回 `None`，而不是声明的修改数 `2`。
+- 成因复核：这一返回契约同时出现在源码 docstring，不是仅由 LLM SPEC 发明；实现没有 counter 和 `return`。当前 caller 忽略返回值，所以运行影响较低，但函数自身的明示 API 契约确实未实现。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- specs 是 `extract_existing_specs` 生成的映射，extracted-functions 树包含刚重新抽取的原始函数文件。
+- FMA SPEC post-condition：- 向尚无 SPEC 头的现存文件恢复 SPEC/INFO，并返回实际写入的文件数。
+- FMA 推导 actual POST：- 文件内容会按预期被重写，但函数落到末尾时隐式返回 `None`。
+
+</details>
+
+#### FMA-MISMATCH-261 — `src--incremental_reasoner-py--_split_spec_and_info`
+
+- 结论：**推理误判**；内置 validator：`confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/_split_spec_and_info.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/_split_spec_and_info.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--_split_spec_and_info.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--_split_spec_and_info.py)
+- 触发/冲突：probe 传入 `extra\n[SPEC]\ncontent\n[SPEC]`，然后指责返回的 spec_block 包含 `extra`。
+- 成因复核：前置条件和源码 docstring 都规定 `block` 来自 `_extract_leading_spec_comments`；该 callee 要求第一个非空行就是 SPEC marker，不可能产生这个反例。probe 越过上游合约直接构造了不可达状态。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- block 是 `_extract_leading_spec_comments` 返回的 leading SPEC/INFO 注释块，comment_prefix/spec_marker 与该块匹配。
+- FMA SPEC post-condition：- 返回 `(spec_block, info_block)`，从第一对 SPEC marker 切出 SPEC，并在存在时切出 INFO。
+- FMA 推导 actual POST：- 实现从 `lines[0]` 取到第二个 SPEC marker；对合法 callee 输出，`lines[0]` 本来就是第一个 marker。
+
+</details>
+
+#### FMA-MISMATCH-262 — `src--incremental_reasoner-py--_update_specs_for_intent`
+
+- 结论：**推理误判**；内置 validator：`not_confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/_update_specs_for_intent.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--_update_specs_for_intent.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--_update_specs_for_intent.py)
+- 触发/冲突：原报告把嵌套 `_plan_spec_update` 中的 `return None` 当成了外层 `_update_specs_for_intent` 的返回。
+- 成因复核：probe 分别执行空 seed 和非空 seed 路径，外层函数都返回 list；推理器混淆了嵌套函数的控制流边界。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- 项目路径、调用图产物、changed_functions 和 relevant file 列表符合增量管线 schema。
+- FMA SPEC post-condition：- 按 caller-before-callee 轮次更新 SPEC/INFO，并返回排序后的已更新 extracted-function 相对路径列表。
+- FMA 推导 actual POST：- 原推导将内层 plan 的早返回错归到外层；实际外层空 seed 返回 `[]`，正常结束返回 `sorted(changed_spec_files)`。
+
+</details>
+
+#### FMA-MISMATCH-263 — `src--incremental_reasoner-py--_verify_incremental_functions`
+
+- 结论：**SPEC 错误**；内置 validator：`confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/_verify_incremental_functions.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/_verify_incremental_functions.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--_verify_incremental_functions.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--_verify_incremental_functions.py)
+- 触发/冲突：SPEC 将 `submodules=[]` 解释为“启用筛选但没有任何允许前缀”，因而指责 `if submodules:` 会验证全部函数。
+- 成因复核：仓库的 `_normalize_submodules` 在用户没有指定 `--submodule` 时就返回 `[]`，整条管线一贯用真值表示“是否限定 scope”。若按生成 SPEC 的 `is not None` 语义，默认运行反而会验证零个函数，与 CLI/README 的全项目默认行为相反。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- submodules 为 `None` 或相对目录列表，其余参数符合增量验证管线结构。
+- FMA SPEC post-condition：- 当 `submodules is not None` 时必须执行路径过滤。
+- FMA 推导 actual POST：- 实现在 `submodules` 为非空真值时执行过滤；这与上游将空列表视为“未限定”的协议一致。
+
+</details>
+
+#### FMA-MISMATCH-264 — `src--incremental_reasoner-py--extract_existing_specs`
+
+- 结论：**推理误判**；内置 validator：`confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/extract_existing_specs.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/extract_existing_specs.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--extract_existing_specs.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--extract_existing_specs.py)
+- 触发/冲突：probe 人工构造行首缩进的 SPEC/INFO 标记，再要求恢复结果保留这些缩进；重建过程确实会将部分行左移。
+- 成因复核：该函数的声明输入是“上一次完整 full run 产生的 extracted-functions”，`md/system_prompt.md` 的格式模板和实际生成器都把 `<C> [SPEC]`/`<C> [INFO]` 放在文件行首。probe 使用的缩进头不是该管线可产生的 baseline。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- proj_dir 是项目目录，其 `fm_agent/extracted_functions/` 来自上次 full run，也可不存在。
+- FMA SPEC post-condition：- 收集每个已生成 SPEC 的文件，保存完整 SPEC 块和可选完整 INFO 块，不修改磁盘。
+- FMA 推导 actual POST：- INFO body 由 `extract_info_block(...).strip()` 提取，marker 再用 SPEC 检测到的 comment prefix 重建；人工缩进样本不会字节保真。
+
+</details>
+
+#### FMA-MISMATCH-265 — `src--incremental_reasoner-py--run_incremental_pipeline`
+
+- 结论：**推理误判**；内置 validator：`not_confirmed`。
+- 证据：[`[SPEC]` 原文](extracted_functions/src/incremental_reasoner-py/run_incremental_pipeline.py) · [推导 POST / result](logic_verification_results/src/incremental_reasoner-py/run_incremental_pipeline.json) · [具体 bug 报告](bug_validation/src--incremental_reasoner-py--run_incremental_pipeline.md) · [probe](bug_validation/probe_src--incremental_reasoner-py--run_incremental_pipeline.py)
+- 触发/冲突：原报告只读到删除 `logic_verification_results/` 和 `bug_validation/` 的第一个 cleanup loop，便断言顶层增量 prompt/result 不会删除。
+- 成因复核：紧接着的第二个 cleanup block 定义了 `stale_artifact_globs`，完整覆盖 `select_relevant_*`、`relevant_*` 和 `spec_update_*`；probe 也确认全部要求的前缀都能匹配。
+
+<details><summary>SPEC / POST 摘录</summary>
+
+- Pre-condition：- 项目、旧 commit、intent 文件、可选 submodules/domain knowledge/extra edges 符合增量管线输入。
+- FMA SPEC post-condition：- 在新产物生成前删除旧 verification/bug-validation 目录，并清理上一轮的 scope-selection/spec-update 中间文件。
+- FMA 推导 actual POST：- 推导只截取了第一个目录删除代码块，遗漏后面的 glob 文件清理，因而生成不完整 actual POST。
 
 </details>
 
@@ -3957,20 +4122,24 @@
 
 </details>
 
-## 非 MISMATCH 的完整性问题
+## 历史完整性问题与 restore 结果
 
-### 已 ready 但没有 result 的 10 个函数
+### 原已 ready 但无 result 的 10 个函数（当前已补齐）
 
-- `src/incremental_reasoner-py/_reapply_existing_specs.json`
-- `src/incremental_reasoner-py/_llm_check_spec_update.json`
-- `src/incremental_reasoner-py/_plan_spec_update.json`
-- `src/incremental_reasoner-py/_verify_incremental_functions.json`
-- `src/incremental_reasoner-py/extract_existing_specs.json`
-- `src/incremental_reasoner-py/run_incremental_pipeline.json`
-- `src/incremental_reasoner-py/_opencode_generate_spec.json`
-- `src/incremental_reasoner-py/_split_spec_and_info.json`
-- `src/incremental_reasoner-py/_update_specs_for_intent.json`
-- `src/incremental_reasoner-py/_llm_check_caller_info_update.json`
+| 函数 | 补跑 verdict / validator | 静态复核 | 清单编号 |
+|---|---|---|---|
+| `_reapply_existing_specs` | MISMATCH / confirmed | 实现缺陷候选 | `FMA-MISMATCH-260` |
+| `_llm_check_spec_update` | MISMATCH / not_confirmed | 推理误判 | `FMA-MISMATCH-257` |
+| `_plan_spec_update` | MISMATCH / confirmed | 实现缺陷候选 | `FMA-MISMATCH-259` |
+| `_verify_incremental_functions` | MISMATCH / confirmed | SPEC 错误 | `FMA-MISMATCH-263` |
+| `extract_existing_specs` | MISMATCH / confirmed | 推理误判 | `FMA-MISMATCH-264` |
+| `run_incremental_pipeline` | MISMATCH / not_confirmed | 推理误判 | `FMA-MISMATCH-265` |
+| `_opencode_generate_spec` | MISMATCH / confirmed | 实现缺陷候选 | `FMA-MISMATCH-258` |
+| `_split_spec_and_info` | MISMATCH / confirmed | 推理误判 | `FMA-MISMATCH-261` |
+| `_update_specs_for_intent` | MISMATCH / not_confirmed | 推理误判 | `FMA-MISMATCH-262` |
+| `_llm_check_caller_info_update` | MISMATCH / confirmed | 实现缺陷候选 | `FMA-MISMATCH-256` |
+
+这 10 项现在都已有逻辑 result、validator report/result 和 probe，因此不再是“skipped/无结果”完整性问题。其中 7 项 confirmed 不等于 7 个真实 bug：对前置条件、上游协议和嵌套函数边界复核后，只有 4 项列为实现缺陷候选。
 
 ### 恢复重跑前的 ERROR（当前已清零）
 
@@ -3978,7 +4147,7 @@
 - `src/reasoner-py/_sanitize_strings.json`：原为 LLM connection error；重跑后为 `MATCH`。
 - `src/reasoner-py/reasoner.json`：原为 LLM connection error；重跑后为 `MATCH`。
 
-三项均已产生有效逻辑 verdict，当前 `ERROR = 0`。这次恢复只消除了连接故障，不能单独用来证明新 verdict 正确；其中新增 MISMATCH 已由 probe 否定。
+三项均已产生有效逻辑 verdict，当前 `ERROR = 0`。这次恢复只消除了连接故障，不能单独用来证明新 verdict 正确；其中 `_iter_project_source_files` 的新增 MISMATCH 已由 probe 否定。
 
 ## 复核边界
 
