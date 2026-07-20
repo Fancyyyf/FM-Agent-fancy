@@ -1,0 +1,19 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def __init__(self, console, log_stream):
+Line 2:         self._console = console
+Line 3:         self._log_stream = log_stream
+```
+
+Condition A (what the code actually does):
+After execution of __init__, the newly created instance (self) has attribute _console bound to the same writable stream object as the argument console, and attribute _log_stream bound to the same writable stream object as the argument log_stream. The console and log_stream objects still support a write(str) method, as they did in the pre-condition. Formally: self._console = console ∧ self._log_stream = log_stream ∧ callable(console.write) ∧ callable(log_stream.write) ∧ ∀ s: str • console.write(s) is a valid method invocation.
+
+Condition B (what the specification requires):
+- self._console is bound to the console argument
+  - self._log_stream is bound to the log_stream argument
+  - No other instance attributes are set
+  - Neither stream is opened, closed, or written to by this method
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

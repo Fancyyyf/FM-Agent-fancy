@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/typescript-py/function_spans.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- When a codegraph backend initializes successfully from proj_dir AND the backend\n    indexes the TypeScript file at filepath, returns a nonempty list of\n    (name, start_idx, end_idx) tuples covering every function defined in the file,\n    where name is the function's declared name as a string, and start_idx and end_idx\n    are 0indexed inclusive line positions delimiting the function body\n  - When no codegraph backend is available, or the backend exists but does not index\n    the file at filepath, returns None\n  - The order of tuples in the returned list corresponds to the definition order of\n    functions in the source file",
+    "actual_behavior": "The function returns a value R satisfying: if CodeGraphExtractor.from_proj_dir(proj_dir) is None, then R is None; otherwise, let cg be the returned instance. If cg.get_function_spans('typescript', filepath) returns a list L of (name, start_idx, end_idx) tuples (where name is a string, start_idx and end_idx are nonnegative integers giving 0indexed inclusive line indices), then R = L; else (when the file is not indexed by the backend) R = None. No exceptions are raised; the inputs proj_dir and filepath remain unchanged.",
+    "code_evidence": "Line 8: return cg.get_function_spans(\"typescript\", filepath) if cg else None",
+    "trigger_condition": "The specification requires that when the backend initializes successfully AND indexes the file, the return value is a nonempty list. However, if the file contains no functions, cg.get_function_spans may return an empty list ([]). The code passes this empty list directly to the caller, violating the nonempty requirement."
+  }
+}

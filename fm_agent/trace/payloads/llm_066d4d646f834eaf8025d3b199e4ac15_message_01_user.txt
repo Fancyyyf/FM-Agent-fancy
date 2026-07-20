@@ -1,0 +1,58 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir, work_dir, and script_dir are existing directory paths
+  - workflow_filename is a string such that the file script_dir/md/workflow_filename
+    exists and is readable
+
+Code block:
+```python
+Line 1: def _prepare_workflow_file(proj_dir, work_dir, script_dir, workflow_filename):
+Line 2:     """Copy a workflow markdown into ``work_dir`` and rewrite the
+Line 3:     ``source_files`` instruction so it points at the concrete project root,
+Line 4:     telling the agent to record paths relative to it (and not prefixed with the
+Line 5:     project directory name).
+Line 6:     """
+Line 7:     workflow_src = os.path.join(script_dir, "md", workflow_filename)
+Line 8:     workflow_dst = os.path.join(work_dir, workflow_filename)
+Line 9:     shutil.copy2(workflow_src, workflow_dst)
+Line 10:     proj_dir_abs = os.path.abspath(proj_dir)
+Line 11:     proj_dir_name = os.path.basename(proj_dir_abs)
+Line 12:     with open(workflow_dst, "r") as _f:
+Line 13:         md = _f.read()
+Line 14:     old = ("- `phases[*].modules[*].source_files` — relative paths from repo root of all source files "
+Line 15:            "that belong to this module.")
+Line 16:     new = (f"- `phases[*].modules[*].source_files` — relative paths from the project root "
+Line 17:            f"`{proj_dir_abs}` of all source files that belong to this module. "
+Line 18:            f"For example, a file at `{proj_dir_abs}/path/to/file.ext` must be recorded as "
+Line 19:            f"`path/to/file.ext`, NOT as `{proj_dir_name}/path/to/file.ext`.")
+Line 20:     md = md.replace(old, new, 1)
+Line 21:     user_knowledge_paths = list_staged_domain_knowledge_relpaths(work_dir)
+Line 22:     if user_knowledge_paths:
+Line 23:         md += (
+Line 24:             "\n---\n\n"
+Line 25:             "## User-Provided Domain Knowledge\n\n"
+Line 26:             "The user supplied extra Markdown files with domain knowledge for this run. "
+Line 27:             "Read these files before writing `phases.json` and the generated domain "
+Line 28:             "context files. Use them only as contextual knowledge about intended "
+Line 29:             "behavior, terminology, business rules, data encodings, and invariants; "
+Line 30:             "do NOT include these Markdown files as project source files in "
+Line 31:             "`phases.json`, and do NOT edit or summarize them in place.\n\n"
+Line 32:             f"{format_domain_knowledge_bullets(user_knowledge_paths)}\n"
+Line 33:         )
+Line 34:     with open(workflow_dst, "w") as _f:
+Line 35:         _f.write(md)
+```
+
+Additional context:
+list_staged_domain_knowledge_relpaths(work_dir) -> list
+Pre-condition: work_dir is an existing directory path
+  Post-condition: Returns a sorted list of project-relative paths for domain
+    knowledge files that have been staged under work_dir; returns an empty list
+    when no such files exist
+
+format_domain_knowledge_bullets(relpaths) -> str
+Pre-condition: relpaths is a list of path strings
+  Post-condition: Returns a newline-joined string where each path is formatted
+    as a Markdown bullet point (prefixed with "- `" and suffixed with "`")
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

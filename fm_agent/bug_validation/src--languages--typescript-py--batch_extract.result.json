@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--typescript-py--batch_extract",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/typescript-py/batch_extract.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--typescript-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--typescript-py--batch_extract.md",
+  "probe_stdout": "CONFIRMED — actual includes nested function(s): ['nestedInner'] | expected only top-level: ['arrowTop', 'outer', 'topLevel']\n  full output: arrowTop, nestedInner, outer, topLevel\n  expected:     topLevel, outer, arrowTop (top-level only)",
+  "trigger_summary": "A TypeScript project containing nested function declarations causes batch_extract to return nested functions alongside top-level functions, violating the specification that only top-level functions should be returned."
+}

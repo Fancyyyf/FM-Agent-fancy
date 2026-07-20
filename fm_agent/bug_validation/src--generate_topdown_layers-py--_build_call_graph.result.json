@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_build_call_graph",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/src/generate_topdown_layers-py/_build_call_graph.py",
+  "function_name": "_build_call_graph",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_build_call_graph.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_build_call_graph.md",
+  "probe_stdout": "CONFIRMED\n  caller_fqn:           src::test-c::caller_func\n  callee_fqn:           src::test-c::callee_func\n  callees_map[caller]:  ['src::test-c::callee_func']\n  all_callees_map[caller]: ['src::test-c::callee_func']\n  spec requires: no callee edges when file cannot be opened for reading\n  bug: codegraph-derived edges added despite unreadable source file\n",
+  "trigger_summary": "When codegraph resolves edges for a file, callee_fqns is computed from registry_edges before any file-open attempt; an unreadable file does not prevent codegraph-derived edges from being added."
+}

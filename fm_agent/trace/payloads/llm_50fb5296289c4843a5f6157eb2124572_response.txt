@@ -1,0 +1,10 @@
+=None ensures no response file. This demonstrates the extra mutation. So final JSON.
+
+Note: condition A says "event setdefault" mutates event. So yes.
+
+Let's produce the final answer.{
+  "verdict": "MISMATCH",
+  "counterexample": "trace_dir='/writable', event_id='1', event={'id': 1}, messages=[], response=None",
+  "offending_statements": "Line 5: metadata = event.setdefault(\"metadata\", {})",
+  "reason": "The specification requires removal of an existing 'parsed' key from event.metadata but does not allow adding a 'metadata' key if one is absent. The code unconditionally sets a default empty metadata dict, which modifies event beyond the specified side effects, appending an extra key to the trace log."
+}

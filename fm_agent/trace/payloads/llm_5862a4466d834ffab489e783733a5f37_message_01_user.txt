@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _position_to_offset(source: str, position: dict) -> int:
+Line 2:     """Compatibility wrapper for callers that do not reuse a source index."""
+Line 3:     return _SourceIndex.build(source).position_to_offset(position)
+```
+
+Condition A (what the code actually does):
+Post-condition: The function returns an integer representing the 0‑based byte offset in the source string for the line and character given by position. If the source is a valid string and position is a dict with proper 'line' and 'character' keys (per the pre‑condition), then the normal execution path produces a result r such that r = byte_offset(source, position['line'], position['character']), where byte_offset computes the offset from the start of the string to the specified line and character. If the position is out of range (e.g., line number exceeds lines in source, character beyond end of line), the call may raise an IndexError or ValueError. If the arguments violate their types, a TypeError may be raised. This covers all execution paths: normal return and exceptional termination.
+
+Condition B (what the specification requires):
+- Returns the 0-based byte offset within source that corresponds to the given line and character
+
+Additional context:
+_SourceIndex.build(source) -> _SourceIndex
+Pre-condition: source is a string
+  Post-condition: Returns a _SourceIndex instance whose operations are scoped to the given source string
+
+_SourceIndex.position_to_offset(position) -> int
+Pre-condition: position is a dict with keys 'line' (int, 0-based) and 'character' (int, 0-based)
+  Post-condition: Returns the 0-based byte offset in the indexed source string that corresponds to the given position
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

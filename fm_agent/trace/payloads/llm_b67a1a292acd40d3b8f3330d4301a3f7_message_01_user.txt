@@ -1,0 +1,59 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _push_llm_status(self, ts, source, label, status, model=None, code=None, detail=None):
+Line 2:         when = ts.strftime("%H:%M:%S") if ts else ""
+Line 3:         self.llm_statuses.append(
+Line 4:             {
+Line 5:                 "time": when,
+Line 6:                 "source": source,
+Line 7:                 "label": label or "llm_call",
+Line 8:                 "status": status or "?",
+Line 9:                 "model": model,
+Line 10:                 "code": code or status or "?",
+Line 11:                 "detail": detail,
+Line 12:             }
+Line 13:         )
+```
+
+Condition A (what the code actually does):
+After the method executes, no exception is raised. The sequence `self.llm_statuses` has been updated to contain a new dictionary as its last element, with fields assembled from the parameters. Let `old` be the value of `self.llm_statuses` immediately before the call, `new` be its value after the call, and `capacity` the fixed maximum length of the sequence (the eviction threshold). The new dictionary `entry` is defined as:
+
+`entry = {
+  "time": ts.strftime("%H:%M:%S") if ts is not None else "",
+  "source": source,
+  "label": label if label else "llm_call",
+  "status": status if status else "?",
+  "model": model,
+  "code": code if code else (status if status else "?"),
+  "detail": detail
+}`
+
+Post-conditions on the sequence:
+- If `len(old) < capacity`:
+    `new == old + [entry]` and `len(new) == len(old) + 1`.
+- If `len(old) == capacity`:
+    `new == old[1:] + [entry]` and `len(new) == capacity`.
+- The new element is always at index `len(new) - 1`.
+- All other objects (including `self`, `ts`, and the string parameters) remain unchanged, and no side effects occur outside `self.llm_statuses`.
+
+Condition B (what the specification requires):
+- A new record is appended to self.llm_statuses.
+  - The record contains the following fields:
+      * "time": "HH:MM:SS" string formatted from ts when ts is
+        truthy; empty string when ts is falsy.
+      * "source": the given source value.
+      * "label": the given label value, defaulting to "llm_call"
+        when label is falsy.
+      * "status": the given status value, defaulting to "?" when
+        status is falsy.
+      * "model": the given model value.
+      * "code": the given code value, defaulting to the status
+        value when code is falsy; if status is also falsy,
+        defaults to "?".
+      * "detail": the given detail value.
+  - self.llm_statuses never exceeds a fixed maximum length; when the
+    append would exceed the maximum, the oldest entry is evicted.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

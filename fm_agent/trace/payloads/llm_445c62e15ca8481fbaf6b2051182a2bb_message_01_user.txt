@@ -1,0 +1,90 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _resolve_extra_call_edges(extra_call_edges, phase_fqns, known_fqns):
+Line 2:     """Resolve supplemental edges into phase-local caller indexes."""
+Line 3:     by_caller_fqn = defaultdict(list)
+Line 4:     by_callsite = defaultdict(list)
+Line 5:     if not extra_call_edges:
+Line 6:         return by_caller_fqn, by_callsite
+Line 7:     phase_fqns = set(phase_fqns)
+Line 8:     known_fqns = set(known_fqns)
+Line 9:     for edge in extra_call_edges:
+Line 10:         callee_fqn = edge.callee.fqn
+Line 11:         if callee_fqn not in known_fqns:
+Line 12:             logging.warning(
+Line 13:                 "Skipping supplemental edge from %s: callee.fqn %r "
+Line 14:                 "was not found among extracted functions.",
+Line 15:                 edge.source or "edge file",
+Line 16:                 callee_fqn,
+Line 17:             )
+Line 18:             continue
+Line 19:         resolved = _ResolvedExtraEdge(
+Line 20:             callee_fqn=callee_fqn,
+Line 21:             info_names=tuple(edge.callee.info_names),
+Line 22:             source=edge.source,
+Line 23:         )
+Line 24:         if edge.caller.fqn:
+Line 25:             caller_fqn = edge.caller.fqn
+Line 26:             if caller_fqn in phase_fqns:
+Line 27:                 by_caller_fqn[caller_fqn].append(resolved)
+Line 28:             else:
+Line 29:                 logging.debug(
+Line 30:                     "Skipping supplemental edge from %s in current phase: "
+Line 31:                     "caller FQN %r is not in phase.",
+Line 32:                     edge.source or "edge file",
+Line 33:                     caller_fqn,
+Line 34:                 )
+Line 35:         for callsite in edge.caller.callsite_names:
+Line 36:             if not re.fullmatch(r"[A-Za-z_]\w*", callsite):
+Line 37:                 logging.warning(
+Line 38:                     "Skipping supplemental edge callsite selector %r from %s: "
+Line 39:                     "the current scanner only matches identifier callsites.",
+Line 40:                     callsite,
+Line 41:                     edge.source or "edge file",
+Line 42:                 )
+Line 43:                 continue
+Line 44:             by_callsite[callsite].append(resolved)
+Line 45:     return by_caller_fqn, by_callsite
+```
+
+Condition A (what the code actually does):
+If `extra_call_edges` is None or empty, the function returns a tuple of two empty `defaultdict(list)` objects. Otherwise, let P = set(phase_fqns) and K = set(known_fqns). For each edge e in extra_call_edges, if e.callee.fqn ∈ K, a _ResolvedExtraEdge r is created with callee_fqn = e.callee.fqn, info_names = tuple(e.callee.info_names), source = e.source. Then, if e.caller.fqn is truthy and e.caller.fqn ∈ P, r is appended to by_caller_fqn[e.caller.fqn]; otherwise a debug log message is emitted. For each callsite c in e.caller.callsite_names, if re.fullmatch(r"[A-Za-z_]\w*", c) succeeds, r is appended to by_callsite[c]; otherwise a warning log message is emitted. If e.callee.fqn ∉ K, a warning log message is emitted and the edge contributes no entries. The returned by_caller_fqn is a defaultdict(list) that maps exactly each caller FQN f for which at least one qualifying edge satisfied the above conditions to the list of corresponding resolved edges, preserving the iteration order of extra_call_edges. The returned by_callsite is a defaultdict(list) that maps exactly each valid callsite name c to the list of resolved edges from qualifying edges containing that callsite, in the order edges were processed. Logging side effects are not reflected in the return value.
+
+Condition B (what the specification requires):
+- Returns (by_caller_fqn, by_callsite): two dict-like mappings that return
+    an empty list for any key not explicitly present
+  - by_caller_fqn: maps each caller FQN (from edge.caller.fqn) to a list of
+    resolved-edge objects; a caller FQN appears as a key iff it is a member of
+    phase_fqns AND at least one supplied edge whose callee.fqn is a member of
+    known_fqns carries that exact caller FQN
+  - by_callsite: maps each callsite name string to a list of resolved-edge
+    objects; a callsite name appears as a key iff it is a valid source-code
+    identifier (begins with an ASCII letter or underscore, followed by zero or
+    more ASCII alphanumeric characters or underscores) AND at least one supplied
+    edge whose callee.fqn is a member of known_fqns lists that callsite in
+    edge.caller.callsite_names
+  - A single supplied edge can produce entries in both by_caller_fqn (via its
+    caller.fqn) and by_callsite (via each of its caller.callsite_names),
+    independently
+  - When extra_call_edges is None or empty, both returned mappings contain no
+    entries
+  - An edge whose callee.fqn is NOT a member of known_fqns produces NO entries
+    in either returned mapping (the edge is silently excluded)
+  - A caller FQN from edge.caller.fqn that is NOT a member of phase_fqns
+    produces NO entry in by_caller_fqn for that edge (the edge is silently
+    excluded with respect to that caller FQN, but may still produce entries in
+    by_callsite)
+  - Each resolved-edge object in the returned lists carries at minimum: the
+    callee FQN, a tuple of supplemental info names from the original edge's
+    callee.info_names, and a source identifier
+
+Additional context:
+re.fullmatch(pattern, string) -> Optional[Match]
+Pre-condition: pattern is a compiled regex pattern or a string to be compiled;
+    string is the text to match against
+  Post-condition: returns a match object if the entire string matches the
+    pattern; returns None if the string does not fully match the pattern or if
+    the pattern is invalid
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

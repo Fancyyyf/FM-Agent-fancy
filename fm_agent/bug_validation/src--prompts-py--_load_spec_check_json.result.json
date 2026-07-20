@@ -1,0 +1,11 @@
+{
+  "id": "src--prompts-py--_load_spec_check_json",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/prompts-py/_load_spec_check_json.py",
+  "function_name": "_load_spec_check_json",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--prompts-py--_load_spec_check_json.py",
+  "detail_file": "fm_agent/bug_validation/src--prompts-py--_load_spec_check_json.md",
+  "probe_stdout": "NOT CONFIRMED — actual matched expected: json.JSONDecodeError('LLM response must be a JSON string: line 1 column 1 (char 0)')",
+  "trigger_summary": "When response is 42 (an integer), _parse_json_response raises ValueError (not TypeError), which IS caught by except ValueError and correctly converted to json.JSONDecodeError — the code already satisfies the spec."
+}

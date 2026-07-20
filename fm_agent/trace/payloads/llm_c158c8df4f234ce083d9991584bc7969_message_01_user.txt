@@ -1,0 +1,55 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _fuzzy_name_score(parts: set[str], signals: dict[str, set[str]]) -> float:
+Line 2:     """Return a small typo-tolerant score for long intent tokens vs function names."""
+Line 3:     intent_tokens = (
+Line 4:         signals['backtick_idents']
+Line 5:         | signals['plain_idents']
+Line 6:         | signals['dotted_refs']
+Line 7:         | signals['all_words']
+Line 8:     )
+Line 9:     intent_tokens = {
+Line 10:         t for t in intent_tokens
+Line 11:         if len(t) >= FUZZY_NAME_MIN_LEN and t not in _STOP and t not in _PY_KEYWORDS
+Line 12:     }
+Line 13:     name_tokens = {
+Line 14:         p for p in parts
+Line 15:         if len(p) >= FUZZY_NAME_MIN_LEN and p not in _STOP and p not in _PY_KEYWORDS
+Line 16:     }
+Line 17:     score = 0.0
+Line 18:     for token in intent_tokens:
+Line 19:         if token in name_tokens:
+Line 20:             continue
+Line 21:         best = 0.0
+Line 22:         for part in name_tokens:
+Line 23:             if part in intent_tokens:
+Line 24:                 continue
+Line 25:             ratio = SequenceMatcher(None, token, part).ratio()
+Line 26:             if ratio > best:
+Line 27:                 best = ratio
+Line 28:         if best >= FUZZY_NAME_THRESHOLD:
+Line 29:             score += W_FUZZY_NAME * best
+Line 30:     return score
+```
+
+Condition A (what the code actually does):
+Returns a float score computed as W_FUZZY_NAME multiplied by the sum over every intent token t (where t is in the union of signals['backtick_idents'] | signals['plain_idents'] | signals['dotted_refs'] | signals['all_words'], len(t) >= FUZZY_NAME_MIN_LEN, t ∉ _STOP, t ∉ _PY_KEYWORDS, and t ∉ name_tokens) of the maximum SequenceMatcher ratio between t and any name token n (where n ∈ parts, len(n) >= FUZZY_NAME_MIN_LEN, n ∉ _STOP, n ∉ _PY_KEYWORDS, and n ∉ intent_tokens), provided that maximum ratio is >= FUZZY_NAME_THRESHOLD; otherwise the contribution for that t is 0.0. No input data structures are modified.
+
+Condition B (what the specification requires):
+- Returns a non-negative float quantifying fuzzy (typo-tolerant) string
+    similarity between function name parts and developer intent tokens
+  - The score considers all tokens from the union of the four signal sets
+  - Only tokens of length ≥ FUZZY_NAME_MIN_LEN that are not common stop
+    words or Python language keywords can contribute
+  - An intent token that has an exact case-insensitive match among the
+    qualified name parts does NOT contribute to this score (exact matches
+    are scored elsewhere by the caller)
+  - For each remaining qualified intent token, if the best string-similarity
+    ratio against any qualified name part is at least FUZZY_NAME_THRESHOLD,
+    the product W_FUZZY_NAME × (that best ratio) is added to the result
+  - Returns 0.0 when no qualified intent token has a best fuzzy-match ratio
+    reaching FUZZY_NAME_THRESHOLD against any qualified name part
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

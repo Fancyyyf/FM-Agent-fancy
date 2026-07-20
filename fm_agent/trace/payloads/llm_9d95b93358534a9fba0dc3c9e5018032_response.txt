@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/tmp/test_project' where '/tmp/test_project/.codegraph/codegraph.db' exists but is an empty file (not a valid SQLite codegraph database).",
+  "offending_statements": "Line 9: if os.path.exists(db_path):\nLine 10: return cls(db_path)",
+  "reason": "The code returns a CodeGraphExtractor instance whenever the file exists, even if the file is not a valid codegraph database. The specification requires returning an initialized instance only when a codegraph database exists and returning None otherwise. The presence of a non‑database file triggers a false positive, producing a broken instance that violates the post‑condition."
+}

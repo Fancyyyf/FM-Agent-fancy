@@ -1,0 +1,27 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _cache_rate(rows):
+Line 2:     cr_total = sum(cr for cr, _ in rows)
+Line 3:     in_total = sum(t for _, t in rows)
+Line 4:     if in_total == 0:
+Line 5:         return None, cr_total, in_total
+Line 6:     return cr_total / in_total, cr_total, in_total
+```
+
+Condition A (what the code actually does):
+The function returns a tuple (result, cr_total, in_total) such that cr_total = sum(cr for (cr, _) in rows) and in_total = sum(t for (_, t) in rows), both non‑negative. If in_total == 0 then result is None; otherwise result = cr_total / in_total. No exceptions are raised. Formally: ∀ rows where rows is a sequence of pairs (cr, t) with cr ≥ 0 and t ≥ 0, let S_cr = Σ_{ (cr, t) ∈ rows } cr and S_t = Σ_{ (cr, t) ∈ rows } t. The return value r satisfies: r = (None, S_cr, S_t) if S_t = 0, else r = (S_cr / S_t, S_cr, S_t).
+
+Condition B (what the specification requires):
+- Returns a 3-tuple (rate, cache_read_sum, input_sum).
+  - cache_read_sum is the sum of all cache_read values across rows.
+  - input_sum is the sum of all total_input values across rows.
+  - When input_sum > 0: rate is cache_read_sum / input_sum, a float
+    in the range [0.0, ∞) representing the fraction of total input
+    tokens served from cache.
+  - When input_sum == 0: rate is 0.0.
+  - The type of each sum is determined by the numeric types present
+    in rows (the result of adding the values in the sequence).
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

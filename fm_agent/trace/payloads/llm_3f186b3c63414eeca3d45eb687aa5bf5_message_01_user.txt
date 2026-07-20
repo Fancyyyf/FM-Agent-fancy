@@ -1,0 +1,106 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def stage_domain_knowledge_files(proj_dir, work_dir, markdown_paths=None):
+Line 2:     """Copy user markdown files into fm_agent/spec_prompts/domain_context/.
+Line 3:     When markdown_paths is provided, the staged directory is replaced with exactly
+Line 4:     those files. When omitted or empty, existing staged files are preserved and
+Line 5:     listed; this supports resume runs.
+Line 6:     """
+Line 7:     if not markdown_paths:
+Line 8:         return list_staged_domain_knowledge_relpaths(work_dir)
+Line 9:     resolved = resolve_domain_knowledge_paths(
+Line 10:         markdown_paths,
+Line 11:         base_dir=proj_dir,
+Line 12:         fallback_base_dir=os.getcwd(),
+Line 13:     )
+Line 14:     target_dir = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR)
+Line 15:     parent_dir = os.path.dirname(target_dir)
+Line 16:     tmp_dir = target_dir + ".tmp"
+Line 17:     shutil.rmtree(tmp_dir, ignore_errors=True)
+Line 18:     os.makedirs(tmp_dir, exist_ok=True)
+Line 19:     used_names = set()
+Line 20:     entries = []
+Line 21:     for source_path in resolved:
+Line 22:         target_name = _safe_staged_name(source_path, used_names)
+Line 23:         target_path = os.path.join(tmp_dir, target_name)
+Line 24:         shutil.copy2(source_path, target_path)
+Line 25:         rel_to_work = os.path.join(USER_KNOWLEDGE_REL_DIR, target_name).replace(
+Line 26:             os.sep, "/"
+Line 27:         )
+Line 28:         entries.append({
+Line 29:             "source_path": source_path,
+Line 30:             "staged_path": f"fm_agent/{rel_to_work}",
+Line 31:         })
+Line 32:     manifest_path = os.path.join(tmp_dir, USER_KNOWLEDGE_MANIFEST)
+Line 33:     with open(manifest_path, "w", encoding="utf-8") as f:
+Line 34:         json.dump({"files": entries}, f, indent=2, ensure_ascii=False)
+Line 35:     os.makedirs(parent_dir, exist_ok=True)
+Line 36:     shutil.rmtree(target_dir, ignore_errors=True)
+Line 37:     os.replace(tmp_dir, target_dir)
+Line 38:     return list_staged_domain_knowledge_relpaths(work_dir)
+```
+
+Condition A (what the code actually does):
+After executing stage_domain_knowledge_files(proj_dir, work_dir, markdown_paths):
+
+If markdown_paths is falsy (None or an empty iterable), then the function returns the list of currently staged domain knowledge file paths relative to the project root (each prefixed with 'fm_agent/') as returned by list_staged_domain_knowledge_relpaths(work_dir). The file system remains unchanged; no files in the staging directory are added, removed, or modified.
+
+If markdown_paths is truthy (a non-empty iterable of path strings), then:
+1. Let resolved = resolve_domain_knowledge_paths(markdown_paths, base_dir=proj_dir, fallback_base_dir=os.getcwd()). resolved is a list of existing absolute source file paths.
+2. Let target_dir = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR). The function atomically replaces the entire directory at target_dir with a new staging directory containing:
+   - For each source_path in resolved, a copy of that file under a unique safe filename target_name = _safe_staged_name(source_path, used_names) (no two target_names are the same). The copy preserves file metadata (via shutil.copy2).
+   - A manifest file named USER_KNOWLEDGE_MANIFEST containing a JSON object with a key 'files' whose value is a list of objects, each with 'source_path' (the resolved absolute path) and 'staged_path' ('fm_agent/' followed by the relative path from work_dir to the staged copy, using forward slashes).
+3. After the atomic replacement, the staging directory at target_dir contains exactly those files and the manifest; any previous contents (including files from earlier invocations) are permanently removed.
+4. The function returns the list of staged domain knowledge file paths as described by list_staged_domain_knowledge_relpaths(work_dir), which is a sorted list of strings, each beginning with 'fm_agent/', corresponding to the newly staged files (one per unique target_name).
+
+Formally, for the truthy case, the post-condition ensures:
+- Let S = { _safe_staged_name(p, U) | p in resolved } where U is the set built incrementally; |S| = |resolved|.
+- The directory target_dir contains exactly the files with names in S ∪ {USER_KNOWLEDGE_MANIFEST} and no other files.
+- The manifest content matches the entries described.
+- The return value equals sorted([ 'fm_agent/' + os.path.join(USER_KNOWLEDGE_REL_DIR, n).replace(os.sep, '/') for n in S ]).
+
+In both cases, no files outside work_dir are altered.
+
+Condition B (what the specification requires):
+- When markdown_paths is falsy (None or empty): the staging directory
+    <work_dir>/spec_prompts/domain_context/user_knowledge/ is NOT modified;
+    any previously staged files are preserved. This supports resume runs.
+  - When markdown_paths is truthy and non-empty: the staging directory is
+    atomically replaced to contain exactly copies of the resolved markdown
+    files plus a manifest file recording which source files were staged.
+  - The replacement is atomic: a temporary directory is populated, then
+    atomically swapped into place; a concurrent reader either sees the
+    complete old state or the complete new state.
+  - Returns a sorted list of project-relative path strings, each prefixed
+    with "fm_agent/", for all domain knowledge files that are currently
+    staged under the work directory.
+  - The returned paths use "/" as the path separator regardless of platform.
+
+Additional context:
+resolve_domain_knowledge_paths(markdown_paths, base_dir, fallback_base_dir) -> list[str]
+Pre-condition: markdown_paths is a non-empty iterable of path strings;
+    base_dir and fallback_base_dir are directory paths.
+  Post-condition: returns a list of resolved absolute file paths. Each path
+    is derived by resolving a markdown_paths entry against base_dir; if the
+    resolved path does not exist, the entry is resolved against
+    fallback_base_dir instead. Only paths that point to existing files are
+    included in the returned list.
+
+_safe_staged_name(source_path, used_names) -> str
+Pre-condition: source_path is an absolute file path; used_names is a
+    mutable set of filename strings already reserved for the current batch.
+  Post-condition: returns a filename derived from the basename of source_path
+    that is unique within used_names. The returned name is added to
+    used_names; no two calls with the same used_names set return the same
+    name.
+
+list_staged_domain_knowledge_relpaths(work_dir, prefix="fm_agent") -> list[str]
+Pre-condition: work_dir is a directory path where the staging subdirectory
+    resides.
+  Post-condition: returns a sorted list of path strings relative to the
+    project root. Each returned path begins with the given prefix and
+    corresponds to a domain knowledge file currently present in the staging
+    directory under work_dir.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

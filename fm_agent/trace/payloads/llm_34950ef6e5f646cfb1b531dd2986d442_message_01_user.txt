@@ -1,0 +1,34 @@
+Programming language: Python
+
+Pre-condition:
+- rel_path is a source file path relative to the repository root
+  - lang_key is a recognized language key for function extraction
+  - ext is a file extension string
+  - old_commit_id (from enclosing scope) is a valid commit identifier in the repository
+
+Code block:
+```python
+Line 1:     def _funcs_from_commit(rel_path, lang_key, ext):
+Line 2:         """Extract {name: source} for the old_commit_id version of rel_path via a temp file."""
+Line 3:         text = _git("show", f"{old_commit_id}:{rel_path}")
+Line 4:         with tempfile.NamedTemporaryFile("w", suffix=f".{ext}", delete=False) as tmp:
+Line 5:             tmp.write(text)
+Line 6:             tmp_path = tmp.name
+Line 7:         try:
+Line 8:             return dict(extract_functions_from_file(tmp_path, lang_key))
+Line 9:         finally:
+Line 10:             os.unlink(tmp_path)
+```
+
+Additional context:
+_git(subcommand, *args) -> str
+Pre-condition: subcommand is a git subcommand name; args are arguments to that subcommand
+  Post-condition: Returns the stdout output of the git command as a string; raises
+    subprocess.CalledProcessError on nonzero exit
+
+extract_functions_from_file(file_path, lang_key) -> iterable of (str, str) pairs
+Pre-condition: file_path is an existing source file path; lang_key is a recognized
+    language key
+  Post-condition: Yields (function_name, source_text) pairs for each top-level function
+    found in the file, ordered by their appearance in the source
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

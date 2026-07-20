@@ -1,0 +1,76 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _collect_caller_context(fqn, callers_map, file_map, edge_aliases_map=None):
+Line 2:     """
+Line 3:     Gather the context an existing caller provides about fqn, mirroring the caller context
+Line 4:     run_pipeline feeds into spec generation: each caller's own [SPEC] block and the entry in
+Line 5:     its [INFO] block that records what the caller expects from fqn (as one of its callees).
+Line 6:     Returns a list of (caller_fqn, caller_spec, callee_expectation) tuples — caller_spec and
+Line 7:     callee_expectation are None when the caller has no such block — for every caller of fqn
+Line 8:     whose extracted-function file exists and yields at least one of the two. Callers with no
+Line 9:     file or no usable block are skipped.
+Line 10:     """
+Line 11:     context = []
+Line 12:     for caller_fqn in sorted(callers_map.get(fqn, ())):
+Line 13:         cpath = file_map.get(caller_fqn)
+Line 14:         if not cpath or not os.path.isfile(cpath):
+Line 15:             continue
+Line 16:         cpath_p = Path(cpath)
+Line 17:         caller_spec = extract_spec_block(cpath_p)
+Line 18:         info_block = extract_info_block(cpath_p)
+Line 19:         aliases = ()
+Line 20:         if edge_aliases_map:
+Line 21:             aliases = tuple(edge_aliases_map.get(fqn, {}).get(caller_fqn, ()))
+Line 22:         expectation = extract_callee_spec_from_info(info_block, fqn, aliases) if info_block else None
+Line 23:         if caller_spec or expectation:
+Line 24:             context.append((caller_fqn, caller_spec, expectation))
+Line 25:     return context
+```
+
+Condition A (what the code actually does):
+The function returns a list of triples (caller_fqn, caller_spec, callee_expectation). Let L be the iterable of caller FQN strings obtained from callers_map for fqn (empty iterable if fqn is not a key). Let S be the sorted list produced by sorting the elements of L. The returned list is built by processing each element of S in order: for each caller_fqn in S, retrieve its filesystem path from file_map. If the path is present and is an existing regular file, extract its [SPEC] block via extract_spec_block and its [INFO] block via extract_info_block. If an [INFO] block was found, use it to extract the callee specification for fqn under aliases obtained from edge_aliases_map (if provided) by extracting the tuple of aliases for caller_fqn as a caller of fqn; otherwise the callee specification is set to None. The current caller_fqn is included in the result if and only if either the [SPEC] block or the callee specification is not None. The result list preserves the order imposed by the sorted caller_fqn sequence; duplicate caller_fqn entries from the original iterable remain as separate entries in the final list. Formally:
+
+Let L = callers_map.get(fqn, ())
+Let S = sorted(tuple(L))
+context = []
+For each k in 0..len(S)-1:
+  c = S[k]
+  p = file_map.get(c)
+  if p is not None and os.path.isfile(p):
+    spec = extract_spec_block(Path(p))
+    info = extract_info_block(Path(p))
+    if edge_aliases_map is not None:
+      aliases = tuple(edge_aliases_map.get(fqn, {}).get(c, ()))
+    else:
+      aliases = ()
+    exp = extract_callee_spec_from_info(info, fqn, aliases) if info is not None else None
+    if spec is not None or exp is not None:
+      context.append((c, spec, exp))
+  else:
+    # skip this caller
+Return context
+
+Condition B (what the specification requires):
+- Returns a list of (caller_fqn, caller_spec, callee_expectation) tuples
+  - Each caller_fqn is a member of callers_map[fqn] whose mapped file exists on disk and contains at least one of a [SPEC] block or a matching [INFO] entry for fqn
+  - caller_spec is the textual content of the caller's [SPEC] block, or None if the caller's file has no [SPEC] block
+  - callee_expectation is the textual content of the [INFO] entry within the caller's file that describes expectations for fqn, or None if no matching entry exists or the caller has no [INFO] block
+  - When edge_aliases_map is provided and contains an alias entry for fqn under a given caller, matching is widened: a [INFO] entry whose callee name matches any alias of fqn for that caller is treated as a match for fqn
+  - Callers for which the mapped file does not exist or yields neither caller_spec nor callee_expectation are omitted from the returned list
+  - The returned list is ordered by caller_fqn in ascending lexicographic sort order
+
+Additional context:
+extract_spec_block(file_path) -> Optional[str]
+Pre-condition: file_path is a pathlib.Path pointing to an extracted function file
+  Post-condition: If the file contains a [SPEC] block (delimited by "# [SPEC]" start and end markers), returns its full textual content excluding the markers; returns None if the file exists but contains no [SPEC] block
+
+extract_info_block(file_path) -> Optional[dict]
+Pre-condition: file_path is a pathlib.Path pointing to an extracted function file
+  Post-condition: If the file contains an [INFO] block (delimited by "# [INFO]" start and end markers), returns a parsed representation of the block; returns None if the file exists but contains no [INFO] block
+
+extract_callee_spec_from_info(info_block, fqn, aliases) -> Optional[str]
+Pre-condition: info_block is a parsed [INFO] block; fqn is a non-empty FQN string; aliases is an iterable of alias strings
+  Post-condition: Searches the info block for an entry whose callee FQN matches fqn or any string in aliases; when exactly one match is found, returns its full textual content; when no entry matches, returns None
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,85 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def render_tokens(state):
+Line 2:     p = _price_for(state.model_seen or "")
+Line 3:     table = Table(show_header=True, header_style="bold", expand=True, pad_edge=False)
+Line 4:     table.add_column("Source", style="cyan", no_wrap=True)
+Line 5:     table.add_column("in:new", justify="right")
+Line 6:     table.add_column("in:read", justify="right", style="green")
+Line 7:     table.add_column("in:write", justify="right", style="yellow")
+Line 8:     table.add_column("output", justify="right")
+Line 9:     table.add_column("cost", justify="right", style="bold")
+Line 10:     def row(label, b):
+Line 11:         return [
+Line 12:             label,
+Line 13:             _fmt_tokens(b.get("input", 0)),
+Line 14:             _fmt_tokens(b.get("cache_read", 0)),
+Line 15:             _fmt_tokens(b.get("cache_write", 0)),
+Line 16:             _fmt_tokens(b.get("output", 0)),
+Line 17:         ]
+Line 18:     table.add_row(*row("verification", state.totals), _fmt_cost(state.cost_native))
+Line 19:     table.add_row(
+Line 20:         *row(f"opencode ({state.opencode_calls})", state.opencode_token_totals),
+Line 21:         _fmt_cost(state.opencode_cost),
+Line 22:     )
+Line 23:     # TOTAL — sum across both sources; also expose total input in the label
+Line 24:     sums = {k: state.totals.get(k, 0) + state.opencode_token_totals.get(k, 0)
+Line 25:             for k in ("input", "cache_read", "cache_write", "output")}
+Line 26:     in_total = sums["input"] + sums["cache_read"] + sums["cache_write"]
+Line 27:     table.add_row(
+Line 28:         f"[bold]TOTAL[/] [dim](in={_fmt_tokens(in_total)})[/]",
+Line 29:         _fmt_tokens(sums["input"]),
+Line 30:         _fmt_tokens(sums["cache_read"]),
+Line 31:         _fmt_tokens(sums["cache_write"]),
+Line 32:         _fmt_tokens(sums["output"]),
+Line 33:         f"[bold]{_fmt_cost(state.cost_native + state.opencode_cost)}[/]",
+Line 34:     )
+Line 35:     return Panel(table, title="Tokens & Cost", border_style="green")
+```
+
+Condition A (what the code actually does):
+The state object is unchanged: state.totals, state.opencode_token_totals, state.model_seen, state.cost_native, state.opencode_cost, and state.opencode_calls retain the exact same values and types as before the call. The return value is an instance of rich.panel.Panel with title='Tokens & Cost', border_style='green', and its renderable is a rich.table.Table containing the following rows: a header row [Source, in:new, in:read, in:write, output, cost]; a row labeled 'verification' with token counts from state.totals and cost from state.cost_native; a row labeled 'opencode (<state.opencode_calls>)' with token counts from state.opencode_token_totals and cost from state.opencode_cost; a total row summing both token categories and both costs, displaying a bold label 'TOTAL' with an input subtotal. All numeric values are formatted using _fmt_tokens and _fmt_cost (human-readable format). No exceptions are raised; all execution paths complete normally.
+
+Condition B (what the specification requires):
+- Returns a Rich Panel renderable whose title is "Tokens & Cost"
+    and whose border is styled green
+  - The panel contains a table with exactly three data rows: one for
+    verification tokens, one for OpenCode tokens, and one for the
+    combined totals across both sources
+  - Each data row displays five values: the token count classified as
+    new input ("input"), the count of tokens served from the prompt
+    cache ("cache_read"), the count of tokens written to the prompt
+    cache ("cache_write"), the output token count ("output"), and a
+    monetary cost formatted as currency
+  - The OpenCode row label includes the value of state.opencode_calls
+    to indicate the number of invocations comprising the totals
+  - The combined-total row's token values are the element-wise sum of
+    the corresponding verification and OpenCode token counts; its cost
+    is the sum of the two cost values
+  - Token values are formatted with unit suffixes that compactly
+    represent large magnitudes; cost values are derived from per-model
+    pricing and formatted consistently with the currency unit
+
+Additional context:
+_price_for(model: str) -> dict
+Pre-condition: model is a non-empty string identifying an LLM model
+  Post-condition: Returns a dict containing per-token pricing
+    information for the given model, with keys suitable for cost
+    computation from token counts
+
+_fmt_tokens(count: int) -> str
+Pre-condition: count is a non-negative integer
+  Post-condition: Returns a human-readable string representation of
+    count with an appropriate magnitude suffix (e.g., "k", "M") such
+    that the resulting string is compact and the value can be
+    approximately recovered
+
+_fmt_cost(amount: float) -> str
+Pre-condition: amount is a non-negative numeric value in the native
+    currency unit
+  Post-condition: Returns a human-readable currency-formatted string
+    representation of amount, consistent in precision and formatting
+    across all rows of the table
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

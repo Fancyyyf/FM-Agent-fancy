@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--python-py--call_edges",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/python-py/call_edges.py",
+  "function_name": "call_edges",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--python-py--call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--python-py--call_edges.md",
+  "probe_stdout": "NOT CONFIRMED\n  reason: backend available (cg is truthy), call_edges returned a dict (219 callers)\n  spec: Returns a dict when backend can index — satisfied\n  code: get_call_edges('python') returned a dict, not None\n  note: CodeGraphExtractor.get_call_edges() always returns dict for 'python';\n        the None-return code path in call_edges is unreachable with the current backend",
+  "trigger_summary": "call_edges returns None when cg is truthy but cg.get_call_edges('python') is None — unreachable because get_call_edges always returns a dict for Python."
+}

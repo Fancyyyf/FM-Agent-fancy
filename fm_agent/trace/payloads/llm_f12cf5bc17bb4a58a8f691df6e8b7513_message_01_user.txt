@@ -1,0 +1,68 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _topdown_ordered_fqns(work_dir, extra_call_edges=None):
+Line 2:     """
+Line 3:     Return every extracted-function FQN in the top-down order used by run_pipeline for
+Line 4:     spec generation: phases in ascending phase number, layers from 0 upward, and the
+Line 5:     functions in the order listed within each layer (callers precede the callees they
+Line 6:     depend on).
+Line 7:     Regenerates the per-phase topdown-layer JSON files under work_dir/spec_prompts/ as
+Line 8:     a side effect (mirroring run_pipeline's generate_topdown_layers(work_dir) call).
+Line 9:     """
+Line 10:     generate_topdown_layers(work_dir, extra_call_edges=extra_call_edges)
+Line 11:     phases_data = _load_phases(work_dir)
+Line 12:     spec_prompts_dir = os.path.join(work_dir, "spec_prompts")
+Line 13:     ordered = []
+Line 14:     for phase_info in sorted(phases_data.get("phases", []), key=lambda p: p["phase"]):
+Line 15:         phase_num = phase_info["phase"]
+Line 16:         layers_path = os.path.join(
+Line 17:             spec_prompts_dir, f"phase_{phase_num:02d}_topdown_layers.json"
+Line 18:         )
+Line 19:         if not os.path.exists(layers_path):
+Line 20:             continue
+Line 21:         with open(layers_path, "r") as f:
+Line 22:             layers_data = json.load(f)
+Line 23:         for layer in sorted(layers_data.get("layers", []), key=lambda l: l["layer"]):
+Line 24:             for func in layer.get("functions", []):
+Line 25:                 ordered.append(func["name"])
+Line 26:     return ordered
+```
+
+Condition A (what the code actually does):
+If no exception occurs during the execution of `_topdown_ordered_fqns`, the function returns a list `ordered` of fully qualified function names (FQNs) in the top-down order that `run_pipeline` uses for spec generation: phases in ascending phase number, layers within each phase in ascending layer number, and functions within each layer in the order they appear. The return value is exactly the concatenation of `func['name']` for all functions from all phases that have a corresponding `phase_{phase_num:02d}_topdown_layers.json` file under `work_dir/spec_prompts/`. As a side effect, the directory `work_dir/spec_prompts/` has been populated with regenerated `phase_NN_topdown_layers.json` files for every phase present in `work_dir/phases.json`, as a result of the call to `generate_topdown_layers(work_dir, extra_call_edges=extra_call_edges)`. These files reflect a topological ordering where callees are assigned to lower-numbered layers than their callers. If any operation (including `generate_topdown_layers`, `_load_phases`, file I/O, or JSON parsing) raises an exception, the function does not return a value; instead, the exception propagates, and the state of `work_dir/spec_prompts/` may reflect partial side effects (the layer files may have been partly or fully regenerated before the failure). Formally, let `phases_data = _load_phases(work_dir)` and `spec_prompts_dir = os.path.join(work_dir, 'spec_prompts')`. Then for every normally terminating execution, the return value `ordered` satisfies:
+`ordered == [f['name'] for p in sorted(phases_data['phases'], key=lambda p: p['phase']) if os.path.exists(os.path.join(spec_prompts_dir, f"phase_{p['phase']:02d}_topdown_layers.json")) for l in sorted(json.load(open(os.path.join(spec_prompts_dir, f"phase_{p['phase']:02d}_topdown_layers.json")))['layers'], key=lambda l: l['layer']) for f in l['functions']]`.
+
+Condition B (what the specification requires):
+- Returns a list of fully-qualified function names (FQNs), ordered such that
+    callers precede the callees they depend on (top-down order).
+  - The ordering follows: ascending phase number, then ascending layer number within
+    each phase, then the order of functions as listed within each layer (the order
+    produced by the full run's generate_topdown_layers).
+  - Every FQN present in the per-phase topdown-layer JSON files appears exactly once
+    in the returned list.
+  - As a side effect, the per-phase topdown-layer JSON files under
+    work_dir/spec_prompts/ (phase_NN_topdown_layers.json) are regenerated via
+    generate_topdown_layers(work_dir, extra_call_edges=extra_call_edges), mirroring
+    the full run's layer generation.
+
+Additional context:
+generate_topdown_layers(work_dir, extra_call_edges=extra_call_edges) -> None
+Pre-condition: work_dir contains a valid phases.json and extracted_functions/ with
+    complete extracted function files for all phases.
+  Post-condition: Writes phase_NN_topdown_layers.json files under
+    work_dir/spec_prompts/ for each phase; each file contains a topological ordering
+    of functions where callees are assigned to lower-numbered layers than their callers.
+
+_load_phases(work_dir) -> dict
+Pre-condition: work_dir/phases.json exists and is valid JSON conforming to the
+    phases schema ({project, languages, phases: [{phase, name, ...}]}).
+  Post-condition: Returns the parsed phases.json data structure.
+
+json.load(open(layers_path, "r")) -> dict
+Pre-condition: layers_path points to a valid phase_NN_topdown_layers.json file
+    containing a "layers" key with a list of layer objects, each with "layer" and
+    "functions" keys.
+  Post-condition: Returns the parsed layer data structure.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

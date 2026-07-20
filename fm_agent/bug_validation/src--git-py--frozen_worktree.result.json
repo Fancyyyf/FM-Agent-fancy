@@ -1,0 +1,11 @@
+{
+  "id": "src--git-py--frozen_worktree",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/git-py/frozen_worktree.py",
+  "function_name": "frozen_worktree",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--git-py--frozen_worktree.py",
+  "detail_file": "fm_agent/bug_validation/src--git-py--frozen_worktree.md",
+  "probe_stdout": "[Pipeline] Snapshot created at: /tmp/fm_agent_wt_fm_probe_repo_w8884uto_tsrfxpfd/snapshot\n[Pipeline] Snapshot is kept after the run. Remove with: git -C /tmp/fm_probe_repo_w8884uto worktree remove --force /tmp/fm_agent_wt_fm_probe_repo_w8884uto_tsrfxpfd/snapshot\nCONFIRMED — data.log (gitignored untracked file) missing from snapshot (important.txt present=True, data.log present=False, main.py present=True, .gitignore present=True)",
+  "trigger_summary": "git add -A respects .gitignore and silently skips gitignored untracked files, so they are absent from the snapshot despite the spec requiring 'all untracked files'."
+}

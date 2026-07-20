@@ -1,0 +1,47 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def __init__(self, proj_dir: str):
+Line 2:         self.proj_dir = os.path.abspath(proj_dir)
+Line 3:         self.root_uri = Path(self.proj_dir).as_uri()
+Line 4:         self.timeout = _timeout_seconds()
+Line 5:         self._messages: queue.Queue = queue.Queue()
+Line 6:         self._next_id = 1
+Line 7:         self._status = None
+Line 8:         self._write_lock = threading.Lock()
+Line 9:         self._proc = None
+Line 10:         self._reader = None
+```
+
+Condition A (what the code actually does):
+After the constructor finishes (either normally or by raising an exception), there exists an integer k (0 ≤ k ≤ 9) representing the number of successfully completed assignment statements. The attribute assignments are performed in order: (1) self.proj_dir = os.path.abspath(proj_dir), (2) self.root_uri = Path(self.proj_dir).as_uri(), (3) self.timeout = _timeout_seconds(), (4) self._messages = queue.Queue(), (5) self._next_id = 1, (6) self._status = None, (7) self._write_lock = threading.Lock(), (8) self._proc = None, (9) self._reader = None. The post-condition holds that for each i in 1..9, if i ≤ k then attribute_i has the specified value, otherwise attribute_i is not bound on self. Specifically: if k ≥ 1 then self.proj_dir = os.path.abspath(proj_dir) (absolute path string); if k ≥ 2 then self.root_uri = Path(self.proj_dir).as_uri() (file URI string); if k ≥ 3 then self.timeout = _timeout_seconds() ∧ self.timeout ≥ 1; if k ≥ 4 then self._messages is an empty queue.Queue; if k ≥ 5 then self._next_id = 1; if k ≥ 6 then self._status is None; if k ≥ 7 then self._write_lock is an unlocked threading.Lock; if k ≥ 8 then self._proc is None; if k ≥ 9 then self._reader is None. Normal return yields k=9; an exception during the i‑th assignment (1-indexed) yields k = i−1.
+
+Condition B (what the specification requires):
+- self.proj_dir is the absolute, normalized path derived from proj_dir via
+    os.path.abspath resolution (relative path components such as "." and ".."
+    are resolved; symlinks are NOT canonicalized)
+  - self.root_uri is the file:// URI representation of self.proj_dir
+  - self.timeout is an integer ≥ 1 representing the maximum number of seconds
+    the client will wait for any single LSP response or server status transition
+  - self._messages is a new, empty thread-safe queue capable of concurrent
+    enqueue and dequeue operations from multiple threads
+  - self._next_id is initialized to 1, serving as a monotonically increasing
+    JSON-RPC message identifier counter
+  - self._status is initialized to None, indicating that the ELP server has not
+    yet reported its running status
+  - self._write_lock is a new, unacquired threading.Lock instance used to
+    serialize writes to the subprocess stdin pipe
+  - self._proc is initialized to None, indicating that no subprocess has been
+    started
+  - self._reader is initialized to None, indicating that no reader thread has
+    been created
+  - No subprocess is started, no I/O resources are acquired, and no threads are
+    spawned during construction
+
+Additional context:
+_timeout_seconds() -> int
+Pre-condition: None (configured via environment variable or a built-in default)
+  Post-condition: Returns an integer ≥ 1 representing the maximum number of
+    seconds to wait for a single LSP operation
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

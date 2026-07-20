@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_payload_dir",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/src/opencode_trace-py/_payload_dir.py",
+  "function_name": "_payload_dir",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_payload_dir.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_payload_dir.md",
+  "probe_stdout": "CONFIRMED — FileExistsError raised: \"[Errno 17] File exists: '/tmp/probe_payload_dir_mwm4irs_/payloads'\"\n",
+  "trigger_summary": "If a file named 'payloads' already exists at the target path, os.makedirs raises FileExistsError, violating the spec's guarantee that the function returns a path and the directory exists after the call."
+}

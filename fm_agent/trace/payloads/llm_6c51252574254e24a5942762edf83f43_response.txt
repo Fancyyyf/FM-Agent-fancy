@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code assigns exactly self._console and self._log_stream, sets no other attributes, and does not open, close, or write to the streams. This satisfies all requirements of condition B."
+}

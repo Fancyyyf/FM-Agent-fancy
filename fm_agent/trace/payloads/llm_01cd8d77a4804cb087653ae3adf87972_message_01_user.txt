@@ -1,0 +1,47 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _collect_changed_modules(ensure_changes, *change_sets):
+Line 2:     """Collect the modules whose source-file list changed during post-processing.
+Line 3:     Both ``_ensure_source_files_in_phases`` (which force-adds source files to a
+Line 4:     module), ``_filter_phases_to_submodules`` (which strips out-of-scope files),
+Line 5:     and ``_deduplicate_phases`` (which strips duplicate source files from modules)
+Line 6:     alter which files a module owns, so an affected module's description may no
+Line 7:     longer match. This returns one entry per affected module, giving only its phase
+Line 8:     number and name — the input to ``_update_module_description``. The agent
+Line 9:     re-reads each module's current source files from phases.json itself.
+Line 10:     Dedup no longer renumbers phases, so both sources speak the same phase
+Line 11:     numbering (the one in the freshly written phases.json).
+Line 12:     """
+Line 13:     entries = {}  
+Line 14:     for changes in change_sets:
+Line 15:         for m in changes.get("modified_modules", []):
+Line 16:             key = (m["phase"], m["module"])
+Line 17:             entries[key] = {"phase": m["phase"], "module": m["module"]}
+Line 18:     for a in ensure_changes.get("augmented_modules", []):
+Line 19:         key = (a["phase"], a["module"])
+Line 20:         entries[key] = {"phase": a["phase"], "module": a["module"]}
+Line 21:     return list(entries.values())
+```
+
+Condition A (what the code actually does):
+The function returns a list of dictionaries, each containing exactly the keys 'phase' and 'module'. The list holds one entry per unique (phase, module) pair drawn from the union of all 'modified_modules' entries across every `change_set` argument and all 'augmented_modules' entries from the `ensure_changes` argument. No duplicate (phase, module) pairs appear in the result. The operation does not modify any inputs or external state. Formal post-condition: Let Modified = ⋃_{cs ∈ change_sets} { (m['phase'], m['module']) | m ∈ cs.get('modified_modules', []) } and Augmented = { (a['phase'], a['module']) | a ∈ ensure_changes.get('augmented_modules', []) }. Then the returned value, result, satisfies result = [{'phase': p, 'module': m} | (p, m) ∈ Modified ∪ Augmented] and the mapping from pairs to dicts is a bijection (no duplicates).
+
+Condition B (what the specification requires):
+- Returns a list of dicts, each containing "phase" and "module" keys,
+    with no duplicate (phase, module) pairs.
+  - The set of (phase, module) pairs in the result is exactly the union of
+    all pairs from every change_set's "modified_modules" list (in the order
+    the change_sets arguments are given) and from
+    ensure_changes["augmented_modules"].
+  - When a (phase, module) pair appears in multiple inputs, only the first
+    occurrence is retained in the result.
+  - The order of entries in the result is the order of first appearance
+    across the inputs: change_sets in positional order, then
+    ensure_changes.
+  - Returns an empty list when none of the inputs contain
+    "modified_modules" / "augmented_modules" keys, or when those keys are
+    absent or map to empty lists.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

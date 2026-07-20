@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_remove_stale_extracted.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- For every function name appearing in any \"removed\" list within modified_functions, the corresponding extracted-function file under fm_agent/extracted_functions/ no longer exists on the filesystem\n  - For every function directory under fm_agent/extracted_functions/ that contained only files deleted by this operation, the directory itself no longer exists\n  - Every file and directory under fm_agent/extracted_functions/ whose function does not appear in any \"removed\" list is unchanged",
+    "actual_behavior": "After the code block executes, either an exception (e.g., OSError) is raised, or it completes normally. In the normal case, for every sourcefile path S such that modified_functions[S]['removed'] is a nonempty list, let P = _modified_function_targets(proj_dir, modified_functions, classes=('removed',))[S]. Then os.path.isfile(P) is False (the extractedfunction file has been removed). Moreover, for each such P, letting D = os.path.dirname(P), if D existed and became an empty directory after the removal of P, then os.path.isdir(D) is False (D has been deleted). If an exception occurred, there exists a prefix of the iteration order of the values returned by _modified_function_targets such that for all paths in that prefix the same properties hold, and no guarantees are made for later paths. The arguments proj_dir and modified_functions are unchanged.",
+    "code_evidence": "Line 8-10: removed = _modified_function_targets(proj_dir, modified_functions, classes=('removed',))",
+    "trigger_condition": "The code only removes the extracted file for the first removed function per source file (because _modified_function_targets returns a single path per source file). The specification requires all removed functions' files to be deleted. With two removed functions in the same source file, the second function's file is never deleted, violating the spec."
+  }
+}

@@ -1,0 +1,95 @@
+Programming language: Python
+
+Pre-condition:
+- result_json_rel is a non-empty string: the path (relative to proj_dir) of a
+    logic_verification_results/…json file whose verdict is "MISMATCH"
+  - proj_dir is an existing directory containing a readable md/bug_validator.md
+    and a writable fm_agent/ subtree
+  - work_dir is either None (defaults to proj_dir) or an existing directory
+    whose fm_agent/bug_validation/ tree is writable
+  - resume is a boolean; when True, a previous run may have left
+    fm_agent/bug_validation/<bug_id>.result.json under proj_dir
+
+Code block:
+```python
+Line 1: def _validate_single_bug(result_json_rel, proj_dir, work_dir=None, resume=False):
+Line 2:     """Validate a single MISMATCH result by running opencode with a per-file prompt."""
+Line 3:     if work_dir is None:
+Line 4:         work_dir = proj_dir
+Line 5:     script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+Line 6:     # Derive bug id from result path relative to results dir
+Line 7:     # e.g. "fm_agent/logic_verification_results/mod/func.json" -> "mod--func"
+Line 8:     parts = result_json_rel
+Line 9:     prefix = os.path.join("fm_agent", "logic_verification_results") + os.sep
+Line 10:     if parts.startswith(prefix):
+Line 11:         parts = parts[len(prefix):]
+Line 12:     elif parts.startswith("fm_agent/logic_verification_results/"):
+Line 13:         parts = parts[len("fm_agent/logic_verification_results/"):]
+Line 14:     bug_id = os.path.splitext(parts)[0].replace(os.sep, "--").replace("/", "--")
+Line 15:     function_id = function_id_from_result_path(result_json_rel)
+Line 16:     # Read the base bug_validator.md
+Line 17:     base_md_path = os.path.join(script_dir, "md", "bug_validator.md")
+Line 18:     with open(base_md_path, "r") as f:
+Line 19:         base_content = f.read()
+Line 20:     user_knowledge_paths = list_staged_domain_knowledge_relpaths(work_dir)
+Line 21:     if user_knowledge_paths:
+Line 22:         user_knowledge_section = (
+Line 23:             "## User-Provided Domain Knowledge\n\n"
+Line 24:             "Read these Markdown files as additional context for intended behavior, "
+Line 25:             "terminology, data encodings, and invariants before validating the "
+Line 26:             "candidate bug:\n\n"
+Line 27:             f"{format_domain_knowledge_bullets(user_knowledge_paths)}\n\n---\n\n"
+Line 28:         )
+Line 29:     else:
+Line 30:         user_knowledge_section = ""
+Line 31:     # Generate a per-file prompt with target file and bug ID header
+Line 32:     prompt_content = (
+Line 33:         "# Bug Validator\n\n"
+Line 34:         f"**Target result file:** `{result_json_rel}`\n"
+Line 35:         f"**Bug ID:** `{bug_id}`\n\n---\n\n"
+Line 36:         + user_knowledge_section
+Line 37:         + base_content
+Line 38:     )
+Line 39:     os.makedirs(os.path.join(work_dir, "bug_validation"), exist_ok=True)
+Line 40:     prompt_filename = os.path.join(
+```
+
+Additional context:
+function_id_from_result_path(result_json_rel) -> str
+Pre-condition: result_json_rel is a string path relative to
+    fm_agent/logic_verification_results/
+  Post-condition: returns a function-identifier string derived from the
+    result path (the path with extension removed and path separators
+    replaced)
+
+list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+Pre-condition: work_dir is a valid directory path whose fm_agent/
+    subtree may contain staged domain-knowledge Markdown files
+  Post-condition: returns a list of relative paths (strings) to all staged
+    domain-knowledge Markdown files found under work_dir; returns an empty
+    list when none exist
+
+format_domain_knowledge_bullets(user_knowledge_paths) -> str
+Pre-condition: user_knowledge_paths is a non-empty list of file-path
+    strings, each pointing to a domain-knowledge Markdown file
+  Post-condition: returns a Markdown string consisting of a
+    "User-Provided Domain Knowledge" heading, a brief description, and a
+    bullet list of the given file paths
+
+build_llm_cli_command(model, prompt, cwd, files) -> list[str]
+Pre-condition: model is a non-empty model-name string,
+    prompt is a non-empty instruction string, cwd is a valid directory
+    path, files is a list of file-path strings to attach as context
+  Post-condition: returns a list of strings suitable for subprocess
+    invocation that runs the LLM CLI for the given model with the given
+    prompt, working directory, and context files
+
+run_opencode_traced(proj_dir, work_dir, command, stage, function_ids,
+input_files, output_files, summary, metadata)
+  Pre-condition: proj_dir and work_dir are valid directory paths,
+    command is a non-empty list of strings, stage is a stage-identifier
+    string, and at least one of function_ids is non-empty
+  Post-condition: executes command as a subprocess, writes a trace event
+    to the fm_agent/trace/ directory, and raises CalledProcessError
+    if the subprocess exits with a non-zero return code
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

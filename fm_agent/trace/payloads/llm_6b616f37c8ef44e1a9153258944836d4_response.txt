@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "results_dir = '/nonexistent_path'",
+  "offending_statements": "Line 8: for root, _dirs, files in os.walk(results_dir):",
+  "reason": "The code does not wrap os.walk in a try-except, so if results_dir does not exist, os.walk raises FileNotFoundError (a subclass of OSError). The specification requires that when results_dir does not exist or is not a directory, the function returns 0 without raising any exception. This unhandled exception violates that requirement."
+}

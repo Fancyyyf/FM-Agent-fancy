@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_next_message",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_next_message.py",
+  "function_name": "_next_message",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_next_message.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_next_message.md",
+  "probe_stdout": "CONFIRMED — actual: TimeoutError raised | expected: {'jsonrpc': '2.0', 'id': 1, 'result': 'hello'}\n",
+  "trigger_summary": "Setting deadline to time.monotonic() with a message already in self._messages causes TimeoutError instead of returning the message."
+}

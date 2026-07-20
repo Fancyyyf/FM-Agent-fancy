@@ -1,0 +1,34 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _make_run_copy(proj_dir, run_dir):
+Line 2:     """Copy proj_dir (everything except .git) into a fresh ``run_dir``.
+Line 3:     Includes an existing ``fm_agent/`` workspace so a resumed pipeline finds the
+Line 4:     prior run's state. Any leftover run directory from an interrupted run is
+Line 5:     discarded first: the pristine sources always live in proj_dir, so the copy
+Line 6:     can be remade cleanly.
+Line 7:     """
+Line 8:     for stale in (run_dir, run_dir + ".tmp"):
+Line 9:         if os.path.exists(stale):
+Line 10:             shutil.rmtree(stale)
+Line 11:     tmp_dir = run_dir + ".tmp"
+Line 12:     shutil.copytree(
+Line 13:         proj_dir, tmp_dir,
+Line 14:         ignore=shutil.ignore_patterns(*_SKIP_DIRS),
+Line 15:         symlinks=True,
+Line 16:     )
+Line 17:     os.replace(tmp_dir, run_dir)
+```
+
+Condition A (what the code actually does):
+If the function returns normally: run_dir exists as a directory whose recursive contents are an exact copy of proj_dir except that any files or subdirectories matching patterns in _SKIP_DIRS (including '.git') are omitted; proj_dir is unchanged; no run_dir + '.tmp' directory exists. If an exception occurs, the function does not return normally, and the filesystem may be partially modified: old run_dir and/or run_dir.tmp may have been removed, and run_dir.tmp may contain an incomplete copy.
+
+Condition B (what the specification requires):
+- proj_dir is never mutated
+  - run_dir holds a fresh recursive copy of proj_dir reflecting the state of proj_dir at call time, excluding entries whose names match a fixed, predefined set of skip patterns
+  - Directory symlinks present in proj_dir are preserved as symlinks in the copy
+  - Any pre-existing data at run_dir (e.g. a leftover directory from an interrupted prior invocation) is fully removed before the new copy is created
+  - The copy is atomically installed: no observer can see a partial or intermediate state at run_dir
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_extract_leading_spec_comments",
+  "source_file": "src/incremental_reasoner.py",
+  "function_name": "_extract_leading_spec_comments",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_extract_leading_spec_comments.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_extract_leading_spec_comments.md",
+  "probe_stdout": "CONFIRMED — actual: '# [SPEC]\\n# [SPEC]\\n' | expected: None",
+  "trigger_summary": "When spec_marker contains trailing whitespace, .strip() creates a weaker comparison that incorrectly matches a line lacking that whitespace, causing the function to return a prefix instead of None as the specification requires."
+}

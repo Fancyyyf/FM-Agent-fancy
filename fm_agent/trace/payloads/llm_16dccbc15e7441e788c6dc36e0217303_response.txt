@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "block='if True:\\n    return\\nelse:\\n    pass', language='python'",
+  "offending_statements": "Line 5: return re.search(pattern, block) is not None",
+  "reason": "The specification requires returning True only when every syntactically reachable path ends in a terminating statement. The code returns True if any terminating statement exists in the block, ignoring non-terminating paths. For the counterexample, the else branch falls through, so the block does not satisfy 'every path terminates', yet the regex finds 'return' and the code returns True, violating the required False."
+}

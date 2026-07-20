@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "a_b_c",
+  "offending_statements": "Line 13:     toks = [t for t in lower.split('_') if len(t) > 1]\nLine 16:     for i in range(len(toks) - 1):\nLine 17:         parts.add(f\"{toks[i]}_{toks[i+1]}\")",
+  "reason": "The code filters underscore-split tokens to those with length > 1 (Line 13), then generates consecutive pairs using only those filtered tokens (Lines 16-17). For input \"a_b_c\", the split tokens ['a','b','c'] have length 1, so no tokens qualify, resulting in no pairs. However, the specification requires that every consecutive pair of underscore-separated tokens be included, which for \"a_b_c\" are \"a_b\" and \"b_c\". Thus the code's output {\"a_b_c\"} does not satisfy the required set {\"a_b_c\", \"a_b\", \"b_c\"}."
+}

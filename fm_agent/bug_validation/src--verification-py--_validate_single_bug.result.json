@@ -1,0 +1,11 @@
+{
+  "id": "src--verification-py--_validate_single_bug",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/verification-py/_validate_single_bug.py",
+  "function_name": "_validate_single_bug",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--verification-py--_validate_single_bug.py",
+  "detail_file": "fm_agent/bug_validation/src--verification-py--_validate_single_bug.md",
+  "probe_stdout": "CONFIRMED — prompt file not cleaned up: /tmp/bug_probe_8v9ugdd3/fm_agent/bug_validation/bug_validator_src--verification-py--_validate_single_bug.md",
+  "trigger_summary": "When resume=True and a valid result.json already exists, the function returns at line 400 before the try/finally cleanup block, leaving the generated prompt file on disk in violation of the spec."
+}

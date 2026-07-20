@@ -1,0 +1,25 @@
+Programming language: Python
+
+Pre-condition:
+- rel is a non-empty relative path string identifying an extracted function file.
+  - output_dir, proj_dir, and work_dir are valid directory paths accessible from the enclosing scope.
+
+Code block:
+```python
+Line 1:     def _validate(rel):
+Line 2:         result_json_rel = os.path.join(
+Line 3:             os.path.relpath(output_dir, proj_dir),
+Line 4:             os.path.splitext(rel)[0] + ".json",
+Line 5:         )
+Line 6:         _validate_single_bug(result_json_rel, proj_dir, work_dir)
+Line 7:         return rel
+```
+
+Additional context:
+_validate_single_bug(result_json_rel, proj_dir, work_dir) -> None
+Pre-condition: result_json_rel is a non-empty relative path to a verification result JSON file;
+    proj_dir and work_dir are valid directory paths.
+  Post-condition: If the result JSON has a MISMATCH verdict, a bug validation report and verdict
+    file are produced under bug_validation/ in proj_dir. For non-MISMATCH verdicts, no bug
+    validation files are produced.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

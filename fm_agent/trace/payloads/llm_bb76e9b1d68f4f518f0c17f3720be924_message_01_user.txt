@@ -1,0 +1,58 @@
+Programming language: Python
+
+Pre-condition:
+- self is an ElpClient instance with an active LSP JSON-RPC communication channel
+    (stdin open for writes via self._send, stdout readable for response parsing via
+    self._wait_for_response)
+  - self.timeout is a positive number representing the maximum allowed wall-clock
+    duration in seconds
+  - self._next_id is an integer
+  - method is a non-empty string
+
+Code block:
+```python
+Line 1:     def request(self, method: str, params: dict | list | None = None):
+Line 2:         actual_params = {} if params is None else params
+Line 3:         deadline = time.monotonic() + self.timeout
+Line 4:         for attempt in range(_MAX_CONTENT_MODIFIED_RETRIES):
+Line 5:             request_id = self._next_id
+Line 6:             self._next_id += 1
+Line 7:             self._send(
+Line 8:                 {
+Line 9:                     "jsonrpc": "2.0",
+Line 10:                     "id": request_id,
+Line 11:                     "method": method,
+Line 12:                     "params": actual_params,
+Line 13:                 }
+Line 14:             )
+Line 15:             try:
+Line 16:                 return self._wait_for_response(request_id, deadline)
+Line 17:             except _ContentModifiedError as exc:
+Line 18:                 if attempt + 1 == _MAX_CONTENT_MODIFIED_RETRIES:
+Line 19:                     raise RuntimeError(
+Line 20:                         f"ELP request {method} repeatedly failed: {exc.error}"
+Line 21:                     ) from exc
+Line 22:                 remaining = deadline - time.monotonic()
+Line 23:                 if remaining <= 0:
+Line 24:                     raise TimeoutError(f"timed out retrying ELP request {method}") from exc
+Line 25:                 time.sleep(min(0.5 * (2**attempt), 5.0, remaining))
+Line 26:         raise AssertionError("unreachable")
+```
+
+Additional context:
+self._send(message: dict) -> None
+Pre-condition: message is a dict, and the JSON-RPC communication channel to the LSP
+    backend process is open
+  Post-condition: Serializes message as a JSON string and writes it to the LSP backend's
+    input stream, preceded by a Content-Length header as required by the LSP protocol
+
+self._wait_for_response(request_id: int, deadline: float) -> Any
+Pre-condition: request_id is the integer id of an outstanding JSON-RPC request, and
+    deadline is a monotonic clock time before which a response must arrive
+  Post-condition: Reads and parses JSON-RPC messages from the LSP backend's output
+    stream until a response matching request_id is received; returns the "result"
+    field of that response. Raises _ContentModifiedError when the backend sends a
+    notification or error indicating the document changed during indexing and the
+    request must be retried. Raises an exception when no matching response arrives
+    before deadline.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

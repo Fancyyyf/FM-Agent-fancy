@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--rust-py--batch_extract",
+  "source_file": "src/languages/rust-py/batch_extract.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--rust-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--rust-py--batch_extract.md",
+  "probe_stdout": "CONFIRMED — spec requires every value be a non-empty list, but these files have empty lists: ['/proj/src/empty.rs']. Full result: {'/proj/src/lib.rs': [('add', 'fn add() { 1 + 2 }')], '/proj/src/empty.rs': []}\\n",
+  "trigger_summary": "batch_extract delegates to cg.get_functions_by_file without filtering out files that contain zero functions, returning dictionaries with empty lists that violate the non-empty-list specification."
+}

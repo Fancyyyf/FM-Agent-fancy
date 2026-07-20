@@ -1,0 +1,37 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def from_proj_dir(cls, proj_dir: str):
+Line 2:         """Return an extractor if .codegraph/codegraph.db exists, else None.
+Line 3:         Checks both proj_dir itself and its parent directory, because
+Line 4:         generate_topdown_layers() receives work_dir (fm_agent/) as its
+Line 5:         proj_dir argument, while codegraph init runs in the real project root.
+Line 6:         """
+Line 7:         for candidate in [proj_dir, os.path.dirname(os.path.abspath(proj_dir))]:
+Line 8:             db_path = os.path.join(candidate, ".codegraph", "codegraph.db")
+Line 9:             if os.path.exists(db_path):
+Line 10:                 return cls(db_path)
+Line 11:         return None
+```
+
+Condition A (what the code actually does):
+The method returns an instance of the class (initialized with a live connection to the codegraph database) if a file named 'codegraph.db' exists under the '.codegraph' subdirectory of either `proj_dir` itself or its parent directory (obtained via `os.path.abspath` then `os.path.dirname`), checking `proj_dir` first. If neither directory contains that file, the method returns `None`. The returned instance, if any, is ready to resolve function definitions and call edges for all indexed languages. Formally, given the file system state FS at call time, define candidate_dirs = [proj_dir, dirname(abspath(proj_dir))] and for each candidate c let db_path(c) = join(c, '.codegraph', 'codegraph.db'). The result is cls(db_path(candidate_dirs[0])) if FS.exists(db_path(candidate_dirs[0])), else cls(db_path(candidate_dirs[1])) if FS.exists(db_path(candidate_dirs[1])), else None. The `proj_dir` argument is not mutated.
+
+Condition B (what the specification requires):
+- Returns an initialized CodeGraphExtractor instance when a codegraph database
+    exists within the project directory structure reachable from proj_dir
+  - Returns None when no codegraph database is found in the project directory
+    structure, indicating the codegraph backend is unavailable for the project
+  - The returned instance is bound to the discovered database and is ready to
+    serve query operations (get_call_edges, function_spans, batch_extract) against
+    the project's indexed source files
+
+Additional context:
+CodeGraphExtractor.__init__(self, db_path: str) -> None
+Pre-condition: db_path is a path to an existing, valid codegraph SQLite
+    database file
+  Post-condition: self is initialized with a live connection to the database,
+    ready to resolve function definitions and call edges for all languages
+    indexed by the codegraph backend
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

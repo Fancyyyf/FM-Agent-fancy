@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/llm_client-py/_http_status_from_exc.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- If exc is an instance of urllib.error.HTTPError, returns the integer HTTP status code stored on exc\n  - If exc is not an instance of urllib.error.HTTPError, returns None\n  - Never raises an exception regardless of input",
+    "actual_behavior": "The function returns the value of exc.code if exc is an instance of urllib.error.HTTPError; otherwise, it returns None. No side effects occur, and no exceptions are raised. Formal: (isinstance(exc, urllib.error.HTTPError)  result = exc.code)  (isinstance(exc, urllib.error.HTTPError)  result = None)",
+    "code_evidence": "Line 4: return exc.code",
+    "trigger_condition": "The function unconditionally accesses exc.code for any HTTPError instance. If the 'code' attribute has been removed (e.g., via deletion), this raises AttributeError, which violates the specification that the function must never raise an exception regardless of input."
+  }
+}

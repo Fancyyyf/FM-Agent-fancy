@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": " / comment",
+  "offending_statements": "Line 2:     return re.sub(r'^(\\s*)(?://+|#+|--+|%+)\\s?', r'\\1', line)",
+  "reason": "The code requires at least two '/' or '-' characters to recognize a comment prefix, but the specification allows a single '/' or '-'. Input ' / comment' contains a single '/' after leading whitespace, which should be removed per spec but is not removed by the code."
+}

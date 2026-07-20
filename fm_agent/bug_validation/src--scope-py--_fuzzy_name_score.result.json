@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_fuzzy_name_score",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/scope-py/_fuzzy_name_score.py",
+  "function_name": "_fuzzy_name_score",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_fuzzy_name_score.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_fuzzy_name_score.md",
+  "probe_stdout": "CONFIRMED — actual: 1.1199999999999999 | expected: 0.0\\n  Intent token \"Hello\" should have been skipped (case-insensitive match with \"hello\")\\n  but case-sensitive membership check at line 255 allowed fuzzy scoring.",
+  "trigger_summary": "Case-sensitive set membership check fails to skip intent tokens with different casing than name parts; spec requires case-insensitive matching."
+}

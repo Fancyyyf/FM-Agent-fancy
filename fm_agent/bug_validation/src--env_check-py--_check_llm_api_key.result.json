@@ -1,0 +1,11 @@
+{
+  "id": "src--env_check-py--_check_llm_api_key",
+  "source_file": "fm_agent/extracted_functions/src/env_check-py/_check_llm_api_key.py",
+  "function_name": "_check_llm_api_key",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--env_check-py--_check_llm_api_key.py",
+  "detail_file": "fm_agent/bug_validation/src--env_check-py--_check_llm_api_key.md",
+  "probe_stdout": "CONFIRMED — actual: (True, None) | expected: (False, 'LLM_API_KEY is not set in .env file')",
+  "trigger_summary": "Pass a non-string truthy value (int 42) as config.LLM_API_KEY"
+}

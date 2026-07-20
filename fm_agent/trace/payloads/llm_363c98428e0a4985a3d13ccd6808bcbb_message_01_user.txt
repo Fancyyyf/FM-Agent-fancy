@@ -1,0 +1,48 @@
+Programming language: Python
+
+Pre-condition:
+- response is a string
+
+Code block:
+```python
+Line 1: def _parse_json_response(response):
+Line 2:     """Parse the only JSON object or array in an LLM response.
+Line 3:     Prefer a complete JSON response, but tolerate Markdown fences or explanatory
+Line 4:     prose when they surround exactly one valid structured JSON value. Multiple
+Line 5:     structured values are rejected because choosing one would be ambiguous.
+Line 6:     """
+Line 7:     if not isinstance(response, str):
+Line 8:         raise ValueError("LLM response must be a JSON string")
+Line 9:     text = response.strip()
+Line 10:     try:
+Line 11:         data = json.loads(text)
+Line 12:     except json.JSONDecodeError as direct_exc:
+Line 13:         decoder = json.JSONDecoder()
+Line 14:         values = []
+Line 15:         index = 0
+Line 16:         while index < len(text):
+Line 17:             object_start = text.find("{", index)
+Line 18:             array_start = text.find("[", index)
+Line 19:             starts = [start for start in (object_start, array_start) if start != -1]
+Line 20:             if not starts:
+Line 21:                 break
+Line 22:             start = min(starts)
+Line 23:             try:
+Line 24:                 data, end = decoder.raw_decode(text, start)
+Line 25:             except json.JSONDecodeError:
+Line 26:                 index = start + 1
+Line 27:                 continue
+Line 28:             if isinstance(data, (dict, list)):
+Line 29:                 values.append(data)
+Line 30:             index = end
+Line 31:         if len(values) == 1:
+Line 32:             return values[0]
+Line 33:         if len(values) > 1:
+Line 34:             raise ValueError("LLM response contains multiple JSON values")
+Line 35:         raise ValueError(f"LLM response is not valid JSON: {direct_exc}") from direct_exc
+Line 36:     if not isinstance(data, (dict, list)):
+Line 37:         raise ValueError("LLM response must contain a JSON object or array")
+Line 38:     return data
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

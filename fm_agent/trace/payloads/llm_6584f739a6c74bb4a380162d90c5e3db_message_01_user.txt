@@ -1,0 +1,31 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _get_pending_batches(batches, proj_dir):
+Line 2:     """Return batches that still have at least one function without specs."""
+Line 3:     pending = []
+Line 4:     for batch in batches:
+Line 5:         for func_rel in batch.get("functions", []):
+Line 6:             full_path = os.path.join(proj_dir, func_rel)
+Line 7:             if not is_file_ready(full_path):
+Line 8:                 pending.append(batch)
+Line 9:                 break
+Line 10:     return pending
+```
+
+Condition A (what the code actually does):
+The function returns a list containing, in the same relative order as in the input `batches`, every batch `b` from `batches` for which there exists at least one relative file‑path string `func_rel` in `b.get("functions", [])` such that `is_file_ready(os.path.join(proj_dir, func_rel))` evaluates to `False`. A `False` result from `is_file_ready` means the file does not exist, is unreadable, or lacks the required specification artifacts. Batches whose `"functions"` key is missing or whose list is empty are never included. Formally: let `pending = [b for b in batches if ∃ func_rel ∈ b.get("functions", []) : ¬ is_file_ready(os.path.join(proj_dir, func_rel))]`. The returned list is `pending`.
+
+Condition B (what the specification requires):
+- Returns a list of batch dictionaries from batches, preserving the original order
+  - A batch is included in the returned list if and only if at least one function file in that batch, resolved by joining proj_dir with the relative path, is not ready according to is_file_ready
+  - A batch for which every function file, when resolved to a full path, satisfies is_file_ready is excluded from the result
+  - A batch whose "functions" key is missing or whose function list is empty is excluded from the result (vacuously, all zero functions are ready)
+  - Returns an empty list when every function file in every input batch resolves to a path where is_file_ready returns True
+
+Additional context:
+is_file_ready(file_path) -> bool
+Pre-condition: file_path is a string path that may or may not reference an existing file
+  Post-condition: returns True if the file at file_path exists, is readable, and contains the specification artifacts indicating processing is complete; returns False if the file does not exist, is unreadable, or lacks those artifacts
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/_strip_star.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- If d is a dict, returns a new dict with the same key-value pairs\n    as d, except that every key whose string representation starts with\n    \"*\" has that leading \"*\" character stripped from the key.\n    Keys that do not start with \"*\" are unchanged.\n  - Every value in the returned dict is the identical object reference\n    as the corresponding value in d (values are not copied or\n    transformed).\n  - The input dict d is not mutated.\n  - If d is not a dict, returns d unchanged.",
+    "actual_behavior": "If the input d is not a dictionary, the function returns d unchanged. If d is a dictionary, the function returns a new dictionary with the same number of key-value pairs, preserving insertion order, where each key k that starts with the character '*' is replaced by k[1:] (i.e., removing the single leading '*'), and all other keys remain unchanged; all values remain the same. Formally: result = d if not isinstance(d, dict) else { (k[1:] if k.startswith('*') else k) : v for k, v in d.items() }.",
+    "code_evidence": "Line 5: return {(k[1:] if k.startswith(\"*\") else k): v for k, v in d.items()}",
+    "trigger_condition": "The code calls k.startswith('*') directly on the key, which fails for non-string keys like integers. The specification requires checking the string representation of the key (e.g., str(k).startswith('*')), so it should handle non-string keys gracefully. For d = {42: 'test'}, the code raises AttributeError, while the spec expects it to return {42: 'test'} unchanged."
+  }
+}

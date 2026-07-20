@@ -1,0 +1,20 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a string representing a filesystem path.
+
+Code block:
+```python
+Line 1: def _get_head_commit(proj_dir):
+Line 2:     """Return the latest git commit id of proj_dir, or None if not a git repo."""
+Line 3:     try:
+Line 4:         return subprocess.run(
+Line 5:             ["git", "-C", proj_dir, "rev-parse", "HEAD"],
+Line 6:             check=True, capture_output=True, text=True,
+Line 7:         ).stdout.strip()
+Line 8:     except subprocess.CalledProcessError:
+Line 9:         logging.info("_get_head_commit: %s is not a git repo.", proj_dir)
+Line 10:         return None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

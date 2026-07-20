@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/home/user/project', work_dir = None. phases.json contains a single source file 'util.py' (not a test file, exists, language Python) with one function 'add'. The code creates '/home/user/project/extracted_functions/add.py' instead of the required '/home/user/project/extracted_functions/util-py/add.py'.",
+  "offending_statements": "Line 26:     output_base = os.path.join(work_dir, \"extracted_functions\")",
+  "reason": "The specification requires extracted functions to be placed in a subdirectory formed by replacing the last dot in the source filename with a hyphen (e.g., 'util-py/'), but the code uses only a flat 'extracted_functions' directory without any per-file subdirectory, violating the output path structure."
+}

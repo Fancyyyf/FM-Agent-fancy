@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _spec_task_done(handle):
+Line 2:     # spec_procs may be subprocess.Popen handles or executor futures.
+Line 3:     if hasattr(handle, "poll"):
+Line 4:         return handle.poll() is not None
+Line 5:     if hasattr(handle, "done"):
+Line 6:         return handle.done()
+Line 7:     return True
+```
+
+Condition A (what the code actually does):
+The function returns a boolean indicating whether the asynchronous task represented by `handle` has completed. Given the pre-condition that `handle` is either a `subprocess.Popen` instance or a `concurrent.futures.Future` instance, the return value satisfies: (if handle is a Popen then result = (handle.poll() is not None)) and (if handle is a Future then result = handle.done()). In the unreachable case where handle is neither type, result is True. No exceptions are raised.
+
+Condition B (what the specification requires):
+- If handle has a poll method (Popen-like), returns True when the
+    subprocess has terminated (poll() returns a non-None exit code); returns
+    False while the subprocess is still running
+  - If handle has a done method but no poll method (Future-like), returns
+    True when the future has completed execution (done() returns True);
+    returns False while execution is still in progress
+  - If handle has neither a poll method nor a done method, returns True
+  - The return value is deterministic for a given handle state: calling
+    _spec_task_done twice on the same handle with no intervening state change
+    returns the same value
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

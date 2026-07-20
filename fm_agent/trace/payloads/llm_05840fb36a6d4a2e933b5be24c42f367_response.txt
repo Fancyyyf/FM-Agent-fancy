@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "resume=True, file_path='/app/extracted_functions/test.py', input_dir='/app/extracted_functions', output_dir='/app/output', output_dir contains a file 'test.json' with content '{}' (valid JSON, no 'verdict' key). The function returns ('/app/extracted_functions/test.py', 'ERROR') without re-running verification, violating the specification that a corrupted result file triggers fresh verification.",
+  "offending_statements": "Line 10: verdict = existing.get(\"verdict\", \"ERROR\")\nLine 12: return file_path, verdict",
+  "reason": "The specification requires that a corrupted result file (e.g., missing the mandatory 'verdict' field) triggers a fresh verification. The code only considers JSONDecodeError and OSError as corruption; a parseable JSON file without 'verdict' is treated as valid and its default 'ERROR' verdict is returned, but the specification mandates re-running the reasoner for any corrupted result file."
+}

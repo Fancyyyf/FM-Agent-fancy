@@ -1,0 +1,125 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def run_entry_pipeline(
+Line 2:     proj_dir,
+Line 3:     entry_func=None,
+Line 4:     end_funcs=None,
+Line 5:     resume=False,
+Line 6:     domain_knowledge_files=None,
+Line 7:     one_phase=False,
+Line 8:     extra_call_edges_path=None,
+Line 9:     only_spec=False,
+Line 10: ):
+Line 11:     """Run the entry-point-scoped reasoning pipeline.
+Line 12:     Algorithm:
+Line 13:       1. Collect the functions related to ``entry_func`` — those reachable from
+Line 14:          it, optionally restricted to call chains ending at ``end_funcs`` — by
+Line 15:          freshly extracting every function into a temporary workspace and
+Line 16:          building the static call graph. No previous run_pipeline() is assumed.
+Line 17:       2. Copy the project's sources into a separate run directory, then delete
+Line 18:          the unrelated functions and source files from that copy. ``proj_dir``
+Line 19:          itself is never modified.
+Line 20:       3. Invoke the standard ``run_pipeline`` directly on the run directory:
+Line 21:          because only the related functions remain, it naturally specs, reasons
+Line 22:          about, and bug-validates exactly that set, writing results to
+Line 23:          ``<run_dir>/fm_agent/``.
+Line 24:       4. Copy the generated ``fm_agent/`` workspace back into ``proj_dir`` and
+Line 25:          discard the run directory. The copy-back runs even when the pipeline
+Line 26:          fails, so partial results are preserved, and any stray edits the
+Line 27:          pipeline's agents made stay confined to the discarded run directory.
+Line 28:     The run directory lives beside the project at ``<proj_dir>.fm-entry-run``
+Line 29:     while the pipeline runs and is removed afterwards; a leftover one from an
+Line 30:     interrupted run is discarded and remade, since the pristine sources always
+Line 31:     remain in ``proj_dir``.
+Line 32:     Args:
+Line 33:         proj_dir: path to the project directory.
+Line 34:         entry_func: FQN of the entry point to start reasoning from.
+Line 35:         end_funcs: list of FQNs at which to stop. If None (or empty), no chain
+Line 36:             restriction is applied and the whole call graph reachable from
+Line 37:             ``entry_func`` is selected.
+Line 38:         resume: forwarded directly to the standard pipeline.
+Line 39:         one_phase: forwarded directly to the standard pipeline.
+Line 40:         extra_call_edges_path: optional file containing supplemental caller/callee
+Line 41:             edges used for entry reachability and later top-down layer generation.
+Line 42:     """
+Line 43:     if entry_func is None:
+Line 44:         raise ValueError("entry_func is required to run the entry pipeline")
+Line 45:     proj_dir = os.path.abspath(proj_dir)
+Line 46:     work_dir = os.path.join(proj_dir, "fm_agent")
+Line 47:     config.BUG_VALIDATION_MAX_RETRIES = 0
+Line 48:     # The entry_func's source file may match the test-file heuristics (a test
+Line 49:     # directory or test-like name). Exempt it so neither the selection extraction
+Line 50:     # below nor run_pipeline's extraction skips it — the entry point must always
+Line 51:     # be reasoned about. Cleared in the finally so the exemption never leaks into
+Line 52:     # a later run in the same process.
+Line 53:     add_test_file_exemption(_entry_func_source_rel(entry_func))
+Line 54:     try:
+Line 55:         _run_entry_pipeline_inner(
+Line 56:             proj_dir,
+Line 57:             work_dir,
+Line 58:             entry_func,
+Line 59:             end_funcs,
+Line 60:             resume,
+Line 61:             domain_knowledge_files=domain_knowledge_files,
+Line 62:             one_phase=one_phase,
+Line 63:             extra_call_edges_path=extra_call_edges_path,
+Line 64:             only_spec=only_spec,
+Line 65:         )
+Line 66:     finally:
+Line 67:         clear_test_file_exemptions()
+```
+
+Condition A (what the code actually does):
+The function may terminate normally (implicitly returning None) or by raising an exception. The post-condition depends on the value of entry_func at call time.
+
+Case A – entry_func is None:
+  * The function raises ValueError("entry_func is required to run the entry pipeline").
+  * The filesystem is unmodified; no temporary directory is created and proj_dir remains unchanged.
+  * Global configuration and test-file exemption sets are untouched.
+  * Formally: exception = ValueError ∧ ∀ (global state unchanged)
+
+Case B – entry_func is not None:
+  * The original proj_dir is resolved to its absolute path P = os.path.abspath(proj_dir). From that point onward, regardless of whether the function returns normally or propagates an exception from `_run_entry_pipeline_inner`, the following invariants hold:
+    1. The directory P exists and contains a subdirectory P/fm_agent. This subdirectory holds the outputs of the pipeline run, copied back from the temporary workspace. If the pipeline completed successfully the outputs are complete; if an exception occurred the outputs may be partial.
+    2. The temporary run directory that was created beside the project, named <P>.fm-entry-run, has been removed.
+    3. The global setting config.BUG_VALIDATION_MAX_RETRIES equals 0.
+    4. The global set of test-file exemptions is empty (clear_test_file_exemptions() was executed in the finally block, removing all previously registered exemptions).
+  * If the function returns normally, it returns None; otherwise the exception raised by the inner pipeline is re-raised.
+  * Formally:
+      let P = os.path.abspath(original_proj_dir)
+      isdir(P) ∧ isdir(P/"fm_agent")
+      ∧ ¬exists(tmpdir = parent(P)/(stem(P)+".fm-entry-run"))
+      ∧ config.BUG_VALIDATION_MAX_RETRIES = 0
+      ∧ test_file_exemptions = ∅
+      ∧ (exception = None ⇒ pipeline_results_complete(P/"fm_agent"))
+      ∧ (exception ≠ None ⇒ pipeline_results_partial(P/"fm_agent"))
+
+Condition B (what the specification requires):
+- If entry_func is None, raises ValueError before any filesystem side effects occur
+  - proj_dir is never mutated; all filesystem mutations are confined to temporary copies that are discarded before return, regardless of success or failure
+  - A temporary run directory at <proj_dir>.fm-entry-run is created during execution and deleted before return
+  - On successful completion, <proj_dir>/fm_agent/ contains specification, reasoning, and bug-validation results scoped to functions reachable from entry_func via the static call graph; when end_funcs is non-empty, the scope is restricted to functions on at least one call-chain path from entry_func to an element of end_funcs
+  - On failure, any partial results already written to <proj_dir>/fm_agent/ by the inner pipeline stages are preserved in place
+  - The test-file exemption registered for the source file containing entry_func is guaranteed removed before return, even when the inner pipeline raises
+  - config.BUG_VALIDATION_MAX_RETRIES is set to 0 for the duration of this call
+  - When extra_call_edges_path is provided, its supplemental edges contribute to entry reachability analysis and top-down layer generation
+
+Additional context:
+_entry_func_source_rel(entry_func) -> str
+Pre-condition: entry_func is a non-empty string conforming to the FQN format
+  Post-condition: Returns the source-file relative path (using "/" separators) corresponding to the given FQN
+
+add_test_file_exemption(source_rel_path) -> None
+Pre-condition: source_rel_path is a non-empty string
+  Post-condition: The given path is registered as exempt from test-file filtering heuristics; subsequent function extraction passes will process this file regardless of its test-adjacent characteristics
+
+_run_entry_pipeline_inner(proj_dir, work_dir, entry_func, end_funcs, resume, domain_knowledge_files, one_phase, extra_call_edges_path, only_spec) -> None
+Pre-condition: proj_dir is the absolute path of the original project directory; work_dir is <proj_dir>/fm_agent; entry_func is a non-null FQN
+  Post-condition: Executes function selection reachable from entry_func via call graph, source trimming on a temporary copy, standard pipeline invocation, and copies the generated fm_agent/ outputs back to the original proj_dir; the temporary run copy is discarded
+
+clear_test_file_exemptions() -> None
+Pre-condition: None
+  Post-condition: All previously registered test-file exemption paths are removed
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

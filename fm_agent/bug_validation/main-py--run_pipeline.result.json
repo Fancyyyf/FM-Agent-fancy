@@ -1,0 +1,11 @@
+{
+  "id": "main-py--run_pipeline",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/main-py/run_pipeline.py",
+  "function_name": "run_pipeline",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_main-py--run_pipeline.py",
+  "detail_file": "fm_agent/bug_validation/main-py--run_pipeline.md",
+  "probe_stdout": "[Pipeline] ERROR: No source code files found in /tmp/tmpb6are752. Supported extensions: c, cc, cpp, cu, cuh, cxx, erl, ets, go, h, hpp, java, js, jsx, py, rs, ts, tsx\nCONFIRMED — run_pipeline called sys.exit(1) instead of returning early when no supported source files found\n",
+  "trigger_summary": "run_pipeline calls sys.exit(1) when proj_dir contains no supported source files instead of returning early as the spec requires for empty file_list."
+}

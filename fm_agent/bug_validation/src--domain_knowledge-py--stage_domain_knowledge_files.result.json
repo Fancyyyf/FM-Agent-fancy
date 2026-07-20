@@ -1,0 +1,11 @@
+{
+  "id": "src--domain_knowledge-py--stage_domain_knowledge_files",
+  "source_file": "src/domain_knowledge.py",
+  "function_name": "stage_domain_knowledge_files",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--stage_domain_knowledge_files.py",
+  "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--stage_domain_knowledge_files.md",
+  "probe_stdout": "CONFIRMED — directory missing between rmtree and os.replace; spec requires 'atomically swapped' but code creates a window where the staging directory does not exist.",
+  "trigger_summary": "shutil.rmtree(target_dir) followed by os.replace(tmp_dir, target_dir) creates a window where the staging directory does not exist, violating the atomicity specification."
+}

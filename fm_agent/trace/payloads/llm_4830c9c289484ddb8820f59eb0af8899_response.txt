@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "entry_func='my_package.main', proj_dir='/tmp/valid_project' (assuming directory exists and is writable), all other parameters default.",
+  "offending_statements": "Line 46: work_dir = os.path.join(proj_dir, \"fm_agent\") and Line 55: _run_entry_pipeline_inner(...) (which ultimately populates proj_dir/fm_agent/)",
+  "reason": "The specification requires that proj_dir is never mutated; however, the code creates or modifies the subdirectory proj_dir/fm_agent, which is a filesystem mutation inside proj_dir."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code directly delegates to _normalize_endpoint_label, which according to the additional context satisfies all requirements of the specification: deterministic normalization, uses '::' as separator, and replaces the source-file extension dot with '-'. No concrete input causes a violation."
+}

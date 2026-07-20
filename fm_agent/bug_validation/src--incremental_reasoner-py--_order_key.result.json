@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_order_key",
+  "source_file": "src/incremental_reasoner-py/_order_key.py",
+  "function_name": "_order_key",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_order_key.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_order_key.md",
+  "probe_stdout": "Test 1 (sparse order_index = {'alpha': 100, 'beta': 200}):\n  Sorted order: ['delta', 'epsilon', 'gamma', 'alpha', 'beta']\n  CONFIRMED: absent FQNs at positions [0, 1, 2] sort BEFORE present FQNs at [3, 4]\n  Violates spec: absent FQNs must sort AFTER all present FQNs.\n\nTest 2 (consecutive order_index = {'alpha': 0, 'beta': 1, 'gamma': 2}):\n  Sorted order: ['alpha', 'beta', 'gamma', 'delta', 'epsilon']\n  Absent FQNs sort correctly after all present FQNs.\n  Actual code behavior: bug is latent, NOT triggerable in practice.\n\n---\nThe _order_key function has a LOGICAL BUG: absent keys get\nlen(order_index) as position, which can be smaller than present key values.\nCannot trigger through public API because order_index is always\nconstructed with consecutive 0..n-1 values via enumerate().\n\nNOT CONFIRMED",
+  "trigger_summary": "The default for absent keys is len(order_index), which can be smaller than the integer value stored for some present key. The specification requires that absent entries sort after all present entries, but if order_index contains a value >= len(order_index), the tuple ordering makes the absent entry appear first, breaking the guarantee."
+}

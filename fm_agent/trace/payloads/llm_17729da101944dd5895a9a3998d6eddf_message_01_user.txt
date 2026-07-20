@@ -1,0 +1,80 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _node_fqn_map(cur, cg_langs) -> dict:
+Line 2:     """Return {node_id: fqn} for every function/method node in the given languages.
+Line 3:     The per-file name dedup (``Flush``, ``Flush_1``, ...) uses the SAME rule and
+Line 4:     ordering as get_functions_by_file (``ORDER BY file_path, start_line``, then a
+Line 5:     per-(file, name) counter), so the FQN assigned to a node here matches the FQN
+Line 6:     the extracted file for that node receives. Keeping the two in lockstep is what
+Line 7:     makes the call-edge identities line up with the extracted-function identities.
+Line 8:     """
+Line 9:     placeholders = ",".join("?" * len(cg_langs))
+Line 10:     cur.execute(
+Line 11:         f"""
+Line 12:         SELECT id, name, file_path, start_line
+Line 13:         FROM nodes
+Line 14:         WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+Line 15:         ORDER BY file_path, start_line
+Line 16:         """,
+Line 17:         cg_langs,
+Line 18:     )
+Line 19:     counts: dict = {}
+Line 20:     result: dict = {}
+Line 21:     for node_id, name, file_path, _start in cur.fetchall():
+Line 22:         bare = _bare_function_name(name)
+Line 23:         cname = canonicalize(bare)
+Line 24:         key = (file_path, cname)
+Line 25:         c = counts.get(key, 0)
+Line 26:         counts[key] = c + 1
+Line 27:         deduped = cname if c == 0 else f"{cname}_{c}"
+Line 28:         result[node_id] = _fqn_for(file_path, deduped)
+Line 29:     return result
+```
+
+Condition A (what the code actually does):
+After successful execution, the function returns a dictionary `result` mapping each node id (integer) of all rows in the `nodes` table where `kind` is either 'function' or 'method' and `language` is one of the languages in the non‑empty sequence `cg_langs`, to a fully qualified name string. The FQN is constructed by processing the rows in the order given by `ORDER BY file_path, start_line`. For each row, a bare function name is extracted by stripping any angle‑bracket template parameters from `name`, then canonicalized into a safe identifier (`cname`). For each distinct `(file_path, cname)` pair, the first occurrence (by the ordering) receives `cname` as the deduplicated name; subsequent occurrences receive `cname_1`, `cname_2`, etc., where the appended number is the count of prior occurrences of that pair. The FQN is then formed by calling `_fqn_for(file_path, deduped_name)`, which combines the file path and the deduplicated name using `::` as separator and normalizes directory separators. The returned dictionary contains exactly one entry per matched node; its size equals the number of rows selected by the query. The cursor's result set is exhausted, but the database is not modified. Formal logic: Let Q be the sequence of tuples (id, name, file_path, start_line) obtained from `SELECT id, name, file_path, start_line FROM nodes WHERE kind IN ('function','method') AND language IN (placeholders) ORDER BY file_path, start_line`, with placeholders bound to `cg_langs`. Let `counts` be an initially empty map from `(file_path, cname)` to integer counts. After processing Q in order, the returned dictionary M satisfies: M = { id_j : [ let bare_j = _bare_function_name(name_j); cname_j = canonicalize(bare_j); key_j = (file_path_j, cname_j); c_j = counts.get(key_j, 0); deduped_j = cname_j if c_j == 0 else f"{cname_j}_{c_j}"; fqn_j = _fqn_for(file_path_j, deduped_j); counts[key_j] := c_j + 1; yield (id_j, fqn_j) ] for each j in 1..|Q| }.
+
+Condition B (what the specification requires):
+- Returns a dict mapping each node's id to its fully-qualified function
+    name (FQN)
+  - The mapping includes exactly the rows from the nodes table whose kind
+    is either 'function' or 'method' and whose language is one of the given
+    cg_langs values, ordered by (file_path ASC, start_line ASC)
+  - Each FQN is derived from the node's file_path and a canonicalized,
+    deduplicated function name in the canonical convention where path
+    components are joined by "::" and the source file extension in the
+    parent directory component is replaced by a hyphen
+  - Function name canonicalization strips angle-bracket template parameters
+    and normalizes operator-overload names to safe identifier forms
+  - When N > 1 nodes share the same file_path and canonicalized name, the
+    first such node in the result ordering receives the canonicalized name
+    without a suffix, and each subsequent node (k-th, 1-indexed) receives
+    the canonicalized name suffixed with _k
+  - Returns an empty dict when the query matches no rows
+  - The deduplication rule and ordering correspond to those used by
+    get_functions_by_file, ensuring that the FQN assigned to a node here
+    matches the FQN the extracted function file receives for the same node
+
+Additional context:
+_bare_function_name(name) -> str
+Pre-condition: name is a string containing a function name possibly
+    including angle-bracket template parameters
+  Post-condition: Returns the function name with any angle-bracket-delimited
+    template parameters and their brackets removed
+
+canonicalize(bare) -> str
+Pre-condition: bare is a string containing a function name with template
+    parameters already stripped
+  Post-condition: Returns a canonicalized safe identifier form of the
+    function name; operator-overload names are normalized to deterministic
+    identifier strings
+
+_fqn_for(file_path, deduped) -> str
+Pre-condition: file_path is a string path to a source file; deduped is a
+    string containing the deduplicated canonical function name
+  Post-condition: Returns a fully-qualified function name string in the
+    canonical FQN format where directory components and the file-derived
+    component are separated by "::"
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

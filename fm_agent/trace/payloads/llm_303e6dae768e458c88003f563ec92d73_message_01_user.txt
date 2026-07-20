@@ -1,0 +1,36 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a path to an existing directory
+  - phase_data is a dict that may contain a "modules" key; if present, its value is an iterable of module dicts, each with a "name" (str) and optionally "source_files" (iterable of str relative paths)
+
+Code block:
+```python
+Line 1: def _collect_phase_files(proj_dir, phase_data):
+Line 2:     """For a phase, collect all extracted function file paths.
+Line 3:     Returns list of (file_path, module_name) tuples.
+Line 4:     """
+Line 5:     extracted_base = os.path.join(proj_dir, "extracted_functions")
+Line 6:     results = []
+Line 7:     for module in phase_data.get("modules", []):
+Line 8:         module_name = module["name"]
+Line 9:         for src_file in module.get("source_files", []):
+Line 10:             # Derive extracted directory: xxx/yyy/zzz.ext -> xxx/yyy/zzz-ext
+Line 11:             src_dir = os.path.dirname(src_file)
+Line 12:             src_base = os.path.basename(src_file)
+Line 13:             last_dot = src_base.rfind(".")
+Line 14:             if last_dot > 0:
+Line 15:                 dir_name = src_base[:last_dot] + "-" + src_base[last_dot + 1:]
+Line 16:             else:
+Line 17:                 dir_name = src_base
+Line 18:             func_dir = os.path.join(extracted_base, src_dir, dir_name) if src_dir else os.path.join(extracted_base, dir_name)
+Line 19:             if not os.path.isdir(func_dir):
+Line 20:                 continue
+Line 21:             for fname in os.listdir(func_dir):
+Line 22:                 fpath = os.path.join(func_dir, fname)
+Line 23:                 if os.path.isfile(fpath):
+Line 24:                     results.append((fpath, module_name))
+Line 25:     return results
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

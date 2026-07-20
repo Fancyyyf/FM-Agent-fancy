@@ -1,0 +1,65 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _filter_phases_to_submodules(phases_json, submodules):
+Line 2:     """Remove out-of-scope source files from phases.json without renumbering."""
+Line 3:     if not submodules:
+Line 4:         return {"removed": 0, "modified_modules": []}
+Line 5:     with open(phases_json, "r") as f:
+Line 6:         data = json.load(f)
+Line 7:     removed_total = 0
+Line 8:     modified_modules = []
+Line 9:     for phase in sorted(data.get("phases", []), key=lambda p: p.get("phase", 0)):
+Line 10:         for module in phase.get("modules", []):
+Line 11:             original = list(module.get("source_files", []))
+Line 12:             kept = []
+Line 13:             removed = []
+Line 14:             for source_file in original:
+Line 15:                 if _is_under_submodules(source_file, submodules):
+Line 16:                     kept.append(source_file)
+Line 17:                 else:
+Line 18:                     removed.append(source_file)
+Line 19:             if not removed:
+Line 20:                 continue
+Line 21:             module["source_files"] = kept
+Line 22:             removed_total += len(removed)
+Line 23:             modified_modules.append({
+Line 24:                 "phase": phase.get("phase"),
+Line 25:                 "module": module.get("name", ""),
+Line 26:                 "removed_files": removed,
+Line 27:                 "source_files": list(kept),
+Line 28:             })
+Line 29:     if modified_modules:
+Line 30:         with open(phases_json, "w") as f:
+Line 31:             json.dump(data, f, indent=2)
+Line 32:     return {"removed": removed_total, "modified_modules": modified_modules}
+```
+
+Condition A (what the code actually does):
+After successful execution (i.e., no unhandled I/O or JSON parse error), the function returns a dictionary with keys 'removed' (integer) and 'modified_modules' (list). If submodules is falsy (None or empty), the function returns {'removed': 0, 'modified_modules': []} without reading or modifying the file at phases_json. Otherwise: the file at phases_json is read into memory (old_data). The function iterates over the phases array sorted by the 'phase' key, and for each module it partitions its source_files list into kept (files whose path starts with any string in submodules) and removed (all others). If removed is empty, the module is unchanged. If removed is non-empty, the module's 'source_files' field is replaced with kept, the count is added to removed_total, and a record is appended to modified_modules containing 'phase' (the phase number), 'module' (the module's name, defaulting to ''), 'removed_files' (list of removed file strings), and 'source_files' (list of kept file strings). After processing all modules, if modified_modules is non-empty, the file at phases_json is overwritten with the updated JSON (indent=2); otherwise the file remains unchanged. The returned dictionary has 'removed' equal to removed_total and 'modified_modules' equal to the list of modification records, ordered by phase (ascending) and module iteration order. Formally: Let S = submodules. If S is empty (i.e., not submodules): Returned = {'removed': 0, 'modified_modules': []} ∧ Φ(phases_json) unchanged. Else, before execution let Input = json.load(open(phases_json)) (valid JSON object with phases array). After execution, let Data be the final in-memory object (same as Input but with modified source_files). For every phase p in sorted(Data.phases, key=lambda p: p.phase), for every module m in p.modules, let F = original source_files of m, K = {f ∈ F | ∃ s ∈ S: f starts with s}, R = F \ K. If R ≠ ∅ then m.source_files = K; otherwise m.source_files unchanged. Let ModList be the list of dictionaries for each processed module where R ≠ ∅ (in processing order), each with phase=p.phase, module=m.get('name', ''), removed_files=R, source_files=K. Let total_removed = Σ_{(p,m)} |R|. If ModList ≠ []: file at phases_json after execution contains json.dump(Data, indent=2). Otherwise file unchanged. Returned = {'removed': total_removed, 'modified_modules': ModList}.
+
+Condition B (what the specification requires):
+- When submodules is None or empty, phases.json is unchanged on disk and
+    the function returns {"removed": 0, "modified_modules": []}.
+  - When submodules is non-empty, every source_file path in every module of
+    every phase is classified: paths that begin with any of the submodule
+    directory names are retained; all other paths are removed from their
+    module.
+  - Returns a dict with two keys: "removed" maps to the total count (int) of
+    removed source_file entries; "modified_modules" maps to a list of
+    objects, one per module from which at least one file was removed, each
+    containing the phase number, module name, the list of removed file paths,
+    and the list of retained file paths.
+  - When at least one source_file is removed, the file at phases_json is
+    overwritten with the filtered phases.json content; when no source_file is
+    removed, the file at phases_json is not modified.
+
+Additional context:
+_is_under_submodules(source_file, submodules) -> bool
+Pre-condition: source_file is a file path string; submodules is a non-empty
+    iterable of subdirectory name strings.
+  Post-condition: Returns True when source_file begins with any of the
+    submodule directory name strings; returns False when source_file does not
+    begin with any submodule directory name string.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

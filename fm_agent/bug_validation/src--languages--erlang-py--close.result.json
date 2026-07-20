@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--close",
+  "source_file": "src/languages/erlang-py/close.py",
+  "function_name": "ElpClient.close",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--close.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--close.md",
+  "probe_stdout": "CONFIRMED — close() raised OSError: No such process\n",
+  "trigger_summary": "proc.terminate() at line 279 is not wrapped in try/except; if it raises an OSError (e.g., process no longer exists), the exception propagates to the caller, violating the spec's no-exception-leak guarantee."
+}

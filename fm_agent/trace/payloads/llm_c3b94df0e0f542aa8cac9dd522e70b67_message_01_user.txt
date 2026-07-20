@@ -1,0 +1,42 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _info_line_mentions_name(first_line: str, name: str) -> bool:
+Line 2:     if not name:
+Line 3:         return False
+Line 4:     if "::" in name:
+Line 5:         return name in first_line
+Line 6:     return bool(re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?:\s*\(|\b)", first_line))
+```
+
+Condition A (what the code actually does):
+The function returns a boolean value R. If name is an empty string, R is False. If name is non-empty and contains '::', R is True iff name is a substring of first_line. Otherwise (name non-empty and does not contain '::'), R is True iff the regular expression pattern formed by '(?<![A-Za-z0-9_])' + re.escape(name) + '(?:\s*\(|\b)' matches somewhere in first_line (i.e., re.search returns a Match object, not None). The function raises no exceptions and has no side effects.
+
+Formally:
+Let R = _info_line_mentions_name(first_line, name).
+Then:
+(name == "") ⇒ (R == False) ∧
+(name ≠ "" ∧ "::" in name) ⇒ (R == (name in first_line)) ∧
+(name ≠ "" ∧ "::" not in name) ⇒ (R == (re.search(r"(?<![A-Za-z0-9_])" + re.escape(name) + r"(?:\s*\(|\b)", first_line) is not None))
+
+Condition B (what the specification requires):
+- Returns False when name is empty
+  - When name contains the substring "::", returns True if and only if name
+    appears as a substring anywhere in first_line
+  - When name does NOT contain "::", returns True if and only if name appears
+    in first_line at a position not immediately preceded by an ASCII letter,
+    digit, or underscore, and immediately followed by either an opening
+    parenthesis (with optional whitespace between name and parenthesis) or a
+    non-word-character position (including end-of-string)
+  - The return value depends solely on first_line and name; the function is
+    pure (no side effects) and deterministic
+
+Additional context:
+re.search(pattern: str, string: str, flags: int = 0) -> Match | None
+Pre-condition: pattern is a string interpreted as a regular expression;
+    string is the text to search within
+  Post-condition: returns a Match object representing the first location where
+    pattern successfully matches within string; returns None when pattern does
+    not match at any position in string
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

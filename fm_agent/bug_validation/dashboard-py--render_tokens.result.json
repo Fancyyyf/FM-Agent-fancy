@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--render_tokens",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/render_tokens.py",
+  "function_name": "render_tokens",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--render_tokens.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--render_tokens.md",
+  "probe_stdout": "NOT CONFIRMED — render_tokens returned a valid Rich Panel despite model_seen=None\n",
+  "trigger_summary": "When state.model_seen is None (falsy), _price_for receives empty string but handles it gracefully via guard clause; the function still returns a valid Panel."
+}

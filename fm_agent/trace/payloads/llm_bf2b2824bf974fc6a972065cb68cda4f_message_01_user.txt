@@ -1,0 +1,72 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _trim_project_in_place(proj_dir, all_by_source, keep_by_source):
+Line 2:     """Delete the unselected functions and source files from proj_dir.
+Line 3:     Source files with at least one selected function are trimmed to keep only
+Line 4:     the selected function bodies (plus all non-function context lines); source
+Line 5:     files whose functions are all unselected are deleted outright. Files that
+Line 6:     contributed no extracted functions (configs, docs, unsupported languages,
+Line 7:     test files) are left untouched.
+Line 8:     """
+Line 9:     total_kept = total_removed = deleted_files = 0
+Line 10:     for source_rel in sorted(all_by_source):
+Line 11:         src_path = os.path.join(proj_dir, source_rel)
+Line 12:         if not os.path.isfile(src_path):
+Line 13:             continue
+Line 14:         keep_names = keep_by_source.get(source_rel)
+Line 15:         if not keep_names:
+Line 16:             os.remove(src_path)
+Line 17:             deleted_files += 1
+Line 18:             continue
+Line 19:         kept, removed = _trim_source_file(src_path, keep_names, proj_dir)
+Line 20:         total_kept += kept
+Line 21:         total_removed += removed
+Line 22:     print(
+Line 23:         f"[EntryPipeline] Trimmed {proj_dir}: kept {total_kept} function(s), "
+Line 24:         f"removed {total_removed} function(s), deleted {deleted_files} source file(s)."
+Line 25:     )
+```
+
+Condition A (what the code actually does):
+If the function terminates normally (returns None):
+- For each source file relative path r in all_by_source:
+    Let p = os.path.join(proj_dir, r). If p was a regular file before execution:
+        * If r ∉ keys(keep_by_source): p is deleted and does not exist.
+        * If r ∈ keys(keep_by_source): p exists and its content has been rewritten s.t. every function body whose name is not in keep_by_source[r] is removed, while all lines not belonging to a function body are preserved. The numbers of kept and removed function bodies in p satisfy kept+removed = original number of function bodies in p, and kept = |{f in all_by_source[r] : f ∈ keep_by_source[r]}|.
+    If p was not a regular file, it is unchanged.
+- No other files are modified.
+- The local variables total_kept, total_removed, deleted_files reflect the sums: total_kept = sum of kept over all processed files, total_removed = sum of removed over all processed files, deleted_files = number of processed files that were deleted.
+- A single output line is printed to stdout containing proj_dir, total_kept, total_removed, deleted_files.
+
+If an exception is raised during the loop (e.g., OSError from file operations), the function terminates without printing; the filesystem may be partially modified: some files may have been deleted or trimmed while subsequent ones remain unchanged.
+
+Formally:
+Let S = keys(all_by_source). For each r ∈ S, let file_was_regular(r) hold iff os.path.isfile(os.path.join(proj_dir, r)) evaluated to True during execution.
+Normal termination implies:
+∀ r ∈ S:
+  file_was_regular(r) →
+    (if r ∉ keys(keep_by_source) then ¬(os.path.exists(os.path.join(proj_dir, r))) else
+      (file_content_trimmed(r, keep_by_source[r]) ∧
+       ∃ kept_r, removed_r : (kept_r, removed_r) = _trim_source_file(r) ∧
+       total_kept = Σ_{r∈keys(keep_by_source)} kept_r ∧
+       total_removed = Σ_{r∈keys(keep_by_source)} removed_r ∧
+       deleted_files = |{r ∈ S : file_was_regular(r) ∧ r ∉ keys(keep_by_source)}|
+    )
+  ∧ ¬file_was_regular(r) → unchanged(r)
+
+The output stream gains exactly the printed string; no other side effects.
+
+Condition B (what the specification requires):
+- For each source_rel in all_by_source where the source file does not exist under proj_dir, no mutation occurs for that entry
+  - For each source_rel in all_by_source where the source file exists under proj_dir and source_rel is absent from keep_by_source (or its mapped value produces an empty set), the source file is deleted from proj_dir
+  - For each source_rel in all_by_source where the source file exists under proj_dir and source_rel maps to a non-empty set of function names in keep_by_source, the source file at proj_dir/source_rel is rewritten such that every function body whose name is in all_by_source[source_rel] but not in keep_by_source[source_rel] is removed, while all lines not belonging to a function body (comments, imports, top-level statements) are preserved in their original form
+  - No source file whose relative path is absent from all_by_source is modified or deleted
+  - A single-line summary message is printed to stdout containing the total count of function bodies preserved, the total count of function bodies removed, and the total count of source files deleted
+
+Additional context:
+_trim_source_file(src_path, keep_names, proj_dir) -> (kept: int, removed: int)
+Pre-condition: src_path is an absolute path to an existing source file; keep_names is a non-empty collection of function names to preserve; proj_dir is the project root directory
+  Post-condition: The file at src_path is rewritten such that every function body whose name is not a member of keep_names is removed, while all lines not belonging to a function body are preserved in their original form; the source file remains at the same path; returns a tuple (kept, removed) where kept is the count of function bodies preserved and removed is the count of function bodies removed, both non-negative integers whose sum equals the original number of function bodies in the file
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

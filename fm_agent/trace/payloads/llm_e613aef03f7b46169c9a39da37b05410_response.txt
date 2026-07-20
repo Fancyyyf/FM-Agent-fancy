@@ -1,0 +1,1 @@
+{"verdict": "MATCH", "counterexample": null, "offending_statements": null, "reason": "The code implements exactly the maximum operation required by the specification: sets score when key is absent, updates when score > existing, leaves unchanged otherwise. All cases of the specification are covered."}

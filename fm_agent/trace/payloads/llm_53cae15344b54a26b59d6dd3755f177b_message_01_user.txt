@@ -1,0 +1,46 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _verify(rel):
+Line 2:         fpath = os.path.join(extracted_dir, rel)
+Line 3:         language = _VERIFY_EXT_TO_LANG.get(os.path.splitext(fpath)[1], "C")
+Line 4:         _, verdict = _verify_single_file(fpath, extracted_dir, output_dir, language, work_dir=work_dir)
+Line 5:         return rel, verdict
+```
+
+Condition A (what the code actually does):
+After the call to _verify(rel) returns normally (assuming no exception propagates), the return value is a tuple (rel, verdict) where rel is the input argument (unchanged) and verdict is the second element of the pair returned by _verify_single_file(filepath, extracted_dir, output_dir, language, work_dir=work_dir). Here: 
+- filepath = os.path.join(extracted_dir, rel) (an absolute path under extracted_dir). 
+- language = _VERIFY_EXT_TO_LANG.get(os.path.splitext(filepath)[1], 'C'). 
+- The remaining arguments are the enclosing variables output_dir, extracted_dir, and work_dir. 
+- The verdict is a string in the set {'MATCH', 'MISMATCH', 'ERROR', 'SKIPPED'}. 
+The function does not modify any mutable state in the enclosing scope. If any precondition of _verify_single_file is violated or an I/O error occurs, an exception will be raised and the post-condition does not hold; otherwise, the tuple is produced. 
+
+Formally: 
+∀ rel ∈ String, extracted_dir ∈ DirectoryPath, output_dir ∈ DirectoryPath, work_dir ∈ DirectoryPath ∪ {None}, _VERIFY_EXT_TO_LANG ∈ Map⟨String×String⟩, 
+  Pre(rel) ⇒ 
+    let fpath = os.path.join(extracted_dir, rel) in 
+    let lang = _VERIFY_EXT_TO_LANG.get(os.path.splitext(fpath)[1], 'C') in 
+    let (_, v) = _verify_single_file(fpath, extracted_dir, output_dir, lang, work_dir=work_dir) in 
+    Post(_verify(rel)) = (rel, v) ∧ v ∈ {'MATCH', 'MISMATCH', 'ERROR', 'SKIPPED'}
+
+Condition B (what the specification requires):
+- Returns a 2-tuple (rel, verdict) where rel is the exact str passed as input
+    and verdict is the verification result produced by the callee
+  - verdict is one of "MATCH", "MISMATCH", "ERROR", or "SKIPPED" — each representing
+    a distinct category of conformance between the function's [SPEC] block and its
+    implementation
+  - The language identifier passed to the callee is resolved from the file extension
+    of the path formed by joining extracted_dir and rel; if the extension is not
+    present in _VERIFY_EXT_TO_LANG, the language defaults to "C"
+
+Additional context:
+_verify_single_file(filepath, extracted_dir, output_dir, language, work_dir=work_dir) -> (_, str)
+Pre-condition: filepath is an absolute or well-formed path to an extracted function
+    file containing a valid [SPEC] block; language is a string identifier recognized
+    by the verifier; work_dir is a filesystem directory path or None
+  Post-condition: Returns a tuple whose second element is a verdict string
+    ("MATCH", "MISMATCH", "ERROR", or "SKIPPED") describing whether the implementation
+    satisfies its specification
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

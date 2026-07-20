@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Suppose proj_dir contains a file named 'Dockerfile' (no dot, hence no extension). Let the global EXT_TO_LANG map the empty string '' to a truthy value (e.g., {'': 'text'}). Assume _is_test_file('Dockerfile') returns False. The code will compute ext='' and include 'Dockerfile' in the returned list. The specification requires a file to have a file extension, so 'Dockerfile' should be excluded.",
+  "offending_statements": "Line 14: ext = fname.rsplit(\".\", 1)[-1] if \".\" in fname else \"\"\nLine 15: if EXT_TO_LANG.get(ext) and not _is_test_file(src_rel):",
+  "reason": "The specification condition (b) requires a file to have a file extension for which EXT_TO_LANG returns a truthy value. A file without a dot does not have any file extension. The code, however, maps such files to an empty string extension and includes them if EXT_TO_LANG[''] is truthy, violating the specification."
+}

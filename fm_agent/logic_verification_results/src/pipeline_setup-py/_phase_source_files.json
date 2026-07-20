@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_phase_source_files.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- When phases_json cannot be read (file missing, unreadable) or contains\n    invalid JSON, returns an empty dict.\n  - Otherwise returns a dict[int, list[str]] mapping each phase number\n    present in the file to the concatenation of all source_files arrays\n    from ALL modules within that phase. Phases whose \"phase\" key is\n    absent or null are silently skipped.\n  - The returned dict may contain entries whose value is an empty list\n    if the corresponding phase has modules but no source files.\n  - Each source file path in the returned lists is a string exactly as it\n    appears in phases.json (no normalization, no resolution).",
+    "actual_behavior": "The function returns a dictionary mapping each phase number (integer) to the combined list of source file paths (strings) from all modules of that phase, in the order they appear in the phases.json file. Formally, if the file is successfully opened and parsed as a valid JSON object with a 'phases' array conforming to the given schema, then result = {phase['phase']: [file for module in phase['modules'] for file in module['source_files']] for phase in D['phases']}. If the file cannot be opened or contains invalid JSON (contradicting the precondition), an empty dictionary is returned.",
+    "code_evidence": "Line 13: for phase in data.get(\"phases\", []):",
+    "trigger_condition": "The specification states that if the JSON is valid and contains no phase numbers, the function should return an empty dict. The code does not verify that `data` is a dictionary before calling `.get()`, so a valid JSON array causes an unhandled `AttributeError` instead of returning `{}`."
+  }
+}

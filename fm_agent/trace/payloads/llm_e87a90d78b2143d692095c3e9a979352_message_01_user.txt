@@ -1,0 +1,75 @@
+Programming language: Python
+
+Code block:
+```python
+Line 41:                 for fqn in scc:
+Line 42:                     fqn_to_scc[fqn] = i
+Line 43:             # Build DAG between SCCs based on caller edges
+Line 44:             scc_callers = defaultdict(set)  # scc_idx -> set of scc_idx that call into it
+Line 45:             for fqn in remaining:
+Line 46:                 scc_i = fqn_to_scc[fqn]
+Line 47:                 for caller_fqn in callers_map.get(fqn, set()) & remaining:
+Line 48:                     scc_j = fqn_to_scc[caller_fqn]
+Line 49:                     if scc_i != scc_j:
+Line 50:                         scc_callers[scc_i].add(scc_j)
+Line 51:             # Topological sort of SCCs
+Line 52:             scc_assigned = {}
+Line 53:             scc_remaining = set(range(len(sccs)))
+Line 54:             while scc_remaining:
+Line 55:                 scc_ready = set()
+Line 56:                 for scc_idx in scc_remaining:
+Line 57:                     unassigned_scc_callers = scc_callers.get(scc_idx, set()) - set(scc_assigned.keys())
+Line 58:                     if not unassigned_scc_callers:
+Line 59:                         scc_ready.add(scc_idx)
+Line 60:                 if not scc_ready:
+Line 61:                     # Should not happen if Tarjan is correct, but handle gracefully
+Line 62:                     # Assign all remaining to the same layer
+Line 63:                     layer_idx = len(layers)
+Line 64:                     all_fqns = set()
+Line 65:                     for scc_idx in scc_remaining:
+Line 66:                         all_fqns.update(sccs[scc_idx])
+Line 67:                     for fqn in all_fqns:
+Line 68:                         assigned[fqn] = layer_idx
+Line 69:                     layers.append({"layer": layer_idx, "functions": sorted(all_fqns), "cycle_resolution": True})
+Line 70:                     remaining -= all_fqns
+Line 71:                     break
+Line 72:                 layer_idx = len(layers)
+Line 73:                 layer_fqns = set()
+Line 74:                 is_cycle = False
+Line 75:                 for scc_idx in scc_ready:
+Line 76:                     scc_assigned[scc_idx] = layer_idx
+Line 77:                     layer_fqns.update(sccs[scc_idx])
+Line 78:                     if len(sccs[scc_idx]) > 1:
+Line 79:                         is_cycle = True
+Line 80:                 for fqn in layer_fqns:
+Line 81:                     assigned[fqn] = layer_idx
+Line 82:                 layers.append({"layer": layer_idx, "functions": sorted(layer_fqns), "cycle_resolution": is_cycle})
+Line 83:                 remaining -= layer_fqns
+Line 84:                 scc_remaining -= scc_ready
+Line 85:     return layers
+```
+
+Condition A (what the code actually does):
+After execution, the function returns the list `layers`. The inputs `phase_fqns`, `callees_map`, and `callers_map` are not mutated. No exceptions are raised. Let `Phase` = set(phase_fqns), `C` = callees_map, and let `G` be the directed graph with vertices `Phase` and edge (u → v) if v ∈ C.get(u, []). Then:
+1. `layers` is a list of dictionaries, each with keys 'layer' (int), 'functions' (list of strings sorted lexicographically), and 'cycle_resolution' (bool).
+2. For i from 0 to |layers|-1: layers[i]['layer'] == i.
+3. The sets { f for l in layers for f in l['functions'] } form a partition of `Phase`: every FQN in `Phase` appears in exactly one layer's 'functions' list.
+4. For any distinct a, b ∈ Phase, if b ∈ C.get(a, []) then let l_a, l_b be the indices of the layers containing a and b, respectively. We have l_a ≤ l_b.
+5. If l_a == l_b, then the layer has cycle_resolution == True and a and b are in the same strongly connected component (SCC) of G (i.e., there is a directed cycle containing both).
+6. If a layer has cycle_resolution == False, then every SCC of G that is included in that layer has size 1 (no nontrivial cycles) and thus for any distinct a,b in that layer, we have l_a < l_b whenever a calls b.
+7. Every SCC of G is entirely contained in a single layer, and layers are formed by topologically sorting the SCC DAG: if SCC A has an edge to SCC B (A calls B), then A's layer index ≤ B's layer index, with equality only if both are in the same layer (which implies cycle_resolution == True).
+
+Condition B (what the specification requires):
+- Returns a list of layer dicts, sorted by ascending "layer" (0-indexed integer)
+  - Each layer dict contains: "layer" (int), "functions" (list of FQNs in lexicographic order), and "cycle_resolution" (bool)
+  - Every FQN in phase_fqns appears in exactly one layer's "functions" list
+  - For every directed edge (caller → callee) where both endpoints are in phase_fqns: the callee's layer index is less than or equal to the caller's layer index
+  - Equality (callee and caller in the same layer) occurs only when the two functions belong to the same strongly connected component (mutual recursion), and the layer is marked with "cycle_resolution": true
+  - "cycle_resolution" is true when the layer contains at least one SCC with two or more members; it is false when all SCCs in the layer are singletons (no mutual recursion resolved)
+  - When no cycles exist, layers are assigned by applying Kahn's algorithm on the caller graph: a function enters the current layer when all its in-phase callers have already been assigned to strictly earlier layers
+
+Additional context:
+_tarjan_scc(nodes, edges) -> list[list]
+Pre-condition: nodes is an iterable of hashable node identifiers; edges maps each node to an iterable of its outgoing neighbors (other node identifiers)
+  Post-condition: returns a list of SCCs in reverse topological order (no edge from a later SCC to an earlier SCC); each SCC is a maximal set of nodes where every node is reachable from every other node via directed paths restricted to nodes; every node in nodes appears in exactly one SCC
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

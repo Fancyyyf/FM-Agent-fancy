@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "state with cache_window = [(70, 100)]; state.totals = {'cache_read': 100, 'input': 50, 'cache_write': 50}; state.opencode_token_totals = {}; state.model_seen = ''; state.cost_native = 0; state.opencode_cost = 0. _price_for('') returns None. The code's overall bar uses total_cr=100, total_input=100 -> rate=100/(100+100)=0.5. The specification requires the aggregate of all entries in cache_window: sum(cache_read)=70, sum(total_input)=100 -> rate=0.7. The resulting Panel displays an incorrect hit rate for the overall window.",
+  "offending_statements": "Line 26: bar_line(\"overall\", [(total_cr, total_cr + total_input)])",
+  "reason": "The specification requires the overall bar to be computed from the aggregate of all entries in state.cache_window (i.e., sum of cache_read and sum of total_input over the entries). The code instead computes the overall bar using total_cr and total_cr+total_input derived from state.totals and state.opencode_token_totals, which may differ from the cache_window sums. This leads to a wrong hit rate when cache_window does not exactly match those totals."
+}

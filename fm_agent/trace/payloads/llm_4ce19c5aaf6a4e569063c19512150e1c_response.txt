@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/path/to/proj', filepath='Test.java' containing: line 0: 'void foo() {}', line 1: 'void bar() {}'. The code‑graph backend is initialised and indexes the file, but get_function_spans returns [('bar',1,1), ('foo',0,0)]. The output of function_spans is [('bar',1,1), ('foo',0,0)], which is not ordered by appearance in the source.",
+  "offending_statements": "Line 8: return cg.get_function_spans(\"java\", filepath) if cg else None",
+  "reason": "The specification requires the list to be ordered by appearance in the source. The code delegates to cg.get_function_spans without reordering, but the backend’s contract does not guarantee appearance order. Therefore, an unordered result from the backend violates the specification."
+}

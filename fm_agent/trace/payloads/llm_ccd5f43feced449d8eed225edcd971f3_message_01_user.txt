@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def append_event(trace_dir, event):
+Line 2:     _ensure_trace_dirs(trace_dir)
+Line 3:     events_path = os.path.join(trace_dir, "events.jsonl")
+Line 4:     line = json.dumps(event, ensure_ascii=False)
+Line 5:     with _LOCK:
+Line 6:         with open(events_path, "a", encoding="utf-8") as f:
+Line 7:             f.write(line + "\n")
+```
+
+Condition A (what the code actually does):
+After execution, the lock _LOCK is released. If the block completes without raising an exception, then: (1) the directory trace_dir exists (and all missing parent directories exist); (2) the file events_path = os.path.join(trace_dir, 'events.jsonl') exists and its content is the previous content (if any) appended with the line json.dumps(event, ensure_ascii=False) + '\n'; (3) the function returns None. If an exception is raised, the directory may or may not exist depending on whether _ensure_trace_dirs succeeded, the file may be untouched, created but empty, or contain a partial write; the lock is released in all cases. Formally, let S be the initial state and S' the final state, let exists(p) denote path p exists, content(p) the file contents, and line = json.dumps(event, ensure_ascii=False). Then: (¬exception ⇒ (exists(trace_dir) ∧ exists(events_path) ∧ content(events_path) = content(events_path)_S ⊕ line ⊕ '
+' ∧ ret = None)) ∧ (exception ⇒ (lock_released ∧ (exists(trace_dir) ∨ ¬exists(trace_dir)))) where ⊕ denotes string concatenation.
+
+Condition B (what the specification requires):
+- The directory trace_dir exists, with any missing parent directories created
+  - The file events.jsonl inside trace_dir has one additional line appended
+  - That line is the JSON serialization of event with non-ASCII characters preserved in their original form (Unicode, not \u-escaped)
+  - The write is safe under concurrency: each event occupies exactly one complete line and bytes from different events are never interleaved within the same line
+  - Returns None
+
+Additional context:
+_ensure_trace_dirs(trace_dir) -> None
+Pre-condition: trace_dir is a string path
+  Post-condition: the directory trace_dir and all its missing parent directories exist on the filesystem after the call
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

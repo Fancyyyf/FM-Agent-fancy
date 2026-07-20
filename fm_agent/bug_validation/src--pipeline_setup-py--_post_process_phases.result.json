@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_post_process_phases",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_post_process_phases",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_post_process_phases.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_post_process_phases.md",
+  "probe_stdout": "CONFIRMED — one_phase=True, function returned True but phases.json was NOT structurally modified (before==after: True)",
+  "trigger_summary": "one_phase=True with already-single-phase phases.json returns True despite no structural modifications, because or one_phase is unconditionally included in the phases_modified check at line 994."
+}

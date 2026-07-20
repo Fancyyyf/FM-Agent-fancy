@@ -1,0 +1,82 @@
+Programming language: Python
+
+Pre-condition:
+- state is a State instance whose aggregated fields (stage counts, token
+    totals, cache statistics, LLM status history, recent events, bug
+    validation counts) reflect the latest ingested trace data
+
+Code block:
+```python
+Line 1: def build_layout(state):
+Line 2:     # Heights are computed to exactly fit content. A Rich Table renders as
+Line 3:     #   2 (top+bottom edge) + 1 (header) + 1 (header-rule) + N (rows)
+Line 4:     # and Panel adds 2 more border lines, so a Table-in-Panel = N + 6 lines.
+Line 5:     # A Text-in-Panel = N_lines + 2. Small panels (cache, bugs) are Align-centered
+Line 6:     # so the spare height goes evenly above/below instead of bunching at the top.
+Line 7:     stages_h = len(STAGES) + 6                 
+Line 8:     tokens_h = 3 + 6                           
+Line 9:     layout = Layout()
+Line 10:     layout.split_column(
+Line 11:         Layout(render_header(state), name="header", size=3),
+Line 12:         Layout(name="top", size=stages_h),
+Line 13:         Layout(name="mid", size=tokens_h),
+Line 14:         Layout(render_recent(state), name="footer"),
+Line 15:     )
+Line 16:     layout["top"].split_row(
+Line 17:         Layout(render_stages(state), name="stages", ratio=3),
+Line 18:         Layout(name="top_right", ratio=2),
+Line 19:     )
+Line 20:     layout["top"]["top_right"].split_column(
+Line 21:         Layout(render_cache(state), name="cache", ratio=2),
+Line 22:         Layout(render_bugs(state), name="bugs", ratio=1),
+Line 23:     )
+Line 24:     layout["mid"].split_row(
+Line 25:         Layout(render_tokens(state), name="tokens", ratio=3),
+Line 26:         Layout(render_llm_status(state), name="llm", ratio=2),
+Line 27:     )
+Line 28:     return layout
+```
+
+Additional context:
+render_header(state: State) -> RenderableType
+Pre-condition: state is a State instance with project path and run
+    identification attributes populated
+  Post-condition: Returns a renderable displaying the dashboard title
+    and project identification
+
+render_stages(state: State) -> RenderableType
+Pre-condition: state.stage_counts and state.stage_active contain
+    pipeline stage status tallies aggregated from ingested events
+  Post-condition: Returns a renderable displaying each pipeline stage
+    name with its count of completed, in-progress, and error events
+
+render_cache(state: State) -> RenderableType
+Pre-condition: state.cache_window contains recent (cache_read,
+    total_input) tuples from ingested trace data
+  Post-condition: Returns a renderable displaying prompt-cache hit
+    statistics derived from the cached window of recent reads
+
+render_bugs(state: State) -> RenderableType
+Pre-condition: state.bugs_confirmed and state.bugs_not_confirmed
+    reflect bug-validation verdicts from ingested trace data
+  Post-condition: Returns a renderable displaying confirmed and
+    unconfirmed bug counts
+
+render_tokens(state: State) -> RenderableType
+Pre-condition: state.totals and state.opencode_token_totals contain
+    token-usage tallies aggregated from ingested trace events
+  Post-condition: Returns a renderable displaying token consumption
+    broken down by source (verification, OpenCode) and a combined total
+
+render_llm_status(state: State) -> RenderableType
+Pre-condition: state.llm_statuses contains recent LLM call status
+    records from ingested trace data
+  Post-condition: Returns a renderable displaying the most recent
+    LLM call outcomes with their associated stage and status
+
+render_recent(state: State) -> RenderableType
+Pre-condition: state.recent_events contains recent (time, stage,
+    status, summary) tuples from ingested events
+  Post-condition: Returns a renderable displaying a chronological
+    log of the most recent trace events
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

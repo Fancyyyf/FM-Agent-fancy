@@ -1,0 +1,12 @@
+Programming language: Python
+
+Pre-condition:
+- None.
+
+Code block:
+```python
+Line 1: def is_interactive():
+Line 2:     return sys.stdin.isatty()
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

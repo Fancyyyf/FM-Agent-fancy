@@ -1,0 +1,3 @@
+{
+  "post_condition": "If the input `d` is not a dictionary, the function returns `None`. Otherwise, let the sequence `keys` be `(k_1, k_2, ..., k_n)`. For each `i` from 1 to n, define the candidate list `C_i = (k_i, \"+\" + k_i, \"*\" + k_i)`. The function returns `d[C_i[j]]` for the smallest pair `(i, j)` (in lexicographic order, i.e., first by `i` then by `j`) such that `C_i[j]` is a key in `d`. If no such pair exists, the function returns `None`. No side effects occur."
+}

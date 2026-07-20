@@ -1,0 +1,30 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _llm_code_for_event(status):
+Line 2:     if status in ("success", "mismatch"):
+Line 3:         return "200"
+Line 4:     if status == "format_error":
+Line 5:         return "FMT"
+Line 6:     if status == "error":
+Line 7:         return "ERR"
+Line 8:     return status or "?"
+```
+
+Condition A (what the code actually does):
+The function returns a string based on the input status (which is a string or None). If status is 'success' or 'mismatch', it returns '200'. If status is 'format_error', it returns 'FMT'. If status is 'error', it returns 'ERR'. Otherwise, if status is a non-empty string, it returns status. If status is None or an empty string, it returns '?'. Formally: (status ∈ {'success', 'mismatch'} → result = '200') ∧ (status = 'format_error' → result = 'FMT') ∧ (status = 'error' → result = 'ERR') ∧ ((status ∉ {'success', 'mismatch', 'format_error', 'error'} ∧ status is not None ∧ status ≠ '') → result = status) ∧ ((status is None ∨ status = '') → result = '?'). In all execution paths the result is a string, and the function has no side effects.
+
+Condition B (what the specification requires):
+- Returns a non-empty string that classifies status into a fixed set
+    of category codes.
+  - Every recognized status string maps deterministically to a single
+    category code: statuses indicating a completed operation (whether
+    the result matched or not) map to a numeric success code; each
+    distinct failure-type status maps to a distinct short non-numeric
+    code.
+  - When status is not among the recognized classification set but is
+    truthy, the status value itself is returned unchanged.
+  - When status is falsy (empty string or None), "?" is returned.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

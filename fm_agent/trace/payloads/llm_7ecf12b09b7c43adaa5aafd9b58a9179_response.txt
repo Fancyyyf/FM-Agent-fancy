@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "src_path=Path('nonexistent.py'), proj_dir=None",
+  "offending_statements": "Line 18: funcs, source_lines, classes = _parse_python_file(src_path)",
+  "reason": "For a non-existent file with a recognized extension (e.g., '.py'), the specification requires returning (None, None, None) because parsing fails. However, the code calls _parse_python_file without exception handling, which raises FileNotFoundError instead of returning None."
+}

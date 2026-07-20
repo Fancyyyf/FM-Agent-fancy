@@ -1,0 +1,16 @@
+Programming language: Python
+
+Pre-condition:
+- self is an initialized State with a bounded recent_events collection
+    that has a fixed maximum capacity.
+  - ts is a datetime or None.
+  - stage, status, and summary are strings.
+
+Code block:
+```python
+Line 1:     def _push_recent(self, ts, stage, status, summary):
+Line 2:         when = ts.strftime("%H:%M:%S") if ts else ""
+Line 3:         self.recent_events.appendleft((when, stage, status, summary))
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

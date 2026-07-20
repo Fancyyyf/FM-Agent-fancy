@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/generate_batch_prompts-py/detect_lang_and_comment.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a tuple (language_name, comment_prefix) of two strings\n  - language_name is the value in ext_to_lang whose key matches file_rel's file extension (the substring after the last \".\" character, lowercased), if such a key exists; if file_rel has an extension but no matching key exists in ext_to_lang, language_name is the extension itself (lowercased); if file_rel has no extension (no \".\" character or \".\" is the last character), language_name is \"unknown\"\n  - comment_prefix is the single-line comment marker bound to language_name by a fixed language-to-comment mapping; if language_name is absent from that mapping, comment_prefix defaults to \"//\"",
+    "actual_behavior": "The function returns a tuple (lang, comment). Let ext = Path(file_rel).suffix.lstrip('.').lower(). Then lang = ext_to_lang.get(ext, ext if ext else 'unknown'). Then comment = COMMENT_PREFIX_BY_LANG.get(lang, '//'). No external state is modified, and no exceptions are raised. Formal logic: (ext = lowercase(strip_leading_dots(suffix(Path(file_rel)))))  (lang = (ext_to_lang[ext] if ext  dom(ext_to_lang) else (ext if ext  '' else 'unknown')))  (comment = (COMMENT_PREFIX_BY_LANG[lang] if lang  dom(COMMENT_PREFIX_BY_LANG) else '//'))  (return_value = (lang, comment)).",
+    "code_evidence": "Line 2: ext = Path(file_rel).suffix.lstrip('.').lower()",
+    "trigger_condition": "The specification defines the extension as the substring after the last '.' character, which for '.hidden' is 'hidden'. The code uses Path.suffix, which treats a leading period as part of the stem and returns an empty suffix, leading to ext = '' and lang = 'unknown', while the spec requires lang = 'hidden'."
+  }
+}

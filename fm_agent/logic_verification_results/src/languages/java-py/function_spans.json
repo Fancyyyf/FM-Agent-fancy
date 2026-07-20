@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/java-py/function_spans.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- If the codegraph backend is available and indexes the given Java file, returns a list of\n    (name, start_idx, end_idx) tuples, one per function definition found in the file, ordered\n    by appearance in the source. Each tuple contains the function name as a string and\n    0-indexed inclusive line indices delimiting the function body.\n  - If the codegraph backend is unavailable or does not index the file, returns None,\n    signalling that the caller must fall back to regex-based extraction.",
+    "actual_behavior": "The function returns either None or a list of (name: str, start_idx: int, end_idx: int) tuples. It returns None if the code graph backend cannot be initialised for the project directory (i.e. CodeGraphExtractor.from_proj_dir returns None) or if the Java source file is not indexed by the backend. Otherwise it returns a list where each tuple gives the function name, inclusive 0indexed start line and inclusive 0indexed end line of a function definition in the file. Formal postcondition: result = ( let cg = CodeGraphExtractor.from_proj_dir(proj_dir) ; if cg = None then None else cg.get_function_spans('java', filepath) ). Therefore (result = None)  (cg  None  result = cg.get_function_spans('java', filepath)  (result = None  (result is a list of (str, int, int) with 0  start  end and each tuple corresponds to a function definition))).",
+    "code_evidence": "Line 8: return cg.get_function_spans(\"java\", filepath) if cg else None",
+    "trigger_condition": "The specification requires the list to be ordered by appearance in the source. The code delegates to cg.get_function_spans without reordering, but the backends contract does not guarantee appearance order. Therefore, an unordered result from the backend violates the specification."
+  }
+}

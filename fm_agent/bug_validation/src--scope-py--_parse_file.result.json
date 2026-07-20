@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_parse_file",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/scope-py/_parse_file.py",
+  "function_name": "_parse_file",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_parse_file.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_parse_file.md",
+  "probe_stdout": "Could not parse /tmp/fm_agent_wt_FM-Agent_dlsr6ukl/nonexistent_12345_test.py: [Errno 2] No such file or directory: '/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/nonexistent_12345_test.py'\nCould not read /tmp/fm_agent_wt_FM-Agent_dlsr6ukl/nonexistent_12345_test.py: [Errno 2] No such file or directory: '/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/nonexistent_12345_test.py'\n  [scope] test_nonexistent.py: no functions found, skipping\nNOT CONFIRMED — actual matched expected: []",
+  "trigger_summary": "Non-existent .py file passed to _parse_file; FileNotFoundError is caught by _parse_python_file's except Exception handler, returning None and falling through to _parse_generic_file, not propagating."
+}

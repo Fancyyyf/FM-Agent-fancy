@@ -1,0 +1,23 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def __init__(self):
+Line 2:         super().__init__()
+Line 3:         self.signatures = {}
+```
+
+Condition A (what the code actually does):
+self is an empty dictionary (len(self) == 0) and has an attribute `signatures` that is a separate empty dictionary (len(self.signatures) == 0). No exceptions were raised.
+
+Condition B (what the specification requires):
+- self contains zero key-value entries (an empty mapping of function names to
+    spec text)
+  - self.signatures is an empty dict containing zero function-name-to-signature
+    entries
+
+Additional context:
+super().__init__()
+Pre-condition: (none)
+  Post-condition: self is initialized as an empty dict with no entries
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

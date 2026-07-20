@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--run_extraction",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/extract-py/run_extraction.py",
+  "function_name": "run_extraction",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--run_extraction.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--run_extraction.md",
+  "probe_stdout": "Extraction complete: 1 written, 0 skipped.\nNOT CONFIRMED — per-file subdirectory \"util-py\" created as spec requires; actual entries: ['util-py']\n",
+  "trigger_summary": "Spec requires per-file subdirectories (e.g., util-py/) but code was claimed to use flat directory; code actually implements the per-file subdirectory pattern correctly."
+}

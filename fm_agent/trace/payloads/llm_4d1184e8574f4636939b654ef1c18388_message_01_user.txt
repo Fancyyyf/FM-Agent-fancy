@@ -1,0 +1,73 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _wait_opencode_process(proc, command, stage, timeout_seconds=OPENCODE_TIMEOUT_SECONDS):
+Line 2:     try:
+Line 3:         return proc.wait(timeout=timeout_seconds), None
+Line 4:     except subprocess.TimeoutExpired:
+Line 5:         # A model connection that dies silently (e.g. through a forward proxy)
+Line 6:         # leaves opencode waiting forever. Kill it so callers' retry paths can
+Line 7:         # take over instead of the whole pipeline hanging.
+Line 8:         logging.warning(
+Line 9:             "opencode %s timed out after %ss, killing: %s",
+Line 10:             stage, timeout_seconds, command_display(command),
+Line 11:         )
+Line 12:         proc.terminate()
+Line 13:         try:
+Line 14:             exit_code = proc.wait(timeout=10)
+Line 15:         except subprocess.TimeoutExpired:
+Line 16:             proc.kill()
+Line 17:             exit_code = proc.wait()
+Line 18:         if not exit_code:
+Line 19:             exit_code = -15  # killed-on-timeout must never record as success
+Line 20:         return exit_code, f"timeout after {timeout_seconds}s"
+```
+
+Condition A (what the code actually does):
+The function `_wait_opencode_process` either returns a tuple `(exit_code, error_message)` or raises an unhandled exception.
+
+If it returns normally:
+- The process `proc` has been waited on and is no longer running (`proc.returncode is not None`).
+- The return value `exit_code` is an integer, and `error_message` is either `None` or a string.
+
+Two cases produce a return:
+1. The initial `proc.wait(timeout=timeout_seconds)` completes without raising `subprocess.TimeoutExpired`:
+   - `error_message == None`
+   - `exit_code` is the exit code of the process (the return value of that `wait()`).
+
+2. The initial `proc.wait(timeout=timeout_seconds)` raises `subprocess.TimeoutExpired`:
+   - A warning is logged with `stage`, `command`, and `timeout_seconds`.
+   - `proc.terminate()` is called, then `proc.wait(timeout=10)` is attempted:
+       a) If that wait completes, `raw_exit` is its return value.
+       b) If that wait also raises `subprocess.TimeoutExpired`, `proc.kill()` is called and followed by `proc.wait()` (no timeout), returning `raw_exit`.
+   - The final exit code is determined as:
+       `exit_code = -15 if raw_exit == 0 else raw_exit`
+   - `error_message == f"timeout after {timeout_seconds}s"`
+
+If an exception other than `subprocess.TimeoutExpired` occurs at any point (e.g., from `proc.wait`, `proc.terminate`, `proc.kill`), the function does not return and that exception propagates. In that scenario, the process may still be running and its state is unspecified.
+
+Condition B (what the specification requires):
+- Blocks until one of: the subprocess exits normally, or timeout_seconds
+    elapses since invocation of this function
+  - If the subprocess exits within the timeout: returns (exit_code, None)
+    where exit_code is the process exit code — 0 for success, a positive
+    integer for a non-zero exit
+  - If timeout_seconds elapses before the subprocess exits: sends SIGTERM to
+    the subprocess, waits for termination, and if the subprocess has still
+    not terminated after a grace period sends SIGKILL and waits again
+  - If the subprocess is forcibly terminated due to timeout and its final
+    exit code is zero or falsy, the returned exit code is -15, guaranteeing
+    that a timeout is never recorded as success
+  - If the subprocess is killed by a signal during the timeout handling, the
+    returned exit code is the negative of the signal number
+  - When a timeout occurs, returns a non-None error string describing the
+    timeout; when no timeout occurs, the error component is None
+  - After return, the subprocess is guaranteed to no longer be running
+
+Additional context:
+command_display(command) -> str
+Pre-condition: command is a list of strings forming a CLI invocation
+  Post-condition: returns a human-readable string representation of the
+    command, suitable for diagnostic and log messages
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

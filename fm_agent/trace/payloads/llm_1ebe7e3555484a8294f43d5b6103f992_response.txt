@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/home/user/proj', with /home/user/proj/extracted_functions existing, /home/user/proj not being the filesystem root, parent /home/user contains a subdirectory 'skip' that holds test.erl and no other .erl files exist, and 'skip' is in the global set _SKIP_DIRS.",
+  "offending_statements": "Line 11: if next(_iter_project_files(parent, {\".erl\"}), None) is not None:",
+  "reason": "The specification requires returning the parent directory whenever it contains at least one Erlang source file, but the code’s reliance on _iter_project_files ignores files inside directories whose names appear in _SKIP_DIRS. In the counterexample, the only .erl file resides in a skipped directory, causing the code to incorrectly return the original proj_dir instead of the parent, thereby violating the specification."
+}

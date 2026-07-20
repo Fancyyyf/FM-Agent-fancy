@@ -1,0 +1,79 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _handle_server_message(self, message: dict):
+Line 2:         method = message.get("method")
+Line 3:         params = message.get("params")
+Line 4:         if params is None:
+Line 5:             params = {}
+Line 6:         if method == "elp/status":
+Line 7:             self._status = params.get("status")
+Line 8:         if "id" not in message or not method:
+Line 9:             return
+Line 10:         if method == "workspace/configuration":
+Line 11:             result = [None for _ in params.get("items", [])]
+Line 12:         elif method == "workspace/workspaceFolders":
+Line 13:             result = [{"uri": self.root_uri, "name": os.path.basename(self.proj_dir)}]
+Line 14:         elif method == "workspace/applyEdit":
+Line 15:             result = {"applied": False}
+Line 16:         else:
+Line 17:             result = None
+Line 18:         self._send({"jsonrpc": "2.0", "id": message["id"], "result": result})
+```
+
+Condition A (what the code actually does):
+After the method _handle_server_message finishes execution, the following outcomes are possible:
+
+1. Normal termination (no exception):
+   a. If message has an 'id' key and a truthy 'method' (i.e., bool(method) is True), then a JSON-RPC response with that id and a computed result is transmitted via self._send. The result depends on method:
+      - 'workspace/configuration' → list of None elements with length equal to len(params.get('items', [])).
+      - 'workspace/workspaceFolders' → [{'uri': self.root_uri, 'name': os.path.basename(self.proj_dir)}].
+      - 'workspace/applyEdit' → {'applied': False}.
+      - any other method → None.
+   b. If message lacks an 'id' or the 'method' value is falsy (None, empty string, etc.), the method returns early without sending any response.
+   In both subcases, self._status is updated to params.get('status') if and only if method == 'elp/status' (params defaults to {} if originally None).
+
+2. Abnormal termination (exception raised):
+   If self._send raises an exception (e.g., due to communication failure), that exception propagates out of the method. Any state changes that occurred before the send attempt persist; in particular, self._status may have been updated if method was 'elp/status'. No response is successfully sent.
+
+Formal logic (using pre-state S and post-state S′):
+Let has_id ≡ ('id' in message). Let method_val ≡ message.get('method'). Let params_val ≡ message.get('params') if not None else {}.
+Define result as:
+  - [None for _ in params_val.get('items', [])]  if method_val = 'workspace/configuration',
+  - [{'uri': self.root_uri, 'name': os.path.basename(self.proj_dir)}] if method_val = 'workspace/workspaceFolders',
+  - {'applied': False} if method_val = 'workspace/applyEdit',
+  - None otherwise.
+Post-condition assertion:
+  ( (has_id ∧ method_val) ⇒ (a response with id=message['id'] and result was submitted to self._send) )
+  ∧ ( (¬has_id ∨ ¬method_val) ⇒ (no send was attempted) )
+  ∧ ( self′._status = (params_val.get('status') if method_val = 'elp/status' else self._status) )
+  ∧ ( if self._send raises an exception during the send attempt, then the method terminates with that exception and the response is not successfully transmitted, but the self._status update (if any) remains ).
+
+Condition B (what the specification requires):
+- When message lacks an "id" field or has a falsy "method" field (a
+    server notification), returns without sending a response, having processed
+    any side-effectful notification content
+  - When message contains a method whose name matches a known status-reporting
+    pattern, updates self._status to the value of the "status" key in the
+    message params, defaulting to None when the key is absent or params is
+    absent
+  - When message contains both a truthy "id" field and a truthy "method" field
+    (a server-initiated request), sends a JSON-RPC 2.0 response via the
+    client's communication channel:
+    * The response "id" field equals message["id"]
+    * The response "result" field has a value determined by the method's
+      category: configuration-query methods return a list whose length matches
+      the requested items count; folder-query methods return a list containing
+      a single workspace entry with the client's root URI and the base name of
+      the project directory; edit-request methods return a dict whose
+      application-related key is set to a falsy value; any unrecognized method
+      returns None
+
+Additional context:
+self._send(self, data: dict) -> None
+Pre-condition: data is a dict representing a JSON-RPC message to be
+    serialized and transmitted to the LSP backend
+  Post-condition: The message is transmitted to the backend; raises an
+    exception on communication failure
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

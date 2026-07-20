@@ -1,0 +1,3 @@
+{
+  "post_condition": "Returns a list of tuples (name: str, start_idx: int, end_idx: int) for each function found in the JavaScript source file, where start_idx and end_idx are 0-indexed inclusive line numbers; or None if the codegraph backend is unavailable (CodeGraphExtractor.from_proj_dir returns None) or the backend does not index the given file. No side effects. Formally: let r be the return value. r = None if CodeGraphExtractor.from_proj_dir(proj_dir) is None; otherwise, r = cg.get_function_spans('javascript', filepath) where cg is the returned codegraph instance, so r is either None or a list of tuples (name, s, e) with s ≤ e, non-negative integers."
+}

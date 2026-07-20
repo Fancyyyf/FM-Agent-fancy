@@ -1,0 +1,52 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _load_json_edges(text: str, source_path: str) -> list[CallEdge]:
+Line 2:     try:
+Line 3:         data = json.loads(text)
+Line 4:     except json.JSONDecodeError as exc:
+Line 5:         raise ValueError(f"{source_path}: invalid JSON: {exc}") from exc
+Line 6:     if not isinstance(data, dict):
+Line 7:         raise ValueError(f"{source_path}: expected JSON object with an 'edges' list")
+Line 8:     if not isinstance(data.get("edges"), list):
+Line 9:         raise ValueError(f"{source_path}: expected an 'edges' list")
+Line 10:     edges = []
+Line 11:     for idx, item in enumerate(data["edges"], start=1):
+Line 12:         item_source = f"{source_path}:edges[{idx}]"
+Line 13:         if not isinstance(item, dict):
+Line 14:             raise ValueError(f"{item_source}: expected edge object")
+Line 15:         edges.append(_edge_from_mapping(item, item_source))
+Line 16:     return edges
+```
+
+Condition A (what the code actually does):
+The function either raises a ValueError or returns a list of CallEdge objects. If ValueError is raised, the exception's message starts with 'source_path' and indicates the specific violation: if text cannot be decoded as JSON it wraps the json.JSONDecodeError; if the decoded data is not a dict it says 'expected JSON object with an 'edges' list'; if data is a dict but data.get('edges') is not a list it says 'expected an 'edges' list'; if any element of the 'edges' list is not a dict it says 'expected edge object'. If the function returns normally, let D = json.loads(text) (which must succeed). Then D is a dict containing an 'edges' key whose value is a list L (otherwise an earlier ValueError would have been raised). The returned list R satisfies len(R) = len(L) and for every index i in [0, len(L)-1], R[i] = _edge_from_mapping(L[i], f"{source_path}:edges[{i+1}]"). Moreover, each R[i] meets the post-condition of _edge_from_mapping: R[i].callee.fqn is a non‑empty string, R[i].caller has at least one of fqn or callsite_names non‑empty, and R[i].source is set from the mapping's evidence or the source context. Formal logic: (text ∉ valid JSON → ValueError(msg starting with source_path and containing 'invalid JSON')) ∧ (valid JSON ∧ (data := json.loads(text), data ∉ dict) → ValueError(msg starting with source_path and 'expected JSON object with an \'edges\' list')) ∧ (valid JSON ∧ data ∈ dict ∧ (data.get('edges') ∉ list) → ValueError(msg starting with source_path and 'expected an \'edges\' list')) ∧ (valid JSON ∧ data ∈ dict ∧ L := data['edges'] ∈ list ∧ (∃ i∈[0,|L|-1] such that L[i] ∉ dict) → ValueError(msg starting with f"{source_path}:edges[{i+1}]" and 'expected edge object')) ∧ (valid JSON ∧ data ∈ dict ∧ L := data['edges'] ∈ list ∧ (∀ i∈[0,|L|-1], L[i] ∈ dict) → function returns R with R = [ _edge_from_mapping(L[i], f"{source_path}:edges[{i+1}]") for i in range(|L|) ] and ∀ i : (R[i].callee.fqn ≠ "") ∧ (R[i].caller.fqn ≠ "" ∨ R[i].caller.callsite_names ≠ []) ∧ R[i].source is properly derived).
+
+Condition B (what the specification requires):
+- When text is valid JSON that parses to an object containing an "edges"
+    key whose value is a list, returns a list of CallEdge objects, one per
+    element of that list, in the same order as the "edges" array
+  - When the "edges" list is empty, returns an empty list
+  - Every returned CallEdge has a callee whose fqn is a non-empty string
+  - Every returned CallEdge has a caller object where at least one of fqn
+    or callsite_names is non-empty
+  - When text is not valid JSON, raises ValueError with a message that
+    includes source_path
+  - When the parsed JSON value is not a dict, raises ValueError with a
+    message that includes source_path
+  - When the parsed dict does not contain an "edges" key whose value is a
+    list, raises ValueError with a message that includes source_path
+  - When any element of the "edges" list is not a dict, raises ValueError
+    with a message that includes source_path and the 1-based index of
+    the invalid element within the "edges" array
+
+Additional context:
+_edge_from_mapping(mapping, source) -> CallEdge
+Pre-condition: mapping is a dict whose keys conform to the extra-edge JSON
+    schema (at minimum defining caller and callee fields); source is a
+    string identifying the location for error messages
+  Post-condition: Returns a CallEdge where callee.fqn is a non-empty string,
+    the caller has at least one of fqn or callsite_names non-empty, and
+    source is set from the mapping's evidence or the source context
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

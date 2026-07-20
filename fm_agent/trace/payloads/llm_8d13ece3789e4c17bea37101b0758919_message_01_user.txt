@@ -1,0 +1,27 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _is_under_submodules(rel_path, submodules):
+Line 2:     """Return whether rel_path is inside one of the selected submodule dirs."""
+Line 3:     if not submodules:
+Line 4:         return True
+Line 5:     norm = rel_path.replace("\\", "/")
+Line 6:     while norm.startswith("./"):
+Line 7:         norm = norm[2:]
+Line 8:     return any(norm == sub or norm.startswith(sub + "/") for sub in submodules)
+```
+
+Condition A (what the code actually does):
+The function returns True if and only if either 'submodules' is logically false (None or empty iterable), or after normalizing 'rel_path' by replacing every occurrence of '\' with '/' and then repeatedly stripping any leading './', the resulting normalized string is equal to a string in 'submodules' or starts with that string followed by '/'. Returns False otherwise. Neither 'rel_path' nor 'submodules' are modified.
+
+Condition B (what the specification requires):
+- Returns True when submodules is None or empty, regardless of rel_path value
+  - When submodules is non-empty: normalizes rel_path by replacing every backslash
+    ("\\") with a forward slash ("/") and stripping any leading "./" prefix;
+    returns True if the normalized path is exactly equal to any element of
+    submodules OR if the normalized path begins with any element of submodules
+    followed by "/", and False otherwise
+  - The function performs no filesystem I/O and has no side effects
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

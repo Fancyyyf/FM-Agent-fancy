@@ -1,0 +1,11 @@
+{
+  "id": "src--verification-py--streaming_reasoner",
+  "source_file": "src/verification-py/streaming_reasoner.py",
+  "function_name": "streaming_reasoner",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--verification-py--streaming_reasoner.py",
+  "detail_file": "fm_agent/bug_validation/src--verification-py--streaming_reasoner.md",
+  "probe_stdout": "Functions pending verification: 2\nCONFIRMED — function did not exit within 5s timeout; spec B.6 requires immediate exit when spec_procs are all done and not all expected files are ready, but the code on line 209 waits for reasoning_futures to drain first (extra guards: `not reasoning_futures and not validation_futures`)",
+  "trigger_summary": "streaming_reasoner delays early-exit when spec_procs complete and files are unready by requiring reasoning_futures and validation_futures to also be empty (line 209), violating spec B.6 which requires immediate exit with a warning."
+}

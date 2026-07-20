@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/home/user/erlang_project' containing files: 'main.erl', 'include/header.hrl', 'custom.config' (where 'custom.config' is a project-level build configuration file placed at the project root). The predefined list `_PROJECT_CONFIG_FILES` does not include 'custom.config'.",
+  "offending_statements": "Line 4:     paths.extend(\n        Line 5:         os.path.join(root, name)\n        Line 6:         for name in _PROJECT_CONFIG_FILES\n        Line 7:         if os.path.isfile(os.path.join(root, name))\n        Line 8:     )",
+  "reason": "The specification requires one record per project-level build configuration file that exists at the project root. The code only includes those named in `_PROJECT_CONFIG_FILES`, ignoring any other configuration file that may be present. This results in missing entries in the returned file_records and a fingerprint that does not change when those files change, violating the \"if and only if\" condition."
+}

@@ -1,0 +1,31 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _safe_filename(name: str, ext: str) -> str:
+Line 2:     """Return a safe filename from a function name and extension.
+Line 3:     Replaces "/" (directory separator) with "_" and falls back to
+Line 4:     "_function" for empty names.  Does *not* strip leading or trailing
+Line 5:     underscores so that names like __init__ and _private stay consistent
+Line 6:     with codegraph call-edge keys and FQN resolution.
+Line 7:     """
+Line 8:     safe = name.replace('/', '_')
+Line 9:     if not safe:
+Line 10:         safe = "_function"
+Line 11:     return f"{safe}.{ext}"
+```
+
+Condition A (what the code actually does):
+The function returns a string constructed as follows: compute `safe = name.replace('/', '_')`. If `safe` is empty (i.e., an empty string), set `prefix = '_function'`; otherwise `prefix = safe`. The returned value is `f'{prefix}.{ext}'`. Thus the result is always a non‑empty filename prefix followed by a dot and the original extension. Neither `name` nor `ext` are modified. No exceptions are thrown. Formal logic: result = (name.replace('/', '_') if name.replace('/', '_') != '' else '_function') + '.' + ext.
+
+Condition B (what the specification requires):
+- Returns a string in the form "<safe_name>.<ext>", where safe_name is derived from
+    name and ext is used verbatim
+  - When name is non-empty after the replacement described below, safe_name is name
+    with every occurrence of the "/" character replaced by "_"
+  - When name is empty or consists solely of "/" characters (becoming an empty string
+    after replacement), safe_name is the literal string "_function"
+  - Leading and trailing underscore characters in name are preserved unchanged in
+    safe_name
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

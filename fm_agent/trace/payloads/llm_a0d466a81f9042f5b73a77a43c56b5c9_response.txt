@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "work_dir = '/project/src' (valid directory), list_staged_domain_knowledge_relpaths returns ['notes.md'], and the file /project/notes.md exists with content 'hello'. The code opens the file, reads 'hello', and returns a string that begins with 'User-provided domain knowledge:\\nUse these Markdown notes as additional context for intended behavior, terminology, data encodings, and invariants.\\n\\n### notes.md\\nhello' instead of just the concatenated contents '### notes.md\\nhello'.",
+  "offending_statements": "Line 6: sections = [\nLine 7:         \"User-provided domain knowledge:\",\nLine 8:         \"Use these Markdown notes as additional context for intended behavior, \"\nLine 9:         \"terminology, data encodings, and invariants.\",\nLine 10:         \"\",\nLine 11:     ]",
+  "reason": "The specification requires the output to contain only the concatenated file contents with headings, without any extra preamble. The code incorrectly adds a 'User-provided domain knowledge:' header that is not part of the specification, producing an incorrect output for any non-empty list of staged files."
+}

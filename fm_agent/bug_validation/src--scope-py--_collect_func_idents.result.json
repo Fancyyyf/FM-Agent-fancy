@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_collect_func_idents",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/scope-py/_collect_func_idents.py",
+  "function_name": "_collect_func_idents",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_collect_func_idents.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_collect_func_idents.md",
+  "probe_stdout": "CONFIRMED — 3-letter word \"bar\" not in body_words (spec requires ≥3 chars, regex uses ≥4).\n  body_words: []\n  \"bar\" present: False\n  \"baz\" present: False\n  idents: ['bar', 'baz', 'x']\n",
+  "trigger_summary": "body_words regex uses {4,} minimum characters but spec requires ≥3 characters; 3-letter words like 'bar' and 'baz' are silently excluded."
+}

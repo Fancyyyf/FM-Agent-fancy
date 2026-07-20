@@ -1,0 +1,31 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _parse_iso(ts):
+Line 2:     if not ts:
+Line 3:         return None
+Line 4:     if ts.endswith("Z"):
+Line 5:         ts = ts[:-1] + "+00:00"
+Line 6:     try:
+Line 7:         return datetime.fromisoformat(ts)
+Line 8:     except Exception:
+Line 9:         return None
+```
+
+Condition A (what the code actually does):
+If the input 'ts' is falsy (i.e., evaluates to False in a boolean context), the function returns None. Otherwise, 'ts' is a non-empty string. Define t = (ts[:-1] + '+00:00') if ts ends with 'Z' else ts. The function attempts to call datetime.fromisoformat(t). If that call succeeds, the return value is the resulting datetime.datetime object; if any Exception is raised, the return value is None. No non-local state is modified. Formal post-condition: let R be the return value. R = None if (not ts) or (isinstance(ts, str) and datetime.fromisoformat(t) raises an Exception), else R = datetime.fromisoformat(t), where t = (ts[:-1] + '+00:00') if (isinstance(ts, str) and ts.endswith('Z')) else ts. All other program state is unchanged.
+
+Condition B (what the specification requires):
+- Returns None when ts is falsy.
+  - When ts is a non-empty string, attempts to interpret it as an
+    ISO 8601 timestamp.  A trailing "Z" (UTC designator) is accepted
+    and treated equivalently to "+00:00".
+  - On successful parse, returns a timezone-aware datetime object
+    whose components (year, month, day, hour, minute, second,
+    microsecond, UTC offset) match the values expressed in ts
+    according to ISO 8601 rules.
+  - Returns None when ts cannot be parsed as an ISO 8601 timestamp
+    (malformed format, invalid date/time values, etc.).
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Assume record.error is initially None. Suppose _wait_opencode_process returns (0, ''), i.e., an empty string for the error. According to the specification, record.error should remain None. However, the condition `if error or record.error is None:` evaluates as `if '' or True` → `True`, so record.error is set to '' (empty string). This violates the requirement that record.error stays None if an empty error string is produced and record.error was None.",
+  "offending_statements": "Line 8: if error or record.error is None:",
+  "reason": "The condition `error or record.error is None` incorrectly forces an update when an empty error string is produced and record.error is None. The empty string is falsy, so the if-guard becomes True because record.error is None, leading to record.error being assigned the empty string. The specification explicitly states that when an empty or None error string is produced and record.error is None, record.error must remain None."
+}

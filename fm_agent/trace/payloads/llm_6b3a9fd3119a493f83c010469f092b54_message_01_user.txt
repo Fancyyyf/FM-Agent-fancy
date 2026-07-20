@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a string representing a filesystem path to a project directory
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all Rust files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("rust", proj_dir) if cg else {}
+```
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string representing a valid project directory path
+  Post-condition: Returns a configured CodeGraphExtractor instance for the project when the
+    backend initializes successfully; returns None when the backend cannot be initialized
+
+CodeGraphExtractor.get_functions_by_file(lang, proj_dir) -> dict
+Pre-condition: lang is a recognized language key string and proj_dir is the project root path
+  Post-condition: Returns a dictionary mapping each absolute source-file path (str) to a list of
+    (function_name, function_body) tuples for all source files of the given language
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

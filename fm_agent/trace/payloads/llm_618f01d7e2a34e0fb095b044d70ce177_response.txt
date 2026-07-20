@@ -1,0 +1,3 @@
+{
+  "post_condition": "If the function terminates normally, it returns a dictionary d: if the CodeGraphExtractor initialization from proj_dir failed (returned a falsy value), then d == {}; otherwise, d == cg.get_functions_by_file('cpp', proj_dir), i.e., a mapping from each absolute file path of a C++ source file (.cpp, .cc, .cxx) under proj_dir to a list of (function_name: str, body: str) tuples for all top-level functions in that file. If an exception is raised (e.g., due to an inaccessible directory, permission error, or internal error), the exception propagates and no return value is produced."
+}

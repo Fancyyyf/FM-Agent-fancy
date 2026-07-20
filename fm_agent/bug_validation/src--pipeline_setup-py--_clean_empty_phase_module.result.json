@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_clean_empty_phase_module",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_clean_empty_phase_module",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_clean_empty_phase_module.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_clean_empty_phase_module.md",
+  "probe_stdout": "CONFIRMED — Phase 1 was removed but is missing from renumbered dict. renumbered={2: 1}, removed_phases=[1]",
+  "trigger_summary": "When phases are removed from phases.json, the renumbered dict only contains surviving phases (e.g. {2: 1}) instead of all original phases as the spec requires."
+}

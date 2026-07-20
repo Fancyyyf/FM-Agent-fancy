@@ -1,0 +1,3 @@
+{
+  "post_condition": "The return value is a dictionary. If the analysis of the project directory is successful, the dictionary maps absolute file paths (strings) of Erlang files to lists of (function_id, body) tuples; otherwise, it returns an empty dictionary. Formally, let `R` be the return value. Then `isinstance(R, dict)` is true. For all keys `k` in `R`, `k` is a string representing an absolute file path. For each `k`, `R[k]` is a list of tuples, where each tuple is of type `(str, str)`. The condition `R == {}` holds if and only if the analysis for `proj_dir` could not be performed (i.e., no Erlang sources or tool unavailable); otherwise, `R` is non-empty and contains all extracted function definitions from the project."
+}

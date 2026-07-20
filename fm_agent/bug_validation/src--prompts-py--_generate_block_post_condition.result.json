@@ -1,0 +1,11 @@
+{
+  "id": "src--prompts-py--_generate_block_post_condition",
+  "source_file": "src/prompts-py/_generate_block_post_condition.py",
+  "function_name": "_generate_block_post_condition",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--prompts-py--_generate_block_post_condition.py",
+  "detail_file": "fm_agent/bug_validation/src--prompts-py--_generate_block_post_condition.md",
+  "probe_stdout": "CONFIRMED — actual: 'ValueError: Simulated LLM failure: could not determine post-condition from given inputs' | expected: None",
+  "trigger_summary": "_generate_block_post_condition propagates exceptions from _llm_json_call instead of returning None when post-condition cannot be determined"
+}

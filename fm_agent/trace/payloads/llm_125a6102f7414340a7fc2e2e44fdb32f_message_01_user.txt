@@ -1,0 +1,51 @@
+Programming language: Python
+
+Pre-condition:
+- lines is a list of strings representing source code lines with line endings stripped
+  - start_idx is a 0-based index into lines satisfying 0 <= start_idx < len(lines)
+
+Code block:
+```python
+Line 1: def _find_brace_end(lines, start_idx):
+Line 2:     """Find the line index of the closing '}' that matches the first '{' at or after start_idx.
+Line 3:     Handles string/char literals and // comments. Braces belonging to Go
+Line 4:     anonymous composite types (`interface{...}` / `struct{...}`, possibly
+Line 5:     spanning multiple lines) are tracked separately so they are not mistaken
+Line 6:     for the function body.
+Line 7:     Returns the line index of the closing brace, or len(lines)-1 if unmatched.
+Line 8:     """
+Line 9:     depth = 0
+Line 10:     found_open = False
+Line 11:     # Depth of braces inside an anonymous composite type; these do not count
+Line 12:     # toward the function body. `pending_type_brace` means an `interface`/
+Line 13:     # `struct` keyword was seen and its opening `{` is expected next.
+Line 14:     type_depth = 0
+Line 15:     pending_type_brace = False
+Line 16:     for i in range(start_idx, len(lines)):
+Line 17:         line = lines[i]
+Line 18:         j = 0
+Line 19:         while j < len(line):
+Line 20:             ch = line[j]
+Line 21:             # Skip string literals
+Line 22:             if ch == '"':
+Line 23:                 j += 1
+Line 24:                 while j < len(line):
+Line 25:                     if line[j] == '\\':
+Line 26:                         j += 2
+Line 27:                         continue
+Line 28:                     if line[j] == '"':
+Line 29:                         j += 1
+Line 30:                         break
+Line 31:                     j += 1
+Line 32:                 continue
+Line 33:             # Skip char literals
+Line 34:             if ch == "'":
+Line 35:                 j += 1
+Line 36:                 while j < len(line):
+Line 37:                     if line[j] == '\\':
+Line 38:                         j += 2
+Line 39:                         continue
+Line 40:                     if line[j] == "'":
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

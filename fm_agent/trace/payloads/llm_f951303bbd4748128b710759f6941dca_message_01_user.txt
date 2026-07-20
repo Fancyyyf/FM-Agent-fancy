@@ -1,0 +1,40 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _collect_changed_phases(ensure_changes, *change_sets):
+Line 2:     """Collect the phase numbers whose source-file composition changed during
+Line 3:     post-processing.
+Line 4:     Both ``_ensure_source_files_in_phases`` (which force-adds source files to a
+Line 5:     phase's first module), ``_filter_phases_to_submodules`` (which strips
+Line 6:     out-of-scope files), and ``_deduplicate_phases`` (which strips duplicate source
+Line 7:     files from modules) can change which files a phase owns, so its domain-context
+Line 8:     types file (phase_NN_types.txt) may no longer match. This returns the set of
+Line 9:     affected phase numbers so the caller can have those files regenerated (see
+Line 10:     ``_sync_domain_context``).
+Line 11:     Dedup no longer renumbers phases, so both sources speak the same phase
+Line 12:     numbering (the one in the freshly written phases.json).
+Line 13:     """
+Line 14:     phases = set()
+Line 15:     for phase_num in ensure_changes.get("augmented", {}):
+Line 16:         if phase_num is not None:
+Line 17:             phases.add(phase_num)
+Line 18:     for changes in change_sets:
+Line 19:         for m in changes.get("modified_modules", []):
+Line 20:             phase_num = m.get("phase")
+Line 21:             if phase_num is not None:
+Line 22:                 phases.add(phase_num)
+Line 23:     return phases
+```
+
+Condition A (what the code actually does):
+The function returns a set of distinct non-None phase numbers (integers, as per the pre‑condition) collected from two sources. 1) Every key k in ensure_changes["augmented"] (if the key exists and the value is a mapping) for which k is not None is included. 2) For every change set c in *change_sets, and for every module m in c.get("modified_modules", []), the value m.get("phase") is included if it is not None. Formally, if we denote A = ensure_changes.get("augmented", {}) and for each c ∈ change_sets, M(c) = c.get("modified_modules", []), then the returned set is: {k | k ∈ A.keys() ∧ k ≠ None} ∪ {m.get("phase") | c ∈ change_sets, m ∈ M(c) ∧ m.get("phase") ≠ None}.
+
+Condition B (what the specification requires):
+- Returns a set containing every non-None integer that is either:
+    a) a key of ensure_changes["augmented"], or
+    b) the value of the "phase" key from any entry in "modified_modules" across all change_sets.
+  - Each phase number appears at most once in the result (duplicates are collapsed).
+  - Returns an empty set if no non-None phase numbers are found across all sources.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

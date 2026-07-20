@@ -1,0 +1,38 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _edge_from_mapping(item: dict, source: str) -> CallEdge:
+Line 2:     caller = _parse_caller(item.get("caller"), source)
+Line 3:     callee = _parse_callee(item.get("callee"), source)
+Line 4:     return CallEdge(
+Line 5:         caller=caller,
+Line 6:         callee=callee,
+Line 7:         source=_edge_source(item, source),
+Line 8:     )
+```
+
+Condition A (what the code actually does):
+If item.get("caller") is a dict that contains conforming fields (i.e., _parse_caller would succeed without raising an error), and item.get("callee") is a dict that contains a conforming "fqn" field (i.e., _parse_callee would succeed without raising an error), then the function returns a CallEdge object with caller = the CallerSelector produced by _parse_caller (where at least one of fqn or callsite_names is non-empty), callee = the CalleeTarget produced by _parse_callee (whose fqn is a non-empty string), and source = _edge_source(item, source) (a string that incorporates evidence from item if present, otherwise equals source). Otherwise, if either caller_data is missing, not a dict, or lacks required fields, or callee_data is missing, not a dict, or lacks a valid fqn, the function raises an exception whose error message includes the source string. Formal logic: Given item ∈ Dict and source ∈ String, define P_caller(caller_data, source) ≡ (caller_data ∈ Dict ∧ _parse_caller(caller_data, source) succeeds ∧ resulting CallerSelector has (fqn ≠ "" ∨ callsite_names ≠ [])). Define P_callee(callee_data, source) ≡ (callee_data ∈ Dict ∧ _parse_callee(callee_data, source) succeeds ∧ resulting CalleeTarget has fqn ≠ ""). Then post-condition: (P_caller(item.get("caller"), source) ∧ P_callee(item.get("callee"), source)) ⇒ result = CallEdge(caller=_parse_caller(item.get("caller"), source), callee=_parse_callee(item.get("callee"), source), source=_edge_source(item, source)); (¬P_caller(item.get("caller"), source) ∨ ¬P_callee(item.get("callee"), source)) ⇒ an exception is raised and its message contains source.
+
+Condition B (what the specification requires):
+- Returns a CallEdge constructed from the caller, callee, and evidence data in item
+  - The returned CallEdge's callee.fqn is a non-empty string
+  - The returned CallEdge's caller has at least one of fqn or callsite_names non-empty
+  - The returned CallEdge's source is a string derived from the item's evidence entries when present, or from source otherwise
+  - When item does not contain a well-formed "caller" key with at least one non-empty field, raises an error whose message includes source
+  - When item does not contain a well-formed "callee" key with a non-empty fqn, raises an error whose message includes source
+
+Additional context:
+_parse_caller(caller_data, source) -> CallerSelector
+Pre-condition: caller_data is the value of item["caller"] (a dict or None); source is a string
+  Post-condition: Returns a CallerSelector where at least one of fqn or callsite_names is non-empty when caller_data is a dict containing conforming fields; raises an error whose message includes source when caller_data is missing, is not a dict, or lacks the required fields
+
+_parse_callee(callee_data, source) -> CalleeTarget
+Pre-condition: callee_data is the value of item["callee"] (a dict or None); source is a string
+  Post-condition: Returns a CalleeTarget whose fqn is a non-empty string when callee_data is a dict containing a conforming "fqn" field; raises an error whose message includes source when callee_data is missing, is not a dict, or lacks a valid fqn
+
+_edge_source(item, source) -> str
+Pre-condition: item is a dict; source is a string
+  Post-condition: Returns a string identifying the origin of the edge; when item contains evidence data, the returned string incorporates that evidence; otherwise the returned string equals source
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

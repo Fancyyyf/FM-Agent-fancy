@@ -1,0 +1,57 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _fqn_for(file_path: str, name: str) -> str:
+Line 2:     """Build the FQN of a function, identical to generate_topdown_layers._file_to_fqn.
+Line 3:     The extracted layout for a source file ``<dir>/<base>.<ext>`` is
+Line 4:     ``<dir>/<base>-<ext>/<name>.<ext>``, whose FQN is ``dir::base-ext::name``.
+Line 5:     Constructing the same string here lets get_call_edges emit edges keyed by the
+Line 6:     exact same FQN the call-graph builder assigns to each extracted function, so
+Line 7:     codegraph's precisely-resolved caller/callee node identity is preserved
+Line 8:     instead of being collapsed to a bare name.
+Line 9:     """
+Line 10:     norm = file_path.replace(os.sep, "/")
+Line 11:     d = os.path.dirname(norm)
+Line 12:     base = os.path.basename(norm)
+Line 13:     last_dot = base.rfind(".")
+Line 14:     dashed = base[:last_dot] + "-" + base[last_dot + 1:] if last_dot > 0 else base
+Line 15:     parts = [p for p in d.split("/") if p]
+Line 16:     parts += [dashed, name]
+Line 17:     return "::".join(parts)
+```
+
+Condition A (what the code actually does):
+The function returns a string `fqn` defined as follows:
+
+Let `norm = file_path.replace(os.sep, '/')`
+Let `d = os.path.dirname(norm)`
+Let `base = os.path.basename(norm)`
+Let `last_dot = base.rfind('.')`
+If `last_dot > 0`:
+    `dashed = base[:last_dot] + '-' + base[last_dot+1:]`
+Else:
+    `dashed = base`
+Let `parts = [p for p in d.split('/') if p] + [dashed, name]`
+Then `fqn = '::'.join(parts)`.
+
+No side effects; the function always returns this value for given valid inputs (assuming `os.sep` and `os.path` functions behave standardly).
+
+Condition B (what the specification requires):
+- Returns a fully-qualified function name (FQN) string whose components
+    are separated by "::"
+  - The FQN consists of, in order: the non-empty directory components of
+    file_path (excluding the source filename), a single file-derived
+    component, and name
+  - The file-derived component is obtained from the filename portion of
+    file_path: if the filename contains at least one "." after a non-empty
+    prefix, the last "." is replaced by "-"; otherwise the filename is
+    used unchanged
+  - Directory components are extracted independently of OS path separator
+    convention and empty components (from leading or consecutive
+    separators) are excluded
+  - The returned FQN is deterministic and identical to the FQN that the
+    call-graph builder computes for the extracted function file
+    corresponding to the same (file_path, name) pair
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

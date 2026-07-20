@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/reasoner-py/_has_terminating_statement.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns True when every syntactically reachable execution path through `block`\n    ends in an unconditional termination statement (return, raise, system exit,\n    or an equivalent language-specific construct) before reaching the end of the block\n  - Returns False when there exists at least one syntactically reachable execution\n    path through `block` that can fall through to subsequent code without terminating",
+    "actual_behavior": "The function returns a boolean value indicating whether the input `block` string contains a terminating statement pattern. Formally: let `default_regex = r'\\b(return\\b|exit\\s*\\(|raise\\s|throw\\s|abort\\s*\\()'`. Let `pattern` be the value of `_TERMINATING_PATTERNS.get(language.lower())` if that value is truthy (i.e., not None and not empty); otherwise, `pattern = default_regex`. The return value is `True` if and only if `re.search(pattern, block)` returns a non-`None` match object, and `False` otherwise. No side effects occur; the program state is identical except that the function returns this value. This post-condition holds for all execution paths, as there are no early returns or exceptions.",
+    "code_evidence": "Line 5: return re.search(pattern, block) is not None",
+    "trigger_condition": "The specification requires returning True only when every syntactically reachable path ends in a terminating statement. The code returns True if any terminating statement exists in the block, ignoring non-terminating paths. For the counterexample, the else branch falls through, so the block does not satisfy 'every path terminates', yet the regex finds 'return' and the code returns True, violating the required False."
+  }
+}

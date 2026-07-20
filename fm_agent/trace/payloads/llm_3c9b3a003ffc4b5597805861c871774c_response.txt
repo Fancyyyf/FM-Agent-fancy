@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a rich Panel object r with title 'Stages' and border_style 'cyan'. The renderable of r is a Table t with header row ['Stage', '✓', '⚠ mismatch', '✗ error', 'fmt']. For each stage string st in the iterable STAGES, t contains a row consisting of the elements: st, str(c_s), str(c_m), str(c_e), str(c_f), where counts = state.stage_counts.get(st, {}) and c_s = counts.get('success', 0), c_m = counts.get('mismatch', 0), c_e = counts.get('error', 0), c_f = counts.get('format_error', 0). The stage_counts attribute of state is not modified."
+}

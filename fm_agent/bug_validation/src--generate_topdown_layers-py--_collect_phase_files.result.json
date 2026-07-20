@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_collect_phase_files",
+  "source_file": "fm_agent/extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py",
+  "function_name": "_collect_phase_files",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_collect_phase_files.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_collect_phase_files.md",
+  "probe_stdout": "CONFIRMED — actual count: 0 | expected count: 1",
+  "trigger_summary": "The condition `last_dot > 0` skips '.' to '-' replacement when a source file basename has a leading dot (e.g., .hiddenfile), causing the function to look in extracted_functions/.hiddenfile instead of extracted_functions/-hiddenfile and miss files."
+}

@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for JavaScript."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("javascript") if cg else None
+```
+
+Condition A (what the code actually does):
+The function returns None if CodeGraphExtractor.from_proj_dir(proj_dir) returns None (i.e., the codegraph backend is not available or cannot index the project); otherwise, it returns a dictionary where each key is a tuple (caller_stem, caller_module) representing a caller and each value is a set of callee stems (strings) statically referenced by that caller in the JavaScript source files of proj_dir.
+
+Condition B (what the specification requires):
+- Returns None when the codegraph backend cannot be constructed for the project.
+  - Otherwise returns a dict whose keys are caller identifiers and whose values are sets of
+    callee identifier stems that the caller statically references.
+  - Every value set contains only non-empty string stems.
+  - The returned dict includes every static call relationship detected among JavaScript
+    source files within the project.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a valid path to the project root.
+  Post-condition: Returns a configured codegraph extractor instance, or None if the
+    codegraph backend is not available or cannot index the project.
+
+cg.get_call_edges(language_key: str) -> dict
+Pre-condition: cg is a successfully constructed CodeGraphExtractor; language_key is a
+    recognized language identifier.
+  Post-condition: Returns a dict mapping each detected caller to the set of callees it
+    statically references within source files for the given language.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

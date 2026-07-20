@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a string path to an existing project directory
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for C."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("c") if cg else None
+```
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a path to a project directory
+  Post-condition: Returns an initialized CodeGraphExtractor when the C codegraph
+    backend can be constructed; returns None when the backend is unavailable
+
+CodeGraphExtractor.get_call_edges("c") -> dict
+Pre-condition: The instance is a valid, initialized codegraph extractor for C
+  Post-condition: Returns a dict mapping each fully-qualified caller function name
+    to the set of fully-qualified callee function names it directly invokes
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

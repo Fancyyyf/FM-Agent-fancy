@@ -1,0 +1,162 @@
+# [SPEC]
+# Unit: src/incremental_reasoner-py/_collect_changed_functions.py
+#
+# _collect_changed_functions(proj_dir, old_commit_id, submodules=None) -> dict
+#
+# Pre-condition:
+#   - proj_dir is a directory path containing a git repository
+#   - old_commit_id is a valid commit identifier in that repository
+#   - submodules is None or a list of subdirectory paths relative to proj_dir
+#
+# Post-condition:
+#   - Returns a dict mapping absolute file paths (str) to change-category dicts, each with
+#     keys "added", "removed", and "modified" whose values are sorted lists of function
+#     name strings.
+#   - A source file is considered only when its extension maps to a recognized key in
+#     EXT_TO_LANG, it is not classified as a test file, it is not under the fm_agent
+#     workspace directory, and — when submodules is provided — it resides under one of the
+#     specified subdirectory paths.
+#   - For a file present in the working tree but absent from old_commit_id (including
+#     untracked files): every function name extracted from the current version appears
+#     under "added"; "removed" and "modified" are empty lists.
+#   - For a file present at old_commit_id but absent from the working tree: every function
+#     name extracted from the old version appears under "removed"; "added" and "modified"
+#     are empty lists.
+#   - For a file present in both the old commit and the working tree: a function name
+#     extracted from the current tree but absent from the old tree is "added"; a function
+#     name extracted from the old tree but absent from the current tree is "removed"; a
+#     function name extracted from both trees whose source text differs is "modified".
+#   - Function identity is determined by extraction-result key, not by source text
+#     equivalence.
+#   - Source text comparison for "modified" uses exact string equality on the extracted
+#     function body.
+#   - Files with empty "added", "removed", and "modified" lists are excluded from the
+#     returned dict.
+#   - Raises subprocess.CalledProcessError when proj_dir is not a git repository or
+#     old_commit_id does not identify a valid commit reachable from the repository.
+# [SPEC]
+
+# [INFO]
+# extract_functions_from_file(filepath, lang_key) -> iterable[(str, str)]
+#   Pre-condition: filepath is a path to an existing source file; lang_key is a key
+#     recognized by the extraction framework.
+#   Post-condition: Returns an iterable of (function_name, source_text) pairs for every
+#     extractable function body in the file. Each source_text value is the full function
+#     definition source as a string.
+# [SPLIT]
+# _is_test_file(rel_path) -> bool
+#   Pre-condition: rel_path is a relative file path string.
+#   Post-condition: Returns True when rel_path identifies a test file according to naming
+#     conventions or directory pattern heuristics; returns False otherwise.
+# [SPLIT]
+# _is_under_submodules(rel_path, submodules) -> bool
+#   Pre-condition: rel_path is a relative file path string; submodules is None or a list of
+#     subdirectory path strings.
+#   Post-condition: Returns True when submodules is None, or when rel_path's directory
+#     prefix matches a member of submodules; returns False otherwise.
+# [INFO]
+
+def _collect_changed_functions(proj_dir, old_commit_id, submodules=None):
+    """
+    Determine which functions changed between commit old_commit_id and the current working
+    tree under proj_dir, so the incremental pipeline only re-analyzes what actually moved.
+
+    Only source files whose extension is in EXT_TO_LANG are considered; test files (per
+    _is_test_file), anything under the fm_agent work dir, and files outside submodules
+    when a submodule scope is provided are ignored. For each candidate file, functions are
+    extracted from both the old (old_commit_id) version and the current working-tree
+    version using the same parser as extract.py, then compared by source text.
+
+    Returns a dict mapping each changed file's absolute path to a dict with keys "added",
+    "removed", and "modified", each a sorted list of function names. Files with no
+    detectable function-level change are omitted; a file that did not exist at
+    old_commit_id reports all of its current functions under "added", and a file deleted
+    since old_commit_id reports all of its old functions under "removed". Raises
+    subprocess.CalledProcessError if proj_dir is not a git repository or old_commit_id is
+    not a valid commit.
+    """
+    # Pathspecs limiting git to recognized source-file extensions (e.g. "*.py", "*.cpp").
+    pathspecs = [f"*.{ext}" for ext in EXT_TO_LANG]
+
+    def _git(*args):
+        return subprocess.run(
+            ["git", "-C", proj_dir, *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+    def _is_workspace_file(rel_path):
+        norm = rel_path.replace("\\", "/")
+        return norm == "fm_agent" or norm.startswith("fm_agent/")
+
+    # Files that changed between old_commit_id and the working tree, plus untracked files
+    # (new files absent from old_commit_id), then drop test and workspace files.
+    changed = _git(
+        "diff", "--name-only", old_commit_id, "--", *pathspecs
+    ).splitlines()
+    untracked = _git(
+        "ls-files", "--others", "--exclude-standard", "--", *pathspecs
+    ).splitlines()
+    files = [
+        f for f in dict.fromkeys(changed + untracked)
+        if not _is_test_file(f) and not _is_workspace_file(f)
+        and _is_under_submodules(f, submodules)
+    ]
+
+    def _path_exists_in_commit(rel_path):
+        """Return whether rel_path exists at old_commit_id without reading its contents."""
+        return subprocess.run(
+            ["git", "-C", proj_dir, "cat-file", "-e", f"{old_commit_id}:{rel_path}"],
+            check=False,
+            capture_output=True,
+            text=True,
+        ).returncode == 0
+
+    def _funcs_from_commit(rel_path, lang_key, ext):
+        """Extract {name: source} for the old_commit_id version of rel_path via a temp file."""
+        text = _git("show", f"{old_commit_id}:{rel_path}")
+        with tempfile.NamedTemporaryFile("w", suffix=f".{ext}", delete=False) as tmp:
+            tmp.write(text)
+            tmp_path = tmp.name
+        try:
+            return dict(extract_functions_from_file(tmp_path, lang_key))
+        finally:
+            os.unlink(tmp_path)
+
+    result = {}
+    for rel_path in files:
+        ext = rel_path.rsplit(".", 1)[-1] if "." in rel_path else ""
+        lang_key = EXT_TO_LANG.get(ext)
+        if not lang_key:
+            continue
+
+        # Working-tree functions (empty if the file was deleted).
+        abs_path = os.path.abspath(os.path.join(proj_dir, rel_path))
+        if os.path.exists(abs_path):
+            new_funcs = dict(extract_functions_from_file(abs_path, lang_key))
+        else:
+            new_funcs = {}
+
+        # Old-commit functions (empty for files that did not exist at old_commit_id).
+        # A path can be absent from the base even when it is already tracked/staged in the
+        # current tree, so check the base commit directly instead of relying on untracked
+        # status.
+        if not _path_exists_in_commit(rel_path):
+            old_funcs = {}
+        else:
+            old_funcs = _funcs_from_commit(rel_path, lang_key, ext)
+
+        added = sorted(n for n in new_funcs if n not in old_funcs)
+        removed = sorted(n for n in old_funcs if n not in new_funcs)
+        modified = sorted(
+            n for n in new_funcs if n in old_funcs and new_funcs[n] != old_funcs[n]
+        )
+        if added or removed or modified:
+            result[abs_path] = {
+                "added": added,
+                "removed": removed,
+                "modified": modified,
+            }
+
+    return result

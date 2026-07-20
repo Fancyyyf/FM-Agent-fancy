@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_phase_source_files",
+  "source_file": "src/pipeline_setup-py/_phase_source_files.py",
+  "function_name": "_phase_source_files",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_phase_source_files.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_phase_source_files.md",
+  "probe_stdout": "CONFIRMED — AttributeError on JSON array (expected empty dict per spec): 'list' object has no attribute 'get'\\n",
+  "trigger_summary": "A valid JSON array (e.g. []) parsed by json.load() as a list causes AttributeError on data.get() because lists lack .get(), instead of returning {} as the spec requires."
+}

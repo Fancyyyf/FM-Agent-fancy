@@ -1,0 +1,30 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def build(cls, source: str) -> _SourceIndex:
+Line 2:         lines = source.splitlines(keepends=True)
+Line 3:         line_offsets = []
+Line 4:         offset = 0
+Line 5:         for line in lines:
+Line 6:             line_offsets.append(offset)
+Line 7:             offset += len(line)
+Line 8:         return cls(source=source, lines=lines, line_offsets=line_offsets)
+```
+
+Condition A (what the code actually does):
+After execution, the method returns an instance obj of cls, such that: obj.source == source, obj.lines == source.splitlines(keepends=True), and obj.line_offsets is a list with len(obj.line_offsets) == len(obj.lines) where obj.line_offsets[0] == 0 and for all i in range(1, len(obj.line_offsets)): obj.line_offsets[i] == obj.line_offsets[i-1] + len(obj.lines[i-1]).
+
+Condition B (what the specification requires):
+- Returns an instance of cls initialized from source
+  - The returned instance supports mapping a
+    (start_line, end_line) line-number pair to the substring
+    of source spanning from the start line (inclusive) to
+    the end line (exclusive)
+  - The returned instance supports converting a
+    (line, character) position to a 0-based byte offset
+    within source
+  - Line-break characters in source are preserved exactly as
+    they appear in the input string
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

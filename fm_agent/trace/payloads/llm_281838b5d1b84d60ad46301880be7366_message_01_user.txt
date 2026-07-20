@@ -1,0 +1,68 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _build_module_description_prompt(modified_modules, phases_json):
+Line 2:     """Compose the instruction telling the agent to refresh the descriptions of
+Line 3:     modules whose source-file list changed during post-processing.
+Line 4:     ``modified_modules`` is the list produced by ``_collect_changed_modules``; each
+Line 5:     entry names a module by its CURRENT phase number and module name. Modules that
+Line 6:     own no source files in ``phases_json`` are skipped — there is nothing to
+Line 7:     describe, so they are left out of the prompt.
+Line 8:     """
+Line 9:     try:
+Line 10:         with open(phases_json, "r") as f:
+Line 11:             data = json.load(f)
+Line 12:     except (OSError, ValueError):
+Line 13:         data = {"phases": []}
+Line 14:     source_files_by_key = {}
+Line 15:     for phase in data.get("phases", []):
+Line 16:         for module in phase.get("modules", []):
+Line 17:             source_files_by_key[(phase.get("phase"), module.get("name", ""))] = list(
+Line 18:                 module.get("source_files", [])
+Line 19:             )
+Line 20:     lines = []
+Line 21:     for m in modified_modules:
+Line 22:         if not source_files_by_key.get((m["phase"], m["module"])):
+Line 23:             # Module owns no files; nothing to describe, so leave it out.
+Line 24:             continue
+Line 25:         lines.append(f"  - phase {m['phase']} module \"{m['module']}\"")
+Line 26:     if not lines:
+Line 27:         return None
+Line 28:     changes_text = "\n".join(lines)
+Line 29:     return (
+Line 30:         "Here is a list of modules in fm_agent/phases.json:\n\n"
+Line 31:         f"{changes_text}\n\n"
+Line 32:         "Please update the \"description\" field of each module above so that it accurately "
+Line 33:         "describes the source files it now owns.\n"
+Line 34:         "Rules:\n"
+Line 35:         "- Edit ONLY the \"description\" field of the listed modules in "
+Line 36:         "fm_agent/phases.json.\n"
+Line 37:         "- Do NOT change any \"source_files\", \"phase\", \"name\", "
+Line 38:         "\"depends_on_phases\", or the phase structure in any way.\n"
+Line 39:         "- Do NOT touch modules that are not in the list above.\n"
+Line 40:         "- Keep the JSON valid.\n"
+Line 41:         "- Do NOT modify any project source file; only edit fm_agent/phases.json."
+Line 42:     )
+```
+
+Condition A (what the code actually does):
+The function returns either None or a string. It attempts to open and parse the JSON file at `phases_json`; if an OSError or ValueError occurs (e.g., file missing, invalid JSON), the file is treated as containing no phases. A mapping from (phase, module name) to list of source files is built from the file's 'phases' array. For each module in `modified_modules`, if the corresponding source file list is non-empty, the module is included in a list of changes. If this list is empty, the function returns None. Otherwise, it returns a prompt string beginning with 'Here is a list of modules in fm_agent/phases.json:\n\n', followed by lines of the form '  - phase {phase} module "{name}"' for each included module, followed by a fixed instruction text. The function has no side effects on its arguments or persistent state. Formal logic: Let D be the parsed JSON object if file read/parse succeeds, otherwise {'phases': []}. Define M = { (p.get('phase'), m.get('name', '')) : list(m.get('source_files', [])) for p in D.get('phases', []) for m in p.get('modules', []) }. Let C = { m ∈ modified_modules | M.get((m['phase'], m['module']), []) != [] }. Then (C = ∅) ⇒ result = None; (C ≠ ∅) ⇒ result = 'Here is a list of modules in fm_agent/phases.json:\n\n' + '\n'.join(f"  - phase {m['phase']} module \"{m['module']}\"" for m in sorted(C)) + '\n\nPlease update the "description" field of each module above so that it accurately describes the source files it now owns.\nRules:\n- Edit ONLY the "description" field of the listed modules in fm_agent/phases.json.\n- Do NOT change any "source_files", "phase", "name", "depends_on_phases", or the phase structure in any way.\n- Do NOT touch modules that are not in the list above.\n- Keep the JSON valid.\n- Do NOT modify any project source file; only edit fm_agent/phases.json.'
+
+Condition B (what the specification requires):
+- If phases_json cannot be opened or its content is not valid JSON,
+    behaves as if phases were an empty list.
+  - Returns None when none of the modules named in modified_modules
+    has a non-empty source_files array in phases_json.
+  - Otherwise, returns a string containing an agent prompt. The prompt
+    enumerates every module in modified_modules that still owns at least
+    one source file according to phases_json, each formatted as a
+    bulleted line identifying the module by its current phase number
+    and module name. The prompt includes explicit constraints that the
+    agent must: edit only the "description" field of the listed modules
+    in fm_agent/phases.json; not modify "source_files", "phase", "name",
+    "depends_on_phases", or the phase structure; not touch any unlisted
+    module; keep the JSON valid; and not modify any project source file.
+  - This function has no side effects: it does not write to any file.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

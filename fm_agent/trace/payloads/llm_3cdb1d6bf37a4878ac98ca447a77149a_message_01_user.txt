@@ -1,0 +1,41 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None):
+Line 2:     """Collect markdown paths from CLI values plus FM_AGENT_DOMAIN_KNOWLEDGE."""
+Line 3:     paths = []
+Line 4:     paths.extend(_split_env_paths(os.environ.get("FM_AGENT_DOMAIN_KNOWLEDGE")))
+Line 5:     paths.extend(_flatten_paths(cli_paths))
+Line 6:     return resolve_domain_knowledge_paths(
+Line 7:         paths,
+Line 8:         base_dir=base_dir,
+Line 9:         fallback_base_dir=fallback_base_dir,
+Line 10:     )
+```
+
+Condition A (what the code actually does):
+The function returns a list of unique absolute file paths, preserving the order of first appearance. The list is obtained by (1) reading the environment variable 'FM_AGENT_DOMAIN_KNOWLEDGE': if present and non-empty, it is split on os.pathsep into individual path strings; otherwise an empty list. (2) flattening the cli_paths argument (which may be None or a nested iterable of path strings) into a flat list of non-empty path strings. These two lists are concatenated. Each resulting path is then resolved to an absolute file path: if the path is absolute and an existing file, it is kept as-is; if relative, it is first joined with base_dir; if that file exists, the joined path is kept; otherwise, if fallback_base_dir is not None, it is joined with fallback_base_dir and kept if the file exists. Paths that do not resolve to any existing file are discarded. Finally, duplicate absolute paths are removed from the result. No side-effects occur, and the function raises no exceptions under normal pre-conditions. Formally: let env_val = os.environ.get('FM_AGENT_DOMAIN_KNOWLEDGE'), env_paths = (env_val.split(os.pathsep) if env_val else []), cli_flat = flatten(cli_paths) (flattening recursively and excluding None/empty), combined = env_paths + cli_flat. Then result = { resolve(p) | p in combined, resolve(p) is not None } ordered by first occurrence, where resolve(p) ≡ if os.path.isabs(p) and os.path.isfile(p) then p else if os.path.isfile(join(base_dir, p)) then join(base_dir, p) else if fallback_base_dir != None and os.path.isfile(join(fallback_base_dir, p)) then join(fallback_base_dir, p) else None.
+
+Condition B (what the specification requires):
+- Returns a list of resolved absolute file path strings, one per distinct domain-knowledge markdown file
+  - The returned list includes paths sourced from two origins: the FM_AGENT_DOMAIN_KNOWLEDGE environment variable (split on os.pathsep) and the flattened cli_paths
+  - An empty or unset FM_AGENT_DOMAIN_KNOWLEDGE environment variable contributes no paths
+  - cli_paths entries that are None or empty contribute no paths
+  - Each path in the returned list is absolute; if a source path is relative, it is resolved against base_dir, and if that resolution does not yield an existing file, it is resolved against fallback_base_dir as a secondary base
+  - The returned list contains no duplicate entries
+  - The returned list is empty if no valid domain-knowledge paths are found
+
+Additional context:
+_split_env_paths(env_value) -> list[str]
+Pre-condition: env_value is None or a string
+  Post-condition: if env_value is a non-empty string, splits it on os.pathsep and returns the resulting list of path strings; if env_value is None or empty, returns an empty list
+
+_flatten_paths(cli_paths) -> list[str]
+Pre-condition: cli_paths is None or an iterable that may contain nested iterables or individual path strings
+  Post-condition: returns a flat list of path strings with all nesting removed; None and empty values are excluded
+
+resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir) -> list[str]
+Pre-condition: paths is a list of path strings; base_dir and fallback_base_dir are directory paths
+  Post-condition: returns a list of absolute file paths, with each relative path resolved first against base_dir then fallback_base_dir; only paths that resolve to existing files are included; duplicates are removed
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

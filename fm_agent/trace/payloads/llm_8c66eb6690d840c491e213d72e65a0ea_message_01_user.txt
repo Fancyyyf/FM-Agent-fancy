@@ -1,0 +1,82 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _domain_context_complete(work_dir):
+Line 2:     """Return True only if all domain context files exist and match the phases in phases.json."""
+Line 3:     phases_path = os.path.join(work_dir, "phases.json")
+Line 4:     if not _json_file_is_valid(phases_path):
+Line 5:         return False
+Line 6:     domain_dir = os.path.join(work_dir, "spec_prompts", "domain_context")
+Line 7:     if not os.path.exists(os.path.join(domain_dir, "engine_overview.txt")):
+Line 8:         return False
+Line 9:     try:
+Line 10:         with open(phases_path, "r") as f:
+Line 11:             phases_data = json.load(f)
+Line 12:     except (OSError, json.JSONDecodeError):
+Line 13:         return False
+Line 14:     for phase in phases_data.get("phases", []):
+Line 15:         phase_num = phase.get("phase")
+Line 16:         if phase_num is None:
+Line 17:             return False
+Line 18:         types_path = os.path.join(domain_dir, f"phase_{phase_num:02d}_types.txt")
+Line 19:         if not os.path.exists(types_path):
+Line 20:             return False
+Line 21:     return True
+```
+
+Condition A (what the code actually does):
+After execution, the function returns a boolean value. 
+
+Natural language: 
+The function returns True if and only if: 
+1. The file `phases.json` inside `work_dir` is a valid JSON file (i.e., it exists as a regular file and its content is successfully parseable as JSON). 
+2. The file `spec_prompts/domain_context/engine_overview.txt` relative to `work_dir` exists as a regular file. 
+3. The parsed JSON object from `phases.json` contains a key `'phases'` whose value is a list. For every element `phase_entry` in that list, `phase_entry` contains a key `'phase'` with a non‑null numeric value, and the file `spec_prompts/domain_context/phase_{phase_num:02d}_types.txt` (where `phase_num` is that numeric value formatted to two digits) exists as a regular file. 
+If any of these conditions fails, the function returns False. All file handles are properly closed by the context manager. No exception is raised to the caller; any `OSError` or `json.JSONDecodeError` is caught and results in a `False` return. 
+
+Formal logic (using higher‑order predicates): 
+Let 
+  `PhasesPath = Join(work_dir, "phases.json")` 
+  `DomainDir = Join(work_dir, "spec_prompts", "domain_context")` 
+  `EngOverviewPath = Join(DomainDir, "engine_overview.txt")` 
+Define 
+  `IsValidJSONFile(p) ::= p refers to an existing regular file whose contents are valid JSON` 
+  `ExistsRegFile(p) ::= p refers to an existing regular file` 
+Then, the return value `R` satisfies: 
+  `R = True  ⇔  IsValidJSONFile(PhasesPath) 
+                ∧ ExistsRegFile(EngOverviewPath) 
+                ∧ (∃ D such that D = parse_json(PhasesPath) ∧ 
+                   (D["phases"] is a list ∧ 
+                    ∀ i ∈ [0 .. |D["phases"]|-1] : 
+                      D["phases"][i] has key "phase" ∧ 
+                      D["phases"][i]["phase"] ≠ None ∧ 
+                      ExistsRegFile(Join(DomainDir, 
+                        "phase_" + format(int(D["phases"][i]["phase"]), '02d') + "_types.txt")) 
+                  ))` 
+Otherwise `R = False`.
+
+Condition B (what the specification requires):
+- Returns True if and only if all of the following hold simultaneously:
+    (a) phases.json exists under work_dir and is a well-formed JSON file
+        containing a "phases" array
+    (b) spec_prompts/domain_context/engine_overview.txt exists as a regular
+        file under work_dir
+    (c) For every phase object in phases.json whose "phase" key is a numeric
+        value, the file spec_prompts/domain_context/phase_NN_types.txt
+        (where NN is the phase number zero-padded to 2 digits) exists as a
+        regular file under work_dir
+    (d) No phase object in phases.json has a missing or non-numeric "phase"
+        key
+  - Returns False when any of conditions (a)-(d) is not satisfied
+  - Does not modify any filesystem state: the function performs only
+    existence checks and reads, never creates, updates, or deletes files
+
+Additional context:
+_json_file_is_valid(path) -> bool
+Pre-condition: path is a string
+  Post-condition: Returns True if and only if path refers to an existing
+                   regular file whose contents are successfully parseable as
+                   JSON; returns False when path does not exist, is not a
+                   regular file, or its contents cannot be parsed as JSON
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

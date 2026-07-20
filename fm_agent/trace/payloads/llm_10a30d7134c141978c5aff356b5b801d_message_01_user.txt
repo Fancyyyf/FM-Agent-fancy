@@ -1,0 +1,42 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a valid path to a project directory containing indexed source files
+  - lang_keys is an iterable of language key strings (e.g., "python", "go")
+  - REGISTRY is a mapping from language keys to objects exposing a call_edges method
+
+Code block:
+```python
+Line 1: def call_edges_all(proj_dir: str, lang_keys) -> tuple:
+Line 2:     """Call call_edges for each language in lang_keys and merge results.
+Line 3:     Returns (edges, langs) where edges is {caller_fqn: {callee_fqns}} and langs is
+Line 4:     the set of language keys codegraph handled (it returned a dict, even if empty
+Line 5:     — None means the backend was unavailable and the caller should use regex).
+Line 6:     """
+Line 7:     edges = {}
+Line 8:     langs = set()
+Line 9:     for lang in lang_keys:
+Line 10:         if lang not in REGISTRY:
+Line 11:             continue
+Line 12:         result = REGISTRY[lang].call_edges(proj_dir)
+Line 13:         # A handler returns None when its backend (codegraph) is unavailable, and
+Line 14:         # a dict (possibly empty) when it handled the language. Treat "handled but
+Line 15:         # no edges" as codegraph-authoritative — add the language to `langs` so the
+Line 16:         # caller uses the codegraph path — instead of falling back to regex, which
+Line 17:         # would otherwise invent edges (e.g. match a function's own signature) for
+Line 18:         # a genuinely call-free project.
+Line 19:         if result is not None:
+Line 20:             langs.add(lang)
+Line 21:             for key, callees in result.items():
+Line 22:                 edges.setdefault(key, set()).update(callees)
+Line 23:     return edges, langs
+```
+
+Additional context:
+call_edges(proj_dir: str) -> dict | None
+Pre-condition: proj_dir is a valid path to a project directory
+  Post-condition: Returns a dict mapping each caller FQN to the set of its
+    callee FQNs when the codegraph backend is available for the language;
+    returns None when the backend is unavailable, signaling the caller to
+    use regex-based call-edge detection for this language.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,15 @@
+Programming language: Python
+
+Pre-condition:
+- self._console is an initialized attribute referring to an object that supports attribute resolution via getattr
+  - name is a non-empty string
+
+Code block:
+```python
+Line 1:     def __getattr__(self, name):
+Line 2:         # Delegate everything else (isatty, fileno, encoding, ...) to the real console
+Line 3:         # stream. _console is a real attribute, so this never recurses.
+Line 4:         return getattr(self._console, name)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_filter_phases_to_submodules",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_filter_phases_to_submodules",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_filter_phases_to_submodules.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_filter_phases_to_submodules.md",
+  "probe_stdout": "CONFIRMED — actual phase: None (None) | expected: an integer (int)\n",
+  "trigger_summary": "When a phase object in phases.json lacks a 'phase' key, phase.get('phase') returns None instead of an integer, violating the post-condition that each modified module record must contain the phase number."
+}

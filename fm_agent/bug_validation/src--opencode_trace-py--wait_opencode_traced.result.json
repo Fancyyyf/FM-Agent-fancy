@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--wait_opencode_traced",
+  "source_file": "src/opencode_trace.py",
+  "function_name": "wait_opencode_traced",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--wait_opencode_traced.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--wait_opencode_traced.md",
+  "probe_stdout": "CONFIRMED — actual: '' | expected: None\n",
+  "trigger_summary": "When _wait_opencode_process returns an empty error string and record.error is None, the condition 'error or record.error is None' evaluates True (empty string is falsy), causing record.error to be set to '' instead of remaining None per spec."
+}

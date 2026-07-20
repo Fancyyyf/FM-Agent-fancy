@@ -1,0 +1,32 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _strip_angle_brackets(text):
+Line 2:     """Remove balanced <...> segments from text (for template parameters)."""
+Line 3:     result = []
+Line 4:     depth = 0
+Line 5:     for ch in text:
+Line 6:         if ch == '<':
+Line 7:             depth += 1
+Line 8:         elif ch == '>':
+Line 9:             if depth > 0:
+Line 10:                 depth -= 1
+Line 11:         else:
+Line 12:             if depth == 0:
+Line 13:                 result.append(ch)
+Line 14:     return ''.join(result)
+```
+
+Condition A (what the code actually does):
+The returned string is the original string with all angle brackets '<' and '>' removed, and additionally all characters that appear inside any properly nested pair of angle brackets (including the brackets themselves and any nested content) are omitted. Formally, let s = text. Define depth(i) for i ≥ 1 as the net number of unclosed '<' after processing s[0..i-1] according to: depth(1) = 0; for each j from 1 to len(s): if s[j-1] == '<' then depth(j) = depth(j-1) + 1; else if s[j-1] == '>' and depth(j-1) > 0 then depth(j) = depth(j-1) - 1; else depth(j) = depth(j-1). Then the output string equals the concatenation of all characters s[k] for k from 0 to len(s)-1 such that depth(k) == 0 and s[k] ≠ '<' and s[k] ≠ '>'. Consequently, the returned string contains no '<' or '>' characters, and it includes only those non-bracket characters that were not enclosed by any balanced angle-bracket region in the input.
+
+Condition B (what the specification requires):
+- Returns text with all content enclosed within matching angle-bracket pairs removed
+  - Angle-bracket pairs are matched using balanced counting: each '<' opens a new scope, each '>' closes the most recently opened scope
+  - All characters between a matching '<' and '>' (the brackets themselves and everything between them) are omitted from the result
+  - Characters not inside any matching pair appear in the result in their original relative order
+  - A '>' with no preceding unmatched '<' is not inside any matching pair and appears in the result
+  - If the input contains no '<' characters, every character in the input appears in the result in original order
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

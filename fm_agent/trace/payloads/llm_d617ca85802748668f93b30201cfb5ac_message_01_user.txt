@@ -1,0 +1,78 @@
+Programming language: Python
+
+Pre-condition:
+After execution of the code block, the name "build_prompt" is bound to a function object whose signature is (phase: int, layer_idx: int, is_cycle: bool, functions: List[dict], func_to_layer: Dict[str, int], all_funcs: Dict[str, dict], work_dir: Path, fm_agent_prefix: str, ext_to_lang: Dict[str, str]) -> str. No other side effects occur, and all other variables in scope (functions, all_funcs, fm_agent_prefix, work_dir, ext_to_lang, phase, layer_idx, is_cycle, func_to_layer) retain their pre‑condition values. No exceptions are raised. Formal: ∃ f such that build_prompt = f ∧ f is a function with domain matching the parameter types described above ∧ ∀ name ∈ {functions, all_funcs, fm_agent_prefix, work_dir, ext_to_lang, phase, layer_idx, is_cycle, func_to_layer}, value(name) == value_pre(name).
+
+Code block:
+```python
+Line 41:     caller_specs: List[Tuple[str, str]] = []
+Line 42:     caller_expectations: Dict[str, List[Tuple[str, str]]] = {}
+Line 43:     for fn in functions:
+Line 44:         fn_name = fn["name"]
+Line 45:         caller_key = phase_callers_key(fn, phase)
+Line 46:         info_names_key = phase_callee_info_names_key(fn, phase)
+Line 47:         info_names_by_caller = fn.get(info_names_key, {}) if info_names_key else {}
+Line 48:         callers = fn.get(caller_key, [])
+Line 49:         for caller_name in callers:
+Line 50:             caller_layer = func_to_layer.get(caller_name)
+Line 51:             if caller_layer is None or caller_layer >= layer_idx:
+Line 52:                 continue
+Line 53:             caller_meta = all_funcs.get(caller_name)
+Line 54:             if not caller_meta:
+Line 55:                 continue
+Line 56:             caller_file = work_dir / caller_meta["file"]
+Line 57:             spec_block = extract_spec_block(caller_file)
+Line 58:             if spec_block and (caller_name, spec_block) not in caller_specs:
+Line 59:                 caller_specs.append((caller_name, spec_block))
+Line 60:             info_block = extract_info_block(caller_file)
+Line 61:             if not info_block:
+Line 62:                 continue
+Line 63:             entry = extract_callee_spec_from_info(
+Line 64:                 info_block, fn_name, info_names_by_caller.get(caller_name, [])
+Line 65:             )
+Line 66:             if entry:
+Line 67:                 caller_expectations.setdefault(fn_name, []).append((caller_name, entry.strip()))
+Line 68:     if caller_specs:
+Line 69:         lines.append("")
+Line 70:         lines.append("## EARLIER-LAYER CALLER SPECS")
+Line 71:         for caller_name, block in caller_specs:
+Line 72:             lines.append(f"#### {caller_name}")
+Line 73:             lines.append("")
+Line 74:             lines.append(block)
+Line 75:             lines.append("")
+Line 76:     if caller_expectations:
+Line 77:         lines.append("## CALLEE EXPECTATIONS FROM CALLERS")
+Line 78:         for fn in functions:
+Line 79:             fn_name = fn["name"]
+Line 80:             entries = caller_expectations.get(fn_name, [])
+```
+
+Additional context:
+detect_lang_and_comment(file_path, ext_to_lang) -> (str, str)
+Pre-condition: file_path is a string with a file extension; ext_to_lang maps extension strings (with leading dot) to language name strings
+  Post-condition: returns a tuple (language_name, comment_prefix) where language_name is the language string corresponding to file_path's extension in ext_to_lang (or "unknown" if not found), and comment_prefix is the single-line comment marker for that language ("#" for Python, "//" for C-family/Java/Go/Rust/JS/TS, "%" for Erlang)
+
+list_staged_domain_knowledge_relpaths(work_dir, prefix) -> list[str]
+Pre-condition: work_dir is a Path to the fm_agent/ workspace; prefix is a string whose concatenation with the domain-knowledge directory path relative to work_dir yields a valid reference path
+  Post-condition: returns a list of relative path strings from the workspace root to each staged user-provided domain knowledge file under the subdirectory spec_prompts/domain_context/user_knowledge/; returns an empty list when no such files are staged
+
+phase_callers_key(fn, phase) -> str
+Pre-condition: fn is a function entry dict; phase is a non-negative integer
+  Post-condition: returns the dictionary key string that accesses the set of in-phase caller FQNs within fn; the key incorporates the phase number such that it is unique to that phase
+
+phase_callee_info_names_key(fn, phase) -> str
+Pre-condition: fn is a function entry dict; phase is a non-negative integer
+  Post-condition: returns the dictionary key string that accesses the per-caller info-name aliases within fn; the key incorporates the phase number and describes names used by callers to reference this function
+
+extract_spec_block(filepath) -> Optional[str]
+Pre-condition: filepath is a Path to an existing file containing extracted function source code
+  Post-condition: returns the full content between the first "[SPEC]" marker and the closing "[SPEC]" marker (inclusive of both markers) as a string, or None if no such markers are present in the file
+
+extract_info_block(filepath) -> Optional[str]
+Pre-condition: filepath is a Path to an existing file containing extracted function source code
+  Post-condition: returns the content between the "[INFO]" start marker and "[INFO]" end marker (inclusive of both markers) as a string, or None if no such markers are present in the file
+
+extract_callee_spec_from_info(info_block, callee_fqn, aliases) -> Optional[str]
+Pre-condition: info_block is a string containing [SPLIT]-delimited callee entries; callee_fqn is a fully qualified function name string; aliases is a list of alternative name strings that callers may use for this callee
+  Post-condition: returns the complete [SPLIT]-delimited entry (both Pre-condition and Post-condition lines) for the callee whose name line matches callee_fqn or any of the aliases, or None if no matching entry is found
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

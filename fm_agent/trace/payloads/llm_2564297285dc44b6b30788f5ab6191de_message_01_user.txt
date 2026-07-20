@@ -1,0 +1,20 @@
+Programming language: Python
+
+Pre-condition:
+- rel_path is a string representing a file or directory path
+  - submodules is None, an empty iterable, or a non-empty iterable of subdirectory
+    name strings, each not containing "/" or "\"
+
+Code block:
+```python
+Line 1: def _is_under_submodules(rel_path, submodules):
+Line 2:     """Return whether rel_path is inside one of the selected submodule dirs."""
+Line 3:     if not submodules:
+Line 4:         return True
+Line 5:     norm = rel_path.replace("\\", "/")
+Line 6:     while norm.startswith("./"):
+Line 7:         norm = norm[2:]
+Line 8:     return any(norm == sub or norm.startswith(sub + "/") for sub in submodules)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

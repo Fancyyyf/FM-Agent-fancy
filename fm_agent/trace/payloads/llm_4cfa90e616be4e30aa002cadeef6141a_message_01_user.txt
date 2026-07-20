@@ -1,0 +1,34 @@
+Programming language: Python
+
+Pre-condition:
+- label is a non-empty string
+
+Code block:
+```python
+Line 1: def _normalize_endpoint_label(label: str) -> str:
+Line 2:     label = _clean_label(label)
+Line 3:     if _is_path_function_label(label):
+Line 4:         path, func = label.rsplit("::", 1)
+Line 5:         path = path.lstrip("./")
+Line 6:         src_path = PurePosixPath(path)
+Line 7:         base = src_path.name
+Line 8:         last_dot = base.rfind(".")
+Line 9:         func_dir = base[:last_dot] + "-" + base[last_dot + 1:] if last_dot > 0 else base
+Line 10:         parts = [p for p in src_path.parent.parts if p not in {"", "."}]
+Line 11:         return "::".join([*parts, func_dir, func])
+Line 12:     return label
+```
+
+Additional context:
+_clean_label(label: str) -> str
+Pre-condition: label is a non-empty string
+  Post-condition: Returns a string whose path-vs-non-path classification and
+    function-name suffix are preserved; the transformation is deterministic and
+    identity-preserving for function references
+
+_is_path_function_label(label: str) -> bool
+Pre-condition: label is a cleaned label string
+  Post-condition: Returns True when the label contains a source-file path prefix
+    whose filename extension dot must be replaced with "-" for FQN normalization;
+    returns False otherwise; the classification is deterministic
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

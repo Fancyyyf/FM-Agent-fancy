@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_payload_ref",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/src/opencode_trace-py/_payload_ref.py",
+  "function_name": "_payload_ref",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_payload_ref.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_payload_ref.md",
+  "probe_stdout": "CONFIRMED — actual: 'tmp/foo' | expected: 'foo'\n",
+  "trigger_summary": "_payload_ref computes relpath from os.path.dirname(trace_dir) instead of trace_dir, so joining the result with trace_dir yields an incorrect double-nested path."
+}

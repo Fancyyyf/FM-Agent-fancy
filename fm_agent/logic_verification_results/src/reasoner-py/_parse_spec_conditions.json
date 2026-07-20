@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/reasoner-py/_parse_spec_conditions.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a 2-tuple (pre_condition, post_condition)\n  - pre_condition is the text content between the \"Pre-condition:\" header line and the\n    next section boundary, with leading and trailing whitespace stripped;\n    it is None when no \"Pre-condition:\" section is found in the spec string\n  - post_condition is the text content between the \"Post-condition:\" header line and\n    the end of the string, with leading and trailing whitespace stripped;\n    it is None when no \"Post-condition:\" section is found in the spec string",
+    "actual_behavior": "The function returns a tuple (pre, post). Define pre_match = re.search(r'Pre-condition:\\s*\\n(.*?)(?=\\nPost-condition:|\\Z)', spec, re.DOTALL); pre = pre_match.group(1).strip() if pre_match else None. Define post_match = re.search(r'Post-condition:\\s*\\n(.*)', spec, re.DOTALL); post = post_match.group(1).strip() if post_match else None. Therefore, pre is the stripped content of the 'Pre-condition:' section if it exists (i.e., the substring after the newline following 'Pre-condition:', up to the next 'Post-condition:' line or end of spec), else None; post is the stripped content of the 'Post-condition:' section if it exists (i.e., the substring after the newline following 'Post-condition:' to the end of spec), else None.",
+    "code_evidence": "Line 2: pre_match = re.search(r'Pre-condition:\\s*\\n(.*?)(?=\\nPost-condition:|\\Z)', spec, re.DOTALL)",
+    "trigger_condition": "The specification requires pre_condition to be the text between the 'Pre-condition:' header line and the next section boundary. The code's pre regex (Line 2) only treats '\\nPost-condition:' or end-of-string as a boundary, so any other section header (such as 'Note:') is incorrectly included in the pre_condition. For the input spec above, the code returns pre = 'x > 0\\nNote:\\n  test' instead of the correct 'x > 0'."
+  }
+}

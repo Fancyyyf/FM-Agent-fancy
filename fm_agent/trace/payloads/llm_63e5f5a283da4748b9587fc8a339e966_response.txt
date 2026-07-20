@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "extracted_rel = 'proj/-loader/func.cpp'",
+  "offending_statements": "Line 13: if hyphen > 0:",
+  "reason": "When the parent directory name starts with a hyphen (e.g., '-loader' from a source file '.loader'), hyphen is 0, so the code treats it as having no hyphen after the first character. It returns 'proj/-loader', but the specification says: if no hyphen after first character, return the directory name unchanged with no parent prefix, yielding just '-loader'. Thus the code incorrectly retains the parent directory and fails to handle this edge case."
+}

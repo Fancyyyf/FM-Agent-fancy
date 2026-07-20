@@ -1,0 +1,50 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a string or Path-like value referencing an existing directory
+    on the filesystem
+
+Code block:
+```python
+Line 1:     def __init__(self, proj_dir):
+Line 2:         self.proj_dir = Path(proj_dir).resolve()
+Line 3:         self.workdir = _locate_workdir(self.proj_dir)
+Line 4:         self.trace_dir = self.workdir / "trace"
+Line 5:         self.events_path = self.trace_dir / "events.jsonl"
+Line 6:         self.opencode_dir = self.trace_dir / "opencode"
+Line 7:         self.bug_dir = self.workdir / "bug_validation"
+Line 8:         # Tail offsets
+Line 9:         self._events_offset = 0
+Line 10:         self._opencode_offsets = {}      
+Line 11:         # Aggregates
+Line 12:         self.first_event_time = None
+Line 13:         self.last_event_time = None
+Line 14:         self.stage_counts = defaultdict(lambda: defaultdict(int))   
+Line 15:         self.stage_active = defaultdict(int)                        
+Line 16:         self.totals = defaultdict(int)                              
+Line 17:         self.cost_native = 0.0
+Line 18:         self.model_seen = None
+Line 19:         self.cache_window = deque(maxlen=CACHE_WINDOW)              
+Line 20:         self.llm_statuses = deque(maxlen=LLM_STATUS_WINDOW)         
+Line 21:         self.recent_events = deque(maxlen=40)                       
+Line 22:         self.opencode_token_totals = defaultdict(int)               
+Line 23:         self.opencode_cost = 0.0
+Line 24:         self.opencode_calls = 0
+Line 25:         self._opencode_requests = {}                                
+Line 26:         # Verification verdicts
+Line 27:         self.verification_success = 0
+Line 28:         self.verification_mismatch = 0
+Line 29:         self.verification_error = 0
+Line 30:         # Bug validation
+Line 31:         self.bugs_confirmed = 0
+Line 32:         self.bugs_not_confirmed = 0
+Line 33:         self.bugs_pending = 0
+```
+
+Additional context:
+_locate_workdir(proj_dir: Path) -> Path
+Pre-condition: proj_dir is a resolved absolute Path to an existing directory
+  Post-condition: Returns the Path to the fm_agent/ workspace directory;
+    when proj_dir itself is an fm_agent/ workspace it returns proj_dir;
+    otherwise returns the fm_agent/ subdirectory within proj_dir
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

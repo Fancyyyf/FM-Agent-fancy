@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "modified_modules = ['module_1'], work_dir contains a valid phases.json listing 'module_1' with at least one source file, and the external agent command (run_opencode_traced) fails with a non-zero exit code on the first invocation, causing the retry loop to execute. The function sleeps for 10 seconds before the next attempt, but no mechanism exists to change this interval.",
+  "offending_statements": "Line 52: time.sleep(10)",
+  "reason": "The specification requires that the function wait a configurable fixed interval between failed attempts. The code uses a hard-coded 10-second delay, making the interval non-configurable and violating the requirement."
+}

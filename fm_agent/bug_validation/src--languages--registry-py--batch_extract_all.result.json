@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--registry-py--batch_extract_all",
+  "source_file": "src/languages/registry-py/batch_extract_all.py",
+  "function_name": "batch_extract_all",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--registry-py--batch_extract_all.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--registry-py--batch_extract_all.md",
+  "probe_stdout": "CONFIRMED — actual: '/tmp/a/../b/file.py' | expected (normalized): '/tmp/b/file.py'",
+  "trigger_summary": "batch_extract_all merges handler results via funcs.update(result) without normalizing file paths, so a handler returning a non-normalized absolute path (e.g. /tmp/a/../b/file.py) appears verbatim in funcs instead of the normalized form."
+}

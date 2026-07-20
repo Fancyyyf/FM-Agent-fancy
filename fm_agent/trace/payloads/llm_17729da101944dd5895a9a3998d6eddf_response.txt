@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "cg_langs = [] (an empty list), with `cur` a valid database cursor. The function call raises an exception instead of returning an empty dict.",
+  "offending_statements": "Line 9: placeholders = \",\".join(\"?\" * len(cg_langs))\nLine 10: cur.execute(",
+  "reason": "The specification explicitly requires returning an empty dict when the query matches no rows. With an empty cg_langs, the query matches no rows and the specification thus demands an empty dict. The code, however, generates an SQL clause `language IN ()` which is syntactically invalid, causing a database error and preventing the function from returning any value."
+}

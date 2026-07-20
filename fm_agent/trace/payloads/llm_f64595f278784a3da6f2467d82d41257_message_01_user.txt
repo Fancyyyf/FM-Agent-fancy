@@ -1,0 +1,61 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _restrict_to_chains(call_graph, entry_func, end_funcs):
+Line 2:     """Keep only functions lying on a call chain from entry_func to an end_func.
+Line 3:     A function is retained iff it is reachable from ``entry_func`` (already
+Line 4:     guaranteed by ``call_graph``) *and* it can reach one of ``end_funcs`` — i.e.
+Line 5:     it sits on some path ``entry_func -> ... -> end_func``. The ``end_funcs`` are
+Line 6:     treated as terminal: their outgoing edges are dropped so chains stop there.
+Line 7:     Args:
+Line 8:         call_graph: dict mapping FQN -> sorted list of callee FQNs, rooted at
+Line 9:             entry_func (as built in _select_functions_by_source).
+Line 10:         entry_func: FQN of the entry point.
+Line 11:         end_funcs: list of FQNs at which to stop. If falsy, call_graph is
+Line 12:             returned unchanged.
+Line 13:     Returns:
+Line 14:         A new call graph (same shape) containing only the on-chain functions.
+Line 15:     """
+Line 16:     if not end_funcs:
+Line 17:         return call_graph
+Line 18:     # Reverse adjacency over the reachable graph.
+Line 19:     callers = {fqn: set() for fqn in call_graph}
+Line 20:     for fqn, callees in call_graph.items():
+Line 21:         for callee in callees:
+Line 22:             callers.setdefault(callee, set()).add(fqn)
+Line 23:     # Nodes that can reach some end_func: reverse-BFS seeded at the end_funcs.
+Line 24:     on_chain = set()
+Line 25:     queue = deque(ef for ef in end_funcs if ef in call_graph)
+Line 26:     while queue:
+Line 27:         fqn = queue.popleft()
+Line 28:         if fqn in on_chain:
+Line 29:             continue
+Line 30:         on_chain.add(fqn)
+Line 31:         for caller in callers.get(fqn, ()):
+Line 32:             if caller not in on_chain:
+Line 33:                 queue.append(caller)
+Line 34:     end_set = set(end_funcs)
+Line 35:     pruned = {}
+Line 36:     for fqn in on_chain:
+Line 37:         if fqn in end_set:
+Line 38:             # end_funcs are terminal stop points: no outgoing edges.
+Line 39:             pruned[fqn] = []
+Line 40:         else:
+Line 41:             pruned[fqn] = [c for c in call_graph[fqn] if c in on_chain]
+Line 42:     return pruned
+```
+
+Condition A (what the code actually does):
+If `bool(end_funcs)` is False, the return value is the input dictionary `call_graph` unchanged (identical reference). Otherwise, let `V` be the set of keys in `call_graph`, and for each `u ∈ V`, let `E(u) = call_graph[u]`. Let `T = {t ∈ end_funcs | t ∈ V}` be the end_funcs present in the graph. Define `R = { u ∈ V | there exists a directed path from u to some t ∈ T }` (nodes that can reach an end_func). The returned dictionary `pruned` satisfies: (1) `set(pruned.keys()) = R`; (2) for every `u ∈ R`, if `u ∈ T` then `pruned[u] = []`, else `pruned[u] = [v for v in E(u) if v ∈ R]`. The original `call_graph` is assumed to contain only nodes reachable from `entry_func`; therefore `R` is exactly the set of functions lying on some call chain from `entry_func` to an end_func, and those chains are preserved in `pruned` up to the terminal end_func nodes (which have no outgoing edges).
+
+Condition B (what the specification requires):
+- call_graph is never mutated; a new dict is returned (or the original when end_funcs is falsy)
+  - When end_funcs is empty or falsy, call_graph is returned unchanged
+  - When end_funcs is non-empty, the returned dict contains exactly those FQNs that satisfy both:
+    1. Reachable from entry_func via zero or more edges in call_graph, AND
+    2. Can reach at least one member of end_funcs via zero or more edges in call_graph
+  - For each FQN in the returned dict that is also a member of end_funcs: its callee list is empty (the FQN is a terminal stop-point)
+  - For each FQN in the returned dict that is not a member of end_funcs: its callee list contains exactly the subset of its callees from call_graph that also appear in the returned dict
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

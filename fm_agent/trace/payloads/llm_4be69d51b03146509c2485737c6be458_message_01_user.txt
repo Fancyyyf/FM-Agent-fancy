@@ -1,0 +1,26 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _json_file_is_valid(path):
+Line 2:     try:
+Line 3:         with open(path, "r") as f:
+Line 4:             json.load(f)
+Line 5:         return True
+Line 6:     except (OSError, json.JSONDecodeError):
+Line 7:         return False
+```
+
+Condition A (what the code actually does):
+The function returns True if and only if the file at 'path' exists, is readable, and its entire content is a valid JSON document according to json.load; otherwise it returns False. The file is properly closed in all cases. No exceptions propagate. Formally: retval = (can_open_read(path) ∧ valid_json(content(file(path)))) ? True : False, where can_open_read succeeds iff open(path, 'r') does not raise OSError, and valid_json succeeds iff json.load does not raise json.JSONDecodeError.
+
+Condition B (what the specification requires):
+- Returns True if and only if the filesystem object at path is openable
+    for reading and its content is well-formed JSON (parseable by the
+    standard library JSON parser).
+  - Returns False when the filesystem object at path does not exist, cannot
+    be opened for reading, or its content is not well-formed JSON.
+  - Does not raise exceptions to its caller and does not mutate any
+    filesystem state.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

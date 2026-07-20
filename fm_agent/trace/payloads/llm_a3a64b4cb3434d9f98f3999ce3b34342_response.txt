@@ -1,0 +1,1 @@
+{"post_condition": "The function returns a string `result` such that `result` equals `PurePosixPath(unquote(urlparse(uri).path).replace('\\\\', '/')).stem`. No exceptions are raised. Formally: `result = PurePosixPath(unquote(urlparse(uri).path).replace('\\\\', '/')).stem` and `isinstance(result, str)`."}

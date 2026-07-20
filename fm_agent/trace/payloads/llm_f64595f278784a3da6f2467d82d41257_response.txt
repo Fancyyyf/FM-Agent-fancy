@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "call_graph = {'A': ['B'], 'B': ['C'], 'D': ['E'], 'E': ['C']}, entry_func = 'A', end_funcs = ['C']",
+  "offending_statements": "Line 25: queue = deque(ef for ef in end_funcs if ef in call_graph)\nLine 31: for caller in callers.get(fqn, ()):\nLine 41: pruned[fqn] = [c for c in call_graph[fqn] if c in on_chain]",
+  "reason": "The code only checks backward reachability to end_funcs (reverse BFS from end_funcs) and does not verify forward reachability from entry_func. In the counterexample, nodes 'D' and 'E' are not reachable from 'A' but can reach 'C', so they are incorrectly included in the output, violating the specification which requires nodes to be both reachable from entry_func and able to reach an end_func."
+}

@@ -1,0 +1,39 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _collect_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+Line 2:     calls: set[str] = set()
+Line 3:     for n in ast.walk(node):
+Line 4:         if isinstance(n, ast.Call):
+Line 5:             if isinstance(n.func, ast.Name):
+Line 6:                 calls.add(n.func.id)
+Line 7:             elif isinstance(n.func, ast.Attribute):
+Line 8:                 calls.add(n.func.attr)
+Line 9:     return calls
+```
+
+Condition A (what the code actually does):
+After execution, the function returns a set of strings. This set contains exactly the function names (either direct names or attribute names) referenced in all function call nodes within the AST subtree rooted at `node` (including `node` itself). Specifically, for each `ast.Call` node `c` encountered by `ast.walk(node)`, if `c.func` is an `ast.Name`, the identifier `c.func.id` is added; if `c.func` is an `ast.Attribute`, the attribute name `c.func.attr` is added. If `c.func` is of any other type, nothing is added. The set may be empty if no such calls exist.
+
+Formal logic:
+Let returned be the set returned by `_collect_calls(node)`. Then for any string s, s ∈ returned if and only if ∃ c ∈ ast.walk(node) such that (isinstance(c, ast.Call) ∧ ((isinstance(c.func, ast.Name) ∧ c.func.id = s) ∨ (isinstance(c.func, ast.Attribute) ∧ c.func.attr = s))).
+
+Condition B (what the specification requires):
+- Returns a set of zero or more strings, each being the name used as the
+    direct target of a function-call expression (ast.Call) at any depth
+    within the AST subtree rooted at node
+  - For a call expression whose target is an ast.Name, the identifier
+    string (the ast.Name.id attribute) is included in the result set
+  - For a call expression whose target is an ast.Attribute, the attribute
+    name (the ast.Attribute.attr string) is included in the result set;
+    the receiver sub-expression is not traversed for additional call-target
+    names
+  - For a call expression whose target is any other AST node kind
+    (including but not limited to ast.Subscript, ast.Lambda, ast.Call), no
+    name is collected from that call expression
+  - The returned set contains no duplicate entries: each distinct
+    call-target name string appears at most once
+  - If the subtree contains no ast.Call nodes, returns an empty set
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_persist_analysis",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_persist_analysis.py",
+  "function_name": "_persist_analysis",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_persist_analysis.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_persist_analysis.md",
+  "probe_stdout": "CONFIRMED — caller_file is null for edge with orphan caller. Edge: {\"caller\": \"orphan_caller\", \"caller_module\": \"orphan_module\", \"caller_file\": null, \"callee\": \"some_callee\"}",
+  "trigger_summary": "When analysis.edges contains a caller not present in analysis.functions, caller_files.get() returns None, producing null for caller_file instead of a relative path."
+}

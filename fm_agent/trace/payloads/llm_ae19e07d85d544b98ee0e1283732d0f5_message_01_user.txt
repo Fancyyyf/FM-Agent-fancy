@@ -1,0 +1,15 @@
+Programming language: Python
+
+Pre-condition:
+- exc is any object
+
+Code block:
+```python
+Line 1: def _http_status_from_exc(exc):
+Line 2:     """Extract HTTP status from a urllib HTTPError, else None."""
+Line 3:     if isinstance(exc, urllib.error.HTTPError):
+Line 4:         return exc.code
+Line 5:     return None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

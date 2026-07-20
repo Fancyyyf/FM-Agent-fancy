@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/opencode_trace-py/_write_command_stdin.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- text has been written to stream via write(text) and the stream internal\n    buffer has been flushed via flush()\n  - stream.close() has been called  the stream resource is released\n  - The stream is guaranteed to be closed even if write() or flush() raises\n    an exception",
+    "actual_behavior": "After the execution of the code block, `text` remains unchanged. The stream object `stream` is closed (i.e., `stream.close()` has been called, the underlying resource is released, and any further operations on `stream` raise `ValueError`). If the block completed without raising an exception (normal return), then the entire `text` has been successfully written to the stream's internal buffer via `stream.write(text)` and flushed to the underlying resource via `stream.flush()`. If an exception was raised during `stream.write(text)` or `stream.flush()`, the exception propagates out of the function; `stream` is still closed, but the amount of `text` written is unspecified. Formally: (invariant: `text` unchanged  `stream.closed`)  ((normal_return)  (written(text, stream)  flushed(stream)))  ((exception_raised)  (`stream.closed`  full_write_guaranteed))",
+    "code_evidence": "Line 3: stream.write(text)\nLine 4: stream.flush()",
+    "trigger_condition": "The specification requires that text is written and the stream buffer is flushed. If stream.flush() raises an exception, the code does not ensure the text is written and flushed; the exception propagates, leaving the text potentially unwritten or unflushed, violating the postcondition."
+  }
+}

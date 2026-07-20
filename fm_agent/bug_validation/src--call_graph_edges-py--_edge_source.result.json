@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_edge_source",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/call_graph_edges-py/_edge_source.py",
+  "function_name": "_edge_source",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_edge_source.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_edge_source.md",
+  "probe_stdout": "CONFIRMED — actual: 'a' | expected: '; a'\n",
+  "trigger_summary": "When evidence list contains empty strings alongside non-empty ones, the code filters out empty elements before joining, but the spec requires keeping all elements (up to 4) as long as at least one is non-empty after stripping."
+}

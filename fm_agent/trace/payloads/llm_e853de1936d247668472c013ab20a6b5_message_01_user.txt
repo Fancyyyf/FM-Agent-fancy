@@ -1,0 +1,71 @@
+Programming language: Python
+
+Pre-condition:
+The function returns a list `functions` where each element is a dictionary with keys 'name' (string), 'start' (0‑based index of the line containing the function's opening brace `{`), and 'end' (0‑based index of the line containing the matching closing brace `}`); the list contains exactly one entry for each top‑level function definition encountered in `lines`, respecting the following rules:
+- Blank lines, line comments (lines whose stripped version starts with any prefix from `lang_cfg['skip_prefixes']`), and block comments (for C‑family languages) are entirely ignored and do not contribute to function signatures.
+- For C++ anonymous namespaces (i.e., a stripped line matching `r'^namespace\s*\{'`), the opening line is skipped but the namespace body is treated as top‑level; thus functions directly inside such a namespace are extracted.
+- Any other brace‑delimited block that does not match a function definition (e.g., named namespaces, classes, structs, conditional compilation blocks) is skipped in its entirety using `_find_brace_end`; no nested functions are extracted.
+- A function definition is identified by collecting consecutive non‑skipped lines (the signature) until a line is found that contains an opening brace `{`; the concatenated signature is passed to `_extract_func_name_brace`, and if it returns a non‑`None` name, the opening brace line index and the closing brace index (from `_find_brace_end`) are recorded along with the name.
+- The returned list preserves the order of appearance of function definitions in `lines`.
+
+Formally:
+Let `L = lines`, `P = lang_cfg['skip_prefixes']`, `B = {'cpp','c','cuda','java','javascript','typescript','arkts'}`.
+Define `skip(i)` to be true when line `i` is blank, a line comment (stripped starts with any p∈P), or part of a block comment for languages in B.
+Define `top_level(i)` as `i` is not inside any brace block that was skipped (including anonymous namespace opening but not its body).
+There exists a bijection between elements of `functions` and all `i` such that:
+∃ signature lines from `i_sig` to `i_brace`, with `i_brace` being the first index ≥ `i_sig` where `L[i_brace]` contains a `{` not inside a string/comment, all intermediate lines `j ∈ [i_sig, i_brace-1]` are not `skip(j)`, `top_level(j)` holds, and `_extract_func_name_brace(concat(L[i_sig..i_brace-1]), lang_cfg) = name ≠ None`.
+Then for the matching entry in `functions`: `name = name`, `start = i_brace`, `end = _find_brace_end(L, i_brace)`. No other entries exist, and the list is sorted by increasing `start`.
+
+Code block:
+```python
+Line 41:         # Handle named namespace — skip entire block
+Line 42:         if lang_key in ("cpp", "c") and re.match(r'^namespace\s+\w', stripped):
+Line 43:             # Find the opening brace and skip to the matching close
+Line 44:             # But we actually want to scan inside named namespaces too for
+Line 45:             # functions. Let's just skip the namespace line and descend.
+Line 46:             if '{' in stripped:
+Line 47:                 i += 1
+Line 48:                 continue
+Line 49:             else:
+Line 50:                 # Multi-line namespace declaration — skip until {
+Line 51:                 j = i + 1
+Line 52:                 while j < len(lines) and '{' not in lines[j]:
+Line 53:                     j += 1
+Line 54:                 i = j + 1
+Line 55:                 continue
+Line 56:         # Skip lines starting with class/struct/etc. keywords
+Line 57:         if any(stripped.startswith(kw) for kw in skip_kw_line):
+Line 58:             # But if it's a method definition (has '(' and '{'), still skip
+Line 59:             i += 1
+Line 60:             continue
+Line 61:         # Skip constexpr variable declarations (C++)
+Line 62:         if lang_key in ("cpp", "c") and stripped.startswith("constexpr") and stripped.endswith(";"):
+Line 63:             i += 1
+Line 64:             continue
+Line 65:         # Go: detect func keyword
+Line 66:         if lang_key == "go":
+Line 67:             if not stripped.startswith("func ") and not stripped.startswith("func("):
+Line 68:                 i += 1
+Line 69:                 continue
+Line 70:             # Extract name
+Line 71:             m = re.search(r'func\s+(?:\([^)]*\)\s*)?(\w+)', stripped)
+Line 72:             if not m:
+Line 73:                 i += 1
+Line 74:                 continue
+Line 75:             name = m.group(1)
+Line 76:             # Find opening brace
+Line 77:             sig_lines = [lines[i]]
+Line 78:             sig_end = i
+Line 79:             for look in range(i, min(i + 10, len(lines))):
+Line 80:                 if '{' in lines[look]:
+```
+
+Additional context:
+_find_brace_end(lines, brace_line_idx) -> int
+Pre-condition: lines is a list of source lines; brace_line_idx is a 0-based index into lines where the line contains an opening brace '{' that begins a brace-delimited scope
+  Post-condition: Returns the 0-based index of the line containing the matching closing brace '}', accounting for properly nested balanced brace pairs; braces that appear inside string literals, character literals, or comments do not contribute to the brace-depth count for matching purposes
+
+_extract_func_name_brace(sig_text, lang_cfg) -> str | None
+Pre-condition: sig_text is a string containing one or more concatenated source lines forming a function signature; lang_cfg is a language configuration entry
+  Post-condition: Returns the function name as a string when sig_text matches the language's function-definition identifier pattern according to the rules encoded in lang_cfg; returns None when sig_text does not match any recognized function-definition form for that language
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

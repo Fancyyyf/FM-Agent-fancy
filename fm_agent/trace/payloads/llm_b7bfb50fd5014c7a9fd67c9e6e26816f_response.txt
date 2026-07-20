@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Consider an execution where `functions` = [{'name': 'func1', 'file': 'module.py'}] and `caller_expectations` = {'func1': [('callerA', 'requires thread-safety')]}. The code block extends `lines` with '### What callers expect from func1:', then '#### According to callerA:', then 'requires thread-safety', and a blank line. No line '## CALLEE EXPECTATIONS FROM CALLERS' is ever added. The returned string therefore lacks the mandatory section heading, violating the specification.",
+  "offending_statements": "Line 83: lines.append(f\"### What callers expect from {fn_name}:\")",
+  "reason": "Specification B requires a 'CALLEE EXPECTATIONS FROM CALLERS' section header whenever caller expectations exist. The code (lines 81--87) produces only per-function subheadings without the required section title, so any input with non-empty caller_expectations yields an output that misses this header."
+}

@@ -1,0 +1,35 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _normalize_backend(value):
+Line 2:     backend = (value or "").strip().lower()
+Line 3:     if not backend or backend in {"0", "false", "no", "off"}:
+Line 4:         return "opencode"
+Line 5:     if backend == "auto":
+Line 6:         return "auto"
+Line 7:     return _BACKEND_ALIASES.get(backend, backend)
+```
+
+Condition A (what the code actually does):
+The function returns a string. Let b = (value or "").strip().lower(). If b is empty or b ∈ {"0", "false", "no", "off"}, return "opencode". If b == "auto", return "auto". Otherwise, return _BACKEND_ALIASES.get(b, b). Formally: result = "opencode" if (b == "" or b in {"0","false","no","off"}) else ("auto" if b == "auto" else (_BACKEND_ALIASES[b] if b in _BACKEND_ALIASES else b)). The function never raises an exception under the given pre-condition.
+
+Condition B (what the specification requires):
+- When value is None, or when its normalized form is the empty string,
+    or when the normalized form is one of the recognized disable-sentinel
+    strings ("0", "false", "no", "off"): returns "opencode", the canonical
+    name of the default backend
+  - When the normalized form equals "auto": returns "auto" unchanged,
+    deferring resolution of the auto-sentinel to the caller
+  - When the normalized form matches a recognized backend alias:
+    returns the canonical backend name that the alias maps to
+    (aliases map to the set {"opencode", "codex-cli", "claude-cli"})
+  - When the normalized form matches none of the above categories:
+    returns the normalized form itself unchanged as a pass-through
+  - The returned string is always non-empty, case-normalized to lowercase,
+    and drawn from the set {"opencode", "codex-cli", "claude-cli", "auto"}
+    unioned with the domain of unrecognized pass-through strings
+  - The same input value always produces the same output (pure function)
+  - Returns a str in all cases — no exceptions are raised for any input
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

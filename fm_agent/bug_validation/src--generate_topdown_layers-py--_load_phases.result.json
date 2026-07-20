@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_load_phases",
+  "source_file": "src/generate_topdown_layers.py",
+  "function_name": "_load_phases",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_load_phases.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_load_phases.md",
+  "probe_stdout": "CONFIRMED — returned object lacks \"phases\" key, actual: {}\n",
+  "trigger_summary": "When phases.json contains valid but structurally non-conforming JSON (e.g. {}), _load_phases returns the raw parsed object without validating that it contains the required \"phases\" key."
+}

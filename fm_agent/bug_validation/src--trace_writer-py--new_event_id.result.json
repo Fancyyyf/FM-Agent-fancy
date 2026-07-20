@@ -1,0 +1,11 @@
+{
+  "id": "src--trace_writer-py--new_event_id",
+  "source_file": "src/trace_writer.py",
+  "function_name": "new_event_id",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--trace_writer-py--new_event_id.py",
+  "detail_file": "fm_agent/bug_validation/src--trace_writer-py--new_event_id.md",
+  "probe_stdout": "CONFIRMED — duplicate IDs under deterministic uuid4: 'test_12345678123412341234123456789abc' == 'test_12345678123412341234123456789abc'\n",
+  "trigger_summary": "Monkey-patching uuid.uuid4() to a deterministic value causes new_event_id() to return duplicate IDs, confirming no collision-prevention mechanism exists beyond probabilistic UUID4 randomness."
+}

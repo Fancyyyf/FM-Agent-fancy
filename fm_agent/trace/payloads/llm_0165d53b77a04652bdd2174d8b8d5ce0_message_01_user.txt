@@ -1,0 +1,32 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is an absolute path to the project root directory, under which a child path fm_agent/extracted_functions/ exists
+  - modified_functions is a dict mapping absolute source-file paths to dicts, each having at minimum a "removed" key whose value is a list of function names declared in that source file
+
+Code block:
+```python
+Line 1: def _remove_stale_extracted(proj_dir, modified_functions):
+Line 2:     """
+Line 3:     Delete extracted-function files for functions reported as removed (including every
+Line 4:     function of a deleted source file), and prune any function directory left empty as
+Line 5:     a result. Re-extraction never rewrites these files, so without this they linger as
+Line 6:     stale specs under fm_agent/extracted_functions/.
+Line 7:     """
+Line 8:     removed = _modified_function_targets(
+Line 9:         proj_dir, modified_functions, classes=("removed",)
+Line 10:     )
+Line 11:     for path in removed.values():
+Line 12:         if os.path.isfile(path):
+Line 13:             os.remove(path)
+Line 14:     for path in removed.values():
+Line 15:         func_dir = os.path.dirname(path)
+Line 16:         if os.path.isdir(func_dir) and not os.listdir(func_dir):
+Line 17:             os.rmdir(func_dir)
+```
+
+Additional context:
+_modified_function_targets(proj_dir, modified_functions, classes=("removed",)) -> dict[str, str]
+Pre-condition: proj_dir is a valid project root path; modified_functions is a dict mapping source file paths to change-info dicts with at least the key "removed"; classes is a tuple of change-category strings to select
+  Post-condition: Returns a dict mapping each source-file path to the absolute filesystem path of the extracted-function file for the first function whose change category is in classes; functions whose categories do not intersect classes are excluded
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/git-py/_is_git_repo.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns True if and only if proj_dir is a git repository with a resolvable\n    HEAD commit (the directory is recognized by git as a repository and contains\n    at least one commit).\n  - Returns False if proj_dir is not a git repository or is a git repository\n    with no commits.\n  - The function does not raise exceptions to its callers; all outcomes are\n    expressed via the boolean return value.",
+    "actual_behavior": "After the execution of the block, the function _is_git_repo either returns a boolean or raises an exception. (1) If it returns True, then proj_dir is a valid git repository containing at least one commit (the command 'git -C proj_dir rev-parse --verify HEAD' exits with status 0). (2) If it returns False, then the command raised subprocess.CalledProcessError (nonzero exit status), meaning proj_dir is either not a git repository or has no commits. (3) If an exception is raised, it is not subprocess.CalledProcessError; it could be any other exception from subprocess.run (e.g., FileNotFoundError, PermissionError). The function has no side effects: proj_dir and the global state remain unchanged. Formally: (return = True)  (git_exit_code = 0  valid_git_repo_with_commits(proj_dir)); (return = False)  (git_exit_code  0  valid_git_repo_with_commits(proj_dir)); (exception E)  E  CalledProcessError; proj_dir_out = proj_dir_in  unchanged_global_state.",
+    "code_evidence": "Line 9: except subprocess.CalledProcessError:",
+    "trigger_condition": "The specification requires that the function never raises exceptions to its callers; all outcomes must be expressed via the boolean return value. However, if the 'git' executable is not present or not in PATH, subprocess.run raises FileNotFoundError, which is not caught by the narrow except clause. This causes the function to propagate an exception instead of returning False, violating the specification."
+  }
+}

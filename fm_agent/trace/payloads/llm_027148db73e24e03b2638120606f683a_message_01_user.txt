@@ -1,0 +1,47 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def build_llm_cli_command(model, prompt, cwd, files=None):
+Line 2:     """Build the configured CLI command for a file-oriented LLM task.
+Line 3:     The pipeline supports the configurable Codex/Claude agent backends as well
+Line 4:     as the legacy ``opencode run`` backend. Keeping that choice here ensures
+Line 5:     every caller passes files and prompts with the same command-line shape.
+Line 6:     """
+Line 7:     if is_cli_backend_enabled():
+Line 8:         return build_agent_command(model=model, prompt=prompt, cwd=cwd, files=files)
+Line 9:     command = ["opencode", "run", "--model", f"{OPENCODE_MODEL_PROVIDER}/{model}"]
+Line 10:     for file_path in files or []:
+Line 11:         command.extend(["--file", file_path])
+Line 12:     return command + ["--", prompt]
+```
+
+Condition A (what the code actually does):
+The function returns a list of strings representing a CLI command. If is_cli_backend_enabled() is true, the returned list is exactly the result of build_agent_command(model, prompt, cwd, files). Otherwise, the returned list is the concatenation of: ['opencode', 'run', '--model', OPENCODE_MODEL_PROVIDER + '/' + model], followed by the sequence of alternating '--file' and file_path for each file_path in files (if files is not None, otherwise no additional elements), followed by ['--', prompt]. No side effects occur. Formal logic: For any return value R of build_llm_cli_command(model, prompt, cwd, files): (is_cli_backend_enabled() ⇒ R = build_agent_command(model, prompt, cwd, files)) ∧ (¬is_cli_backend_enabled() ⇒ R = ['opencode', 'run', '--model', OPENCODE_MODEL_PROVIDER + '/' + model] + ([] if files is None else ['--file', f for f in files]) + ['--', prompt]).
+
+Condition B (what the specification requires):
+- Returns a non-empty list of strings constituting a CLI command
+  - When the returned command list is executed as a subprocess with cwd as the
+    working directory, the subprocess invokes the configured LLM backend to
+    process the given prompt
+  - When files is a non-empty list, each file path is attached to the LLM
+    invocation as context; when files is None or empty, no file attachments
+    are included in the command
+  - The returned command is self-contained: it requires no additional
+    arguments to launch the LLM agent in the specified working directory
+
+Additional context:
+is_cli_backend_enabled() -> bool
+Pre-condition: the backend configuration has been loaded and its
+    module-level state is initialized
+  Post-condition: returns True when a direct CLI backend (Codex or Claude)
+    is configured; returns False when the OpenCode backend is configured
+
+build_agent_command(model, prompt, cwd, files) -> list[str]
+Pre-condition: model is a non-empty string identifying an LLM model;
+    prompt is a non-empty string; cwd is a path to an existing directory;
+    files is None or a list of file path strings
+  Post-condition: returns a CLI argument list formatted for the configured
+    agent CLI backend that, when executed, invokes the model with the given
+    prompt, working directory, and file attachments
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

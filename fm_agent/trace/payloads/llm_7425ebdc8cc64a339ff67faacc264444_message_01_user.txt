@@ -1,0 +1,40 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def row(label, b):
+Line 2:         return [
+Line 3:             label,
+Line 4:             _fmt_tokens(b.get("input", 0)),
+Line 5:             _fmt_tokens(b.get("cache_read", 0)),
+Line 6:             _fmt_tokens(b.get("cache_write", 0)),
+Line 7:             _fmt_tokens(b.get("output", 0)),
+Line 8:         ]
+```
+
+Condition A (what the code actually does):
+The function returns a list of five strings: the first element is the input string 'label' unchanged, and the following four elements are the results of `_fmt_tokens` applied to the non-negative integer values obtained from dictionary `b` for keys "input", "cache_read", "cache_write", and "output" respectively, defaulting to 0 if a key is missing. The arguments `label` and `b` are not modified. Formally: result = [label, _fmt_tokens(b.get("input", 0)), _fmt_tokens(b.get("cache_read", 0)), _fmt_tokens(b.get("cache_write", 0)), _fmt_tokens(b.get("output", 0))] ∧ label_after = label_before ∧ b_after = b_before.
+
+Condition B (what the specification requires):
+- Returns a list whose first element is label unchanged, followed
+    by formatted token-count values for each of the four recognized
+    LLM token-tracking categories in a fixed order: new input tokens,
+    tokens read from the prompt cache, tokens written to the prompt
+    cache, and output tokens
+  - When a category key is absent from b, the token count in b is
+    treated as 0 for that position
+  - Each token count is transformed through the dashboard's
+    token-formatting function before being placed in the result list
+
+Additional context:
+_fmt_tokens(n) -> str
+Pre-condition: n is a non-negative integer representing a token
+    count
+  Post-condition: Returns a formatted string representation of n
+    using a magnitude-appropriate compact suffix
+
+dict.get(key, default) -> Any
+Pre-condition: none
+  Post-condition: Returns the value associated with the given key, or
+    the given default value when the key is absent from the dict
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

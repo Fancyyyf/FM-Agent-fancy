@@ -1,0 +1,59 @@
+Programming language: Python
+
+Pre-condition:
+Function returns a list `layers` where each element is a dictionary with keys `layer` (int), `functions` (list of FQNs, sorted), and `cycle_resolution` (bool). The list partitions `phase_fqns`: every FQN in `phase_fqns` appears in exactly one layer's `functions` list, the layers are ordered by ascending `layer` starting from 0, and the union of `functions` over all layers equals `set(phase_fqns)`. Inputs `phase_fqns`, `callees_map`, and `callers_map` are not mutated. For any two distinct FQNs `a` and `b` in `phase_fqns`, if `b` is in `callees_map.get(a, [])` (i.e., `a` calls `b`), then letting `layer(a)` be the index of the layer containing `a` and `layer(b)` be the index of the layer containing `b`, we have `layer(a) <= layer(b)`. If `layer(a) == layer(b)`, then the layer has `cycle_resolution == True` and there exists a directed cycle in the in‑phase call graph containing both `a` and `b` (i.e., `a` and `b` belong to the same strongly connected component). If `cycle_resolution` is `False` for the layer containing `a` and `b`, then `layer(a) < layer(b)`. No exceptions are raised provided the pre‑condition holds.
+
+Code block:
+```python
+Line 41:                 for fqn in scc:
+Line 42:                     fqn_to_scc[fqn] = i
+Line 43:             # Build DAG between SCCs based on caller edges
+Line 44:             scc_callers = defaultdict(set)  # scc_idx -> set of scc_idx that call into it
+Line 45:             for fqn in remaining:
+Line 46:                 scc_i = fqn_to_scc[fqn]
+Line 47:                 for caller_fqn in callers_map.get(fqn, set()) & remaining:
+Line 48:                     scc_j = fqn_to_scc[caller_fqn]
+Line 49:                     if scc_i != scc_j:
+Line 50:                         scc_callers[scc_i].add(scc_j)
+Line 51:             # Topological sort of SCCs
+Line 52:             scc_assigned = {}
+Line 53:             scc_remaining = set(range(len(sccs)))
+Line 54:             while scc_remaining:
+Line 55:                 scc_ready = set()
+Line 56:                 for scc_idx in scc_remaining:
+Line 57:                     unassigned_scc_callers = scc_callers.get(scc_idx, set()) - set(scc_assigned.keys())
+Line 58:                     if not unassigned_scc_callers:
+Line 59:                         scc_ready.add(scc_idx)
+Line 60:                 if not scc_ready:
+Line 61:                     # Should not happen if Tarjan is correct, but handle gracefully
+Line 62:                     # Assign all remaining to the same layer
+Line 63:                     layer_idx = len(layers)
+Line 64:                     all_fqns = set()
+Line 65:                     for scc_idx in scc_remaining:
+Line 66:                         all_fqns.update(sccs[scc_idx])
+Line 67:                     for fqn in all_fqns:
+Line 68:                         assigned[fqn] = layer_idx
+Line 69:                     layers.append({"layer": layer_idx, "functions": sorted(all_fqns), "cycle_resolution": True})
+Line 70:                     remaining -= all_fqns
+Line 71:                     break
+Line 72:                 layer_idx = len(layers)
+Line 73:                 layer_fqns = set()
+Line 74:                 is_cycle = False
+Line 75:                 for scc_idx in scc_ready:
+Line 76:                     scc_assigned[scc_idx] = layer_idx
+Line 77:                     layer_fqns.update(sccs[scc_idx])
+Line 78:                     if len(sccs[scc_idx]) > 1:
+Line 79:                         is_cycle = True
+Line 80:                 for fqn in layer_fqns:
+Line 81:                     assigned[fqn] = layer_idx
+Line 82:                 layers.append({"layer": layer_idx, "functions": sorted(layer_fqns), "cycle_resolution": is_cycle})
+Line 83:                 remaining -= layer_fqns
+Line 84:                 scc_remaining -= scc_ready
+Line 85:     return layers
+```
+
+Additional context:
+_tarjan_scc(nodes, edges) -> list[list]
+Pre-condition: nodes is an iterable of hashable node identifiers; edges maps each node to an iterable of its outgoing neighbors (other node identifiers)
+  Post-condition: returns a list of SCCs in reverse topological order (no edge from a later SCC to an earlier SCC); each SCC is a maximal set of nodes where every node is reachable from every other node via directed paths restricted to nodes; every node in nodes appears in exactly one SCC
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

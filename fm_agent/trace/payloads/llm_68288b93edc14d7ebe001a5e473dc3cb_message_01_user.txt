@@ -1,0 +1,74 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a valid directory containing fm_agent/phases.json with at minimum the key "phases" (a list of phase objects) and optionally other phase metadata
+  - Each phase in phases.json must have integer "phase" and string "name" keys
+  - Extracted function files exist under fm_agent/extracted_functions/ for at least one phase; each filename encodes a function name
+  - If phase_numbers is provided, every element is a valid phase number present in phases.json
+  - If extra_call_edges is provided, each edge identifies a caller (by FQN and/or callsite names) and a callee (by FQN)
+
+Code block:
+```python
+Line 1: def generate_topdown_layers(proj_dir, phase_numbers=None, extra_call_edges=None):
+Line 2:     """Generate topdown layer JSON files for the specified phases (or all phases).
+Line 3:     Args:
+Line 4:         proj_dir: project root directory
+Line 5:         phase_numbers: list of phase numbers to process, or None for all
+Line 6:         extra_call_edges: optional iterable of supplemental caller/callee edges
+Line 7:     Returns:
+Line 8:         list of output file paths written
+Line 9:     """
+Line 10:     phases_data = _load_phases(proj_dir)
+Line 11:     output_dir = os.path.join(proj_dir, "spec_prompts")
+Line 12:     os.makedirs(output_dir, exist_ok=True)
+Line 13:     # Build global stem->FQN mapping across ALL phases for all_callees
+Line 14:     global_stem_to_fqns = defaultdict(set)
+Line 15:     for pi in phases_data["phases"]:
+Line 16:         for filepath, _ in _collect_phase_files(proj_dir, pi):
+Line 17:             fqn = _file_to_fqn(filepath, proj_dir)
+Line 18:             stem = fqn.split("::")[-1]
+Line 19:             global_stem_to_fqns[stem].add(fqn)
+Line 20:     output_files = []
+Line 21:     for phase_info in phases_data["phases"]:
+Line 22:         phase_num = phase_info["phase"]
+Line 23:         phase_name = phase_info["name"]
+Line 24:         if phase_numbers and phase_num not in phase_numbers:
+Line 25:             continue
+Line 26:         # 1.2 Collect files
+Line 27:         phase_files = _collect_phase_files(proj_dir, phase_info)
+Line 28:         if not phase_files:
+Line 29:             logging.warning(f"Phase {phase_num} ({phase_name}): no extracted files found, skipping.")
+Line 30:             continue
+Line 31:         # 1.4 Build call graph (also returns file_map and module_map)
+Line 32:         (
+Line 33:             callees_map,
+Line 34:             callers_map,
+Line 35:             all_callees_map,
+Line 36:             file_map,
+Line 37:             module_map,
+Line 38:             edge_aliases_map,
+Line 39:         ) = _build_call_graph(
+Line 40:             phase_files, proj_dir, global_stem_to_fqns, extra_call_edges=extra_call_edges
+```
+
+Additional context:
+_load_phases(proj_dir: str) -> dict
+Pre-condition: proj_dir/fm_agent/phases.json exists and is valid JSON
+  Post-condition: returns the parsed JSON object containing at minimum a "phases" list; each phase entry has integer "phase" and string "name" keys
+
+_collect_phase_files(proj_dir: str, phase_info: dict) -> list[tuple[str, object]]
+Pre-condition: phase_info has module and source_file information; extracted function files exist under proj_dir/fm_agent/extracted_functions/
+  Post-condition: returns a list of (filepath, metadata) pairs where each filepath is a path to a single-function extracted file belonging to this phase; the list is empty if no extracted files exist for this phase
+
+_file_to_fqn(filepath: str, proj_dir: str) -> str
+Pre-condition: filepath is a path to an extracted function file under proj_dir/fm_agent/extracted_functions/
+  Post-condition: returns the fully-qualified name derived by stripping the extension from filepath and joining directory components of the path below extracted_functions/ with "::" separators; the filename component becomes the last segment
+
+_build_call_graph(phase_files: list, proj_dir: str, global_stem_to_fqns: dict, extra_call_edges=None) -> tuple[dict, dict, dict, dict, dict, dict]
+Pre-condition: phase_files is a non-empty list of (filepath, metadata) pairs; global_stem_to_fqns maps function-name stems to sets of FQNs across all phases
+  Post-condition: returns a 6-tuple of (callees_map, callers_map, all_callees_map, file_map, module_map, edge_aliases_map), all keyed by FQN; callees_map[fqn] is the set of FQNs called by fqn, callers_map[fqn] is the set of FQNs that call fqn, all_callees_map[fqn] includes callees from all phases, file_map[fqn] is the absolute file path, module_map[fqn] is the module name, and edge_aliases_map[callee_fqn][caller_fqn] is a set of supplemental info names from extra_call_edges or static analysis
+
+_compute_layers(phase_fqns: set[str], callees_map: dict, callers_map: dict) -> list[dict]
+Pre-condition: phase_fqns is the set of all FQNs in this phase; callees_map and callers_map cover all FQNs in phase_fqns with zero or more edges each
+  Post-condition: returns a list of layer dicts sorted by ascending layer index; each dict has "layer" (0-indexed integer), "functions" (list of FQNs in this layer), and optionally "cycle_resolution": true when the layer contains an SCC; every FQN in phase_fqns appears in exactly one layer; for every caller-callee pair where both are in phase_fqns, the callee's layer index is ≤ the caller's layer index, with equality only when they belong to the same cycle-resolution layer
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

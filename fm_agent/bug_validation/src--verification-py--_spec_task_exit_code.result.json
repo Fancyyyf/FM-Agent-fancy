@@ -1,0 +1,11 @@
+{
+  "id": "src--verification-py--_spec_task_exit_code",
+  "source_file": "fm_agent/extracted_functions/src/verification-py/_spec_task_exit_code.py",
+  "function_name": "_spec_task_exit_code",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--verification-py--_spec_task_exit_code.py",
+  "detail_file": "fm_agent/bug_validation/src--verification-py--_spec_task_exit_code.md",
+  "probe_stdout": "CONFIRMED — CustomBaseException propagated (not caught by except Exception), expected return 1\n",
+  "trigger_summary": "except Exception on line 59 catches only Exception subclasses; BaseException subclasses like KeyboardInterrupt/SystemExit propagate uncaught instead of returning 1 as the spec requires."
+}

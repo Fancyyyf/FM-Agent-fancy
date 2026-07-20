@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_score_class",
+  "source_file": "src/scope-py/_score_class.py",
+  "function_name": "_score_class",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_score_class.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_score_class.md",
+  "probe_stdout": "CONFIRMED - actual: 0.0 | expected: 2.0\n",
+  "trigger_summary": "ASCII-only regex r'\\b([a-zA-Z]{4,})\\b' fails to match non-ASCII alphabetic docstring tokens like 'naïve', so they contribute 0 even when present in all_words."
+}

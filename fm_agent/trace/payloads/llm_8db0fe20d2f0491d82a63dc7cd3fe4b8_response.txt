@@ -1,0 +1,3 @@
+{
+  "post_condition": "If value is a string and after stripping leading/trailing whitespace it is non-empty (i.e., isinstance(value, str) and value.strip() != ''), then the function returns value with all leading and trailing whitespace removed (result of _clean_label(value)), which is a non-empty string with no leading/trailing whitespace. Otherwise, a ValueError is raised with the message f\"{source}: missing non-empty string '{key}'\". Formally: (isinstance(value, str) ∧ value.strip() ≠ '' ⇒ result = _clean_label(value) ∧ result ≠ '' ∧ isinstance(result, str)) ∧ (¬(isinstance(value, str) ∧ value.strip() ≠ '') ⇒ ValueError raised with appropriate message)."
+}

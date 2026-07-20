@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "target_desc='a', source_desc='b'",
+  "offending_statements": "Line 12: return f\"{target_desc}\\n\\n{source_desc}\"",
+  "reason": "The specification requires joining with a single space when neither description is empty and source_desc is not a substring of target_desc, but the code uses two newline characters."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--render_llm_status",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/render_llm_status.py",
+  "function_name": "render_llm_status",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--render_llm_status.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--render_llm_status.md",
+  "probe_stdout": "CONFIRMED — strip shows 50 symbols for 70 entries, expected 70\n",
+  "trigger_summary": "The strip loop uses statuses[-50:] instead of iterating all window entries, so when LLM_STATUS_WINDOW (80) exceeds 50, not all entries are represented."
+}

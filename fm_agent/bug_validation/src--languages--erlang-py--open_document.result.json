@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--open_document",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/open_document.py",
+  "function_name": "open_document",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--open_document.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--open_document.md",
+  "probe_stdout": "NOT CONFIRMED — open_document with no channel correctly raised RuntimeError: ELP client is not running\n",
+  "trigger_summary": "open_document calls self.notify without explicit channel check, but self.notify delegates to self._send which checks self._proc is None and raises RuntimeError"
+}

@@ -1,0 +1,18 @@
+Programming language: Python
+
+Pre-condition:
+- work_dir is a path to an existing, writable directory
+
+Code block:
+```python
+Line 1: def _record_version(commit_id, work_dir):
+Line 2:     """Append commit_id as a new line to fm_agent/version.log, building up a
+Line 3:     history of processed commits. No-op when commit_id is falsy."""
+Line 4:     if not commit_id:
+Line 5:         return
+Line 6:     version_path = os.path.join(work_dir, "version.log")
+Line 7:     with open(version_path, "a") as f:
+Line 8:         f.write(commit_id + "\n")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

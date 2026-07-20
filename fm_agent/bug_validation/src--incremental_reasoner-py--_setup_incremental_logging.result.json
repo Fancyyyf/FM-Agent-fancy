@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_setup_incremental_logging",
+  "source_file": "src/incremental_reasoner-py/_setup_incremental_logging.py",
+  "function_name": "_setup_incremental_logging",
+  "confirmation_status": "not_confirmed",
+  "attempts": "3",
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_setup_incremental_logging.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_setup_incremental_logging.md",
+  "probe_stdout": "A1: _console in __dict__: True\\nA2: getattr _console returns real console: True\\nB1: All StreamHandlers on original_stdout: True\\nB2: Any StreamHandler on old tee (BUG): False\\nNOT CONFIRMED — _setup_incremental_logging consistently uses real console on repeated calls",
+  "trigger_summary": "The code assumes _StdoutTee exposes _console as a direct instance attribute, which it does (set in __init__); Python's attribute lookup finds it before __getattr__ is invoked, so repeated calls always resolve the real console correctly."
+}

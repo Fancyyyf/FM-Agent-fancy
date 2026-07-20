@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/trace_writer-py/utc_now_iso.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns the current UTC date and time formatted as an ISO 8601 string ending with \"Z\" as the UTC timezone designator\n  - The returned string includes microsecond precision",
+    "actual_behavior": "The function returns a string that is the ISO 8601 formatted representation of the current UTC date and time, with the UTC offset suffix '+00:00' replaced by 'Z'. Formally, let t be the instant the function is called, let dt = datetime.now(timezone.utc) at t, then the returned value is dt.isoformat().replace('+00:00', 'Z'). No exceptions are raised, and no side effects occur.",
+    "code_evidence": "Line 2: return datetime.now(timezone.utc).isoformat().replace(\"+00:00\", \"Z\")",
+    "trigger_condition": "The specification requires the returned string to include microsecond precision. However, datetime.isoformat() omits the fractional seconds when microseconds are zero, violating this requirement."
+  }
+}

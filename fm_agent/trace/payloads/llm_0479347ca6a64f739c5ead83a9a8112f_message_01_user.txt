@@ -1,0 +1,34 @@
+Programming language: Python
+
+Pre-condition:
+- self.events_path is a Path object pointing to a JSONL file where each
+    non-blank line is a valid JSON object.
+  - self._events_offset is a non-negative integer tracking the byte
+    position up to which the file has already been processed by previous
+    calls.
+
+Code block:
+```python
+Line 1:     def tail_events(self):
+Line 2:         if not self.events_path.exists():
+Line 3:             return
+Line 4:         size = self.events_path.stat().st_size
+Line 5:         if size < self._events_offset:
+Line 6:             # file truncated/rotated
+Line 7:             self._events_offset = 0
+Line 8:         if size == self._events_offset:
+Line 9:             return
+Line 10:         with open(self.events_path, "r", encoding="utf-8") as f:
+Line 11:             f.seek(self._events_offset)
+Line 12:             for line in f:
+Line 13:                 if not line.strip():
+Line 14:                     continue
+Line 15:                 try:
+Line 16:                     ev = json.loads(line)
+Line 17:                 except Exception:
+Line 18:                     continue
+Line 19:                 self._ingest_event(ev)
+Line 20:             self._events_offset = f.tell()
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

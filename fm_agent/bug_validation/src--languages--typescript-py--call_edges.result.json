@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--typescript-py--call_edges",
+  "source_file": "src/languages/typescript-py/call_edges.py",
+  "function_name": "call_edges",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--typescript-py--call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--typescript-py--call_edges.md",
+  "probe_stdout": "CONFIRMED — callee \"linked::external-ts::externalHelper\" resolved to external file /tmp/external_ts/external.ts (not in project)\n",
+  "trigger_summary": "CodeGraphExtractor.get_call_edges includes callee stems for functions in symlinked external files that are not part of the project source, violating the spec requirement that every callee correspond to a function reachable from a project TypeScript source file."
+}

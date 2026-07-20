@@ -1,0 +1,109 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _split_into_blocks_braced(func, language):
+Line 2:     """
+Line 3:     Split function body into blocks respecting syntactic boundaries.
+Line 4:     """
+Line 5:     python_like = {"python"}
+Line 6:     if language.lower() in python_like:
+Line 7:         return _split_into_blocks(func)
+Line 8:     raw_lines = func.strip().split("\n")
+Line 9:     total = len(raw_lines)
+Line 10:     if total <= GRANULARITY:
+Line 11:         return [func.strip()]
+Line 12:     # normalize prefix
+Line 13:     stripped_lines = []
+Line 14:     for line in raw_lines:
+Line 15:         if line.startswith("Line "):
+Line 16:             colon = line.find(":", 5)
+Line 17:             if colon != -1:
+Line 18:                 line = line[colon + 1:].lstrip()
+Line 19:         stripped_lines.append(line)
+Line 20:     # compute brace depth
+Line 21:     depths = _compute_brace_depth_per_line(stripped_lines)
+Line 22:     # define entry depth 
+Line 23:     entry_depth = depths[0] if total > 0 else 0
+Line 24:     if entry_depth == 0:
+Line 25:         entry_depth = next((d for d in depths if d > 0), 0)
+Line 26:     if entry_depth == 0:
+Line 27:         # fallback to safe splitter
+Line 28:         return _split_into_blocks(func)
+Line 29:     # greedy safe splitting
+Line 30:     blocks = []
+Line 31:     i = 0
+Line 32:     while i < total:
+Line 33:         remaining = total - i
+Line 34:         if remaining <= GRANULARITY * 2:
+Line 35:             blocks.append("\n".join(raw_lines[i:]))
+Line 36:             break
+Line 37:         target = i + GRANULARITY
+Line 38:         split_point = -1
+Line 39:         # ONLY split when we return to entry depth
+Line 40:         for j in range(target, total):
+Line 41:             if depths[j] == entry_depth:
+Line 42:                 split_point = j
+Line 43:                 break
+Line 44:         if split_point == -1:
+Line 45:             blocks.append("\n".join(raw_lines[i:]))
+Line 46:             break
+Line 47:         blocks.append("\n".join(raw_lines[i:split_point + 1]))
+Line 48:         i = split_point + 1
+Line 49:     return blocks
+```
+
+Condition A (what the code actually does):
+**Natural Language:**
+The function `_split_into_blocks_braced` returns a non‑empty list of strings, each representing a contiguous block of lines from the input function body. The blocks are constructed so that their ordered concatenation with newline characters exactly reproduces the whole function body after stripping leading and trailing whitespace (i.e., `func.strip()`).
+
+If `language.lower()` belongs to the set `{"python"}`, or if the computed brace‑depth entry point is zero after the algorithm’s fallback, the returned value is the result of calling `_split_into_blocks(func)`, which splits on indentation boundaries (that function preserves the stripped reconstruction property).
+
+Otherwise, the function removes any “Line N: ” prefixes from the lines, computes the running net brace depth per line (via `_compute_brace_depth_per_line`), determines an entry depth (first positive depth, or 0 if none), and then greedily partitions the original prefixed lines into blocks. The splitting algorithm tries to insert a cut only at a line where the brace depth returns to the entry depth, and only after at least `GRANULARITY` lines have been accumulated. The last block may be shorter when the remaining lines are few (`≤ 2·GRANULARITY`) or when no line at entry depth exists beyond the target line. In the special case where the total number of lines does not exceed `GRANULARITY`, the function returns a single‑element list containing the fully stripped function body.
+
+The function raises no exceptions provided the helper functions `_split_into_blocks` and `_compute_brace_depth_per_line` behave as specified (their preconditions are satisfied by the calling context).
+
+**Formal Logic:**
+Let `Func` be the input string `func`, `Lang` the input string `language`, and `GRANULARITY` a fixed positive integer constant. Define:
+- `stripped = Func.strip()`, `raw_lines = stripped.split("\n")`, `n = len(raw_lines)`.
+- `stripped_lines` obtainable from `raw_lines` by, for each line, if it starts with `"Line "` and contains `":"` after index 5, replacing it with the substring after the first such colon stripped of leading whitespace.
+- `depths = _compute_brace_depth_per_line(stripped_lines)` (list of integers, length `n`).
+- `entry_initial = depths[0] if n > 0 else 0`.
+- `entry_depth = entry_initial if entry_initial != 0 else next((d for d in depths if d > 0), 0)`.
+Then one of the following holds:
+
+1. **Python‑like or zero‑depth fallback:**
+   `Lang.lower() ∈ {"python"} ∨ entry_depth = 0`
+   ⇒ `result = _split_into_blocks(Func)`
+   ∧ (∀ result, the post‑condition of `_split_into_blocks` is satisfied).
+
+2. **Short input:**
+   `¬(Lang.lower() ∈ {"python"}) ∧ entry_depth ≠ 0 ∧ n ≤ GRANULARITY`
+   ⇒ `result = [stripped]`.
+
+3. **Greedy brace‑depth splitting:**
+   `¬(Lang.lower() ∈ {"python"}) ∧ entry_depth ≠ 0 ∧ n > GRANULARITY`
+   ⇒ ∃ sequence of indices `0 = i₀ < i₁ < … < iₖ = n` (with `k ≥ 1`) such that:
+   - `result = [ "\n".join(raw_lines[iₘ : iₘ₊₁]) | m ∈ [0, k-1] ]`.
+   - For each `m` from `0` to `k-1`, let `s = iₘ`, `e = iₘ₊₁`. Then the pair `(s, e)` satisfies the following greedy invariant:
+     * If `n - s ≤ 2·GRANULARITY` then `e = n`.
+     * Else let `target = s + GRANULARITY`. If there exists `j ∈ [target, n-1]` with `depths[j] = entry_depth`, let `j_min` be the smallest such `j`; then `e = j_min + 1`. Otherwise, `e = n`.
+   - Consequently, every block (except possibly the last one when no suitable split point exists) contains at least `GRANULARITY` lines, and the reconstructed string `"\n".join(result)` equals `stripped`.
+
+No exception is thrown by this function.
+
+Condition B (what the specification requires):
+- Returns a non-empty list of strings, each being a contiguous, non-overlapping segment of the function body, appearing in the same order as in the original body
+  - For brace-delimited languages: every boundary between consecutive returned segments occurs at a line whose brace-nesting depth equals the brace-nesting depth at the first meaningful brace level of the function body. Each segment is therefore syntactically self-contained with respect to brace structure — it begins and ends at the same nesting depth as the function's entry depth
+  - For languages that use indentation for syntactic structure (classified as Python-like by the function): segments are split at boundaries that respect indentation-level changes, with each segment being a syntactically contiguous block
+  - The ordered concatenation of all returned strings, joined with newline characters, reconstructs the original function body text after stripping leading and trailing whitespace
+
+Additional context:
+_split_into_blocks(func) -> list[str]
+Pre-condition: func is a non-empty string containing the body of a function
+  Post-condition: Returns a list of strings, each being a contiguous, non-overlapping segment of the function body split at indentation-level boundaries. The ordered concatenation of all returned strings joined with newline characters reconstructs the original function body text after stripping leading and trailing whitespace
+
+_compute_brace_depth_per_line(stripped_lines) -> list[int]
+Pre-condition: stripped_lines is a non-empty list of strings, each containing one line of function body text without "Line N:" prefixes
+  Post-condition: Returns a list of non-negative integers with length equal to stripped_lines. Each element at position i is the net brace count (opening braces '{' minus closing braces '}') accumulated from line 0 through line i inclusive, where braces appearing inside string literals and comments do not contribute to the count
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

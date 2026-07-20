@@ -1,0 +1,25 @@
+Programming language: Python
+
+Pre-condition:
+- filepath is an absolute or relative path to an extracted function file
+    that resides under the directory <proj_dir>/extracted_functions/
+  - proj_dir is the project root directory path
+  - The extracted function file has a filename that includes a file extension
+    (e.g., .py, .cpp, .rs)
+
+Code block:
+```python
+Line 1: def _file_to_fqn(filepath, proj_dir):
+Line 2:     """Convert an extracted function file path to its FQN.
+Line 3:     extracted_functions/src/engine/loader-cpp/loadData.cpp -> src::engine::loader-cpp::loadData
+Line 4:     """
+Line 5:     extracted_base = os.path.join(proj_dir, "extracted_functions")
+Line 6:     rel = os.path.relpath(filepath, extracted_base)
+Line 7:     # Strip file extension from the function file itself
+Line 8:     stem, _ = os.path.splitext(rel)
+Line 9:     # Join with :: separator
+Line 10:     parts = Path(stem).parts
+Line 11:     return "::".join(parts)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

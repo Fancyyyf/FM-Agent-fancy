@@ -1,0 +1,41 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _resolve_callee_fqns(caller_fqn, callee_names, callees_map, edge_aliases_map=None):
+Line 2:     """
+Line 3:     Map callee names reported by opencode (the [INFO] entries whose expected spec changed)
+Line 4:     back to the FQNs of caller_fqn's callees.
+Line 5:     A callee is identified in the [INFO] block by its name; this matches that name against
+Line 6:     the final component (stem) of each of caller_fqn's callee FQNs, case-insensitively, and
+Line 7:     returns every matching callee FQN (a name shared by callees in several files resolves to
+Line 8:     all of them).
+Line 9:     """
+Line 10:     wanted = {n.strip() for n in callee_names if n and n.strip()}
+Line 11:     wanted_lower = {n.lower() for n in wanted}
+Line 12:     resolved = set()
+Line 13:     for callee_fqn in callees_map.get(caller_fqn, ()):
+Line 14:         stem = callee_fqn.split("::")[-1]
+Line 15:         aliases = set()
+Line 16:         if edge_aliases_map:
+Line 17:             aliases.update(edge_aliases_map.get(callee_fqn, {}).get(caller_fqn, ()))
+Line 18:         alias_lower = {alias.lower() for alias in aliases}
+Line 19:         if stem in wanted or stem.lower() in wanted_lower or aliases & wanted or alias_lower & wanted_lower:
+Line 20:             resolved.add(callee_fqn)
+Line 21:     return resolved
+```
+
+Condition A (what the code actually does):
+The function `_resolve_callee_fqns` returns a `set` of callee FQNs from `callees_map[caller_fqn]` that match any of the given callee names (case-insensitively), considering both the stem (final `::`-separated component) of each callee FQN and any aliases provided by `edge_aliases_map`. The desired names are cleaned by stripping whitespace; empty or blank entries are discarded. The function does not mutate its inputs. Formally, let \( W = \{ \text{strip}(n) \mid n \in \text{callee\_names},\ n \neq \text{empty},\ \text{strip}(n) \neq \text{empty} \} \). Then the returned set \( \text{resolved} \) satisfies: \( \text{resolved} = \{ c \mid c \in \text{callees\_map}[\text{caller\_fqn}] \land \big( \exists w \in W: \big( (\text{stem} = c.\text{split}(\text{'::'})[-1]) \land (\text{stem} = w \lor \text{stem.lower}() = w.\text{lower}()) \big) \lor \big( \text{edge\_aliases\_map} \neq \text{None} \land \exists a \in \text{edge\_aliases\_map}.\text{get}(c, \{\}).\text{get}(\text{caller\_fqn}, ()): a = w \lor a.\text{lower}() = w.\text{lower}() \big) \big) \} \).
+
+Condition B (what the specification requires):
+- Returns a (possibly empty) set of callee FQN strings.
+  - Every returned FQN belongs to callees_map[caller_fqn].
+  - A callee FQN is included if and only if its final "::"-separated component (the stem)
+    matches any string in callee_names, case-insensitively, OR any alias in
+    edge_aliases_map for that (callee FQN, caller_fqn) pair matches any string in
+    callee_names, case-insensitively.
+  - A callee FQN whose stem or alias matches more than one name in callee_names is
+    included exactly once (duplicate callee FQNs are not returned).
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

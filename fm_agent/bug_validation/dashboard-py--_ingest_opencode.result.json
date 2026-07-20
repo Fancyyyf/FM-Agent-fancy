@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_ingest_opencode",
+  "source_file": "dashboard.py",
+  "function_name": "_ingest_opencode",
+  "confirmation_status": "not_confirmed",
+  "attempts": "3",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_ingest_opencode.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_ingest_opencode.md",
+  "probe_stdout": "NOT CONFIRMED — actual matched expected: calls=1, input=75, output=25, cr=10, cw=5, cache_len=1",
+  "trigger_summary": "Response with status 200 and valid usage dict was claimed to be ignored, but 3 probe variants all confirmed the code correctly updates opencode_calls, token totals, cost, and cache_window."
+}

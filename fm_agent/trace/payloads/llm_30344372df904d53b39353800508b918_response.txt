@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/home/user/project' (where CodeGraphExtractor.from_proj_dir returns a truthy instance), filepath='/home/user/project/unindexed.c' (a C source file not indexed by the codegraph, causing get_function_spans to return None)",
+  "offending_statements": "Line 8: return cg.get_function_spans(\"c\", filepath) if cg else None",
+  "reason": "The specification mandates that if a codegraph instance can be initialized from proj_dir, the function must return a list of function spans. The code can return None even when cg is truthy, because it passes through the result of get_function_spans, which may be None if the file is not indexed. This violates the 'Otherwise returns a list' requirement."
+}

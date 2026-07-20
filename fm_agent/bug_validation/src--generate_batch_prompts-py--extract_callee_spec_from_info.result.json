@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_batch_prompts-py--extract_callee_spec_from_info",
+  "source_file": "src/generate_batch_prompts-py/extract_callee_spec_from_info.py",
+  "function_name": "extract_callee_spec_from_info",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_batch_prompts-py--extract_callee_spec_from_info.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_batch_prompts-py--extract_callee_spec_from_info.md",
+  "probe_stdout": "CONFIRMED — actual: '//[SPLIT]entry1\\nhello\\n//[SPLIT]entry2\\nworld' | expected: 'entry1\\nhello'\\n",
+  "trigger_summary": "When info_block uses a comment prefix directly followed by [SPLIT] without a space (e.g., '//[SPLIT]'), the hardcoded space in split_tag causes an incorrect delimiter, splitting fails, and the function returns the entire block instead of the first matching entry."
+}

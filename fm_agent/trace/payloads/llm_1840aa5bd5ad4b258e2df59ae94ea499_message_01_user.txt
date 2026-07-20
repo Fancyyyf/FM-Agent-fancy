@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a valid filesystem path to a project directory
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return ``{abs_filepath: [(function_id, body)]}`` for Erlang files."""
+Line 3:     return _analysis_or_empty(proj_dir).functions
+```
+
+Additional context:
+_analysis_or_empty(root: str) -> object
+Pre-condition: root is a filesystem path
+  Post-condition: Returns an analysis object whose .functions attribute yields the extracted-function mapping; returns an object whose .functions is an empty dict when analysis is unavailable for the given root
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

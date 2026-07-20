@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "fqn = \"target_func\"; callers_map = {\"target_func\": [\"caller1\"]}; file_map = {\"caller1\": \"/path/to/file.py\"} (with /path/to/file.py existing and containing only an empty [SPEC] block: '# [SPEC]\\n# [SPEC]'); edge_aliases_map = None. Under these inputs, extract_spec_block returns '' and extract_info_block returns None, so caller_spec='', expectation=None. The condition on Line 23 evaluates to False, so caller1 is omitted from the result. However, specification requires caller1 to be included with caller_spec='' because it possesses a [SPEC] block.",
+  "offending_statements": "Line 23: if caller_spec or expectation:",
+  "reason": "The condition uses truthiness to decide whether a caller should be included. An empty [SPEC] block yields an empty string (truthiness False), but the specification states that a caller with a [SPEC] block must be included regardless of its content, with caller_spec set to the block content (even if empty). Therefore the code incorrectly omits callers whose [SPEC] block is empty."
+}

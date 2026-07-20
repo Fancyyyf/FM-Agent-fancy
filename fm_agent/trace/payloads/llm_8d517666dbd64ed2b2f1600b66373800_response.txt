@@ -1,0 +1,1 @@
+{"verdict": "MISMATCH", "counterexample": "n=0.5", "offending_statements": "Line 8: return str(n)", "reason": "The code returns the string representation of the float (e.g., '0.5'), but the specification requires 'decimal string representation of the integer value of n', which would be '0'."}

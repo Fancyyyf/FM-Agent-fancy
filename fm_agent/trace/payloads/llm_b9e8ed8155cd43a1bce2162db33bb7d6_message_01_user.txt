@@ -1,0 +1,74 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a path to an existing directory on the filesystem
+  - work_dir is a path to an existing directory on the filesystem
+  - event_id is a non-empty unique string identifying this trace event
+  - command is an AgentCommand or a non-empty list of strings forming a valid
+    CLI invocation
+  - trace_log_path is a filesystem path under work_dir whose parent
+    directories exist
+
+Code block:
+```python
+Line 1: def _start_opencode_process(proj_dir, work_dir, event_id, command, trace_log_path):
+Line 2:     stdin_text = command_stdin(command)
+Line 3:     proc = subprocess.Popen(
+Line 4:         command_argv(command),
+Line 5:         cwd=proj_dir,
+Line 6:         env=_opencode_env(work_dir, event_id),
+Line 7:         stdin=subprocess.PIPE if stdin_text is not None else None,
+Line 8:         stdout=subprocess.PIPE,
+Line 9:         stderr=subprocess.STDOUT,
+Line 10:         text=True,
+Line 11:         encoding="utf-8",
+Line 12:         errors="replace",
+Line 13:     )
+Line 14:     stdin_thread = None
+Line 15:     if stdin_text is not None:
+Line 16:         stdin_thread = threading.Thread(
+Line 17:             target=_write_command_stdin,
+Line 18:             args=(proc.stdin, stdin_text),
+Line 19:             daemon=True,
+Line 20:         )
+Line 21:         stdin_thread.start()
+Line 22:     log_thread = threading.Thread(
+Line 23:         target=_copy_opencode_output,
+Line 24:         args=(proc.stdout, trace_log_path),
+Line 25:         daemon=True,
+Line 26:     )
+Line 27:     log_thread.start()
+Line 28:     return proc, log_thread, stdin_thread
+```
+
+Additional context:
+command_stdin(command) -> Optional[str]
+Pre-condition: command is an AgentCommand or list of strings
+  Post-condition: returns the stdin text payload of the command, or None
+    if the command has no stdin text
+
+command_argv(command) -> list[str]
+Pre-condition: command is an AgentCommand or list of strings
+  Post-condition: returns the argument list suitable for passing to
+    subprocess.Popen as the command to execute
+
+_opencode_env(work_dir, event_id) -> dict
+Pre-condition: work_dir is an existing directory path; event_id is a
+    non-empty string
+  Post-condition: returns a dictionary of environment variables for the
+    subprocess, derived from work_dir and event_id, that is a superset of
+    the current process environment
+
+_write_command_stdin(pipe, text) -> None
+Pre-condition: pipe is a writable file-like object connected to a
+    subprocess stdin; text is a string
+  Post-condition: writes text to pipe, flushes, and closes the pipe,
+    after which no further writes to the subprocess stdin are possible
+
+_copy_opencode_output(stream, path) -> None
+Pre-condition: stream is a readable text stream producing lines; path
+    is a writable filesystem path
+  Post-condition: reads from stream line by line until the stream is
+    exhausted (EOF), writing each line to the file at path, then flushes
+    and closes the output file
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

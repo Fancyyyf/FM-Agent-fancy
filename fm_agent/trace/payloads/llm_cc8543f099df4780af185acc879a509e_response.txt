@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a set containing all keywords for the given language merged with a global set of additional keywords. Specifically, if lang_key is a key in LANG_CONFIG and its value is a dictionary that contains a 'keywords' key, then the returned set is the union of that 'keywords' set and the global _COMMON_EXTRA_KEYWORDS. Otherwise, the returned set is simply a copy of _COMMON_EXTRA_KEYWORDS. No side-effects occur. Formally: result = (LANG_CONFIG.get(lang_key, {}).get('keywords', set())) ∪ _COMMON_EXTRA_KEYWORDS."
+}

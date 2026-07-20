@@ -1,0 +1,47 @@
+Programming language: Python
+
+Pre-condition:
+- edges is an iterable of CallEdge objects
+
+Code block:
+```python
+Line 1: def _dedupe_edges(edges: Iterable[CallEdge]) -> list[CallEdge]:
+Line 2:     merged = {}
+Line 3:     for edge in edges:
+Line 4:         key = (
+Line 5:             edge.caller.fqn,
+Line 6:             edge.callee.fqn,
+Line 7:         )
+Line 8:         if key not in merged:
+Line 9:             merged[key] = {
+Line 10:                 "fqn": edge.caller.fqn,
+Line 11:                 "callsite_names": list(edge.caller.callsite_names),
+Line 12:                 "source": edge.source,
+Line 13:                 "info_names": list(edge.callee.info_names),
+Line 14:             }
+Line 15:             continue
+Line 16:         for name in edge.caller.callsite_names:
+Line 17:             if name not in merged[key]["callsite_names"]:
+Line 18:                 merged[key]["callsite_names"].append(name)
+Line 19:         for name in edge.callee.info_names:
+Line 20:             if name not in merged[key]["info_names"]:
+Line 21:                 merged[key]["info_names"].append(name)
+Line 22:     result = []
+Line 23:     for (_caller_fqn, callee_fqn), data in sorted(merged.items()):
+Line 24:         result.append(
+Line 25:             CallEdge(
+Line 26:                 caller=CallerSelector(
+Line 27:                     fqn=data["fqn"],
+Line 28:                     callsite_names=tuple(data["callsite_names"]),
+Line 29:                 ),
+Line 30:                 callee=CalleeTarget(
+Line 31:                     fqn=callee_fqn,
+Line 32:                     info_names=tuple(data["info_names"]),
+Line 33:                 ),
+Line 34:                 source=data["source"],
+Line 35:             )
+Line 36:         )
+Line 37:     return result
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,76 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def main():
+Line 2:     ap = argparse.ArgumentParser(description=__doc__)
+Line 3:     ap.add_argument("proj_dir",
+Line 4:                     help=("Either a target codebase (monitors <proj_dir>/fm_agent/) "
+Line 5:                           "or a workspace directly (any dir containing a trace/ subdir)"))
+Line 6:     ap.add_argument("--refresh", type=float, default=1.5, help="Refresh seconds (default 1.5)")
+Line 7:     args = ap.parse_args()
+Line 8:     state = State(args.proj_dir)
+Line 9:     if not state.trace_dir.exists():
+Line 10:         print(f"trace dir not found: {state.trace_dir}", file=sys.stderr)
+Line 11:         print("Has the pipeline started yet? (waiting…)", file=sys.stderr)
+Line 12:     console = Console()
+Line 13:     with Live(console=console, refresh_per_second=max(1.0, 1.0 / args.refresh),
+Line 14:               screen=True) as live:
+Line 15:         try:
+Line 16:             while True:
+Line 17:                 state.tail_events()
+Line 18:                 state.tail_opencode()
+Line 19:                 state.scan_bugs()
+Line 20:                 live.update(build_layout(state))
+Line 21:                 time.sleep(args.refresh)
+Line 22:         except KeyboardInterrupt:
+Line 23:             pass
+```
+
+Condition A (what the code actually does):
+If the function returns normally (i.e., after catching a KeyboardInterrupt while in the infinite update loop), then the `Live` context manager has exited, the terminal has been restored to its original state, and the program ends with an implicit success code. The `State` object `state` reflects the events, trace, and bug data that were read from the project directory up to the end of the last *fully completed* iteration of the loop. Any iteration that was in progress when the interrupt was raised is partially applied: some of `tail_events`, `tail_opencode`, `scan_bugs` may have completed, but `live.update` might not have been called with the final layout, or `time.sleep` might not have finished. The live display showed the layout that was last generated. After the interrupt is caught, no further modifications to `state` or the display occur. If an exception other than `KeyboardInterrupt` arises at any point (during argument parsing, `State` initialization, the `Live` setup, or within the loop), that exception propagates out of the function; before it propagates, the `Live` context manager’s `__exit__` method is invoked, stopping the live display and restoring the terminal. The `State` object remains in whatever state it was when the exception occurred – its data may be partially updated from the incomplete iteration. Formal post-condition (Hoare-style):  { pre-condition: argv has valid project dir and optional --refresh float > 0 }  main()  { (∎ ⇒ (live_stopped ∧ term_restored ∧ state ⊆ disk_data ∧ last_iteration_complete)) ∧ (↯ ⇒ (exception ∈ Exc ∧ ¬KeyboardInterrupt ∧ live_stopped ∧ term_restored ∧ state_at_exception = state_current)) }  where ∎ denotes normal termination after catching KeyboardInterrupt, ↯ denotes abnormal termination by an unhandled exception, `state ⊆ disk_data` means the internal state corresponds to the on-disk data as of the last completed read point, and `last_iteration_complete` indicates the loop was interrupted between iterations or after a full iteration (guaranteeing `live.update` was called with a consistent state).
+
+Condition B (what the specification requires):
+- If the trace directory expected under the project directory does not exist,
+    a diagnostic message and a waiting hint are written to stderr; execution
+    continues regardless.
+  - Enters an infinite loop. On each iteration:
+      - The dashboard state is refreshed with the latest trace events, OpenCode
+        trace data, and bug validation results from the filesystem.
+      - A full-screen terminal UI is rendered showing the current aggregated
+        dashboard state, refreshed at a rate no slower than once per second
+        and no faster than the configured refresh interval.
+      - The loop sleeps for the configured refresh interval (default 1.5
+        seconds) after each render.
+  - On KeyboardInterrupt, the loop terminates and the function returns without
+    propagating the exception.
+
+Additional context:
+State(proj_dir: str) -> State
+Pre-condition: proj_dir is a non-empty string representing a filesystem path.
+  Post-condition: Returns a State instance initialized with the trace directory
+    resolved from the given path.
+
+State.tail_events(self) -> None
+Pre-condition: self was initialized with a project directory.
+  Post-condition: Reads any new entries from the trace events file since the
+    last call and appends them to the State's internal event list.
+
+State.tail_opencode(self) -> None
+Pre-condition: self was initialized with a project directory.
+  Post-condition: Reads any new OpenCode trace data since the last call and
+    updates the State's internal metrics accordingly.
+
+State.scan_bugs(self) -> None
+Pre-condition: self was initialized with a project directory.
+  Post-condition: Scans the bug validation directory for new or updated bug
+    reports since the last call and updates the State's internal bug report
+    collection.
+
+build_layout(state: State) -> RenderableType
+Pre-condition: state is a State object populated with current trace and bug
+    data.
+  Post-condition: Returns a Rich renderable that, when displayed, produces a
+    full terminal screen layout whose content reflects the data contained in
+    state at the time of the call.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

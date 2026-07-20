@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_parse_python_file",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/scope-py/_parse_python_file.py",
+  "function_name": "_parse_python_file",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_parse_python_file.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_parse_python_file.md",
+  "probe_stdout": "CONFIRMED — funcs contains class methods: ['my_method'] | expected: [] (empty)\n",
+  "trigger_summary": "A Python file with only a class containing a method (no module-level functions) causes class methods to leak into funcs_info because ast.walk() traverses nested FunctionDef nodes inside ClassDef bodies."
+}

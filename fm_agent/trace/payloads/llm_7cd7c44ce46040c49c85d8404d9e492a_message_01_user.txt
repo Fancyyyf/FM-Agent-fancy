@@ -1,0 +1,19 @@
+Programming language: Python
+
+Pre-condition:
+- func is a dictionary
+  - phase is a non-negative integer
+
+Code block:
+```python
+Line 1: def phase_callee_info_names_key(func: dict, phase: int) -> Optional[str]:
+Line 2:     target = f"phase{phase}_callee_info_names_by_caller"
+Line 3:     if target in func:
+Line 4:         return target
+Line 5:     for key in func.keys():
+Line 6:         if key.endswith("_callee_info_names_by_caller") and key.startswith("phase"):
+Line 7:             return key
+Line 8:     return None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_escape_component",
+  "source_file": "src/languages/erlang-py/_escape_component.py",
+  "function_name": "_escape_component",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_escape_component.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_escape_component.md",
+  "probe_stdout": "CONFIRMED — input '_:' produced '__3a' which contains \"__\"",
+  "trigger_summary": "Input containing underscore followed by a non-alphanumeric character (e.g., '_:') produces forbidden '__' in output."
+}

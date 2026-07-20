@@ -1,0 +1,11 @@
+{
+  "id": "src--entry_reasoning_pipeline-py--_select_functions_by_source",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_select_functions_by_source.py",
+  "function_name": "_select_functions_by_source",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--entry_reasoning_pipeline-py--_select_functions_by_source.py",
+  "detail_file": "fm_agent/bug_validation/src--entry_reasoning_pipeline-py--_select_functions_by_source.md",
+  "probe_stdout": "[Pipeline] Building codegraph index...\n[Pipeline] codegraph index built.\nExtraction complete: 1 written, 0 skipped.\nNOT CONFIRMED — ValueError was raised for missing entry_func, as the spec requires: entry_func 'nonexistent_module::nonexistent_func' not found among extracted functions under proj_dir",
+  "trigger_summary": "Call _select_functions_by_source with extractable source files but an entry_func FQN that does not match any extracted function; the spec requires ValueError, and the code correctly raises it."
+}

@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+- trace_dir is a valid path to an existing directory
+  - path is a valid filesystem path
+
+Code block:
+```python
+Line 1: def _payload_ref(trace_dir, path):
+Line 2:     return os.path.relpath(path, os.path.dirname(trace_dir))
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

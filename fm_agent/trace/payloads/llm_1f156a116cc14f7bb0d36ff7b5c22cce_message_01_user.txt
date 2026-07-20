@@ -1,0 +1,52 @@
+Programming language: Python
+
+Pre-condition:
+- self._stream is an open, readable byte stream sourced from the stdout of a
+    running ELP (Erlang Language Platform) process operating in LSP JSON-RPC
+    mode.
+  - self._messages is a thread-safe queue that accepts any Python object.
+
+Code block:
+```python
+Line 1:     def run(self):
+Line 2:         try:
+Line 3:             while True:
+Line 4:                 headers = {}
+Line 5:                 while True:
+Line 6:                     line = self._stream.readline()
+Line 7:                     if not line:
+Line 8:                         raise EOFError("ELP closed its stdout")
+Line 9:                     if line in (b"\r\n", b"\n"):
+Line 10:                         break
+Line 11:                     name, separator, value = line.decode("ascii", "replace").partition(":")
+Line 12:                     if separator:
+Line 13:                         headers[name.strip().lower()] = value.strip()
+Line 14:                 length = int(headers["content-length"])
+Line 15:                 payload = self._stream.read(length)
+Line 16:                 if len(payload) != length:
+Line 17:                     raise EOFError("ELP returned a truncated JSON-RPC payload")
+Line 18:                 self._messages.put(json.loads(payload.decode("utf-8")))
+Line 19:         except BaseException as exc:
+Line 20:             self._messages.put(exc)
+```
+
+Additional context:
+self._stream.readline() -> bytes
+Pre-condition: stream is open and readable.
+  Post-condition: Returns the next line including its line terminator as bytes,
+    or empty bytes when EOF is reached.
+
+self._stream.read(n: int) -> bytes
+Pre-condition: n >= 0; stream is open and readable.
+  Post-condition: Returns up to n bytes from the stream; returns fewer than n
+    bytes only when EOF is reached before all n bytes are available.
+
+self._messages.put(item) -> None
+Pre-condition: queue is open for writes.
+  Post-condition: item is appended to the queue; at most one consumer blocked
+    on get() may become unblocked.
+
+json.loads(s: str) -> object
+Pre-condition: s is a valid JSON-encoded string.
+  Post-condition: Returns the Python object represented by the JSON string.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

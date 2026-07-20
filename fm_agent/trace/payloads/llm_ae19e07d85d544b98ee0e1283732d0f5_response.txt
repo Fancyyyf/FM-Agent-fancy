@@ -1,0 +1,1 @@
+{"post_condition": "The function returns the value of exc.code if exc is an instance of urllib.error.HTTPError; otherwise, it returns None. No side effects occur, and no exceptions are raised. Formal: (isinstance(exc, urllib.error.HTTPError) ⇒ result = exc.code) ∧ (¬isinstance(exc, urllib.error.HTTPError) ⇒ result = None)"}

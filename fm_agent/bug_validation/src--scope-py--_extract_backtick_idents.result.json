@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_extract_backtick_idents",
+  "source_file": "src/scope-py/_extract_backtick_idents.py",
+  "function_name": "_extract_backtick_idents",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_extract_backtick_idents.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_extract_backtick_idents.md",
+  "probe_stdout": "CONFIRMED — actual: {'init'} | expected '__init__' preserved, 'init' absent",
+  "trigger_summary": "Input '`__init__`' causes .strip('_') to drop underscores, returning {'init'} instead of spec-expected {'__init__'}"
+}

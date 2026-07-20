@@ -1,0 +1,19 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def clear_test_file_exemptions():
+Line 2:     """Drop all registered test-file exemptions."""
+Line 3:     _TEST_FILE_EXEMPTIONS.clear()
+```
+
+Condition A (what the code actually does):
+The function `clear_test_file_exemptions` is bound in the module's global scope. The set `_TEST_FILE_EXEMPTIONS` exists and retains its previous contents; none of its elements have been added or removed. Formally: (clear_test_file_exemptions ∈ globals()) ∧ (_TEST_FILE_EXEMPTIONS ∈ globals()) ∧ (_TEST_FILE_EXEMPTIONS = old(_TEST_FILE_EXEMPTIONS)).
+
+Condition B (what the specification requires):
+- The module-level set of exempted test-file paths is empty.
+  - All paths previously registered via `add_test_file_exemption` are no longer
+    exempt; subsequent test-file classification functions will apply default
+    heuristics to every path.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

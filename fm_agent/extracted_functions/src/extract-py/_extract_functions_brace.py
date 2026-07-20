@@ -1,0 +1,224 @@
+# [SPEC]
+# Unit: src/extract.py
+#
+# _extract_functions_brace(lines, lang_key, lang_cfg) -> [(raw_name, start, end)]
+#
+# Pre-condition:
+#   - lines is a list of strings representing source lines with line endings stripped
+#   - lang_key is a recognized language key
+#   - lang_cfg is the LANG_CONFIG entry for that language, with body type "brace"
+#
+# Post-condition:
+#   - Returns a list of (raw_name, start, end) tuples, one per top-level function definition detected in lines, ordered by first appearance in the source
+#   - Each tuple describes a contiguous span: start is the 0-based index of the first line of the function definition, end is the 0-based index of the last line of the function body (containing the matching closing brace of the body), satisfying 0 <= start <= end < len(lines)
+#   - A function definition is identified by a language-specific declarator pattern at the outermost nesting level, followed by a brace-delimited body
+#   - The raw_name is the unqualified function name as it appears in the source text
+#   - Returned spans are non-overlapping: no line index belongs to more than one span
+#   - Lines inside syntactically well-formed comments (both line comments and block comments delimited by the language's comment syntax) are excluded from function-definition detection
+#   - Lines matching the skip-prefix and skip-keyword patterns defined in lang_cfg are excluded from function-definition detection
+#   - Language-specific exclusion rules (e.g., namespace and class declarations, constexpr variables, test-annotated functions) are applied so that non-function constructs are not misidentified as function definitions
+#   - For C and C++, only source lines at the leftmost indent level are considered as function-definition candidates
+#   - When no function definitions are detected, returns an empty list
+# [SPEC]
+
+# [INFO]
+# _find_brace_end(lines, brace_line_idx) -> int
+#   Pre-condition: lines is a list of source lines; brace_line_idx is a 0-based index into lines where the line contains an opening brace '{' that begins a brace-delimited scope
+#   Post-condition: Returns the 0-based index of the line containing the matching closing brace '}', accounting for properly nested balanced brace pairs; braces that appear inside string literals, character literals, or comments do not contribute to the brace-depth count for matching purposes
+# [SPLIT]
+# _extract_func_name_brace(sig_text, lang_cfg) -> str | None
+#   Pre-condition: sig_text is a string containing one or more concatenated source lines forming a function signature; lang_cfg is a language configuration entry
+#   Post-condition: Returns the function name as a string when sig_text matches the language's function-definition identifier pattern according to the rules encoded in lang_cfg; returns None when sig_text does not match any recognized function-definition form for that language
+# [INFO]
+
+def _extract_functions_brace(lines, lang_key, lang_cfg):
+    """Extract functions from a brace-delimited language source."""
+    functions = []
+    i = 0
+    skip_prefixes = lang_cfg["skip_prefixes"]
+    skip_kw_line = lang_cfg["skip_keywords_line"]
+    in_block_comment = False
+    _block_comment_langs = {"cpp", "c", "cuda", "java", "javascript", "typescript", "arkts"}
+
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.lstrip()
+
+        # Skip blank lines
+        if not stripped:
+            i += 1
+            continue
+
+        # Skip /* */ block comments for C-family languages
+        if lang_key in _block_comment_langs:
+            if in_block_comment:
+                end_idx = stripped.find("*/")
+                if end_idx != -1:
+                    in_block_comment = False
+                i += 1
+                continue
+            start_idx = stripped.find("/*")
+            if start_idx != -1:
+                # Check whether the block comment closes on the same line
+                after_start = stripped[start_idx + 2:]
+                if "*/" not in after_start:
+                    in_block_comment = True
+                i += 1
+                continue
+
+        # Skip comment / preprocessor / using lines
+        if any(stripped.startswith(p) for p in skip_prefixes):
+            i += 1
+            continue
+
+        # Handle anonymous namespace (C++)
+        if lang_key in ("cpp", "c") and re.match(r'^namespace\s*\{', stripped):
+            # Descend into anonymous namespace — skip the opening line
+            i += 1
+            continue
+
+        # Handle named namespace — skip entire block
+        if lang_key in ("cpp", "c") and re.match(r'^namespace\s+\w', stripped):
+            # Find the opening brace and skip to the matching close
+            # But we actually want to scan inside named namespaces too for
+            # functions. Let's just skip the namespace line and descend.
+            if '{' in stripped:
+                i += 1
+                continue
+            else:
+                # Multi-line namespace declaration — skip until {
+                j = i + 1
+                while j < len(lines) and '{' not in lines[j]:
+                    j += 1
+                i = j + 1
+                continue
+
+        # Skip lines starting with class/struct/etc. keywords
+        if any(stripped.startswith(kw) for kw in skip_kw_line):
+            # But if it's a method definition (has '(' and '{'), still skip
+            i += 1
+            continue
+
+        # Skip constexpr variable declarations (C++)
+        if lang_key in ("cpp", "c") and stripped.startswith("constexpr") and stripped.endswith(";"):
+            i += 1
+            continue
+
+        # Go: detect func keyword
+        if lang_key == "go":
+            if not stripped.startswith("func ") and not stripped.startswith("func("):
+                i += 1
+                continue
+            # Extract name
+            m = re.search(r'func\s+(?:\([^)]*\)\s*)?(\w+)', stripped)
+            if not m:
+                i += 1
+                continue
+            name = m.group(1)
+            # Find opening brace
+            sig_lines = [lines[i]]
+            sig_end = i
+            for look in range(i, min(i + 10, len(lines))):
+                if '{' in lines[look]:
+                    sig_end = look
+                    sig_lines = lines[i:look + 1]
+                    break
+            end = _find_brace_end(lines, sig_end)
+            functions.append((name, i, end))
+            i = end + 1
+            continue
+
+        # Rust: detect fn keyword
+        if lang_key == "rust":
+            m = re.match(
+                r'(?:pub(?:\s*\([^)]*\))?\s+)?'   # pub, pub(crate), pub(super), pub(in ...)
+                r'(?:default\s+)?'
+                r'(?:const\s+)?'
+                r'(?:async\s+)?'
+                r'(?:unsafe\s+)?'
+                r'(?:extern\s+"[^"]*"\s+)?'
+                r'fn\s+(\w+)',
+                stripped,
+            )
+            if not m:
+                i += 1
+                continue
+            # Skip functions annotated with #[test].
+            # Walk backward through the contiguous run of attribute/blank lines
+            # that immediately precede this fn — stop at the first line that is
+            # neither blank nor an attribute (#[...]) so we never reach a #[test]
+            # that belonged to a different, already-processed function.
+            j = i - 1
+            has_test_attr = False
+            while j >= 0:
+                prev = lines[j].strip()
+                if prev == '' or re.match(r'^#\[', prev) or prev.startswith('//'):
+                    if prev == '#[test]':
+                        has_test_attr = True
+                        break
+                    j -= 1
+                else:
+                    break
+            if has_test_attr:
+                sig_end = i
+                for look in range(i, min(i + 10, len(lines))):
+                    if '{' in lines[look]:
+                        sig_end = look
+                        break
+                i = _find_brace_end(lines, sig_end) + 1
+                continue
+            name = m.group(1)
+            sig_end = i
+            for look in range(i, min(i + 10, len(lines))):
+                if '{' in lines[look]:
+                    sig_end = look
+                    break
+            end = _find_brace_end(lines, sig_end)
+            functions.append((name, i, end))
+            i = end + 1
+            continue
+
+        # For C/C++/Java/JS/TS: candidate line has '(' and does not end with ';'
+        # Must not be indented (column 0) for C/C++; for Java/JS/TS allow indentation
+        if lang_key in ("cpp", "c"):
+            if line[0:1].isspace():
+                i += 1
+                continue
+
+        if '(' not in stripped or stripped.rstrip().endswith(';'):
+            i += 1
+            continue
+
+        # Collect signature lines up to opening brace
+        sig_start = i
+        sig_end = i
+        sig_text = stripped
+        for look in range(i, min(i + 6, len(lines))):
+            if '{' in lines[look]:
+                sig_end = look
+                sig_text = ' '.join(lines[sig_start:look + 1])
+                break
+
+        if '{' not in lines[sig_end]:
+            i += 1
+            continue
+
+        # JS/TS: also handle `function name(` syntax
+        if lang_key in ("javascript", "typescript", "arkts"):
+            m = re.search(r'\bfunction\s+(\w+)', sig_text)
+            if m:
+                name = m.group(1)
+            else:
+                name = _extract_func_name_brace(sig_text, lang_cfg)
+        else:
+            name = _extract_func_name_brace(sig_text, lang_cfg)
+
+        if not name:
+            i += 1
+            continue
+
+        end = _find_brace_end(lines, sig_end)
+        functions.append((name, sig_start, end))
+        i = end + 1
+
+    return functions

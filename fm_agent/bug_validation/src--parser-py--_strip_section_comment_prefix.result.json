@@ -1,0 +1,11 @@
+{
+  "id": "src--parser-py--_strip_section_comment_prefix",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/parser-py/_strip_section_comment_prefix.py",
+  "function_name": "_strip_section_comment_prefix",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--parser-py--_strip_section_comment_prefix.py",
+  "detail_file": "fm_agent/bug_validation/src--parser-py--_strip_section_comment_prefix.md",
+  "probe_stdout": "CONFIRMED ( / comment): actual=' / comment' | expected=' comment'\nCONFIRMED ( - comment): actual=' - comment' | expected=' comment'",
+  "trigger_summary": "The regex requires at least two '/' or '-' characters for comment prefixes, but the spec allows a single character; single-char prefixes are not stripped."
+}

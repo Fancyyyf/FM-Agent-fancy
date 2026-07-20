@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_git",
+  "source_file": "src/incremental_reasoner.py",
+  "function_name": "_git",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_git.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_git.md",
+  "probe_stdout": "CONFIRMED — FileNotFoundError raised when git not found on PATH (spec only allows CalledProcessError)",
+  "trigger_summary": "When git is not on PATH, _git raises FileNotFoundError instead of CalledProcessError, violating the spec which only allows CalledProcessError for nonzero exit codes."
+}

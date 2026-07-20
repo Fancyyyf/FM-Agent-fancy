@@ -1,0 +1,11 @@
+{
+  "id": "src--entry_reasoning_pipeline-py--_count_mismatches",
+  "source_file": "src/entry_reasoning_pipeline.py",
+  "function_name": "_count_mismatches",
+  "confirmation_status": "confirmed",
+  "attempts": 3,
+  "probe_script": "fm_agent/bug_validation/probe_src--entry_reasoning_pipeline-py--_count_mismatches.py",
+  "detail_file": "fm_agent/bug_validation/src--entry_reasoning_pipeline-py--_count_mismatches.md",
+  "probe_stdout": "CONFIRMED — actual: AttributeError raised: 'list' object has no attribute 'get' | expected: return 0 (skip non-dict JSON)\n",
+  "trigger_summary": "A .json file containing valid JSON that is not a dict (e.g., an array) causes json.load() to return a non-dict object, and .get('verdict') raises an unhandled AttributeError — the except block only catches OSError and ValueError."
+}

@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _is_git_repo(proj_dir):
+Line 2:     """Return whether proj_dir is a git repository with at least one commit."""
+Line 3:     try:
+Line 4:         subprocess.run(
+Line 5:             ["git", "-C", proj_dir, "rev-parse", "--verify", "HEAD"],
+Line 6:             check=True, capture_output=True, text=True,
+Line 7:         )
+Line 8:         return True
+Line 9:     except subprocess.CalledProcessError:
+Line 10:         return False
+```
+
+Condition A (what the code actually does):
+After the execution of the block, the function _is_git_repo either returns a boolean or raises an exception. (1) If it returns True, then proj_dir is a valid git repository containing at least one commit (the command 'git -C proj_dir rev-parse --verify HEAD' exits with status 0). (2) If it returns False, then the command raised subprocess.CalledProcessError (non‑zero exit status), meaning proj_dir is either not a git repository or has no commits. (3) If an exception is raised, it is not subprocess.CalledProcessError; it could be any other exception from subprocess.run (e.g., FileNotFoundError, PermissionError). The function has no side effects: proj_dir and the global state remain unchanged. Formally: (return = True) ⇒ (git_exit_code = 0 ∧ valid_git_repo_with_commits(proj_dir)); (return = False) ⇒ (git_exit_code ≠ 0 ∧ ¬valid_git_repo_with_commits(proj_dir)); (exception E) ⇒ E ≠ CalledProcessError; proj_dir_out = proj_dir_in ∧ unchanged_global_state.
+
+Condition B (what the specification requires):
+- Returns True if and only if proj_dir is a git repository with a resolvable
+    HEAD commit (the directory is recognized by git as a repository and contains
+    at least one commit).
+  - Returns False if proj_dir is not a git repository or is a git repository
+    with no commits.
+  - The function does not raise exceptions to its callers; all outcomes are
+    expressed via the boolean return value.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

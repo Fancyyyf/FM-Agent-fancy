@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "An instance of urllib.error.HTTPError with the 'code' attribute deleted, e.g.:\nexc = urllib.error.HTTPError('http://example.com', 404, 'Not Found', {}, None)\ndel exc.code\n_http_status_from_exc(exc)",
+  "offending_statements": "Line 4: return exc.code",
+  "reason": "The function unconditionally accesses exc.code for any HTTPError instance. If the 'code' attribute has been removed (e.g., via deletion), this raises AttributeError, which violates the specification that the function must never raise an exception regardless of input."
+}

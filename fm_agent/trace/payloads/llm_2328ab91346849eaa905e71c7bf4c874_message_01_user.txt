@@ -1,0 +1,112 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _reconcile_caller(caller_fqn, updates, base_idx):
+Line 2:         """
+Line 3:         Reconcile caller_fqn's [INFO] block against a sequence of changed callees.
+Line 4:         updates is a list of (callee_name, callee_new_spec). The entries are applied
+Line 5:         sequentially, re-reading the caller file between each, because they all edit the same
+Line 6:         file — so a single caller is one unit of work and DIFFERENT callers run concurrently
+Line 7:         (see the batch loop). base_idx + offset gives each opencode call a unique artifact name.
+Line 8:         Returns the caller's path if any reconciliation changed it, else None.
+Line 9:         """
+Line 10:         cpath = file_map.get(caller_fqn)
+Line 11:         if not cpath or not os.path.isfile(cpath):
+Line 12:             return None
+Line 13:         cext = cpath.rsplit(".", 1)[-1] if "." in os.path.basename(cpath) else ""
+Line 14:         clang = EXT_TO_LANG.get(cext)
+Line 15:         if not clang:
+Line 16:             return None
+Line 17:         ccfg = LANG_CONFIG[clang]
+Line 18:         cprefix = ccfg["comment_prefix"]
+Line 19:         cmarker = ccfg["spec_marker"]
+Line 20:         changed = False
+Line 21:         for offset, (callee_name, callee_new_spec) in enumerate(updates):
+Line 22:             with open(cpath, "r", errors="replace") as f:
+Line 23:                 ccontent = f.read()
+Line 24:             cleading = _extract_leading_spec_comments(ccontent, cprefix, cmarker)
+Line 25:             if cleading is None:
+Line 26:                 continue
+Line 27:             csource = ccontent[len(cleading):]
+Line 28:             c_spec, c_info = _split_spec_and_info(cleading, cprefix, cmarker)
+Line 29:             if c_info is None:
+Line 30:                 # No callee-contract block to reconcile.
+Line 31:                 continue
+Line 32:             cresult = _llm_check_caller_info_update(
+Line 33:                 proj_dir, work_dir, base_idx + offset, caller_fqn, callee_name, clang, cprefix,
+Line 34:                 callee_new_spec, c_info, csource,
+Line 35:             )
+Line 36:             if not cresult or not cresult.get("info_updated"):
+Line 37:                 continue
+Line 38:             c_new_info = (cresult.get("new_info") or "").strip()
+Line 39:             if not c_new_info:
+Line 40:                 continue
+Line 41:             c_block = c_spec.rstrip("\n") + "\n\n" + c_new_info.strip("\n")
+Line 42:             with open(cpath, "w") as f:
+Line 43:                 f.write(c_block + "\n\n" + csource.lstrip("\n"))
+Line 44:             changed = True
+Line 45:         return cpath if changed else None
+```
+
+Condition A (what the code actually does):
+After the function _reconcile_caller finishes execution normally (i.e., without raising an exception), the following holds:
+
+Natural language:
+1. If cpath is None or not a regular file, or if the file's extension does not map to a known programming language (clang is None), the function returns None without reading or modifying any file.
+2. Otherwise, the function iterates over the `updates` list. For each (callee_name, callee_new_spec), it reads the contents of the file at cpath. It attempts to extract the leading [SPEC]/[INFO] block; if no such block exists, the update is skipped.
+   If the extraction succeeds, it obtains the current [INFO] block (c_info) and the remaining source code (csource). If c_info is None (no callee-contract block), the update is skipped.
+   It then calls _llm_check_caller_info_update with the existing info block, the callee's new spec, and the source. If the call fails or returns a result that does not indicate an update (info_updated is False or missing, or new_info is empty), the update is skipped.
+   If an update is indicated, a new file content is constructed by concatenating the current [SPEC] block (c_spec stripped of trailing newlines), two newlines, the new info block (c_new_info stripped of leading/trailing newlines), two newlines, and the source code (csource stripped of leading newlines). The file is opened for writing and this content is written, replacing all previous contents. The changed flag is set to True. Subsequent iterations will operate on this newly written file.
+3. After processing all updates, if changed is True the function returns cpath; otherwise it returns None.
+
+If the function raises an exception (e.g., IOError, PermissionError) during any file operation, normal post-conditions do not apply; the file may be left in a partially overwritten state or unchanged.
+
+Formal logic (assuming normal termination):
+Let F be the initial file contents at path cpath before the call (if cpath exists and is a file).
+Define the predicate:
+  can_proceed = cpath ≠ None ∧ isfile(cpath) ∧ clang ≠ None.
+
+Post-condition:
+(result = None ∧ ¬can_proceed)
+∨ (can_proceed ∧ (
+    (result = None ∧ changed = False ∧ F remains unchanged)
+    ∨ (result = cpath ∧ changed = True ∧
+       ∃ sequence of indices i₁, i₂, …, iₖ (0 ≤ i₁ < i₂ < … < iₖ < len(updates)) such that for each iⱼ, at the moment of its iteration:
+         - the file contains a [SPEC] block Sⱼ and source code Bⱼ,
+         - the LLM call returns a new info block Iⱼ that replaces the previous [INFO] block,
+         - the file is written with content Sⱼ + "\n\n" + Iⱼ + "\n\n" + Bⱼ,
+       and after the last such write, the file content equals precisely the result of the last applied update.
+       Additionally, for all updates not in the sequence, the preconditions for writing were not met (cleading is None, c_info is None, or the LLM output did not indicate an update).
+    )
+  ))
+
+Condition B (what the specification requires):
+- For each callee in updates, if the LLM determines that the callee's updated [SPEC] requires a change to the
+    caller's existing [INFO] entry for that callee, the caller's [INFO] block is replaced with a corrected
+    callee-expectation contract as determined by the LLM.
+  - The original source code (everything after the [SPEC] and [INFO] leading comment blocks) is preserved identically.
+  - If no update across all callees in updates results in a changed [INFO] block, or if the caller file cannot be
+    read, lacks a valid leading-spec block, or has no [INFO] block, the file is not modified.
+  - Returns the absolute path to the caller file if any [INFO] block was modified by this call; returns None otherwise.
+
+Additional context:
+_extract_leading_spec_comments(content, comment_prefix, spec_marker) -> str | None
+Pre-condition: content is a non-empty string; comment_prefix and spec_marker are non-empty strings.
+  Post-condition: Returns the leading comment block containing [SPEC]/[INFO] markers as a contiguous string;
+    returns None if no valid leading-spec comment block exists.
+
+_split_spec_and_info(leading, comment_prefix, spec_marker) -> (spec: str | None, info: str | None)
+Pre-condition: leading is the string returned by _extract_leading_spec_comments; comment_prefix and spec_marker
+    are non-empty strings.
+  Post-condition: Returns a (spec, info) pair where spec is the [SPEC] block text and info is the [INFO] block text,
+    each extracted from leading. Either may be None if the corresponding block is absent or unparseable.
+
+_llm_check_caller_info_update(proj_dir, work_dir, artifact_id, caller_fqn, callee_name, lang, comment_prefix,
+callee_new_spec, existing_info, source) -> dict | None
+  Pre-condition: caller_fqn, callee_name, lang, comment_prefix, callee_new_spec, existing_info, and source are
+    non-empty strings; proj_dir and work_dir are valid directory paths; artifact_id is a non-negative integer.
+  Post-condition: Returns a dict with keys "info_updated" (bool) and, when true, "new_info" (str) containing
+    the corrected [INFO] entry for the callee that is consistent with the callee's new [SPEC].
+    Returns None if the LLM call fails or produces unparseable output.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

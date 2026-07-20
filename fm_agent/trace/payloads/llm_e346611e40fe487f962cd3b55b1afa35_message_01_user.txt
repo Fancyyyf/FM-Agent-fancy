@@ -1,0 +1,31 @@
+Programming language: Python
+
+Pre-condition:
+- signature_text is a string containing one or more concatenated source lines forming a function signature in a brace-delimited language
+  - lang_cfg is a language configuration entry with a "keywords" key whose value is a set of language reserved words
+
+Code block:
+```python
+Line 1: def _extract_func_name_brace(signature_text, lang_cfg):
+Line 2:     """Extract the function name from a brace-delimited language signature."""
+Line 3:     lang_keywords = lang_cfg["keywords"]
+Line 4:     m = re.search(
+Line 5:         r'\b(operator\s*(?:\[\]|\(\)|[+\-*/%&|^~!=<>]+|new(?:\s*\[\s*\])?|delete(?:\s*\[\s*\])?))'
+Line 6:         r'\s*\(',
+Line 7:         signature_text,
+Line 8:     )
+Line 9:     if m:
+Line 10:         return m.group(1)
+Line 11:     cleaned = _strip_angle_brackets(signature_text)
+Line 12:     for m in re.finditer(r'\b(\w+)\s*\(', cleaned):
+Line 13:         name = m.group(1)
+Line 14:         if name not in lang_keywords:
+Line 15:             return name
+Line 16:     return None
+```
+
+Additional context:
+_strip_angle_brackets(text: str) -> str
+Pre-condition: text is a string that may contain angle-bracket-delimited sections
+  Post-condition: Returns text with all content enclosed in matching angle brackets removed; characters outside angle brackets are preserved in their original order
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

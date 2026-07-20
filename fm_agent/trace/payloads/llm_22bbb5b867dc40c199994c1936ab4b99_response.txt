@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "FM_AGENT_MODEL_BACKEND is not set; all other environment variables are unset.",
+  "offending_statements": "Line 2: backend = _normalize_backend(os.environ.get(\"FM_AGENT_MODEL_BACKEND\"))\nLine 3: if backend != \"auto\":\nLine 4:     return backend",
+  "reason": "When FM_AGENT_MODEL_BACKEND is not set, the code returns None because _normalize_backend(None) produces None, and the condition backend != 'auto' is true (None != 'auto'). The specification requires that when the variable is absent, it should fall through to auto-detection and return one of the three canonical backends, never None."
+}

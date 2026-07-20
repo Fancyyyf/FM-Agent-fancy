@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/from_proj_dir.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns an initialized CodeGraphExtractor instance when a codegraph database\n    exists within the project directory structure reachable from proj_dir\n  - Returns None when no codegraph database is found in the project directory\n    structure, indicating the codegraph backend is unavailable for the project\n  - The returned instance is bound to the discovered database and is ready to\n    serve query operations (get_call_edges, function_spans, batch_extract) against\n    the project's indexed source files",
+    "actual_behavior": "The method returns an instance of the class (initialized with a live connection to the codegraph database) if a file named 'codegraph.db' exists under the '.codegraph' subdirectory of either `proj_dir` itself or its parent directory (obtained via `os.path.abspath` then `os.path.dirname`), checking `proj_dir` first. If neither directory contains that file, the method returns `None`. The returned instance, if any, is ready to resolve function definitions and call edges for all indexed languages. Formally, given the file system state FS at call time, define candidate_dirs = [proj_dir, dirname(abspath(proj_dir))] and for each candidate c let db_path(c) = join(c, '.codegraph', 'codegraph.db'). The result is cls(db_path(candidate_dirs[0])) if FS.exists(db_path(candidate_dirs[0])), else cls(db_path(candidate_dirs[1])) if FS.exists(db_path(candidate_dirs[1])), else None. The `proj_dir` argument is not mutated.",
+    "code_evidence": "Line 9: if os.path.exists(db_path):\nLine 10: return cls(db_path)",
+    "trigger_condition": "The code returns a CodeGraphExtractor instance whenever the file exists, even if the file is not a valid codegraph database. The specification requires returning an initialized instance only when a codegraph database exists and returning None otherwise. The presence of a nondatabase file triggers a false positive, producing a broken instance that violates the postcondition."
+  }
+}

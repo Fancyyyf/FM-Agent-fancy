@@ -1,0 +1,66 @@
+Programming language: Python
+
+Pre-condition:
+- work_dir is a path to a project directory whose fm_agent/ subdirectory contains
+    phases.json with a "phases" key whose value is a list of phase objects, each
+    containing at least a "modules" key
+  - extra_call_edges is None or an object providing supplemental caller→callee edges
+    keyed by callee FQN and caller FQN, with optional edge labels
+
+Code block:
+```python
+Line 1: def _project_call_graph(work_dir, extra_call_edges=None):
+Line 2:     """
+Line 3:     Build the project-wide call graph (keyed by FQN) over every extracted function.
+Line 4:     Treats all extracted functions across every phase in phases.json as one graph, so
+Line 5:     callee/caller edges span the whole project. Returns (callees_map, callers_map,
+Line 6:     file_map, edge_aliases_map): callees_map maps each FQN to the set of FQNs it calls
+Line 7:     directly, callers_map the inverse (each FQN to the FQNs that call it directly),
+Line 8:     file_map maps each FQN to the absolute path of its extracted-function file, and
+Line 9:     edge_aliases_map maps callee -> caller -> supplemental edge labels.
+Line 10:     """
+Line 11:     phases = _load_phases(work_dir)
+Line 12:     all_files = []
+Line 13:     seen = set()
+Line 14:     for phase in phases.get("phases", []):
+Line 15:         for fpath, module_name in _collect_phase_files(work_dir, phase):
+Line 16:             if fpath not in seen:
+Line 17:                 seen.add(fpath)
+Line 18:                 all_files.append((fpath, module_name))
+Line 19:     (
+Line 20:         callees_map,
+Line 21:         callers_map,
+Line 22:         _all_callees,
+Line 23:         file_map,
+Line 24:         _modmap,
+Line 25:         edge_aliases_map,
+Line 26:     ) = _build_call_graph(
+Line 27:         all_files,
+Line 28:         work_dir,
+Line 29:         extra_call_edges=extra_call_edges,
+Line 30:     )
+Line 31:     return callees_map, callers_map, file_map, edge_aliases_map
+```
+
+Additional context:
+_load_phases(work_dir) -> dict
+Pre-condition: work_dir is a directory containing fm_agent/phases.json
+  Post-condition: returns a dict whose "phases" key maps to a list of phase objects,
+    each containing at least a "modules" key with a list of module objects
+
+_collect_phase_files(work_dir, phase) -> iterable of (str, str)
+Pre-condition: work_dir is the project directory; phase is a phase object from
+    phases.json containing a "modules" list
+  Post-condition: yields (absolute_file_path, module_name) tuples for every
+    extracted-function file belonging to this phase, where module_name identifies
+    the phase-level module that owns the file
+
+_build_call_graph(all_files, work_dir, extra_call_edges=None) -> tuple
+Pre-condition: all_files is a non-empty list of (absolute_file_path, module_name)
+    pairs; extra_call_edges may provide supplemental caller→callee edges
+  Post-condition: returns a 6-tuple (callees_map, callers_map, all_callees_set,
+    file_map, module_map, edge_aliases_map) representing the complete intra-phase
+    and cross-phase call graph across all provided files, where callees_map and
+    callers_map are mutually inverse and file_map maps each FQN to its absolute
+    extracted-function file path
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

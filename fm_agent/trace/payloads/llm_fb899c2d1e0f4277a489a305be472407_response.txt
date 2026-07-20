@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir=None, lang_key points to a supported language, and the database contains a function entry with relative file_path (e.g., \"src/utils.py\")",
+  "offending_statements": "Line 31: abs_path = os.path.join(proj_dir, file_path) if proj_dir else file_path",
+  "reason": "The specification requires the returned dictionary to map absolute file paths. When proj_dir is None, the code uses file_path directly from the database without converting it to an absolute path, so the dictionary may contain relative paths, violating the specification."
+}

@@ -1,0 +1,28 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _read_error_body(exc, limit=800):
+Line 2:     """The raw response body of an HTTPError (the relay's actual error page),
+Line 3:     which str(exc) drops — only `HTTP Error 504: Gateway Time-out` survives
+Line 4:     otherwise. Read-once and tolerant; returns '' if unavailable."""
+Line 5:     try:
+Line 6:         raw = exc.read()
+Line 7:     except Exception:
+Line 8:         return ""
+Line 9:     if not raw:
+Line 10:         return ""
+Line 11:     text = raw.decode("utf-8", "replace").strip()
+Line 12:     return text[:limit] + ("…" if len(text) > limit else "")
+```
+
+Condition A (what the code actually does):
+If calling exc.read() raises an exception or returns a falsy value (e.g., None or empty bytes), the function returns an empty string. Otherwise, let raw_bytes be the returned bytes. The function decodes raw_bytes using UTF-8 with replacement characters for errors, strips surrounding whitespace, yielding text. It then returns text if its length ≤ limit; otherwise returns the first limit characters of text followed by '…'. Formally: (∀ result ∈ str)(result = '' ↔ (RaisedException(exc.read()) ∨ ¬bool(raw_bytes := exc.read()))) ∧ (result = (t[:limit] + '…' if len(t) > limit else t) ↔ (¬RaisedException(exc.read()) ∧ bool(raw_bytes := exc.read()) ∧ t = raw_bytes.decode('utf-8','replace').strip())).
+
+Condition B (what the specification requires):
+- Returns the raw HTTP response body decoded as UTF-8 text, with undecodable bytes replaced by the Unicode replacement character (U+FFFD), and leading/trailing whitespace stripped
+  - When the decoded, stripped text exceeds limit characters, the returned string is truncated to the first limit characters and suffixed with a single "…" (ellipsis) character
+  - Returns an empty string when: read() raises any exception, read() returns a falsy value, or the decoded text after stripping is empty
+  - The function tolerates any exception type from read() — callers can invoke it on any exception object without risk of secondary failures
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

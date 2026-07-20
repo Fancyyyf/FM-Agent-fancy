@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/cli_backend-py/command_argv.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- When command has an `argv` attribute whose value is a list of strings:\n    returns that list object (the same reference)  it is the caller's\n    responsibility that the returned list contains only strings\n  - When command is a string: returns a new single-element list containing\n    that string\n  - When command is any other iterable of strings: returns a new list whose\n    elements are the strings yielded by iterating over command, preserving\n    iteration order\n  - The returned value is always a list of strings  every element is a str\n  - Returns a list in all cases  no exceptions are raised for any valid\n    input type",
+    "actual_behavior": "The function returns a list of strings. If 'command' is an instance of AgentCommand, the returned list equals 'command.argv'. Otherwise, it equals 'list(command)'. Formally: (isinstance(command, AgentCommand)  result = command.argv)  (isinstance(command, AgentCommand)  result = list(command))  e : (e  result  type(e) = str)",
+    "code_evidence": "Line 2: if isinstance(command, AgentCommand):; Line 4: return list(command)",
+    "trigger_condition": "The specification requires that any input with an 'argv' attribute containing a list of strings returns that same list object. The code only does this for instances of AgentCommand. For any other object that has 'argv' but is not an AgentCommand instance, the code calls list(command), which may raise a TypeError (if the object is not iterable) or return a new list (if iterable), thus violating the required behavior and the 'no exceptions' guarantee."
+  }
+}

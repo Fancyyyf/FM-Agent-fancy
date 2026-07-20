@@ -1,0 +1,20 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def is_interactive():
+Line 2:     return sys.stdin.isatty()
+```
+
+Condition A (what the code actually does):
+If `sys` is not defined, a `NameError` is raised. If `sys.stdin` does not have an `isatty` attribute, an `AttributeError` is raised. Otherwise, the function returns `True` if standard input is a terminal (TTY), `False` otherwise. Formally: normal postcondition: `result == sys.stdin.isatty()`; exceptional postconditions: `<NameError, 'sys'>` or `<AttributeError, 'isatty'>`.
+
+Condition B (what the specification requires):
+- Returns True when the standard input stream (stdin) is attached to a terminal device,
+    meaning the calling process can receive interactive user input via stdin.
+  - Returns False when stdin is not attached to a terminal (e.g., piped input,
+    redirection from a file, or non-TTY execution environment).
+  - The return value does not depend on any mutable state and is determined solely by
+    the process's file descriptor table at the time of the call.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

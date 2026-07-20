@@ -1,0 +1,22 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _split_env_paths(value):
+Line 2:     if not value:
+Line 3:         return []
+Line 4:     normalized = value.replace("\n", os.pathsep)
+Line 5:     return [part.strip() for part in normalized.split(os.pathsep) if part.strip()]
+```
+
+Condition A (what the code actually does):
+The function returns a list of strings with no empty elements. If the input `value` is None or an empty string, or if after replacing newlines with the OS path separator and splitting by that separator all resulting parts consist solely of whitespace characters, the list is empty. Otherwise, each element is a string obtained by splitting the modified input (with newlines replaced by `os.pathsep`) by `os.pathsep`, stripping whitespace from both ends, and keeping those that are non-empty, in the original order. Formally: let `value` be the argument. If `value` is None or `not value` is True, return `[]`. Else define `s = value.replace("\n", os.pathsep)`. Let `L = s.split(os.pathsep)`. Then the returned list is `[x.strip() for x in L if x.strip() != ""]`.
+
+Condition B (what the specification requires):
+- If value is None or empty, returns an empty list
+  - For a non-empty value, the function treats both the OS path separator (os.pathsep) and newline characters as path element separators, producing a list of individual path strings
+  - Every element in the returned list is a non-empty string with no leading or trailing whitespace
+  - The relative order of the returned path elements corresponds to their order of appearance in value
+  - Empty path components (those that become empty after whitespace stripping) are discarded and do not appear in the result
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

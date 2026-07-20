@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_rank_functions",
+  "source_file": "fm_agent/extracted_functions/src/scope-py/_rank_functions.py",
+  "function_name": "_rank_functions",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_rank_functions.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_rank_functions.md",
+  "probe_stdout": "CONFIRMED — callee bonus (3.0) ≠ caller bonus (2.0)\n  CALLEE_INHERIT = 0.3\n  CALLER_INHERIT = 0.2\n  Spec requires \"a fixed fraction\" (singular) for both directions.",
+  "trigger_summary": "CALLEE_INHERIT (0.30) and CALLER_INHERIT (0.20) are unequal, violating the spec's requirement of a single fixed fraction for both callee and caller call-graph propagation."
+}

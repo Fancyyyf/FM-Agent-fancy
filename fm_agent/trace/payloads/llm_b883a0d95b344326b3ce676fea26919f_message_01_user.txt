@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+- label is a non-empty string
+
+Code block:
+```python
+Line 1: def normalize_fqn_label(label: str) -> str:
+Line 2:     """Normalize ``path/to/file.c::func`` into an FM-Agent FQN when needed."""
+Line 3:     return _normalize_endpoint_label(label)
+```
+
+Additional context:
+_normalize_endpoint_label(label: str) -> str
+Pre-condition: label is a non-empty string
+  Post-condition: Returns a canonical FQN string where "::" separates components and the source-file extension dot is replaced with "-"; the normalization is deterministic
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,37 @@
+Programming language: Python
+
+Pre-condition:
+- self.proj_dir is a path to an existing directory
+  - _elp_argv() returns a non-empty sequence of strings usable as a subprocess argument vector
+
+Code block:
+```python
+Line 1:     def __enter__(self):
+Line 2:         self._proc = subprocess.Popen(
+Line 3:             _elp_argv(),
+Line 4:             cwd=self.proj_dir,
+Line 5:             stdin=subprocess.PIPE,
+Line 6:             stdout=subprocess.PIPE,
+Line 7:             stderr=subprocess.DEVNULL,
+Line 8:         )
+Line 9:         self._reader = _JsonRpcReader(self._proc.stdout, self._messages)
+Line 10:         self._reader.start()
+Line 11:         return self
+```
+
+Additional context:
+subprocess.Popen(args, *, cwd=None, stdin=None, stdout=None, stderr=None) -> subprocess.Popen
+Pre-condition: args is a sequence of program arguments; cwd if given is a valid directory
+  Post-condition: Executes the given program in a new child process and returns a Popen
+    instance whose stdin, stdout, and stderr handles are connected as specified
+
+_JsonRpcReader(stream, messages) -> _JsonRpcReader
+Pre-condition: stream is a readable binary stream providing newline-delimited JSON-RPC
+    messages; messages is a thread-safe queue.Queue
+  Post-condition: Returns a configured daemon Thread instance ready to read from stream
+
+_JsonRpcReader.start() -> None
+Pre-condition: The reader's stream is open and readable
+  Post-condition: A background thread begins reading lines from stream, deserializing each
+    as a JSON-RPC message object, and enqueuing each object into messages
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

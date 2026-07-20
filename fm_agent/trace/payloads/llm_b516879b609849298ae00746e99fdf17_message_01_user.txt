@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+- OH_MY_OPENAGENT_CONFIG is a string path to the oh-my-openagent JSON
+    configuration file
+  - The filesystem is accessible for existence checks and file reads at that path
+
+Code block:
+```python
+Line 1: def _check_comment_checker():
+Line 2:     if not os.path.exists(OH_MY_OPENAGENT_CONFIG):
+Line 3:         return False, f"oh-my-openagent config not found at {OH_MY_OPENAGENT_CONFIG}"
+Line 4:     try:
+Line 5:         with open(OH_MY_OPENAGENT_CONFIG, "r") as f:
+Line 6:             cfg = json.load(f)
+Line 7:     except (json.JSONDecodeError, IOError) as e:
+Line 8:         return False, f"Failed to read {OH_MY_OPENAGENT_CONFIG}: {e}"
+Line 9:     if "comment-checker" not in cfg.get("disabled_hooks", []):
+Line 10:         return False, (
+Line 11:             "comment-checker hook is NOT disabled. FM-Agent writes function "
+Line 12:             "specifications as comment blocks, which the comment-checker may "
+Line 13:             "intercept, wasting tokens or deleting specs. Add "
+Line 14:             '"disabled_hooks": ["comment-checker"] to ' + OH_MY_OPENAGENT_CONFIG
+Line 15:         )
+Line 16:     return True, None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

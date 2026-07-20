@@ -1,0 +1,109 @@
+Programming language: Python
+
+Code block:
+```python
+Line 121:                 for look in range(i, min(i + 10, len(lines))):
+Line 122:                     if '{' in lines[look]:
+Line 123:                         sig_end = look
+Line 124:                         break
+Line 125:                 i = _find_brace_end(lines, sig_end) + 1
+Line 126:                 continue
+Line 127:             name = m.group(1)
+Line 128:             sig_end = i
+Line 129:             for look in range(i, min(i + 10, len(lines))):
+Line 130:                 if '{' in lines[look]:
+Line 131:                     sig_end = look
+Line 132:                     break
+Line 133:             end = _find_brace_end(lines, sig_end)
+Line 134:             functions.append((name, i, end))
+Line 135:             i = end + 1
+Line 136:             continue
+Line 137:         # For C/C++/Java/JS/TS: candidate line has '(' and does not end with ';'
+Line 138:         # Must not be indented (column 0) for C/C++; for Java/JS/TS allow indentation
+Line 139:         if lang_key in ("cpp", "c"):
+Line 140:             if line[0:1].isspace():
+Line 141:                 i += 1
+Line 142:                 continue
+Line 143:         if '(' not in stripped or stripped.rstrip().endswith(';'):
+Line 144:             i += 1
+Line 145:             continue
+Line 146:         # Collect signature lines up to opening brace
+Line 147:         sig_start = i
+Line 148:         sig_end = i
+Line 149:         sig_text = stripped
+Line 150:         for look in range(i, min(i + 6, len(lines))):
+Line 151:             if '{' in lines[look]:
+Line 152:                 sig_end = look
+Line 153:                 sig_text = ' '.join(lines[sig_start:look + 1])
+Line 154:                 break
+Line 155:         if '{' not in lines[sig_end]:
+Line 156:             i += 1
+Line 157:             continue
+Line 158:         # JS/TS: also handle `function name(` syntax
+Line 159:         if lang_key in ("javascript", "typescript", "arkts"):
+Line 160:             m = re.search(r'\bfunction\s+(\w+)', sig_text)
+Line 161:             if m:
+Line 162:                 name = m.group(1)
+Line 163:             else:
+Line 164:                 name = _extract_func_name_brace(sig_text, lang_cfg)
+Line 165:         else:
+Line 166:             name = _extract_func_name_brace(sig_text, lang_cfg)
+Line 167:         if not name:
+Line 168:             i += 1
+Line 169:             continue
+Line 170:         end = _find_brace_end(lines, sig_end)
+Line 171:         functions.append((name, sig_start, end))
+Line 172:         i = end + 1
+Line 173:     return functions
+```
+
+Condition A (what the code actually does):
+After execution of the code block (lines 121–173), the program state satisfies the following. This block is reached only from Path B2 of the preceding block (lines 81–120), i.e., `lang_key == "rust"`, the `fn` regex match succeeded (`m` is not `None`), and `has_test_attr` is either `True` or `False`. The block unconditionally executes lines 121–126, finding the opening brace and skipping the entire brace-delimited scope. Lines 127–173 are dead code because line 126 always transfers control out of the block via `continue`.
+
+**Effects on variables:**
+- `functions` is unchanged: `functions = old(functions)`.
+- `has_test_attr` is unchanged: `has_test_attr = old(has_test_attr)`.
+- `sig_end` and `i` are updated according to whether an opening brace `{` is found within the next 10 lines starting from `i`.
+  - If there exists an index `k` with `old(i) ≤ k < min(old(i) + 10, len(lines))` such that `'{' in lines[k]`, then `sig_end = k` and `i = _find_brace_end(lines, k) + 1`.
+  - Otherwise, the loop completes without finding `{`; `sig_end` retains its previous value `old(sig_end)`, and `i` is set to `_find_brace_end(lines, old(sig_end)) + 1` (this case may lead to undefined behaviour if `old(sig_end)` does not contain `{`; under normal execution a `{` is always found).
+- All other variables (`name`, `m`, `stripped`, etc.) remain unchanged from the state before line 121.
+- A `continue` statement on line 126 transfers control to the top of the enclosing loop; the block does not return.
+
+**Formal post-condition:**
+Let the state before executing line 121 be denoted by `old`. From the pre-condition we have `old(lang_key) = "rust"` and `old(m) ≠ None`. Define:
+- `i0 = old(i)`
+- `F = old(functions)`
+- `h = old(has_test_attr)`
+- `sig0 = old(sig_end)`
+- `N = min(i0 + 10, len(old(lines)))`
+- `K = {k | i0 ≤ k < N ∧ '{' ∈ old(lines)[k]}`  (set of indices with an opening brace in the scanned range)
+
+The state after the block (at the point of `continue`) satisfies exactly one of the following:
+
+`(∃ k ∈ K : (∀ j ∈ K : j ≥ k ⇒ break was taken at first such j) ∧ sig_end = min(K) ∧ i = _find_brace_end(old(lines), min(K)) + 1)`
+`∨`
+`(K = ∅ ∧ sig_end = sig0 ∧ i = _find_brace_end(old(lines), sig0) + 1)`
+
+In both cases: `functions = F`, `has_test_attr = h`, all other variables not mentioned retain their `old` values, and execution continues from the loop header. The ordering invariant and bijective correspondence from the earlier pre-condition remain valid for `functions` because `functions` is unmodified; the new value of `i` skips the entire body of the test function (or, in the `has_test_attr == False` case, the regular function that was not added) and satisfies `i > old(i)`, maintaining progress.
+
+Condition B (what the specification requires):
+- Returns a list of (raw_name, start, end) tuples, one per top-level function definition detected in lines, ordered by first appearance in the source
+  - Each tuple describes a contiguous span: start is the 0-based index of the first line of the function definition, end is the 0-based index of the last line of the function body (containing the matching closing brace of the body), satisfying 0 <= start <= end < len(lines)
+  - A function definition is identified by a language-specific declarator pattern at the outermost nesting level, followed by a brace-delimited body
+  - The raw_name is the unqualified function name as it appears in the source text
+  - Returned spans are non-overlapping: no line index belongs to more than one span
+  - Lines inside syntactically well-formed comments (both line comments and block comments delimited by the language's comment syntax) are excluded from function-definition detection
+  - Lines matching the skip-prefix and skip-keyword patterns defined in lang_cfg are excluded from function-definition detection
+  - Language-specific exclusion rules (e.g., namespace and class declarations, constexpr variables, test-annotated functions) are applied so that non-function constructs are not misidentified as function definitions
+  - For C and C++, only source lines at the leftmost indent level are considered as function-definition candidates
+  - When no function definitions are detected, returns an empty list
+
+Additional context:
+_find_brace_end(lines, brace_line_idx) -> int
+Pre-condition: lines is a list of source lines; brace_line_idx is a 0-based index into lines where the line contains an opening brace '{' that begins a brace-delimited scope
+  Post-condition: Returns the 0-based index of the line containing the matching closing brace '}', accounting for properly nested balanced brace pairs; braces that appear inside string literals, character literals, or comments do not contribute to the brace-depth count for matching purposes
+
+_extract_func_name_brace(sig_text, lang_cfg) -> str | None
+Pre-condition: sig_text is a string containing one or more concatenated source lines forming a function signature; lang_cfg is a language configuration entry
+  Post-condition: Returns the function name as a string when sig_text matches the language's function-definition identifier pattern according to the rules encoded in lang_cfg; returns None when sig_text does not match any recognized function-definition form for that language
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

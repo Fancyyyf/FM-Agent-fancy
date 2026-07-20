@@ -1,0 +1,21 @@
+Programming language: Python
+
+Pre-condition:
+- work_dir is a directory path that exists.
+  - ignored is a set of non-empty strings representing check IDs to persist.
+
+Code block:
+```python
+Line 1: def _save_ignored(work_dir, ignored):
+Line 2:     path = _memory_path(work_dir)
+Line 3:     with open(path, "w") as f:
+Line 4:         for item in sorted(ignored):
+Line 5:             f.write(item + "\n")
+```
+
+Additional context:
+_memory_path(work_dir: str) -> str
+Pre-condition: work_dir is a directory path that exists.
+  Post-condition: Returns the filesystem path to the persisted memory file within work_dir.
+    The path is deterministic: the same work_dir always produces the same result.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

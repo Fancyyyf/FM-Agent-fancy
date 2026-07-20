@@ -1,0 +1,28 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for Python."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("python") if cg else None
+```
+
+Condition A (what the code actually does):
+If the CodeGraphExtractor backend is available and the project can be indexed, the function returns a dictionary mapping each (caller_stem, caller_module) tuple to a set of callee_stem strings for Python; otherwise, it returns None. Formally: let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is falsy, the result is None. If cg is truthy, let edges = cg.get_call_edges('python'). If edges is None, the result is None; else the result is a Dict[Tuple[str, str], Set[str]] containing the call graph edges.
+
+Condition B (what the specification requires):
+- Returns a dict when the CodeGraph backend can index the project directory; returns None when the backend is unavailable or the project cannot be indexed.
+  - When a dict is returned, each key identifies a caller function (as a tuple of stem and module identifiers) and each value is a set of callee function identifiers (stems) called by that caller.
+  - The returned call edges cover Python source files (.py) under the project directory.
+  - A callee appears in the returned set only when the CodeGraph backend resolves a call site within the caller's body to that callee.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> object | None
+Pre-condition: proj_dir is a filesystem path to a project root.
+  Post-condition: Returns a CodeGraphExtractor instance configured for the given project, or a falsy value when the backend is unavailable or the project cannot be indexed.
+
+cg.get_call_edges(language: str) -> dict | None
+Pre-condition: language is a valid language key string (e.g., "python").
+  Post-condition: Returns a dict mapping caller identifiers to sets of callee identifiers for the given language, or None when the backend cannot resolve call edges.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

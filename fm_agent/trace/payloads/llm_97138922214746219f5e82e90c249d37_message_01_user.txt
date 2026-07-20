@@ -1,0 +1,19 @@
+Programming language: Python
+
+Pre-condition:
+- data is a Python value resulting from parsing the LLM's JSON response for
+    a block post-condition generation request.
+
+Code block:
+```python
+Line 1: def _parse_post_condition_json(data):
+Line 2:     """Validate the structured response used to generate one block's post-condition."""
+Line 3:     if not isinstance(data, dict):
+Line 4:         raise ValueError("post-condition JSON must be an object")
+Line 5:     post_condition = data.get("post_condition")
+Line 6:     if not isinstance(post_condition, str) or not post_condition.strip():
+Line 7:         raise ValueError("post-condition JSON requires a non-empty string field: post_condition")
+Line 8:     return post_condition.strip()
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

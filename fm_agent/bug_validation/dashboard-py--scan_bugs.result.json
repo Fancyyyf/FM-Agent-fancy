@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--scan_bugs",
+  "source_file": "dashboard.py",
+  "function_name": "scan_bugs",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--scan_bugs.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--scan_bugs.md",
+  "probe_stdout": "BUG1 CONFIRMED (bugs_pending): actual=42, expected=0\nBUG2 CONFIRMED (invalid json): bugs_not_confirmed: actual=1, expected=2\nCONFIRMED — 2 bug(s) reproduced\n",
+  "trigger_summary": "When bug_dir is missing, bugs_pending is not reset to 0; invalid/unreadable JSON files are silently skipped instead of being counted as bugs_not_confirmed."
+}

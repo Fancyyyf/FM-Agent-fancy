@@ -1,0 +1,97 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def rank_functions_in_file(
+Line 2:     filepath: str,
+Line 3:     src_path: Path,
+Line 4:     issue: str,
+Line 5:     signals: dict[str, set[str]],
+Line 6:     top_k: int = TOP_K,
+Line 7:     llm_client: Any = None,
+Line 8:     llm_model: str = '',
+Line 9:     llm_trigger: int = LLM_TRIGGER_FUNCS,
+Line 10:     llm_top_k: int = LLM_TOP_K,
+Line 11:     llm_confidence_threshold: float = LLM_CONFIDENCE_THRESHOLD,
+Line 12:     proj_dir: str | None = None,
+Line 13: ) -> list[dict]:
+Line 14:     """
+Line 15:     Rank functions in a single file by relevance to the issue.
+Line 16:     proj_dir, when given, lets the non-Python parse path resolve function boundaries from
+Line 17:     codegraph (via extract._function_spans) instead of the regex fallback.
+Line 18:     Returns a list of dicts (file, name, lineno, end_lineno, score, reason),
+Line 19:     sorted descending by score, length ≤ top_k.
+Line 20:     """
+Line 21:     funcs_info, source_lines, classes = _parse_file(src_path, proj_dir=proj_dir)
+Line 22:     if funcs_info is None or not funcs_info:
+Line 23:         print(f"  [scope] {filepath}: no functions found, skipping")
+Line 24:         return []
+Line 25:     # Stage 1: heuristic scoring with all enrichments
+Line 26:     ranked = _rank_functions(funcs_info, classes or [], signals)
+Line 27:     # Deduplicate by name (keep highest-scored occurrence per name)
+Line 28:     seen_names: dict[str, dict] = {}
+Line 29:     deduped_ranked: list[dict] = []
+Line 30:     for f in ranked:
+Line 31:         if f['name'] not in seen_names:
+Line 32:             seen_names[f['name']] = f
+Line 33:             deduped_ranked.append(f)
+Line 34:     # ── print per-file function scores ──────────────────────────────────────
+Line 35:     print(f"\n{'─' * 70}")
+Line 36:     print(f"FILE: {filepath}  ({len(deduped_ranked)} unique functions)")
+Line 37:     if classes:
+Line 38:         class_names = [c['name'] for c in classes]
+Line 39:         print(f"  classes found: {class_names}")
+Line 40:     print(f"  {'rank':>4}  {'score':>8}  {'name'}")
+```
+
+Condition A (what the code actually does):
+If _parse_file returns funcs_info that is None or empty, the function prints the message and returns the empty list []. Otherwise, funcs_info is non-empty, _rank_functions computes a scored list, deduplication by name produces deduped_ranked, and the function prints a formatted table header; after printing it reaches the end of the block and returns None (implicit return). The arguments filepath, src_path, issue, signals, top_k, llm_client, llm_model, llm_trigger, llm_top_k, llm_confidence_threshold, proj_dir are unchanged. No exceptions are raised under the given pre-conditions. Stdout receives the relevant output lines.
+
+Condition B (what the specification requires):
+- If the file contains zero parseable functions, returns an empty list.
+  - Otherwise, returns a list of dicts sorted in descending order by 'score'.
+  - Each returned dict contains the keys: 'file' (str, equal to filepath),
+    'name' (str), 'lineno' (int, 1‑based start line), 'end_lineno' (int,
+    1‑based end line), 'score' (float, rounded to 3 decimal places), and
+    'reason' (str, one of "heuristic", "llm", "heuristic_pad").
+  - The returned list length is at most top_k.
+  - Every 'name' in the result is unique; if a name appeared in multiple
+    positions within the file, only the occurrence with the highest score is kept.
+  - Every 'name' in the result corresponds to a function actually defined
+    in the source file.
+  - Scores reflect relevance to the issue as judged against the signals.
+  - When an LLM client is provided AND EITHER the highest heuristic score among
+    all unique functions is below llm_confidence_threshold OR the count of
+    unique functions in the file is at least llm_trigger, LLM‑based re‑ranking
+    is attempted. On success, entries chosen by the LLM carry reason="llm"
+    and remaining heuristic fillers up to top_k carry reason="heuristic_pad".
+  - When LLM re‑ranking is not attempted or fails, all returned entries carry
+    reason="heuristic".
+
+Additional context:
+_parse_file(src_path: Path, proj_dir: str | None) -> (list[dict] | None, list[str], list[dict] | None)
+Pre-condition: src_path is the path to a source file that exists.
+  Post-condition: Returns a tuple of (funcs_info, source_lines, classes).
+    funcs_info is None or a list of dicts, each describing a function in the
+    file with at minimum 'name', 'start', and 'end' keys. source_lines is the
+    list of source text lines. classes is None or a list of dicts describing
+    each class.
+
+_rank_functions(funcs_info: list[dict], classes: list[dict], signals: dict[str, set[str]]) -> list[dict]
+Pre-condition: funcs_info is a non-empty list of function descriptor dicts,
+    each containing at minimum 'name', 'start', 'end' keys. classes is a list
+    of class descriptor dicts. signals has the structure returned by
+    _parse_issue_signals.
+  Post-condition: Returns a list of dicts, each containing at minimum 'name',
+    'start', 'end', and 'score' (float), sorted in descending order by 'score'.
+    Scores are heuristic relevance values derived from the signals.
+
+_llm_rerank(deduped_ranked: list[dict], source_lines: list[str], filepath: str,
+issue: str, llm_top_k: int, llm_client, llm_model: str) -> list[str] | None
+  Pre-condition: deduped_ranked is a non-empty list of ranked function dicts
+    with unique names; source_lines is the full source text as a list of lines;
+    llm_client is a live LLM client; llm_model is a non-empty model identifier.
+  Post-condition: On success, returns a list of function names re-ranked in
+    descending order of relevance by the LLM, of length at most llm_top_k.
+    On failure, returns None or empty/falsy.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

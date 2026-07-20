@@ -1,0 +1,42 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _phase_source_files(phases_json):
+Line 2:     """Return a mapping of phase number -> its combined source files in phases.json.
+Line 3:     Files from all of a phase's modules are merged, so an empty list means the
+Line 4:     phase currently owns no source files. A missing or malformed phases.json yields
+Line 5:     an empty mapping.
+Line 6:     """
+Line 7:     try:
+Line 8:         with open(phases_json, "r") as f:
+Line 9:             data = json.load(f)
+Line 10:     except (OSError, ValueError):
+Line 11:         return {}
+Line 12:     result = {}
+Line 13:     for phase in data.get("phases", []):
+Line 14:         phase_num = phase.get("phase")
+Line 15:         if phase_num is None:
+Line 16:             continue
+Line 17:         files = result.setdefault(phase_num, [])
+Line 18:         for module in phase.get("modules", []):
+Line 19:             files.extend(module.get("source_files", []))
+Line 20:     return result
+```
+
+Condition A (what the code actually does):
+The function returns a dictionary mapping each phase number (integer) to the combined list of source file paths (strings) from all modules of that phase, in the order they appear in the phases.json file. Formally, if the file is successfully opened and parsed as a valid JSON object with a 'phases' array conforming to the given schema, then result = {phase['phase']: [file for module in phase['modules'] for file in module['source_files']] for phase in D['phases']}. If the file cannot be opened or contains invalid JSON (contradicting the precondition), an empty dictionary is returned.
+
+Condition B (what the specification requires):
+- When phases_json cannot be read (file missing, unreadable) or contains
+    invalid JSON, returns an empty dict.
+  - Otherwise returns a dict[int, list[str]] mapping each phase number
+    present in the file to the concatenation of all source_files arrays
+    from ALL modules within that phase. Phases whose "phase" key is
+    absent or null are silently skipped.
+  - The returned dict may contain entries whose value is an empty list
+    if the corresponding phase has modules but no source files.
+  - Each source file path in the returned lists is a string exactly as it
+    appears in phases.json (no normalization, no resolution).
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

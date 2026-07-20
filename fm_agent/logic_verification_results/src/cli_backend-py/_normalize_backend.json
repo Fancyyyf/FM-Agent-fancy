@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/cli_backend-py/_normalize_backend.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- When value is None, or when its normalized form is the empty string,\n    or when the normalized form is one of the recognized disable-sentinel\n    strings (\"0\", \"false\", \"no\", \"off\"): returns \"opencode\", the canonical\n    name of the default backend\n  - When the normalized form equals \"auto\": returns \"auto\" unchanged,\n    deferring resolution of the auto-sentinel to the caller\n  - When the normalized form matches a recognized backend alias:\n    returns the canonical backend name that the alias maps to\n    (aliases map to the set {\"opencode\", \"codex-cli\", \"claude-cli\"})\n  - When the normalized form matches none of the above categories:\n    returns the normalized form itself unchanged as a pass-through\n  - The returned string is always non-empty, case-normalized to lowercase,\n    and drawn from the set {\"opencode\", \"codex-cli\", \"claude-cli\", \"auto\"}\n    unioned with the domain of unrecognized pass-through strings\n  - The same input value always produces the same output (pure function)\n  - Returns a str in all cases  no exceptions are raised for any input",
+    "actual_behavior": "The function returns a string. Let b = (value or \"\").strip().lower(). If b is empty or b  {\"0\", \"false\", \"no\", \"off\"}, return \"opencode\". If b == \"auto\", return \"auto\". Otherwise, return _BACKEND_ALIASES.get(b, b). Formally: result = \"opencode\" if (b == \"\" or b in {\"0\",\"false\",\"no\",\"off\"}) else (\"auto\" if b == \"auto\" else (_BACKEND_ALIASES[b] if b in _BACKEND_ALIASES else b)). The function never raises an exception under the given pre-condition.",
+    "code_evidence": "Line 2: backend = (value or \"\").strip().lower()",
+    "trigger_condition": "The specification requires that the function returns a str for any input and never raises an exception. For value=1 (an integer), (1 or '') evaluates to 1, which has no .strip() method, so the code raises AttributeError, violating the specification."
+  }
+}

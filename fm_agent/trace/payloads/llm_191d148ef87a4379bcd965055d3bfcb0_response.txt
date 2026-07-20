@@ -1,0 +1,3 @@
+{
+  "post_condition": "If CodeGraphExtractor.from_proj_dir(proj_dir) returns None (because the Java backend cannot be initialized), the function returns None. Otherwise, the function returns the dictionary produced by cg.get_call_edges('java'), which maps each (caller_stem: str, caller_module: str) tuple to a set of callee stems (str) representing all Java call-graph edges in the project. No external state is modified. Formally: let cg = CodeGraphExtractor.from_proj_dir(proj_dir). Then (cg = None ⇒ result = None) ∧ (cg ≠ None ⇒ (result ∈ Dict[Tuple[str,str], Set[str]] ∧ ∀ (cstem, cm) ∈ result, result[(cstem, cm)] is a set of callee stems and the collection represents the complete Java call-graph edges extracted from the project))."
+}

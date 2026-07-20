@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_collect_changed_phases.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a set containing every non-None integer that is either:\n    a) a key of ensure_changes[\"augmented\"], or\n    b) the value of the \"phase\" key from any entry in \"modified_modules\" across all change_sets.\n  - Each phase number appears at most once in the result (duplicates are collapsed).\n  - Returns an empty set if no non-None phase numbers are found across all sources.",
+    "actual_behavior": "The function returns a set of distinct non-None phase numbers (integers, as per the precondition) collected from two sources. 1) Every key k in ensure_changes[\"augmented\"] (if the key exists and the value is a mapping) for which k is not None is included. 2) For every change set c in *change_sets, and for every module m in c.get(\"modified_modules\", []), the value m.get(\"phase\") is included if it is not None. Formally, if we denote A = ensure_changes.get(\"augmented\", {}) and for each c  change_sets, M(c) = c.get(\"modified_modules\", []), then the returned set is: {k | k  A.keys()  k  None}  {m.get(\"phase\") | c  change_sets, m  M(c)  m.get(\"phase\")  None}.",
+    "code_evidence": "Line 16:         if phase_num is not None:\nLine 17:             phases.add(phase_num)\nLine 21:         if phase_num is not None:\nLine 22:             phases.add(phase_num)",
+    "trigger_condition": "The code only checks for None but does not verify that the phase numbers are integers. The specification requires the returned set to contain only non-None integers, so non-integers like strings or floats should be excluded."
+  }
+}

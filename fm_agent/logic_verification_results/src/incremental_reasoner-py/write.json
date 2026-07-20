@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/write.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- The content of data has been delivered to the console output.\n  - If the log stream is open at the time of the call, the content of data has also been persisted to the log.\n  - If the log stream is closed, the log write is silently skipped; no exception is raised.\n  - Returns len(data), the number of characters in data.",
+    "actual_behavior": "After execution: (1) If no exception is raised, then data has been written to self._console; if at the moment of the check self._log_stream was not closed, data has also been written to self._log_stream; and the method returns len(data). (2) If self._console.write(data) raises an exception, the method terminates immediately with that exception, data is not written to self._log_stream, and no value is returned. (3) If self._console.write(data) succeeds but self._log_stream is not closed and self._log_stream.write(data) raises an exception, the method terminates with that exception, the console write remains, and no value is returned.",
+    "code_evidence": "Line 2: self._console.write(data)",
+    "trigger_condition": "If self._console.write(data) raises an exception, the code propagates it immediately, failing to deliver data to the console (violating 'The content of data has been delivered to the console output') and not returning len(data) (violating 'Returns len(data)'). The specification requires delivery to console and normal return, but the code does not handle this failure."
+  }
+}

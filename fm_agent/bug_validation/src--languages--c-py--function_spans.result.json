@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--c-py--function_spans",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/c-py/function_spans.py",
+  "function_name": "function_spans",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--c-py--function_spans.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--c-py--function_spans.md",
+  "probe_stdout": "CONFIRMED — actual: None | expected: []",
+  "trigger_summary": "Calling function_spans with a valid proj_dir that initializes codegraph but a filepath not in the index returns None instead of a list, violating the spec mandate that None is only for when codegraph cannot be initialized."
+}

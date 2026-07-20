@@ -1,0 +1,19 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _order_key(fqn):
+Line 2:         return (order_index.get(fqn, len(order_index)), fqn)
+```
+
+Condition A (what the code actually does):
+The function _order_key returns a tuple (index, fqn) where index equals order_index[fqn] if fqn is a key in order_index, otherwise index equals len(order_index). The dictionary order_index is not modified, and no exceptions are raised. Formally: result = (order_index.get(fqn, len(order_index)), fqn) and for all k in order_index, order_index[k] is unchanged and the set of keys is unchanged.
+
+Condition B (what the specification requires):
+- Returns a two-element tuple (position, fqn) suitable as a sort key for top-down topological ordering
+  - When fqn is a key in order_index, position equals the integer value associated with fqn in order_index
+  - When fqn is not a key in order_index, position equals the number of entries in order_index
+  - For any two FQNs a, b both present in order_index: a sorts before b iff order_index[a] < order_index[b]
+  - Any FQN not present in order_index sorts after all FQNs that are present in order_index
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

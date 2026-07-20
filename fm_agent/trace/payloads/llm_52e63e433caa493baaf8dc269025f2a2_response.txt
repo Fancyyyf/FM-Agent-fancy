@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function terminates without side effects and returns a string. If the input list relpaths is empty, the returned string is empty. Otherwise, the returned string is built by joining the elements of relpaths, each formatted as '- `path`', with newline characters. Formally: \\forall relpaths \\in List[str] . (let result = format_domain_knowledge_bullets(relpaths) in ((relpaths = [] \\land result = \"\") \\lor (relpaths \\neq [] \\land result = \"\\n\".join(\"- `\" + p + \"`\" for p in relpaths))))."
+}

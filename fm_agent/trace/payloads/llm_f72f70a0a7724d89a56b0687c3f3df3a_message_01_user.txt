@@ -1,0 +1,32 @@
+Programming language: Python
+
+Pre-condition:
+- stream is an open, writable stream whose write(s) method accepts a string
+    and whose close() method releases the underlying resource
+  - text is a string to be written to the stream
+
+Code block:
+```python
+Line 1: def _write_command_stdin(stream, text):
+Line 2:     try:
+Line 3:         stream.write(text)
+Line 4:         stream.flush()
+Line 5:     finally:
+Line 6:         stream.close()
+```
+
+Additional context:
+stream.write(text) -> int
+Pre-condition: text is a string
+  Post-condition: text is written to the stream internal buffer; returns the
+    number of characters written
+
+stream.flush() -> None
+Pre-condition: stream is open for writing
+  Post-condition: all buffered data is flushed to the underlying resource
+
+stream.close() -> None
+Pre-condition: stream is open
+  Post-condition: stream is closed; further operations on the stream object
+    raise ValueError
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

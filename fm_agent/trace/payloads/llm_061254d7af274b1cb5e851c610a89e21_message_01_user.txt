@@ -1,0 +1,39 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one Rust file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("rust", filepath) if cg else None
+```
+
+Condition A (what the code actually does):
+The function returns either None (if the CodeGraphExtractor cannot be initialized for the project) or a list of tuples `(name: str, start_idx: int, end_idx: int)` for each top-level Rust function in `filepath`, where `start_idx` and `end_idx` are 0‑indexed inclusive line numbers. No side effects occur. Formally: let `cg = CodeGraphExtractor.from_proj_dir(proj_dir)`; then `(cg = None ⇒ result = None) ∧ (cg ≠ None ⇒ result = cg.get_function_spans("rust", filepath) ∧ result is a list of (name, start_idx, end_idx) with 0-indexed inclusive line indices)`. The pre‑conditions of `get_function_spans` are satisfied because `"rust"` is a supported language and `filepath` lies within the project indexed by `cg`.
+
+Condition B (what the specification requires):
+- If codegraph is available and indexes filepath: returns a list of
+    (function_name, start_line, end_line) tuples, one per top-level function
+    declared in the file. Each start_line and end_line is a 0-indexed
+    inclusive line number bounding the function's source span.
+  - If filepath contains no top-level function declarations: returns an
+    empty list.
+  - If codegraph is unavailable or does not index filepath: returns None.
+    A None return signals the caller to fall back to regex-based extraction.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a filesystem path to a project directory
+  Post-condition: Returns an initialized CodeGraphExtractor instance for the
+    project at proj_dir, or None when the codegraph backend cannot be initialized
+
+CodeGraphExtractor.get_function_spans(language: str, filepath: str) -> list[tuple[str, int, int]]
+Pre-condition: language is a supported language key; filepath is a path to a
+    source file within the indexed project
+  Post-condition: Returns a list of (name, start_idx, end_idx) tuples for each
+    top-level function in filepath, with 0-indexed inclusive line indices
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

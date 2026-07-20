@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/llm_client-py/_read_error_body.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns the raw HTTP response body decoded as UTF-8 text, with undecodable bytes replaced by the Unicode replacement character (U+FFFD), and leading/trailing whitespace stripped\n  - When the decoded, stripped text exceeds limit characters, the returned string is truncated to the first limit characters and suffixed with a single \"\" (ellipsis) character\n  - Returns an empty string when: read() raises any exception, read() returns a falsy value, or the decoded text after stripping is empty\n  - The function tolerates any exception type from read()  callers can invoke it on any exception object without risk of secondary failures",
+    "actual_behavior": "If calling exc.read() raises an exception or returns a falsy value (e.g., None or empty bytes), the function returns an empty string. Otherwise, let raw_bytes be the returned bytes. The function decodes raw_bytes using UTF-8 with replacement characters for errors, strips surrounding whitespace, yielding text. It then returns text if its length  limit; otherwise returns the first limit characters of text followed by ''. Formally: ( result  str)(result = ''  (RaisedException(exc.read())  bool(raw_bytes := exc.read())))  (result = (t[:limit] + '' if len(t) > limit else t)  (RaisedException(exc.read())  bool(raw_bytes := exc.read())  t = raw_bytes.decode('utf-8','replace').strip())).",
+    "code_evidence": "Line 7:     except Exception:",
+    "trigger_condition": "The specification requires that the function returns an empty string when read() raises any exception. The code's except clause only catches exceptions derived from Exception, missing exceptions derived directly from BaseException (e.g., KeyboardInterrupt, SystemExit). This allows such exceptions to propagate, violating the 'any exception' tolerance mandate."
+  }
+}

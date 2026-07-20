@@ -1,0 +1,40 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _collect_project_source_files(proj_dir, submodules=None):
+Line 2:     """Return non-test source files currently present in proj_dir, relative to proj_dir."""
+Line 3:     files = set()
+Line 4:     for rel in _iter_project_source_files(proj_dir, submodules):
+Line 5:         if not _is_test_file(rel):
+Line 6:             files.add(rel)
+Line 7:     return files
+```
+
+Condition A (what the code actually does):
+The function returns a set of strings. Each string is a relative file path (using '/' as separator) that identifies a source file located under proj_dir, is not a test file (as determined by _is_test_file), and belongs to the directory scope defined by submodules: if submodules is None, all directories under proj_dir are considered; otherwise, only those under the subdirectory names specified in submodules are considered. The returned set contains each such qualifying relative path exactly once and no other elements. The function has no side effects beyond constructing and returning a new set. Formally, let S = { rel | rel ∈ _iter_project_source_files(proj_dir, submodules) } and T = { rel ∈ S | ¬_is_test_file(rel) }. Then the returned value equals T.
+
+Condition B (what the specification requires):
+- Returns a set of relative file paths using "/" as the separator
+  - Every returned path corresponds to a source file discoverable under one of
+    the directories scoped by submodules, or under all of proj_dir when
+    submodules is None
+  - No returned path identifies a test file
+  - All returned paths are relative to proj_dir
+  - The returned set is empty when no discoverable non-test source files exist
+    under the scoped directories
+  - The function does not create, modify, delete, or rename any file or directory
+
+Additional context:
+_iter_project_source_files(proj_dir, submodules) -> iterable of str
+Pre-condition: proj_dir is an existing directory; submodules is None or an
+    iterable of subdirectory name strings
+  Post-condition: Yields relative file paths using "/" as the separator for
+    all discoverable source files under the directories scoped by submodules,
+    or under all of proj_dir when submodules is None
+
+_is_test_file(rel) -> bool
+Pre-condition: rel is a string representing a relative file path
+  Post-condition: Returns True when rel identifies a test file; returns False
+    otherwise
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

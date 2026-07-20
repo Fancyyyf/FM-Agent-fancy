@@ -1,0 +1,15 @@
+Programming language: Python
+
+Pre-condition:
+- stream is an open, readable binary stream (typically the stdout pipe of a subprocess)
+  - messages is a Queue instance that supports concurrent enqueue from a background thread
+
+Code block:
+```python
+Line 1:     def __init__(self, stream: BinaryIO, messages: queue.Queue):
+Line 2:         super().__init__(name="fm-agent-elp-reader", daemon=True)
+Line 3:         self._stream = stream
+Line 4:         self._messages = messages
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

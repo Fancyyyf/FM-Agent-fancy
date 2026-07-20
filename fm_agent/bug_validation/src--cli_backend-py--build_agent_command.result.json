@@ -1,0 +1,11 @@
+{
+  "id": "src--cli_backend-py--build_agent_command",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/cli_backend-py/build_agent_command.py",
+  "function_name": "build_agent_command",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--build_agent_command.py",
+  "detail_file": "fm_agent/bug_validation/src--cli_backend-py--build_agent_command.md",
+  "probe_stdout": "CONFIRMED — file path 'test_file.txt' NOT found in argv: ['codex', 'exec', '--sandbox', 'danger-full-access', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', '-C', '/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot', '--model', 'test-model', '-']\n",
+  "trigger_summary": "When 'files' is a non-empty list, file paths are not added to argv — only stdin is composed; backends receive no direct file path context."
+}

@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a string. If the input list `files` is empty, the returned string is identical to the input `prompt`. Otherwise, the returned string is `'Read these file(s) before acting:\\n' + '\\n'.join('- ' + path for path in files) + '\\n\\n' + prompt`. The order of the file paths in the output matches the order in the input list. The function has no side effects and does not modify the inputs."
+}

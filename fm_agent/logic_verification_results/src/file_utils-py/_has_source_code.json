@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/file_utils-py/_has_source_code.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns True when proj_dir (optionally scoped to submodules) contains at least one\n    file whose extension matches a pipeline-supported programming language.\n  - Returns False when no such file exists within the applicable scope, including when\n    proj_dir does not exist, is empty, contains no recognized source files, or when\n    submodules narrows the scope to a subset of the tree that contains no recognized\n    source files.\n  - When submodules is None, the search covers the entire directory tree under proj_dir,\n    excluding directories whose names begin with \".\" and well-known build/package\n    directories.\n  - When submodules is provided and non-empty, only files whose project-relative path\n    begins with one of the listed subdirectory names are considered.",
+    "actual_behavior": "The function returns True if and only if the underlying iterator `_iter_project_source_files(proj_dir, submodules)` produces at least one path (i.e., a file with a pipeline-supported extension exists in the directory tree rooted at `proj_dir`, optionally confined to the submodules listed in `submodules`, excluding hidden directories and build/package directories). Otherwise it returns False. The call has no side effects. Formally: let S = { p | p is yielded by `_iter_project_source_files(proj_dir, submodules)` } ; then `_has_source_code(proj_dir, submodules)` = True  S  .",
+    "code_evidence": "Line 3: for _ in _iter_project_source_files(proj_dir, submodules):",
+    "trigger_condition": "The specification requires that _has_source_code return False when proj_dir does not exist. However, the code does not validate that proj_dir is a directory before calling _iter_project_source_files. If proj_dir does not exist, the iterator may raise a FileNotFoundError, which propagates uncaught, causing the function to raise an exception instead of returning False as required."
+  }
+}

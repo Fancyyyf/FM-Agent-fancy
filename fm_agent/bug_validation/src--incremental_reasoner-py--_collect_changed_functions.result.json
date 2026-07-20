@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_collect_changed_functions",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_collect_changed_functions.py",
+  "function_name": "_collect_changed_functions",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_collect_changed_functions.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_collect_changed_functions.md",
+  "probe_stdout": "NOT CONFIRMED — _is_under_submodules is present in _collect_changed_functions and correctly filters by submodules",
+  "trigger_summary": "Code claim that submodules parameter is ignored in files list comprehension is false; _is_under_submodules(f, submodules) IS present and correctly filters files."
+}

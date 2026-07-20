@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir is a directory containing only a single file named 'test.py'. The suffixes argument is set([\".PY\"]). _SKIP_DIRS is empty. The code's extension check lowercases the file extension to '.py' but checks membership against suffixes exactly, so '.py' is not found in set([\".PY\"]), and the generator yields nothing. The specification requires case-insensitive matching, so 'test.py' should be yielded as its extension matches '.PY' ignoring case.",
+  "offending_statements": "Line 5:             if Path(filename).suffix.lower() in suffixes:",
+  "reason": "The code lowercases only the file's extension but performs an exact set membership test against the suffixes set. If any suffix in the set contains uppercase characters, it will never match the all-lowercase extension, violating the case-insensitive comparison required by the specification."
+}

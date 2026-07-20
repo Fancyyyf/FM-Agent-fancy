@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_run_generate_phases",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_run_generate_phases.py",
+  "function_name": "_run_generate_phases",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_run_generate_phases.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_run_generate_phases.md",
+  "probe_stdout": "CONFIRMED — _json_file_is_valid returned True for '{}' (valid JSON but does NOT conform to phases.json schema)\n",
+  "trigger_summary": "_run_generate_phases uses _json_file_is_valid() to validate phases.json — it only checks JSON validity, not schema conformance, so any valid JSON (e.g. {}) passes even though it lacks required phases fields."
+}

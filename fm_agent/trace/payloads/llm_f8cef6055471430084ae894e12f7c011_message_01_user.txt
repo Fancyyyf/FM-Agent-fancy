@@ -1,0 +1,58 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _parse_info_section(section_text):
+Line 2:     if not section_text.strip() or section_text.strip() == "(no callees)":
+Line 3:         return FunctionSpecMap()
+Line 4:     knowledge_map = FunctionSpecMap()
+Line 5:     entries = _SPLIT_MARKER_RE.split(section_text)
+Line 6:     for entry in entries:
+Line 7:         entry = entry.strip()
+Line 8:         if not entry:
+Line 9:             continue
+Line 10:         entry_lines = [line.rstrip() for line in entry.splitlines() if line.strip()]
+Line 11:         if not entry_lines:
+Line 12:             continue
+Line 13:         function_name = _extract_function_name(entry_lines[0])
+Line 14:         if function_name is None:
+Line 15:             continue
+Line 16:         knowledge_map.add_entry(
+Line 17:             function_name,
+Line 18:             entry_lines[0],
+Line 19:             '\n'.join(entry_lines[1:]).strip(),
+Line 20:         )
+Line 21:     return knowledge_map
+```
+
+Condition A (what the code actually does):
+If `section_text.strip()` is the empty string or exactly "(no callees)", the function returns an empty `FunctionSpecMap`. Otherwise, let `entries` be the list obtained by splitting `section_text` using the regular expression `_SPLIT_MARKER_RE`. The function returns a `FunctionSpecMap` containing one entry for every string `e` in `entries` that satisfies: after stripping whitespace, `e` is non-empty; after splitting `e` into lines and removing any line that consists only of whitespace, the resulting list `entry_lines` is non-empty; and `_extract_function_name(entry_lines[0])` returns a non‑`None` value `name`. For each such qualifying `e`, the map stores an entry whose key is `name`, with the signature set to `entry_lines[0]` and the spec body set to the string formed by joining `entry_lines[1:]` with newline characters and then stripping leading/trailing whitespace from that concatenation. If no `e` satisfies the conditions, the returned map is empty. The parameter `section_text` is not modified.
+
+Condition B (what the specification requires):
+- Returns a FunctionSpecMap object
+  - When section_text is empty, whitespace-only, or equals "(no callees)" after
+    stripping, returns an empty FunctionSpecMap containing zero entries and zero
+    signatures
+  - Otherwise, section_text is partitioned into entries at each [SPLIT] delimiter;
+    leading and trailing whitespace is stripped from each entry
+  - For each non-empty entry: the first non-blank line is interpreted as a callee
+    function signature; all subsequent non-blank lines collectively form the spec
+    body for that callee
+  - An entry whose first non-blank line does not contain a recognizable function
+    name is silently discarded — it produces no entry in the returned map
+  - Each retained entry is stored in the returned map under its extracted function
+    name, with its original signature line and spec body text preserved
+
+Additional context:
+_extract_function_name(signature_line: str) -> str | None
+Pre-condition: signature_line is a string, possibly containing a function
+    signature with a parenthesized parameter list
+  Post-condition: Returns the function name extracted from the signature line;
+    returns None if no recognizable function name is found
+
+FunctionSpecMap.add_entry(name: str, signature: str, spec_body: str) -> None
+Pre-condition: name is a non-empty string; signature and spec_body are strings
+    (spec_body may be empty)
+  Post-condition: The entry is added to the map; it is retrievable by name and
+    its signature and spec_body are stored
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

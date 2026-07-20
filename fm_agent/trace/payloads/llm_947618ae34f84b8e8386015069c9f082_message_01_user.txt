@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+- error is a dict
+
+Code block:
+```python
+Line 1:     def __init__(self, error: dict):
+Line 2:         super().__init__(str(error))
+Line 3:         self.error = error
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

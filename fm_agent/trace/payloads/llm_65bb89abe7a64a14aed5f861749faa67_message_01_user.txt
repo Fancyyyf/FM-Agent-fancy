@@ -1,0 +1,85 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _remove_func_comments(code):
+Line 2:     result = []
+Line 3:     index = 0
+Line 4:     in_block_comment = False
+Line 5:     in_string = False
+Line 6:     string_delimiter = ""
+Line 7:     line_start = True
+Line 8:     while index < len(code):
+Line 9:         char = code[index]
+Line 10:         next_char = code[index + 1] if index + 1 < len(code) else ""
+Line 11:         if in_block_comment:
+Line 12:             if char == '*' and next_char == '/':
+Line 13:                 in_block_comment = False
+Line 14:                 index += 2
+Line 15:                 continue
+Line 16:             if char == '\n':
+Line 17:                 result.append(char)
+Line 18:                 line_start = True
+Line 19:             index += 1
+Line 20:             continue
+Line 21:         if in_string:
+Line 22:             result.append(char)
+Line 23:             if char == '\\' and index + 1 < len(code):
+Line 24:                 result.append(code[index + 1])
+Line 25:                 index += 2
+Line 26:                 continue
+Line 27:             if char == string_delimiter:
+Line 28:                 in_string = False
+Line 29:             line_start = char == '\n'
+Line 30:             index += 1
+Line 31:             continue
+Line 32:         if char in ('"', "'"):
+Line 33:             in_string = True
+Line 34:             string_delimiter = char
+Line 35:             result.append(char)
+Line 36:             line_start = False
+Line 37:             index += 1
+Line 38:             continue
+Line 39:         if char == '/' and next_char == '*':
+Line 40:             in_block_comment = True
+Line 41:             index += 2
+Line 42:             continue
+Line 43:         if char == '/' and next_char == '/':
+Line 44:             index += 2
+Line 45:             while index < len(code) and code[index] != '\n':
+Line 46:                 index += 1
+Line 47:             continue
+Line 48:         if char == '#' and not line_start:
+Line 49:             while index < len(code) and code[index] != '\n':
+Line 50:                 index += 1
+Line 51:             continue
+Line 52:         result.append(char)
+Line 53:         if char == '\n':
+Line 54:             line_start = True
+Line 55:         elif not char.isspace():
+Line 56:             line_start = False
+Line 57:         index += 1
+Line 58:     cleaned_lines = [line for line in ''.join(result).split('\n') if line.strip()]
+Line 59:     return '\n'.join(cleaned_lines)
+```
+
+Condition A (what the code actually does):
+Natural language: The function returns a string derived from `code` by first building a character sequence `res` that preserves all characters except those belonging to certain comment forms, while treating single- and double-quoted string literals as opaque. Specifically: (1) Any substring matching `/*` ... `*/` is removed, but newline characters inside the block are retained. (2) Any substring starting with `//` and extending to the end of the line (i.e., until the next newline or end of input) is removed. (3) Any `#` that is not at the beginning of a line (i.e., the first non-whitespace character on that line) and the subsequent characters up to the next newline are removed; a `#` that is the first non-whitespace on a line is kept. (4) Inside single- or double-quoted strings (where the opening quote is not escaped and the closing unescaped quote matches the delimiter), all characters, including escaped sequences and comment-like patterns, are copied verbatim. After constructing `res`, the function splits it by newline characters, strips leading and trailing whitespace from each line, discards lines that become empty, and joins the remaining lines with newline characters. The relative order of preserved code tokens is maintained. Formal logic: Let `res` be the concatenation of all characters appended to `result` during the while-loop (lines 8-57). The function's output is `'\n'.join([l for l in res.split('\n') if l.strip()])`. The sequence `res` satisfies: for every index `i` in the input `code`, the character `code[i]` appears in `res` if and only if `i` is not inside a removed comment span (with the exception of newlines retained from block comments) and, when inside a string literal, the character is always included regardless of its comment-like appearance. More formally, define the predicate `kept(i, S)` inductively over the scanning state machine defined by the loop. The output string is uniquely determined by these rules.
+
+Condition B (what the specification requires):
+- Returns a copy of code with all comments removed and all string literal
+    content preserved exactly as in the input
+  - Comments removed are: block comments delimited by /* and */, line comments
+    starting with //, and # comments that appear after at least one non-whitespace
+    character on the same line
+  - A # character that is the first non-whitespace character on a line is NOT
+    treated as a comment start and is preserved in the output
+  - Within string literals delimited by " or ', no character is interpreted as
+    comment syntax; all characters within string literals are preserved verbatim,
+    including backslash-escaped characters
+  - Lines that contain only whitespace after comment removal are omitted from
+    the output
+  - The relative order of all preserved characters, including newlines, is
+    unchanged from the input
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns True if the file extension (suffix) of the given path object, when lowercased, equals '.json'; otherwise returns False. The path object is not modified. No side effects occur. Formalized: (result == (path.suffix.lower() == '.json'))"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_batch_prompts-py--_detect_comment_prefix",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/generate_batch_prompts-py/_detect_comment_prefix.py",
+  "function_name": "_detect_comment_prefix",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_batch_prompts-py--_detect_comment_prefix.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_batch_prompts-py--_detect_comment_prefix.md",
+  "probe_stdout": "CONFIRMED — actual: 'hello' | expected valid prefix or None; _detect_comment_prefix returned invalid comment prefix \"hello\"\n",
+  "trigger_summary": "When [SPEC] is preceded by arbitrary non-comment text (e.g. 'hello'), _detect_comment_prefix returns that text instead of None, violating the spec that the returned value must be a valid comment prefix (#, //, %, --)."
+}

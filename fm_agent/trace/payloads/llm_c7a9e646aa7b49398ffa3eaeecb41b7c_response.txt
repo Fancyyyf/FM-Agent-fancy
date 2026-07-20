@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "content='  # [SPEC]  \\n# comment\\ncode', comment_prefix='#', spec_marker='  # [SPEC]  '",
+  "offending_statements": "Line 17: if first >= len(lines) or lines[first].strip() != spec_marker.strip():",
+  "reason": "The code strips spec_marker before comparing, so if spec_marker contains leading/trailing whitespace, it may incorrectly match a stripped line that doesn't equal the original spec_marker value as required by the specification. For the given input, the code returns the prefix instead of None."
+}

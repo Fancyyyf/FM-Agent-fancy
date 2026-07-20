@@ -1,0 +1,23 @@
+Programming language: Python
+
+Pre-condition:
+- state is a State instance whose bugs_confirmed,
+    bugs_not_confirmed, and bugs_pending attributes are non-negative
+    integers reflecting the current bug-validation verdict counts
+    from ingested trace data
+
+Code block:
+```python
+Line 1: def render_bugs(state):
+Line 2:     total = state.bugs_confirmed + state.bugs_not_confirmed + state.bugs_pending
+Line 3:     text = Text.from_markup(
+Line 4:         f"[green]✓ confirmed[/]      {state.bugs_confirmed}\n"
+Line 5:         f"[yellow]✗ not_confirmed[/]  {state.bugs_not_confirmed}\n"
+Line 6:         f"[dim]… pending[/]         {state.bugs_pending}\n"
+Line 7:         f"[bold]total[/]             [bold]{total}[/]"
+Line 8:     )
+Line 9:     return Panel(Align.center(text, vertical="middle"),
+Line 10:                  title="Bug Validation", border_style="yellow")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

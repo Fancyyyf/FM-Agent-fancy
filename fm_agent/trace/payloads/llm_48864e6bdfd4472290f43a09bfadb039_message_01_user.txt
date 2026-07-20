@@ -1,0 +1,22 @@
+Programming language: Python
+
+Pre-condition:
+- trace_dir is a string specifying a writable filesystem path
+  - event is a dict whose top-level values are JSON-serializable
+
+Code block:
+```python
+Line 1: def append_event(trace_dir, event):
+Line 2:     _ensure_trace_dirs(trace_dir)
+Line 3:     events_path = os.path.join(trace_dir, "events.jsonl")
+Line 4:     line = json.dumps(event, ensure_ascii=False)
+Line 5:     with _LOCK:
+Line 6:         with open(events_path, "a", encoding="utf-8") as f:
+Line 7:             f.write(line + "\n")
+```
+
+Additional context:
+_ensure_trace_dirs(trace_dir) -> None
+Pre-condition: trace_dir is a string path
+  Post-condition: the directory trace_dir and all its missing parent directories exist on the filesystem after the call
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

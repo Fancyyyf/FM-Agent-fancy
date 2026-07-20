@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_string_list",
+  "source_file": "src/call_graph_edges.py",
+  "function_name": "_string_list",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_string_list.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_string_list.md",
+  "probe_stdout": "BUG (zero-width space only): blank entries kept — ['\\u200b']\nBUG (zero-width joiner only): blank entries kept — ['\\u200d']\nBUG (word joiner only): blank entries kept — ['\\u2060']\nBUG (BOM only): blank entries kept — ['\\ufeff']\nBUG (spaces + ZWSP + spaces): blank entries kept — ['\\u200b']\nOK  (spaces only): input '   ' → result () (no blank entries)\nOK  (tab only): input '\\t' → result () (no blank entries)\nOK  (newline only): input '\\n' → result () (no blank entries)\nOK  (mixed whitespace): input ' \\t\\n ' → result () (no blank entries)\nOK  (semicolon only): input ';' → result () (no blank entries)\nOK  (semicolons with spaces): input ' ; ; ' → result (';',) (no blank entries)\nOK  (spaces and semicolons): input '   ;;   ' → result () (no blank entries)\nOK  (single-quoted spaces): input \"'   '\" → result () (no blank entries)\nOK  (double-quoted spaces): input '\"   \"' → result () (no blank entries)\nOK  (single-quoted empty): input \"''\" → result () (no blank entries)\nOK  (double-quoted empty): input '\"\"' → result () (no blank entries)\nOK  (single-quoted tab): input \"'\\t'\" → result () (no blank entries)\nCONFIRMED — _string_list includes blank (non-meaningful) labels that should have been filtered out by the spec",
+  "trigger_summary": "Zero-width Unicode characters (U+200B, U+200D, U+2060, U+FEFF) survive _clean_label unchanged because Python's str.strip() does not classify them as whitespace; the `if label:` truthiness check then keeps these invisible strings, violating the spec's requirement to include only non-blank labels."
+}

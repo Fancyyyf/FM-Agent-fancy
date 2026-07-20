@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/generate_batch_prompts-py/_detect_comment_prefix.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- If content contains at least one line in which the substring \"[SPEC]\" appears,\n    returns the text preceding \"[SPEC]\" on the first such line (by ascending line\n    order), with trailing whitespace removed from that prefix text\n  - Otherwise, returns None\n  - The returned value, when not None, is the single-line comment prefix used in\n    the source file (\"#\" for Python, \"//\" for C-family languages, \"%\" for Erlang)",
+    "actual_behavior": "The function returns the string obtained from the first line of `content` that contains the substring '[SPEC]', by extracting the part before '[SPEC]' and removing trailing whitespace, or `None` if no line contains '[SPEC]'. Formally: Let `lines = content.splitlines()`. If there exists an index `i` such that `lines[i].find('[SPEC]') != -1`, let `first = lines[i]` and `idx = first.find('[SPEC]')`; the function returns `first[:idx].rstrip()`. Otherwise, the function returns `None`.",
+    "code_evidence": "Line 6: return line[:idx].rstrip()",
+    "trigger_condition": "The code returns \"hello\", which is not a valid single-line comment prefix (e.g., '#', '//', '%'), violating the specification that the returned value must be a comment prefix."
+  }
+}

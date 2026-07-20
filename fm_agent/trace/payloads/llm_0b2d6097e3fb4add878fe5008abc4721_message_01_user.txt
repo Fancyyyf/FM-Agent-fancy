@@ -1,0 +1,32 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _get_nested(d, *keys):
+Line 2:     cur = d
+Line 3:     for k in keys:
+Line 4:         if not isinstance(cur, dict):
+Line 5:             return None
+Line 6:         cur = cur.get(k)
+Line 7:     return cur
+```
+
+Condition A (what the code actually does):
+The function returns the value at the path given by *keys if the traversal succeeds, otherwise returns None. Formal definition: Let keys = (k1, ..., kn) from *keys. Initialize v0 = d. For i from 1 to n, if v(i-1) is not a dict, return None; else if k_i is not a key in v(i-1), return None (since .get(k_i) returns None by default); else v_i = v(i-1)[k_i]. If the loop completes without early return, return v_n. Note: If the final value v_n is None, the returned value is None, which is indistinguishable from a missing path or early failure.
+
+Condition B (what the specification requires):
+- When keys is empty, returns d unchanged
+  - Otherwise, for key chain k₁, k₂, ..., kₙ:
+    * Walks the chain via successive dict lookups d[k₁], result[k₂], ...
+      using dict.get for each lookup — a missing key at any step yields
+      None rather than raising KeyError
+    * At each step, the intermediate value must be a dict for iteration
+      to continue. If any intermediate value (including None returned by
+      dict.get for a missing key) is not a dict, returns None immediately
+      and no further keys are examined
+    * Returns the final value when every key is found in the
+      corresponding intermediate dict and every intermediate value is a
+      dict
+  - The input dict d is never mutated by this function
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

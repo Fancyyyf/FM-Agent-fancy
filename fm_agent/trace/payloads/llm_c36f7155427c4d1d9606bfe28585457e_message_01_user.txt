@@ -1,0 +1,83 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _extract_functions_indent(lines, lang_cfg):
+Line 2:     """Extract functions from an indent-delimited language (Python)."""
+Line 3:     functions = []
+Line 4:     i = 0
+Line 5:     while i < len(lines):
+Line 6:         line = lines[i]
+Line 7:         stripped = line.lstrip()
+Line 8:         # Look for 'def ' at any indentation level
+Line 9:         m = re.match(r'^(\s*)def\s+(\w+)\s*\(', line)
+Line 10:         if not m:
+Line 11:             i += 1
+Line 12:             continue
+Line 13:         indent = len(m.group(1))
+Line 14:         name = m.group(2)
+Line 15:         func_start = i
+Line 16:         # Handle decorators — walk backwards to include them
+Line 17:         while func_start > 0 and lines[func_start - 1].strip().startswith('@'):
+Line 18:             func_start -= 1
+Line 19:         # Find end of function body: subsequent lines with greater indentation
+Line 20:         # (or blank lines interspersed)
+Line 21:         j = i + 1
+Line 22:         while j < len(lines):
+Line 23:             l = lines[j]
+Line 24:             if l.strip() == '':
+Line 25:                 j += 1
+Line 26:                 continue
+Line 27:             line_indent = len(l) - len(l.lstrip())
+Line 28:             if line_indent == indent and re.match(r'\)\s*(:|->)', l.lstrip()):
+Line 29:                 j += 1
+Line 30:                 continue
+Line 31:             if line_indent <= indent:
+Line 32:                 break
+Line 33:             j += 1
+Line 34:         # j is now the first line after the function body
+Line 35:         func_end = j - 1
+Line 36:         # Trim trailing blank lines
+Line 37:         while func_end > i and lines[func_end].strip() == '':
+Line 38:             func_end -= 1
+Line 39:         functions.append((name, func_start, func_end))
+Line 40:         i = j
+Line 41:     return functions
+```
+
+Condition A (what the code actually does):
+Let `L` be the returned list. Then:
+1. L is a list of triples (name, start, end) with 0 ≤ start ≤ end < len(lines).
+2. For each (n, s, e) ∈ L, there exists an indentation level I and an index d ∈ [s, e] such that line d matches the regex `^\s*def\s+(\w+)\s*\(`, capturing I as len(leading whitespace) and n as the function name; all lines from s to d−1 are decorators (start with '@'); s is the start of the contiguous decorator block; e is the last non-blank line within the function body; the body comprises lines after d with indentation > I or (indentation == I and matches `\)\s*(:|->)`), and breaks at the first non-blank line that has indentation ≤ I and does not match that continuation pattern; trailing blank lines are excluded from e.
+3. The intervals in L are disjoint, non-nested, and ordered by start index.
+4. For every line index d′ matching the def pattern with indentation I′, if d′ is not inside any interval of L (i.e., there is no (n,s,e)∈L with s ≤ d′ ≤ e), then there exists a tuple in L whose interval contains d′.
+Thus L contains exactly all top-level function definitions.
+
+Condition B (what the specification requires):
+- Returns a list of (raw_name, start, end) tuples, ordered by ascending
+    start index
+  - Each tuple identifies one function definition found in lines:
+    * raw_name is the function identifier extracted from the definition line
+    * start is the zero-based index of the block's first line: either the
+      definition line itself, or the earliest immediately-preceding decorator
+      line when the definition line is preceded by one or more consecutive
+      decorator lines
+    * end is the zero-based index of the last non-blank line in the function
+      body
+  - The contiguous span lines[start..end] contains exactly one function
+    definition header; every non-blank line in that span either belongs to
+    the function body (indented more deeply than the definition header) or
+    forms a continuation of the header at the same indentation level
+  - Lines whose indentation is shallower than or equal to the definition
+    header, that are not header continuations, are classified as belonging
+    to a subsequent top-level construct and are excluded from the span
+  - Blank lines within the span do not affect boundary detection
+  - Trailing blank lines after the last non-blank body line are excluded
+    from the span (end is reduced to the last non-blank line)
+  - Returns an empty list when no line in the input matches the
+    function-definition pattern for the language
+  - Function names are returned as raw identifiers extracted directly from
+    the definition line; deduplication of duplicate names is the caller's
+    responsibility
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

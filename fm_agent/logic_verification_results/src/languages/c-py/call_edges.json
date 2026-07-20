@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/c-py/call_edges.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns None when no codegraph backend for the C language can be initialized\n    from proj_dir; this signals the caller to fall back to regex-based call-edge\n    detection for this language\n  - Otherwise returns a dict where each key is a fully-qualified caller function\n    name and each value is a set of fully-qualified callee function names that the\n    caller directly invokes\n  - An empty dict (distinct from None) indicates the backend initialized successfully\n    but found zero call edges",
+    "actual_behavior": "Returns either None if the internal CodeGraphExtractor initialization fails (i.e., CodeGraphExtractor.from_proj_dir(proj_dir) returns None), or a dictionary where each key is a tuple (caller_stem, caller_module) and the corresponding value is a set of callee stems representing the direct function calls from that caller to its callees, as produced by cg.get_call_edges('c'). No side effects occur.",
+    "code_evidence": "Line 4: return cg.get_call_edges(\"c\") if cg else None",
+    "trigger_condition": "Condition A states the code returns a dictionary where keys are (caller_stem, caller_module) tuples and values are sets of callee stems. Specification B requires keys to be fully-qualified caller function name strings and values to be sets of fully-qualified callee function names. The output format is structurally incompatible: for any successful initialization with call edges, the keys and values are not fully-qualified names, violating the specification."
+  }
+}

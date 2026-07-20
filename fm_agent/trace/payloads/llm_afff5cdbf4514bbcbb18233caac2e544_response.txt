@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "self._messages contains the string \"hello\" (not a BaseException). deadline is exactly time.monotonic(). The code raises TimeoutError because remaining = 0, but the specification requires returning \"hello\" since a message is available and the deadline has not been exceeded before the message becomes available.",
+  "offending_statements": "Line 3: if remaining <= 0:\nLine 4: raise TimeoutError(\"timed out waiting for ELP\")",
+  "reason": "The code raises TimeoutError immediately whenever remaining <= 0, without attempting to retrieve a message from self._messages. When remaining == 0 and a message is already in the queue, the specification requires returning that message (or raising RuntimeError if it is a BaseException), because the deadline is reached exactly when the message is available, not before. The code's early return/cutoff violates the semantics of a zero-timeout non-blocking attempt."
+}

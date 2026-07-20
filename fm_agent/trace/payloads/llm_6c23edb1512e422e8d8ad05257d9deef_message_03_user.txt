@@ -1,0 +1,1 @@
+Your previous response was invalid: LLM response is not valid JSON: Invalid control character at: line 2 column 1213 (char 1214). Return only valid JSON matching this schema: {"post_condition": "non-empty string"}. Do not include Markdown, tags, or prose.

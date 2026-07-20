@@ -1,0 +1,19 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def chunked(items: List[dict], size: int) -> List[List[dict]]:
+Line 2:     return [items[i : i + size] for i in range(0, len(items), size)]
+```
+
+Condition A (what the code actually does):
+The input list `items` is not modified. The function returns a list of lists, where each sublist is a consecutive chunk of `items`. The chunks partition the original sequence in order, each of length `size` except possibly the last chunk which is shorter if the length of `items` is not a multiple of `size`. Formally: let n = len(items). The returned list R satisfies: len(R) = ceil(n / size), and for all i in 0 ≤ i < len(R), R[i] = items[i * size : min((i + 1) * size, n)].
+
+Condition B (what the specification requires):
+- Returns a list of n sublists where n = ceil(len(items) / size)
+  - Each sublist has length ≤ size and all but possibly the last have length exactly size
+  - The concatenation of all sublists in returned order equals items in order
+  - No element of items belongs to more than one sublist
+  - The relative order of elements across the returned sublists matches their order in items
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

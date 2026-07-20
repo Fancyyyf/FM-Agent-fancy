@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir is a directory that can be indexed by the backend (e.g., it contains only a README.md file and no Python source files), so CodeGraphExtractor.from_proj_dir(proj_dir) returns a truthy object. However, cg.get_call_edges('python') returns None because no Python call edges can be resolved. The code returns None, but the specification requires a dict to be returned whenever the backend can index the project directory.",
+  "offending_statements": "Line 4: return cg.get_call_edges(\"python\") if cg else None",
+  "reason": "The specification mandates that the function returns a dict whenever the backend can index the project directory. The code returns None if cg is truthy but cg.get_call_edges('python') returns None, which contradicts the spec. A concrete case is a valid project directory that the backend can index but for which no Python call edges can be resolved (e.g., no .py files), leading to a None return while a dict is expected."
+}

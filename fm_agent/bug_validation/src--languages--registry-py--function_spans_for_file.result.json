@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--registry-py--function_spans_for_file",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/registry-py/function_spans_for_file.py",
+  "function_name": "function_spans_for_file",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--registry-py--function_spans_for_file.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--registry-py--function_spans_for_file.md",
+  "probe_stdout": "CONFIRMED — exception propagated instead of returning None: RuntimeError: Simulated codegraph internal failure\n",
+  "trigger_summary": "When handler.function_spans() raises an exception (e.g. codegraph DB corruption), the exception propagates through function_spans_for_file uncaught instead of returning None for the caller to fall back to regex extraction."
+}

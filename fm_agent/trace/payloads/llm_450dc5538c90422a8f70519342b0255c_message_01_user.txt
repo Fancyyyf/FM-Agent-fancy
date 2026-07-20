@@ -1,0 +1,80 @@
+Programming language: Python
+
+Pre-condition:
+- work_dir is a string path to a writable directory containing
+    phases.json that conforms to the phases.json schema (a JSON object
+    with a "phases" array; each phase has "phase" (int), "modules"
+    (array), and optionally "depends_on_phases" (array of int)).
+  - If work_dir contains spec_prompts/domain_context/, it may contain
+    phase_NN_types.txt files keyed by phase number.
+
+Code block:
+```python
+Line 1: def _clean_empty_phase_module(work_dir):
+Line 2:     """Drop empty modules/phases from phases.json, renumber phases, and keep the
+Line 3:     per-phase domain-context files in sync.
+Line 4:     A module owning no source files, and a phase left with no non-empty modules,
+Line 5:     carry no work for later stages, so both are removed. Surviving phases are then
+Line 6:     renumbered 1..N in their existing order (closing any gaps the removals left),
+Line 7:     and ``depends_on_phases`` references are remapped to the new numbering with
+Line 8:     references to removed phases dropped.
+Line 9:     Because the ``spec_prompts/domain_context/phase_NN_types.txt`` files are keyed
+Line 10:     by phase number, this also deletes the types file of every removed phase and
+Line 11:     renames the types file of every renumbered phase to match its new number.
+Line 12:     Returns ``{"removed_phases": [...], "renumbered": {old: new, ...}}`` describing
+Line 13:     what changed (an unchanged phase maps to itself in ``renumbered``).
+Line 14:     """
+Line 15:     phases_path = os.path.join(work_dir, "phases.json")
+Line 16:     with open(phases_path, "r") as f:
+Line 17:         data = json.load(f)
+Line 18:     original_phases = sorted(data.get("phases", []), key=lambda p: p.get("phase", 0))
+Line 19:     kept = []
+Line 20:     removed_phase_nums = []
+Line 21:     for phase in original_phases:
+Line 22:         modules = [
+Line 23:             m for m in phase.get("modules", [])
+Line 24:             if m.get("source_files")
+Line 25:         ]
+Line 26:         if modules:
+Line 27:             phase["modules"] = modules
+Line 28:             kept.append(phase)
+Line 29:         else:
+Line 30:             removed_phase_nums.append(phase.get("phase"))
+Line 31:             logging.info(
+Line 32:                 "Removed empty phase %s ('%s') with no source files",
+Line 33:                 phase.get("phase"), phase.get("name", ""),
+Line 34:             )
+Line 35:     # Map each surviving phase's old number to its new (compacted) number.
+Line 36:     renumbered = {}
+Line 37:     for new_num, phase in enumerate(kept, start=1):
+Line 38:         old_num = phase.get("phase")
+Line 39:         if old_num is not None:
+Line 40:             renumbered[old_num] = new_num
+Line 41:         phase["phase"] = new_num
+Line 42:     # Remap dependencies to the new numbering, dropping any that pointed at a
+Line 43:     # removed phase (which no longer exists to depend on).
+Line 44:     for phase in kept:
+Line 45:         deps = phase.get("depends_on_phases")
+Line 46:         if not deps:
+Line 47:             continue
+Line 48:         phase["depends_on_phases"] = sorted(
+Line 49:             {renumbered[d] for d in deps if d in renumbered}
+Line 50:         )
+Line 51:     data["phases"] = kept
+Line 52:     with open(phases_path, "w") as f:
+Line 53:         json.dump(data, f, indent=2)
+Line 54:     _clean_domain_context_files(work_dir, removed_phase_nums, renumbered)
+Line 55:     return {"removed_phases": removed_phase_nums, "renumbered": renumbered}
+```
+
+Additional context:
+_clean_domain_context_files(work_dir, removed_phase_nums, renumbered) -> None
+Pre-condition: work_dir is a directory containing
+    spec_prompts/domain_context/ with phase_NN_types.txt files.
+    removed_phase_nums is a list of int phase numbers.
+    renumbered is a dict mapping int (old) to int (new).
+  Post-condition: For each phase number in removed_phase_nums, the
+    phase_NN_types.txt file is deleted if it exists. For each
+    (old, new) pair in renumbered where old != new, the file
+    phase_<old>_types.txt is renamed to phase_<new>_types.txt.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

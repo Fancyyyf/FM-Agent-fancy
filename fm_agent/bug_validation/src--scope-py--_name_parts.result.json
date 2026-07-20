@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_name_parts",
+  "source_file": "fm_agent/extracted_functions/src/scope-py/_name_parts.py",
+  "function_name": "_name_parts",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_name_parts.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_name_parts.md",
+  "probe_stdout": "BUG REPRODUCED for \"a_b_c\"\n  missing from actual: {'b_c', 'a_b'}\n  extra in actual: set()\nBUG REPRODUCED for \"x_y_z_w\"\n  missing from actual: {'y_z', 'x_y', 'z_w'}\n  extra in actual: set()\nOK for \"n1_n2\"\nCONFIRMED — bug reproduced: consecutive underscore-separated pairs are missing when individual tokens have length <= 1",
+  "trigger_summary": "Input 'a_b_c' produces only {'a_b_c'} instead of {'a_b_c', 'a_b', 'b_c'} because underscore-split tokens of length 1 are filtered out before consecutive pair generation."
+}

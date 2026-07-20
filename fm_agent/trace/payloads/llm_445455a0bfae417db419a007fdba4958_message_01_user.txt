@@ -1,0 +1,28 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _opencode_trace_path(work_dir, event_id):
+Line 2:     return os.path.join(_trace_dir(work_dir), "opencode", f"{event_id}.jsonl")
+```
+
+Condition A (what the code actually does):
+The function returns a string representing a filesystem path constructed by joining the trace directory path (obtained from `_trace_dir(work_dir)`), the segment `'opencode'`, and the filename `f"{event_id}.jsonl"` using the platform's path separator. No side effects occur, and the returned string does not necessarily correspond to an existing file or directory.
+
+Formally: `result = os.path.join(_trace_dir(work_dir), 'opencode', event_id + '.jsonl')`
+
+Condition B (what the specification requires):
+- Returns a filesystem path under work_dir that is deterministically
+    derived from work_dir and event_id alone
+  - The returned path identifies the file where the raw LLM
+    request/response trace data associated with event_id will be written
+    during execution
+  - For a fixed (work_dir, event_id) pair, every call to this function
+    returns the same path
+
+Additional context:
+_trace_dir(work_dir) -> str
+Pre-condition: work_dir is a path to an existing directory
+  Post-condition: returns the path to a subdirectory under work_dir
+    dedicated to storing execution trace data
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

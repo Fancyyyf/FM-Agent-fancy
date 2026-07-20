@@ -1,0 +1,20 @@
+{
+  "phase": 4,
+  "layers": "3",
+  "total_functions": 2,
+  "total_batches": 1,
+  "batches": [
+    {
+      "index": 0,
+      "file": "batch_000_layer3_extracted_b0.txt",
+      "layer": 3,
+      "is_cycle": false,
+      "num_functions": 2,
+      "num_pending": 0,
+      "functions": [
+        "fm_agent/extracted_functions/src/prompts-py/_load_spec_check_json.py",
+        "fm_agent/extracted_functions/src/prompts-py/_nonempty_string.py"
+      ]
+    }
+  ]
+}

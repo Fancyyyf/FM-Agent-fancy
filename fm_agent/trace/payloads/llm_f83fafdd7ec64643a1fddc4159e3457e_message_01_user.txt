@@ -1,0 +1,20 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def new_event_id(prefix="evt"):
+Line 2:     return f"{prefix}_{uuid.uuid4().hex}"
+```
+
+Condition A (what the code actually does):
+The function returns a string formed by concatenating the prefix (the provided non-empty string argument or the default 'evt'), an underscore, and the 32-character hexadecimal digest of a randomly generated UUID4. Formally, if s is the return value, p is the prefix (p ≠ ''), then s = p + '_' + h where h = uuid.uuid4().hex and h is a string of 32 lowercase hexadecimal digits ([0-9a-f]{32}).
+
+Condition B (what the specification requires):
+- Returns a string composed of prefix, a single underscore, and a 32-character lowercase hexadecimal string
+  - The returned identifier is globally unique: it differs from every identifier previously returned by any invocation of new_event_id
+
+Additional context:
+uuid.uuid4() -> UUID
+Pre-condition: none
+  Post-condition: returns a randomly generated RFC 4122 version 4 UUID
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

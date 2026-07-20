@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_symbol_line_span",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_symbol_line_span.py",
+  "function_name": "_symbol_line_span",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_symbol_line_span.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_symbol_line_span.md",
+  "probe_stdout": "CONFIRMED — actual: (0, 1) | expected: (0, 2)\n",
+  "trigger_summary": "int(0.5) truncates to 0, causing the code to subtract 1 from end when character is a non-zero float."
+}

@@ -1,0 +1,118 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def record_opencode_call(
+Line 2:     work_dir,
+Line 3:     event_id,
+Line 4:     stage,
+Line 5:     status,
+Line 6:     started,
+Line 7:     ended,
+Line 8:     command,
+Line 9:     function_ids=None,
+Line 10:     input_files=None,
+Line 11:     output_files=None,
+Line 12:     exit_code=None,
+Line 13:     summary=None,
+Line 14:     error=None,
+Line 15:     metadata=None,
+Line 16:     opencode_log_path=None,
+Line 17:     opencode_trace_path=None,
+Line 18: ):
+Line 19:     trace_dir = _trace_dir(work_dir)
+Line 20:     children = []
+Line 21:     if opencode_log_path and os.path.exists(opencode_log_path):
+Line 22:         opencode_log_ref = _payload_ref(trace_dir, opencode_log_path)
+Line 23:         children.append(
+Line 24:             {
+Line 25:                 "type": "tool_output",
+Line 26:                 "label": "opencode-stdout",
+Line 27:                 "path": opencode_log_ref,
+Line 28:                 "content_ref": opencode_log_ref,
+Line 29:             }
+Line 30:         )
+Line 31:     if opencode_trace_path and os.path.exists(opencode_trace_path):
+Line 32:         opencode_trace_ref = _payload_ref(trace_dir, opencode_trace_path)
+Line 33:         children.append(
+Line 34:             {
+Line 35:                 "type": "tool_output",
+Line 36:                 "label": "opencode-llm-jsonl",
+Line 37:                 "path": opencode_trace_ref,
+Line 38:                 "content_ref": opencode_trace_ref,
+Line 39:             }
+Line 40:         )
+Line 41:     record_trace_event(trace_dir, {
+Line 42:         "event_id": event_id,
+Line 43:         "type": "opencode_call",
+Line 44:         "stage": stage,
+Line 45:         "status": status,
+Line 46:         "start_time": started,
+Line 47:         "end_time": ended,
+Line 48:         "summary": summary or f"OpenCode {stage}",
+Line 49:         "function_ids": function_ids or [],
+Line 50:         "children": children,
+Line 51:         "metadata": {
+Line 52:             "command": command_argv(command),
+Line 53:             "exit_code": exit_code,
+Line 54:             "input_files": input_files or [],
+Line 55:             "output_files": output_files or [],
+Line 56:             "error": error,
+Line 57:             **(metadata or {}),
+Line 58:             "command_display": command_display(command),
+Line 59:         },
+Line 60:     })
+```
+
+Condition A (what the code actually does):
+The function returns None. It writes a trace event to the file <code>events.jsonl</code> inside the trace directory derived from <code>work_dir</code> (i.e., <code>_trace_dir(work_dir)</code>), creating parent directories and the file if they do not exist. The event is a JSON object <code>e</code> with the following properties: <code>e.event_id = event_id</code>; <code>e.type = 'opencode_call'</code>; <code>e.stage = stage</code>; <code>e.status = status</code>; <code>e.start_time = started</code>; <code>e.end_time = ended</code>; <code>e.summary = summary if summary is not None else 'OpenCode ' + stage</code>; <code>e.function_ids = function_ids if function_ids is not None else []</code>; <code>e.children</code> is a list built by including a child entry with type 'tool_output', label 'opencode-stdout', path and content_ref equal to the normalized relative path of <code>opencode_log_path</code> within the trace directory if <code>opencode_log_path</code> is not None and the file exists, and similarly for <code>opencode_trace_path</code> with label 'opencode-llm-jsonl'; <code>e.metadata</code> is a dictionary containing the keys <code>'command'</code> (set to <code>command_argv(command)</code>), <code>'exit_code'</code> (value <code>exit_code</code>), <code>'input_files'</code> (<code>input_files</code> or <code>[]</code>), <code>'output_files'</code> (<code>output_files</code> or <code>[]</code>), <code>'error'</code> (<code>error</code>), <code>'command_display'</code> (value <code>command_display(command)</code>), plus all key-value pairs from <code>metadata</code> if not None. Formally, after execution the trace file contains an additional line encoding the above object, and no exceptions are raised given the pre-conditions.
+
+Condition B (what the specification requires):
+- Appends exactly one trace event of type "opencode_call" as a single JSON line to the
+    trace events file under work_dir (specifically trace/events.jsonl within work_dir)
+  - The recorded event's event_id, stage, status, start_time, end_time reflect the
+    corresponding parameter values unchanged
+  - The recorded event's function_ids is the provided list when non-None, or an empty list
+    when None
+  - The recorded event's summary is the provided value when non-None, or a default string
+    of the form "OpenCode <stage>" when None
+  - When opencode_log_path is provided and the file it refers to actually exists on disk,
+    the event includes a child payload entry of type "tool_output" labeled "opencode-stdout",
+    referencing the file via a path relative to the trace directory; when the file does not
+    exist or opencode_log_path is None, no such child entry is included
+  - When opencode_trace_path is provided and the file it refers to actually exists on disk,
+    the event includes a child payload entry of type "tool_output" labeled "opencode-llm-jsonl",
+    referencing the file via a path relative to the trace directory; when the file does not
+    exist or opencode_trace_path is None, no such child entry is included
+  - The event's metadata block merges: the full argv of command, exit_code, input_files
+    (empty list when None), output_files (empty list when None), error, a display-formatted
+    command string, and every key-value pair from the provided metadata dict (when not None)
+  - Returns None — all effects are side effects on the trace events file
+
+Additional context:
+_trace_dir(work_dir) -> str
+Pre-condition: work_dir is a valid directory path
+  Post-condition: returns the trace subdirectory path under work_dir as an absolute path
+
+_payload_ref(trace_dir, source_path) -> str
+Pre-condition: trace_dir is a valid directory path; source_path is a filesystem path
+  Post-condition: returns a relative path from trace_dir to source_path, suitable as a
+    content reference in a trace event payload
+
+command_argv(command) -> list[str]
+Pre-condition: command is a list of strings or a string
+  Post-condition: returns command as a list of strings, normalizing a single string to a
+    single-element list if needed
+
+command_display(command) -> str
+Pre-condition: command is a list of strings forming a CLI invocation
+  Post-condition: returns a human-readable shell-quoted representation of command suitable
+    for display in trace metadata
+
+record_trace_event(trace_dir, event_dict) -> None
+Pre-condition: trace_dir is a valid, writable directory; event_dict is a JSON-serializable
+    dict containing at least event_id, type, stage, status, start_time, and end_time
+  Post-condition: serializes event_dict as a single JSON line and appends it to
+    trace/events.jsonl within trace_dir, creating the file and parent directories if they
+    do not exist; returns None
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,31 @@
+Programming language: Python
+
+Pre-condition:
+- filepath is a Path to an existing, readable regular file whose content is
+    source code that may contain [INFO] annotation blocks
+
+Code block:
+```python
+Line 1: def extract_info_block(filepath: Path) -> Optional[str]:
+Line 2:     """Return content between the two '<comment> [INFO]' markers, or None."""
+Line 3:     content = filepath.read_text(errors="replace")
+Line 4:     prefix = _detect_comment_prefix(content)
+Line 5:     if prefix is None:
+Line 6:         return None
+Line 7:     tag = f"{prefix} [INFO]"
+Line 8:     start = content.find(tag)
+Line 9:     if start == -1:
+Line 10:         return None
+Line 11:     end = content.find(tag, start + len(tag))
+Line 12:     if end == -1:
+Line 13:         return None
+Line 14:     return content[start + len(tag) + 1 : end].strip()
+```
+
+Additional context:
+_detect_comment_prefix(content) -> Optional[str]
+Pre-condition: content is a non-empty string of source code text
+  Post-condition: returns the single-line comment prefix ("#", "//", or "%")
+    detected in content, or None if no recognized comment prefix appears in
+    the content
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

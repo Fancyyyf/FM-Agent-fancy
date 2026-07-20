@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "name='func', start0=0, end0=0, source_lines=['café word'], lang_cfg={'keywords': set()}",
+  "offending_statements": "Line 13:     body_words = {w for w in re.findall(r'\\b([a-zA-Z]{4,})\\b', body_text.lower())",
+  "reason": "The specification requires extracting all lowercased alphabetic words of length ≥ 4. The code's regex [a-zA-Z] matches only ASCII letters, missing words with non-ASCII letters like 'café'. Thus body_words would be {'word'} instead of {'word', 'café'}."
+}

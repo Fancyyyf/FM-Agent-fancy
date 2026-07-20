@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_clean_label",
+  "source_file": "src/call_graph_edges-py/_clean_label.py",
+  "function_name": "_clean_label",
+  "confirmation_status": "confirmed",
+  "attempts": "3",
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_clean_label.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_clean_label.md",
+  "probe_stdout": "CONFIRMED — idempotence violated:\n  input:     '\\'\"hello\"\\''\n  1st call:  '\"hello\"'\n  2nd call:  'hello'\n  expected (idempotent): both calls produce the same output\n",
+  "trigger_summary": "Input with nested matching quotes (e.g., '\"hello\"') causes _clean_label to strip only the outermost quotes once, violating idempotence when applied twice."
+}

@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _compose_stdin(prompt, files):
+Line 2:     if not files:
+Line 3:         return prompt
+Line 4:     file_list = "\n".join(f"- {path}" for path in files)
+Line 5:     return (
+Line 6:         "Read these file(s) before acting:\n"
+Line 7:         f"{file_list}\n\n"
+Line 8:         f"{prompt}"
+Line 9:     )
+```
+
+Condition A (what the code actually does):
+The function returns a string. If the input list `files` is empty, the returned string is identical to the input `prompt`. Otherwise, the returned string is `'Read these file(s) before acting:\n' + '\n'.join('- ' + path for path in files) + '\n\n' + prompt`. The order of the file paths in the output matches the order in the input list. The function has no side effects and does not modify the inputs.
+
+Condition B (what the specification requires):
+- When files is empty, returns None
+  - When files is non-empty, returns a string that begins with a directive
+    to read the listed files, enumerates each file path on a separate line,
+    and appends the prompt text after a blank line
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

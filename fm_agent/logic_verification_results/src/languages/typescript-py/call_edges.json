@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/typescript-py/call_edges.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- When a codegraph backend initializes successfully from proj_dir, returns a dict\n    whose keys are (caller_stem, caller_module) pairs  where caller_stem is a\n    functionlevel identifier and caller_module is the containing module identifier \n    and whose values are sets of callee function stem strings that the corresponding\n    caller directly invokes within the project's TypeScript source\n  - When no codegraph backend is available, returns None\n  - Every callee stem in the returned value sets corresponds to a function reachable\n    from at least one TypeScript source file in the project",
+    "actual_behavior": "If the function returns normally, it returns either None (when no compatible codegraph backend exists for proj_dir) or a dictionary mapping each caller identity tuple (caller_stem, caller_module) to the set of callee stem strings for all call relationships detected in the TypeScript source files of proj_dir. If an exception is raised by CodeGraphExtractor.from_proj_dir or CodeGraphExtractor.get_call_edges, the function does not return normally and propagates the exception.",
+    "code_evidence": "Line 4: return cg.get_call_edges(\"typescript\") if cg else None",
+    "trigger_condition": "The specification requires that every callee stem corresponds to a function reachable from at least one TypeScript source file in the project. CodeGraphExtractor.get_call_edges may include callee stems for external functions that are not defined in any project source file, causing the returned dictionary to violate this condition."
+  }
+}

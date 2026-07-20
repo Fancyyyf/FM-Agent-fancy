@@ -1,0 +1,105 @@
+Programming language: Python
+
+Pre-condition:
+- rec is a dict parsed from a single JSONL line of an OpenCode
+    trace file.  It contains at minimum the key "_kind" (string)
+    and may contain "_id" (call identifier), "_ts" (ISO 8601
+    timestamp), "_trace_file" (string), "model" (string), "usage"
+    (dict), and response status fields.
+  - trace_file is an optional string identifying the source trace
+    file; may be None when the record embeds "_trace_file".
+  - self is an initialized State with OpenCode-specific aggregated
+    metrics: opencode_calls (integer), opencode_token_totals (dict
+    with "input", "output", "cache_read", "cache_write" keys),
+    opencode_cost (float), cache_window (list of (cached, total)
+    pairs), LLM-status history, and an internal request-tracking
+    dictionary _opencode_requests.
+
+Code block:
+```python
+Line 1:     def _ingest_opencode(self, rec, trace_file=None):
+Line 2:         # opencode-trace alternates request and response; usage lives on responses.
+Line 3:         # The @lucentia plugin prefixes streaming-delta keys with "*" (e.g. "*usage",
+Line 4:         # "*input_tokens"). Older runs used plain names. Strip the prefix so both work.
+Line 5:         rec = _strip_star(rec)
+Line 6:         kind = rec.get("_kind")
+Line 7:         call_id = rec.get("_id")
+Line 8:         trace_key = rec.get("_trace_file") or trace_file
+Line 9:         if kind == "request" and call_id is not None:
+Line 10:             self._opencode_requests[(trace_key, call_id)] = {
+Line 11:                 "ts": _parse_iso(rec.get("_ts")),
+Line 12:                 "model": rec.get("model"),
+Line 13:                 "url": rec.get("_url"),
+Line 14:                 "purpose": rec.get("_purpose"),
+Line 15:             }
+Line 16:             return
+Line 17:         if kind == "error":
+Line 18:             req = self._opencode_requests.get((trace_key, call_id), {})
+Line 19:             self._push_llm_status(
+Line 20:                 ts=_parse_iso(rec.get("_ts")) or req.get("ts"),
+Line 21:                 source="opencode",
+Line 22:                 label=req.get("purpose") or rec.get("_purpose") or rec.get("_url") or "opencode",
+Line 23:                 status="error",
+Line 24:                 model=rec.get("model") or req.get("model"),
+Line 25:                 code=_trace_value(rec, "_status", "status", "status_code") or "ERR",
+Line 26:                 detail=_trace_value(rec, "_error", "error", "message"),
+Line 27:             )
+Line 28:             return
+Line 29:         if kind != "response":
+Line 30:             return
+Line 31:         req = self._opencode_requests.get((trace_key, call_id), {})
+Line 32:         status_code = _trace_value(rec, "_status", "status", "status_code")
+Line 33:         if status_code and str(status_code) != "200":
+Line 34:             self._push_llm_status(
+Line 35:                 ts=_parse_iso(rec.get("_ts")) or req.get("ts"),
+Line 36:                 source="opencode",
+Line 37:                 label=req.get("purpose") or rec.get("_purpose") or rec.get("_url") or "opencode",
+Line 38:                 status="error",
+Line 39:                 model=rec.get("model") or req.get("model"),
+Line 40:                 code=status_code,
+```
+
+Additional context:
+_strip_star(d) -> dict
+Pre-condition: d is a dict.
+  Post-condition: Returns a new dict where every key that starts
+    with "*" has that prefix removed.  Keys without the prefix are
+    unchanged.  The returned dict has the same values as d for
+    each (possibly renamed) key.
+
+_parse_iso(timestamp_str) -> Optional[datetime]
+Pre-condition: timestamp_str is a string or None.
+  Post-condition: Returns a timezone-aware datetime parsed from an
+    ISO 8601 string; returns None when timestamp_str is falsy or
+    cannot be parsed as a valid timestamp.
+
+_trace_value(d, *keys) -> Optional[str]
+Pre-condition: d is a dict; keys is a sequence of string key
+    names.
+  Post-condition: Returns the value associated with the first key
+    in keys that exists in d and has a truthy value.  Returns None
+    if no key in keys maps to a truthy value in d.
+
+State._push_llm_status(self, ts, source, label, status, model, code, detail) -> None
+Pre-condition: ts is a datetime or None; source, label, status,
+    model, code, and detail are strings or None.
+  Post-condition: A record containing the given fields is appended
+    to the LLM-status history, bounded to a fixed maximum length
+    (oldest entries evicted when at capacity).
+
+_cost_from_usage(model, usage) -> float
+Pre-condition: model is a string or None; usage is a dict containing
+    token-count fields.
+  Post-condition: Returns the monetary cost in USD computed from the
+    model's per-token pricing and the token counts in usage.
+    Returns 0.0 when model is None or pricing data for the model is
+    unavailable.
+
+_get_nested(d, *keys) -> Optional[Any]
+Pre-condition: d is a dict; keys is a sequence of string key
+    names.
+  Post-condition: Returns the value at d[k1][k2]...[kN] for the
+    given key chain, where each intermediate value must be a dict.
+    Returns None when any intermediate key is missing or the
+    corresponding value is not a dict.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

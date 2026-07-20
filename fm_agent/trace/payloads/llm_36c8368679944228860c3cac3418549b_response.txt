@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/home/user/proj', fingerprint=(1,), analysis has functions={'/home/user/proj/src/a.erl': [('func1', '@code')]} and edges={('func2', 'mod_nonexistent'): {'callee'}}",
+  "offending_statements": "Line 13: caller_files[(function_id, caller_module)] = rel_path; Line 18: \"caller_file\": caller_files.get((caller, caller_module))",
+  "reason": "When analysis.edges contains a caller that is not present in analysis.functions, caller_files does not contain an entry for the (caller, caller_module) key. The code falls back to None via .get(), producing \"caller_file\": null in the JSON output. This violates the specification which requires \"caller_file\" to be the relative path of the file containing the caller function."
+}

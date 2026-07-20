@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/javascript-py/function_spans.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns None when the codegraph backend is unavailable for the project, or when the\n    backend exists but does not index the given file.\n  - Otherwise returns a list of (name, start_idx, end_idx) tuples, one per function\n    defined in the file.\n  - start_idx and end_idx are 0-indexed inclusive line numbers.\n  - The list is ordered by appearance (ascending start_idx).\n  - The list is empty when no functions are defined in the file.",
+    "actual_behavior": "Returns a list of tuples (name: str, start_idx: int, end_idx: int) for each function found in the JavaScript source file, where start_idx and end_idx are 0-indexed inclusive line numbers; or None if the codegraph backend is unavailable (CodeGraphExtractor.from_proj_dir returns None) or the backend does not index the given file. No side effects. Formally: let r be the return value. r = None if CodeGraphExtractor.from_proj_dir(proj_dir) is None; otherwise, r = cg.get_function_spans('javascript', filepath) where cg is the returned codegraph instance, so r is either None or a list of tuples (name, s, e) with s  e, non-negative integers.",
+    "code_evidence": "Line 8: return cg.get_function_spans('javascript', filepath) if cg else None",
+    "trigger_condition": "Specification B requires the returned list to be ordered by appearance (ascending start_idx). The code simply passes through the list from get_function_spans without enforcing any order. If the backend returns an unsorted list, the code's output violates the ordering requirement. The counterexample shows a concrete scenario where the backend returns tuples in non-ascending start_idx order, causing a mismatch between A and B."
+  }
+}

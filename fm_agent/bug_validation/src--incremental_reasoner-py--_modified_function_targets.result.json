@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_modified_function_targets",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_modified_function_targets.py",
+  "function_name": "_modified_function_targets",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_modified_function_targets.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_modified_function_targets.md",
+  "probe_stdout": "CONFIRMED — actual FQN last component: '.hidden' | expected (spec) last component: '-hidden' | actual path: /tmp/probe_jh1n4jz_/fm_agent/extracted_functions/src/.hidden/myfunc\n",
+  "trigger_summary": "Dotfiles like .hidden have the dot at index 0, so last_dot > 0 is false and the code treats them as having no dot, but the spec applies the dot-to-hyphen replacement for any basename containing a dot."
+}

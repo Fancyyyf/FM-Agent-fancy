@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_batch_prompts-py--list_staged_domain_knowledge_relpaths",
+  "source_file": "src/generate_batch_prompts-py/list_staged_domain_knowledge_relpaths.py",
+  "function_name": "list_staged_domain_knowledge_relpaths",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_batch_prompts-py--list_staged_domain_knowledge_relpaths.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_batch_prompts-py--list_staged_domain_knowledge_relpaths.md",
+  "probe_stdout": "CONFIRMED — actual: ['linked.md', 'real.md'] | expected (per spec): ['real.md']\n",
+  "trigger_summary": "Symlinks to regular .md files in the user_knowledge directory are incorrectly included because path.is_file() (and DirEntry.is_file()) resolve symlinks; the spec requires symlinks to be excluded."
+}

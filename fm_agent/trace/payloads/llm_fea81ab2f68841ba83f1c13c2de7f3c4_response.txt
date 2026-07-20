@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code correctly returns command.stdin for AgentCommand instances and None for all other inputs. Since AgentCommand instances always have a stdin that is either a str or None, the function returns only str or None as required. For bare argument list types (non-AgentCommand), it returns None, matching the specification. No exception is raised. Therefore, no valid input violates the post-condition."
+}

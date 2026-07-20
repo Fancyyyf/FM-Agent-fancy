@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "ts = \"2023-10-01T12:00:00\"",
+  "offending_statements": "Line 4: if ts.endswith(\"Z\"):\nLine 5:     ts = ts[:-1] + \"+00:00\"\nLine 7: return datetime.fromisoformat(ts)",
+  "reason": "The specification requires that on successful parse, the function returns a timezone-aware datetime object. For the input \"2023-10-01T12:00:00\" (a valid ISO 8601 datetime without an explicit timezone), the code returns a naive datetime (no tzinfo) from datetime.fromisoformat, violating this requirement. The code only makes the datetime aware when a trailing Z is present, but not for other timezone-less timestamps."
+}

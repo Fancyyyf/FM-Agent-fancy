@@ -1,0 +1,11 @@
+{
+  "id": "src--parser-py--_parse_info_section",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/parser-py/_parse_info_section.py",
+  "function_name": "_parse_info_section",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--parser-py--_parse_info_section.py",
+  "detail_file": "fm_agent/bug_validation/src--parser-py--_parse_info_section.md",
+  "probe_stdout": "CONFIRMED — actual: 'line one\\n  line two' | expected: '  line one\\n  line two'",
+  "trigger_summary": "Calling .strip() on the joined body lines removes leading whitespace from the first body line, violating the spec's requirement to preserve original spec body text."
+}

@@ -1,0 +1,3 @@
+{
+  "post_condition": "After execution of _payload_ref(trace_dir, path):\n- If the function returns normally, the return value is a string r such that r == os.path.relpath(path, os.path.dirname(trace_dir)). This string is the relative filesystem path from the parent directory of trace_dir to path.\n- If the function raises an exception, it is a ValueError (or, rarely, an OSError derived from path manipulation) because the relative path cannot be computed (e.g., path and the start directory reside on different Windows drives and no relative path exists).\n\nFormal logic:\n( returns(r) ⇒ r = relpath(path, dirname(trace_dir)) ) ∧ ( raises(e) ⇒ (e is ValueError) ∨ (e is OSError) )"
+}

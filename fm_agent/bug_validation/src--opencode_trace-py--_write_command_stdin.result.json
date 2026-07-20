@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_write_command_stdin",
+  "source_file": "src/opencode_trace.py",
+  "function_name": "_write_command_stdin",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_write_command_stdin.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_write_command_stdin.md",
+  "probe_stdout": "CONFIRMED — actual: RuntimeError raised after write(), flush() failed. Spec requires text written AND flushed, but flush() failure means the postcondition is violated. Stream was closed via finally block.",
+  "trigger_summary": "When stream.flush() raises an exception after a successful write(), the exception propagates unhandled, violating the spec postcondition that text is always both written and flushed."
+}

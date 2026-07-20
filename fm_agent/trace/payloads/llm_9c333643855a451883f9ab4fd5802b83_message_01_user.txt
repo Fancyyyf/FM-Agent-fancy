@@ -1,0 +1,27 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def record_trace_event(trace_dir, event):
+Line 2:     if not trace_dir:
+Line 3:         return
+Line 4:     append_event(trace_dir, event)
+```
+
+Condition A (what the code actually does):
+If trace_dir is falsy (None or empty string), no side effects occur and the function returns None. Otherwise, trace_dir is a writable directory path and the call to append_event(trace_dir, event) durably appends event as a single JSON line to the trace event log under trace_dir, creating the file and parent directories if they do not exist; the append is thread-safe under a global lock, and append_event returns None. The function then returns None. In all cases, event remains unchanged.
+
+Condition B (what the specification requires):
+- When trace_dir is falsy, returns immediately with no side effects
+  - When trace_dir is a writable directory, the event dict is serialized as a single
+    JSON line and durably appended to the trace event log under trace_dir, with parent
+    directories created if they do not exist
+  - Returns None — all effects are side effects on the persistent trace event log
+
+Additional context:
+append_event(trace_dir, event) -> None
+Pre-condition: trace_dir is a writable directory path; event is a JSON-serializable dict
+  Post-condition: serializes event as a single JSON line and durably appends it to the
+    trace event log under trace_dir, creating the file and parent directories if they do
+    not exist; the append is guarded by a global lock for thread safety; returns None
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

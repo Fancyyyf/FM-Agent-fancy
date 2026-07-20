@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def utc_now_iso():
+Line 2:     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+```
+
+Condition A (what the code actually does):
+The function returns a string that is the ISO 8601 formatted representation of the current UTC date and time, with the UTC offset suffix '+00:00' replaced by 'Z'. Formally, let t be the instant the function is called, let dt = datetime.now(timezone.utc) at t, then the returned value is dt.isoformat().replace('+00:00', 'Z'). No exceptions are raised, and no side effects occur.
+
+Condition B (what the specification requires):
+- Returns the current UTC date and time formatted as an ISO 8601 string ending with "Z" as the UTC timezone designator
+  - The returned string includes microsecond precision
+
+Additional context:
+datetime.now(tz) -> datetime
+Pre-condition: tz is a timezone-aware timezone object
+  Post-condition: returns a timezone-aware datetime object representing the current moment in the specified timezone
+
+datetime.isoformat() -> str
+Pre-condition: none
+  Post-condition: returns an ISO 8601 formatted string representation of the datetime including a UTC offset suffix
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

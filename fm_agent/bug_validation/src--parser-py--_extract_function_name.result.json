@@ -1,0 +1,11 @@
+{
+  "id": "src--parser-py--_extract_function_name",
+  "source_file": "src/parser.py",
+  "function_name": "_extract_function_name",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--parser-py--_extract_function_name.py",
+  "detail_file": "fm_agent/bug_validation/src--parser-py--_extract_function_name.md",
+  "probe_stdout": "CONFIRMED — actual: None (None) | expected: 'café'\\n",
+  "trigger_summary": "The regex uses ASCII-only character classes [A-Za-z_] and [A-Za-z0-9_]* which fail to match Unicode letters in Python identifiers (e.g. 'café'), causing the function to return None instead of extracting the identifier."
+}

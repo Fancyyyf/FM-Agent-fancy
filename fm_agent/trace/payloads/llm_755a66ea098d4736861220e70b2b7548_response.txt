@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "self._console is a file-like object whose flush() method raises an I/O error (e.g., a file opened for writing but the disk is full or the stream has been closed); self._log_stream is any open writable file-like object.",
+  "offending_statements": "Line 2: self._console.flush()",
+  "reason": "The specification requires unconditionally that all buffered output written to self._console has been delivered to the underlying device. The code only guarantees this when the method returns normally. If self._console.flush() raises an exception, the buffered data may not be delivered, and the specification's requirement is violated."
+}

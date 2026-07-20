@@ -1,0 +1,73 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _validate_spec_update(data):
+Line 2:     """Validate a direct LLM decision about a function's [SPEC]/[INFO] blocks."""
+Line 3:     if not isinstance(data, dict):
+Line 4:         raise ValueError("spec-update JSON must be an object")
+Line 5:     required = ("spec_updated", "new_spec", "info_updated", "new_info", "updated_callees")
+Line 6:     missing = [field for field in required if field not in data]
+Line 7:     if missing:
+Line 8:         raise ValueError("spec-update JSON missing required field(s): " + ", ".join(missing))
+Line 9:     if not isinstance(data["spec_updated"], bool) or not isinstance(data["info_updated"], bool):
+Line 10:         raise ValueError("spec-update JSON fields spec_updated and info_updated must be booleans")
+Line 11:     if not isinstance(data["new_spec"], str) or not isinstance(data["new_info"], str):
+Line 12:         raise ValueError("spec-update JSON fields new_spec and new_info must be strings")
+Line 13:     if not isinstance(data["updated_callees"], list) or not all(
+Line 14:         isinstance(name, str) and name.strip() for name in data["updated_callees"]
+Line 15:     ):
+Line 16:         raise ValueError("spec-update JSON field updated_callees must be an array of non-empty strings")
+Line 17:     if data["spec_updated"] and not data["new_spec"].strip():
+Line 18:         raise ValueError("spec-update JSON requires non-empty new_spec when spec_updated is true")
+Line 19:     if data["info_updated"] and not data["new_info"].strip():
+Line 20:         raise ValueError("spec-update JSON requires non-empty new_info when info_updated is true")
+Line 21:     return {
+Line 22:         "spec_updated": data["spec_updated"],
+Line 23:         "new_spec": data["new_spec"].strip(),
+Line 24:         "info_updated": data["info_updated"],
+Line 25:         "new_info": data["new_info"].strip(),
+Line 26:         "updated_callees": [name.strip() for name in data["updated_callees"]],
+Line 27:     }
+```
+
+Condition A (what the code actually does):
+Post-condition: After the function call, exactly one of the following two scenarios occurs:
+
+1. **Exception scenario:** The function raises a `ValueError` e whose error message is determined by the first failing validation condition applied to the input `data` (checked in the order listed below):
+   - `¬isinstance(data, dict)` ⇒ message = 'spec-update JSON must be an object'.
+   - `isinstance(data, dict) ∧ (∃ field ∈ {spec_updated, new_spec, info_updated, new_info, updated_callees} : field ∉ keys(data))` ⇒ message starts with 'spec-update JSON missing required field(s):' and lists the missing fields.
+   - `isinstance(data, dict) ∧ all fields present ∧ (¬isinstance(data.spec_updated, bool) ∨ ¬isinstance(data.info_updated, bool))` ⇒ message = 'spec-update JSON fields spec_updated and info_updated must be booleans'.
+   - `isinstance(data, dict) ∧ all fields present ∧ isinstance(spec_updated, bool) ∧ isinstance(info_updated, bool) ∧ (¬isinstance(data.new_spec, str) ∨ ¬isinstance(data.new_info, str))` ⇒ message = 'spec-update JSON fields new_spec and new_info must be strings'.
+   - `isinstance(data, dict) ∧ all fields present ∧ all previous types ok ∧ (¬isinstance(data.updated_callees, list) ∨ ¬∀ name ∈ data.updated_callees : isinstance(name, str) ∧ name.strip() ≠ '')` ⇒ message = 'spec-update JSON field updated_callees must be an array of non-empty strings'.
+   - `isinstance(data, dict) ∧ all fields present ∧ all types ok ∧ data.spec_updated = True ∧ data.new_spec.strip() = ''` ⇒ message = 'spec-update JSON requires non-empty new_spec when spec_updated is true'.
+   - `isinstance(data, dict) ∧ all fields present ∧ all types ok ∧ data.info_updated = True ∧ data.new_info.strip() = ''` ⇒ message = 'spec-update JSON requires non-empty new_info when info_updated is true'.
+
+2. **Normal return scenario:** None of the above exception conditions hold, and the function returns a dictionary `result` such that:
+   - `result` is a `dict` with exactly the keys `{"spec_updated", "new_spec", "info_updated", "new_info", "updated_callees"}`.
+   - `result["spec_updated"] = data["spec_updated"]`
+   - `result["info_updated"] = data["info_updated"]`
+   - `result["new_spec"] = data["new_spec"].strip()`
+   - `result["new_info"] = data["new_info"].strip()`
+   - `result["updated_callees"] = [name.strip() for name in data["updated_callees"]]`
+   Moreover, it is guaranteed that all strings in `result["updated_callees"]` are non-empty (i.e., after stripping they are non-empty), and if `result["spec_updated"]` is `True` then `result["new_spec"]` is non-empty, and if `result["info_updated"]` is `True` then `result["new_info"]` is non-empty.
+
+Condition B (what the specification requires):
+- If data is not a dict, raises ValueError with message indicating the top-level value must be an object
+  - If data is a dict but lacks any of the required keys (spec_updated, new_spec, info_updated,
+    new_info, updated_callees), raises ValueError naming every missing key
+  - If spec_updated or info_updated is present but not a bool, raises ValueError
+    indicating both must be booleans
+  - If new_spec or new_info is not a str, raises ValueError indicating both must be strings
+  - If updated_callees is not a list, or if any element of updated_callees is not a str
+    or is an empty/whitespace-only string, raises ValueError indicating updated_callees
+    must be an array of non-empty strings
+  - If spec_updated is True and new_spec is empty or consists only of whitespace, raises
+    ValueError indicating new_spec must be non-empty when spec_updated is true
+  - If info_updated is True and new_info is empty or consists only of whitespace, raises
+    ValueError indicating new_info must be non-empty when info_updated is true
+  - If no ValueError is raised, returns a dict containing every required key with the
+    same boolean values as the input, every string value stripped of leading and trailing
+    whitespace, and every element of updated_callees individually stripped
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

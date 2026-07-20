@@ -1,0 +1,32 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _domain_knowledge_prompt_section(work_dir):
+Line 2:     text = load_staged_domain_knowledge_text(work_dir)
+Line 3:     return f"## User-provided domain knowledge\n\n{text}\n\n" if text else ""
+```
+
+Condition A (what the code actually does):
+The function `_domain_knowledge_prompt_section(work_dir)` returns a string. Let `text = load_staged_domain_knowledge_text(work_dir)`. If `text` is non-empty, the return value is the string formed by concatenating the literal prefix `"## User-provided domain knowledge\n\n"`, the value of `text`, and the literal suffix `"\n\n"`. If `text` is empty, the return value is the empty string `""`. Formally: `_domain_knowledge_prompt_section(work_dir) = (text ≠ '' ? "## User-provided domain knowledge\n\n" + text + "\n\n" : '')`.
+
+Condition B (what the specification requires):
+- Returns a string section intended for concatenation into an LLM prompt that, when
+    domain knowledge files are staged in the workspace, provides their content to the model
+  - The returned string, when non-empty, begins with a level-2 Markdown heading
+    "## User-provided domain knowledge" followed by two newlines, then the content
+    produced by load_staged_domain_knowledge_text(work_dir), then two trailing newlines
+  - Returns an empty string when load_staged_domain_knowledge_text(work_dir) returns
+    an empty string (i.e., no domain knowledge files are staged or all are unreadable/empty)
+  - The returned string, when non-empty, is a self-contained Markdown fragment that can be
+    inserted into any position of a prompt without breaking formatting
+
+Additional context:
+load_staged_domain_knowledge_text(work_dir) -> str
+Pre-condition: work_dir is a valid directory path string pointing to the fm_agent
+    workspace directory; staged domain knowledge files, if any, exist at paths returned
+    by list_staged_domain_knowledge_relpaths
+  Post-condition: Returns a string containing the concatenated UTF-8 Markdown contents of
+    all staged domain knowledge files, formatted for injection into an LLM context; returns
+    an empty string when no domain knowledge files are staged or all are unreadable/empty
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,131 @@
+FM-Agent Engine Overview
+=======================
+
+Architecture
+------------
+
+FM-Agent is a 6-phase pipeline that performs automated Hoare-style formal verification
+of large codebases. Data flows sequentially through these phases:
+
+  Phase 1 (Environment & Pipeline Setup)
+    → produces fm_agent/phases.json
+    → produces fm_agent/spec_prompts/domain_context/*.txt
+
+  Phase 2 (Function Extraction & Call Graph Construction)
+    → reads phases.json
+    → produces fm_agent/extracted_functions/
+
+  Phase 3 (Scope Analysis & Layer Organization)
+    → reads extracted_functions/
+    → produces fm_agent/spec_prompts/phase_NN_topdown_layers.json
+    → produces fm_agent/spec_prompts/batch_prompts_*/manifest.json
+
+  Phase 4 (Specification Generation & Code Reasoning)
+    → reads batch prompts and phase_NN_types.txt
+    → modifies extracted_functions/ files to add [SPEC]/[INFO] blocks
+    → produces fm_agent/logic_verification_results/
+
+  Phase 5 (Bug Diagnosis & Verification)
+    → reads logic_verification_results/
+    → produces fm_agent/bug_validation/
+
+  Phase 6 (Alternative Pipeline Entry Points)
+    → entry-point-scoped and incremental modes that reuse phases 1-5
+
+Key Precomputed Data Structures and Their Invariants
+----------------------------------------------------
+
+1. phases.json
+   - Schema: {project: string, languages: [string], file_extensions: [string],
+     phases: [{phase: int, name: string, description: string,
+               modules: [{name, description, source_files: [string]}],
+               depends_on_phases: [int]}]}
+   - Invariant: Each source_file appears in exactly one phase (deduplication ensures this).
+   - Invariant: Phase numbers are 1..N with no gaps.
+   - Invariant: depends_on_phases references only valid, existing phase numbers.
+   - Invariant: source_files are relative paths from the project root, using "/" separators.
+
+2. extracted_functions/ directory layout
+   - Path convention: extracted_functions/<src_dir>/<basename>-<ext>/<funcname>.<ext>
+   - The last dot in the source filename is replaced with a hyphen for the directory name.
+     Example: src/engine/loader.cpp → extracted_functions/src/engine/loader-cpp/LoadData.cpp
+   - Invariant: Each file contains exactly one function body (per extraction validation).
+   - Invariant: Ready files have both [SPEC] and [INFO] blocks (2+ markers of each type).
+
+3. Fully-Qualified Function Names (FQNs)
+   - Format: path::components::separated::by::double::colons
+   - Derived from extracted-function file path by stripping the extension and joining
+     directory components with "::". The function-file name becomes the last component.
+     Example: extracted_functions/src/engine/loader-cpp/LoadData.cpp
+              → src::engine::loader-cpp::LoadData
+
+4. Call Graph (phase_NN_topdown_layers.json)
+   - Schema: {phase: int, phase_name: string, total_functions: int, total_layers: int,
+     layers: [{layer: int, cycle_resolution?: bool,
+               functions: [{name: FQN, file: relative_path, unit: module_name,
+                           phaseN_callers: [FQN], phaseN_callees: [FQN],
+                           all_callees: [FQN]}]}]}
+   - Invariant: Callees are always assigned to lower layers than their callers
+     (topological ordering). Cycle resolution layers are marked with cycle_resolution: true.
+   - Invariant: all_callees includes functions from ALL phases; phaseN_callers and
+     phaseN_callees are scoped only to functions within the same phase.
+
+5. Verification Result (logic_verification_results/)
+   - Each function produces one JSON file at a mirrored path:
+     logic_verification_results/<rel_path_from_extracted_functions>.json
+   - Schema: {function: string, verdict: "MATCH"|"MISMATCH"|"ERROR"|"SKIPPED",
+     gaps: {spec_claim, actual_behavior, code_evidence, trigger_condition}?,
+     error: string?}
+   - Invariant: MISMATCH verdict MUST have non-null gaps with all four fields populated.
+   - Invariant: SKIPPED means the function had no [SPEC] block; ERROR means parsing/LLM failure.
+
+6. Bug Validation (bug_validation/)
+   - Each MISMATCH produces two files: bug_validation/<bug_id>.md (report) and
+     bug_validation/<bug_id>.result.json (verdict).
+   - bug_id derivation: logic_verification_results/<rel>.json → <rel> with os.sep → "--"
+   - Schema for result.json: {id, bug_id, confirmation_status: "confirmed"|"not_confirmed"|"error", ...}
+   - summary.json: {total_reported, total_confirmed, total_not_confirmed, total_error, bugs: [...]}
+
+Encoding Conventions
+--------------------
+
+1. Language comment prefixes (used for [SPEC]/[INFO] markers):
+   - C, C++, CUDA, Java, Go, Rust, JavaScript, TypeScript, ArkTS: //
+   - Python: #
+   - Erlang: %
+
+2. Spec Format (prepended to each extracted function file):
+   <comment_prefix> [SPEC]
+   <comment_prefix> Unit: <file path relative to repo root>
+   <comment_prefix>
+   <comment_prefix> <FunctionName>(<params>) -> <ReturnType>
+   <comment_prefix>
+   <comment_prefix> Pre-condition:
+   <comment_prefix>   - ...
+   <comment_prefix>
+   <comment_prefix> Post-condition:
+   <comment_prefix>   - ...
+   <comment_prefix> [SPEC]
+   <comment_prefix>
+   <comment_prefix> [INFO]
+   <comment_prefix> <callee_name>(<params>) -> <ReturnType>
+   <comment_prefix>   Pre-condition: ...
+   <comment_prefix>   Post-condition: ...
+   <comment_prefix> [SPLIT]
+   <comment_prefix> ...
+   <comment_prefix> [INFO]
+
+3. Function extraction from source files uses per-language configurations:
+   - "body" determines delimiter: "brace" for C-family/Java/Go/Rust/JS/TS,
+     "indent" for Python, "external" for Erlang (semantic-only, codegraph-backed).
+   - Source file basename dot replaced by hyphen in extracted directory name.
+
+Important Invariants Across All Phases
+---------------------------------------
+
+- All paths use "/" separators, even on Windows.
+- fm_agent/ is a workspace directory, NOT part of the project source code.
+- No existing project files are ever modified by the pipeline.
+- Resumability: Every phase checks for existing outputs before regenerating,
+  supporting --resume mode.
+- Trace: Every LLM call and OpenCode process is recorded to fm_agent/trace/events.jsonl.

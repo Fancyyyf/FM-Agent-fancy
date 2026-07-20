@@ -1,0 +1,68 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _iter_project_source_files(proj_dir, submodules=None):
+Line 2:     """Yield project-relative source file paths, optionally limited to submodules."""
+Line 3:     from src.extract import EXT_TO_LANG  
+Line 4:     source_exts = set(EXT_TO_LANG.keys())
+Line 5:     scan_roots = [proj_dir]
+Line 6:     if submodules:
+Line 7:         scan_roots = [
+Line 8:             os.path.join(proj_dir, submodule.replace("/", os.sep))
+Line 9:             for submodule in submodules
+Line 10:         ]
+Line 11:     for scan_root in scan_roots:
+Line 12:         for root, dirs, files in os.walk(scan_root):
+Line 13:             # Skip hidden dirs and common non-source dirs
+Line 14:             dirs[:] = [d for d in dirs if not d.startswith('.') and d not in
+Line 15:                        {'node_modules', '__pycache__', 'venv', '.venv', 'fm_agent'}]
+Line 16:             for fname in files:
+Line 17:                 ext = fname.rsplit('.', 1)[-1] if '.' in fname else ''
+Line 18:                 if ext not in source_exts:
+Line 19:                     continue
+Line 20:                 rel = os.path.relpath(os.path.join(root, fname), proj_dir)
+Line 21:                 rel = rel.replace(os.sep, "/")
+Line 22:                 if _is_under_submodules(rel, submodules):
+Line 23:                     yield rel
+```
+
+Condition A (what the code actually does):
+The function `_iter_project_source_files(proj_dir, submodules)` returns a generator object. When the generator is iterated to exhaustion without exceptions, it yields a sequence of unique project-relative file paths (using '/' as the separator) that satisfy the following conditions. The set of yielded paths is exactly:
+
+{ rel | 
+  let scan_roots = {proj_dir} if submodules is None or empty, else { os.path.join(proj_dir, s.replace('/', os.sep)) for s in submodules };
+  there exists a scan root sr in scan_roots such that:
+    when walking sr with os.walk, directories whose name starts with '.' or whose name is in {'node_modules', '__pycache__', 'venv', '.venv', 'fm_agent'} are pruned (i.e., not recursed into);
+    there exists a file path fp in the remaining tree such that:
+      let ext = the substring after the last '.' in the filename, or '' if no dot; ext is a key of the dictionary EXT_TO_LANG (imported from src.extract);
+      let rel_candidate = os.path.relpath(fp, proj_dir) with all os.sep replaced by '/';
+      and _is_under_submodules(rel_candidate, submodules) returns True.
+}
+
+According to the post-condition of _is_under_submodules, if submodules is None this check always passes; otherwise, it requires rel_candidate to begin with one of the submodule strings (as a '/'‑separated prefix).
+
+The generator yields no duplicates and does not modify any external state. If an exception occurs during iteration (e.g., ImportError when loading src.extract, OSError from filesystem operations, ValueError from relpath), it is raised to the caller and the generator stops; the sequence of previously yielded paths is a prefix of the full set.
+
+Condition B (what the specification requires):
+- Yields zero or more relative file paths using "/" as the path separator
+  - Every yielded path is relative to proj_dir and identifies a regular file under
+    proj_dir whose filename extension matches a pipeline-supported programming language
+  - The traversal excludes directories whose names begin with "." and those whose
+    names belong to a predefined set of well-known directories that contain generated
+    artifacts, dependencies, or tool workspace output rather than project source code
+  - When submodules is None, every qualifying file under the full proj_dir tree
+    (subject to the directory exclusions above) is yielded
+  - When submodules is provided and non-empty, only qualifying files whose
+    project-relative path begins with one of the listed subdirectory name prefixes
+    are yielded
+  - The function does not create, modify, delete, or rename any file or directory
+
+Additional context:
+_is_under_submodules(rel, submodules) -> bool
+Pre-condition: rel is a project-relative path string using "/" separators;
+    submodules is None or an iterable of subdirectory name strings
+  Post-condition: Returns True when submodules is None; otherwise returns True
+    when the given relative path begins with one of the listed subdirectory name
+    prefixes and False otherwise
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

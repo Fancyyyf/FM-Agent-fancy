@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a boolean value indicating whether the input `block` string contains a terminating statement pattern. Formally: let `default_regex = r'\\b(return\\b|exit\\s*\\(|raise\\s|throw\\s|abort\\s*\\()'`. Let `pattern` be the value of `_TERMINATING_PATTERNS.get(language.lower())` if that value is truthy (i.e., not None and not empty); otherwise, `pattern = default_regex`. The return value is `True` if and only if `re.search(pattern, block)` returns a non-`None` match object, and `False` otherwise. No side effects occur; the program state is identical except that the function returns this value. This post-condition holds for all execution paths, as there are no early returns or exceptions."
+}

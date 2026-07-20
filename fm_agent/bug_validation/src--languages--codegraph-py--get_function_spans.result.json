@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--codegraph-py--get_function_spans",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/get_function_spans.py",
+  "function_name": "get_function_spans",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--get_function_spans.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--get_function_spans.md",
+  "probe_stdout": "CONFIRMED — ValueError raised instead of returning None\nException: path is on mount 'D:', start on mount 'C:'\nExpected (spec): None\nActual (buggy): ValueError propagates unhandled from os.path.relpath\n",
+  "trigger_summary": "On Windows, if abs_filepath is on a different drive than the project root, os.path.relpath raises ValueError instead of returning None."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "state with stage_counts = {'stage1': {'success': 'not_an_integer'}}; STAGES = ['stage1']",
+  "offending_statements": "Line 12: str(counts.get(\"success\", 0))\nLine 13: str(counts.get(\"mismatch\", 0))\nLine 14: str(counts.get(\"error\", 0))\nLine 15: str(counts.get(\"format_error\", 0))",
+  "reason": "The specification requires that each row displays non-negative integer counts. The code directly converts the values from state.stage_counts to strings without ensuring they are integers. Thus, if state.stage_counts contains non-integer values (e.g., strings), the output will not be an integer representation, violating the spec."
+}

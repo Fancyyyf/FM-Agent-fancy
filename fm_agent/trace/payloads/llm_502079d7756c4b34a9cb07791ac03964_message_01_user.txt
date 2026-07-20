@@ -1,0 +1,59 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a path to a project directory for which run_pipeline has been
+    previously executed (or attempted).
+  - submodules is None or a non-empty list of project-relative directory paths
+    using "/" separators.
+
+Code block:
+```python
+Line 1: def check_last_run_existence(proj_dir, submodules=None):
+Line 2:     """
+Line 3:     Return whether a full pipeline run (run_pipeline) has already completed under proj_dir.
+Line 4:     Incremental analysis compares the current working tree against the artifacts left by a
+Line 5:     previous full run, so it can only proceed when those artifacts are present. A full run
+Line 6:     is considered to exist when, under proj_dir/fm_agent/, both:
+Line 7:       1. phases.json exists — the module/phase plan that the full run aborts without, and
+Line 8:       2. extracted_functions/ holds at least one function file and EVERY function file
+Line 9:          there is specced (carries the [SPEC]/[INFO] blocks, per is_file_ready) — proving
+Line 10:          the spec-generation stage ran to completion. A partially specced tree means the
+Line 11:          previous full run did not finish, so it is not a sound basis for incremental
+Line 12:          analysis.
+Line 13:     When submodules is provided, only extracted functions under those selected
+Line 14:     project-relative directories are considered. Returns True only when the
+Line 15:     selected scope has at least one ready function and no selected function is
+Line 16:     incomplete; otherwise False (so the caller can fall back to a scoped full run).
+Line 17:     """
+Line 18:     work_dir = os.path.join(proj_dir, "fm_agent")
+Line 19:     if not os.path.isfile(os.path.join(work_dir, "phases.json")):
+Line 20:         return False
+Line 21:     extracted_dir = os.path.join(work_dir, "extracted_functions")
+Line 22:     if not os.path.isdir(extracted_dir):
+Line 23:         return False
+Line 24:     saw_function = False
+Line 25:     for root, _, files in os.walk(extracted_dir):
+Line 26:         for fname in files:
+Line 27:             fpath = os.path.join(root, fname)
+Line 28:             rel = os.path.relpath(fpath, extracted_dir).replace(os.sep, "/")
+Line 29:             if submodules and not _is_under_submodules(rel, submodules):
+Line 30:                 continue
+Line 31:             saw_function = True
+Line 32:             if not is_file_ready(fpath):
+Line 33:                 return False
+Line 34:     return saw_function
+```
+
+Additional context:
+_is_under_submodules(rel_path, submodules) -> bool
+Pre-condition: rel_path is a "/"-separated relative path; submodules is a
+    non-empty list of "/"-separated directory prefix strings.
+  Post-condition: Returns True when rel_path has one of the submodules entries
+    as a prefix (i.e., rel_path starts with some prefix from submodules);
+    otherwise returns False.
+
+is_file_ready(filepath) -> bool
+Pre-condition: filepath is an absolute path to an extracted function file.
+  Post-condition: Returns True when the file contains at least two [SPEC]
+    markers and at least two [INFO] markers; otherwise returns False.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

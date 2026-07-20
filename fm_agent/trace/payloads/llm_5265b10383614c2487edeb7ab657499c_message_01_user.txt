@@ -1,0 +1,36 @@
+Programming language: Python
+
+Pre-condition:
+- tree is a valid AST for a Python module, produced by ast.parse without raising
+    an exception.
+  - source_lines is a list[str] containing every line of the source file that
+    produced tree, in original order, with trailing newlines removed.
+
+Code block:
+```python
+Line 1: def _extract_classes(tree: ast.Module,
+Line 2:                      source_lines: list[str]) -> list[dict]:
+Line 3:     """
+Line 4:     Return one dict per ClassDef with:
+Line 5:         name, lineno, end_lineno, docstring, method_linenos
+Line 6:     """
+Line 7:     classes = []
+Line 8:     for node in ast.walk(tree):
+Line 9:         if not isinstance(node, ast.ClassDef):
+Line 10:             continue
+Line 11:         doc = ast.get_docstring(node) or ''
+Line 12:         method_linenos = [
+Line 13:             n.lineno for n in ast.walk(node)
+Line 14:             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+Line 15:         ]
+Line 16:         classes.append({
+Line 17:             'name':          node.name,
+Line 18:             'lineno':        node.lineno,
+Line 19:             'end_lineno':    node.end_lineno,
+Line 20:             'docstring':     doc,
+Line 21:             'method_linenos': method_linenos,
+Line 22:         })
+Line 23:     return classes
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

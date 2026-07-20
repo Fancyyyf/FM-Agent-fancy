@@ -1,0 +1,26 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a path to a project root directory containing TypeScript source files
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for TypeScript."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("typescript") if cg else None
+```
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a valid project directory path
+  Post-condition: Returns a CodeGraphExtractor instance bound to the project when a
+    compatible codegraph backend can be constructed from the project; returns None
+    when no compatible backend is available
+
+CodeGraphExtractor.get_call_edges(language) -> dict
+Pre-condition: language is a supported language key recognized by the codegraph backend
+  Post-condition: Returns a dict mapping each caller identity to the set of callee
+    identifiers for all call relationships detected across the project's source files
+    of the given language; the mapping covers both intra-file and cross-file calls
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

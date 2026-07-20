@@ -1,0 +1,23 @@
+Programming language: Python
+
+Pre-condition:
+- exc is an object whose read() method, called with no arguments, returns the raw response body as bytes, or raises any exception
+  - limit is a positive integer (default 800) specifying the maximum character count of the returned string
+
+Code block:
+```python
+Line 1: def _read_error_body(exc, limit=800):
+Line 2:     """The raw response body of an HTTPError (the relay's actual error page),
+Line 3:     which str(exc) drops — only `HTTP Error 504: Gateway Time-out` survives
+Line 4:     otherwise. Read-once and tolerant; returns '' if unavailable."""
+Line 5:     try:
+Line 6:         raw = exc.read()
+Line 7:     except Exception:
+Line 8:         return ""
+Line 9:     if not raw:
+Line 10:         return ""
+Line 11:     text = raw.decode("utf-8", "replace").strip()
+Line 12:     return text[:limit] + ("…" if len(text) > limit else "")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

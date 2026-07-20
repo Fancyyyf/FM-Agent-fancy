@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "label='test', rows=[(200, 100)]",
+  "offending_statements": "Line 6:         bar_w = 20\nLine 7:         filled = int(bar_w * rate)\nLine 8:         bar = \"█\" * filled + \"░\" * (bar_w - filled)",
+  "reason": "When total_input > 0 and rate > 1 (cache_read > total_input), filled = int(20*rate) exceeds 20, making the bar longer than 20 characters. The specification requires a 20-character horizontal bar, so the code violates it."
+}

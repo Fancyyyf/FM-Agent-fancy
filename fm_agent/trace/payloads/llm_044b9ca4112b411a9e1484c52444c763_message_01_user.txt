@@ -1,0 +1,23 @@
+Programming language: Python
+
+Pre-condition:
+- item is a dict
+  - fallback is a string
+
+Code block:
+```python
+Line 1: def _edge_source(item: dict, fallback: str) -> str:
+Line 2:     source = item.get("source")
+Line 3:     if isinstance(source, str) and source.strip():
+Line 4:         return source.strip()
+Line 5:     evidence = item.get("evidence")
+Line 6:     if isinstance(evidence, list):
+Line 7:         values = [str(value).strip() for value in evidence if str(value).strip()]
+Line 8:         if values:
+Line 9:             return "; ".join(values[:4])
+Line 10:     if isinstance(evidence, str) and evidence.strip():
+Line 11:         return evidence.strip()
+Line 12:     return fallback
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

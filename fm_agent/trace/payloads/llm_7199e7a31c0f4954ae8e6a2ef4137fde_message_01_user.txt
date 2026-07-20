@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _add(token: str) -> None:
+Line 2:         t = token.lower().strip('_')
+Line 3:         if len(t) >= 2 and t not in _PY_KEYWORDS and t not in _STOP:
+Line 4:             result.add(t)
+```
+
+Condition A (what the code actually does):
+After execution, the set `result` in the enclosing scope is either: unchanged if the normalized token `t = token.lower().strip('_')` has length less than 2, or is a member of `_PY_KEYWORDS`, or is a member of `_STOP`; otherwise `result` contains all its previous elements plus the string `t`. No other variables are modified and no exceptions are raised. Formal statement: Let `t = token.lower().strip('_')`. Then `result' = result ∪ {t}` if `len(t) >= 2` ∧ `t ∉ _PY_KEYWORDS` ∧ `t ∉ _STOP`, else `result' = result`.
+
+Condition B (what the specification requires):
+- The token is lowercased and has all leading and trailing underscore
+    characters ('_') removed
+  - If the processed token has length ≥ 2 and is absent from both
+    _PY_KEYWORDS and _STOP, it is added to result exactly once (sets
+    prevent duplicates)
+  - If the processed token has length < 2 or is present in _PY_KEYWORDS
+    or _STOP, result is unchanged
+  - The function has no return value and raises no exceptions for any
+    string input
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

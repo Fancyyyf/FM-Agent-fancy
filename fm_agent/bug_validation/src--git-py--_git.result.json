@@ -1,0 +1,11 @@
+{
+  "id": "src--git-py--_git",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/git-py/_git.py",
+  "function_name": "_git",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--git-py--_git.py",
+  "detail_file": "fm_agent/bug_validation/src--git-py--_git.md",
+  "probe_stdout": "CONFIRMED — CalledProcessError.cmd is 'list' (['git', '-C', '/tmp/fm_agent_probe_87jngnld/repo', 'worktree', 'add', '--detach', '/tmp/fm_agent_wt_repo_k_saawu7/snapshot', 'baab82c69bb6a002d6c7b47b02e08d783097368c']), not a string as the spec claims. Code at src/git.py:76-77 constructs ['git', '-C', proj_dir, *args] and passes it to subprocess.run(check=True).",
+  "trigger_summary": "_git passes a list (not a string) to subprocess.run with check=True, so CalledProcessError.cmd is a list rather than the single command string the spec claims."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_domain_context_complete",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_domain_context_complete",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_domain_context_complete.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_domain_context_complete.md",
+  "probe_stdout": "CONFIRMED — ValueError: Unknown format code 'd' for object of type 'str' | spec says return False (no exception)",
+  "trigger_summary": "When a phase object in phases.json has a non-numeric string value for the 'phase' key (which is not None), f'{phase_num:02d}' raises ValueError instead of returning False as the spec requires."
+}

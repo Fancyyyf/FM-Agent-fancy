@@ -1,0 +1,62 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def tail_opencode(self):
+Line 2:         if not self.opencode_dir.exists():
+Line 3:             return
+Line 4:         for path in sorted(self.opencode_dir.glob("*.jsonl")):
+Line 5:             name = path.name
+Line 6:             try:
+Line 7:                 size = path.stat().st_size
+Line 8:             except OSError:
+Line 9:                 continue
+Line 10:             off = self._opencode_offsets.get(name, 0)
+Line 11:             if size < off:
+Line 12:                 off = 0
+Line 13:             if size == off:
+Line 14:                 continue
+Line 15:             with open(path, "r", encoding="utf-8") as f:
+Line 16:                 f.seek(off)
+Line 17:                 for line in f:
+Line 18:                     if not line.strip():
+Line 19:                         continue
+Line 20:                     try:
+Line 21:                         rec = json.loads(line)
+Line 22:                     except Exception:
+Line 23:                         continue
+Line 24:                     self._ingest_opencode(rec, name)
+Line 25:                 self._opencode_offsets[name] = f.tell()
+```
+
+Condition A (what the code actually does):
+Natural language: If self.opencode_dir does not exist, the method returns immediately and the State is unchanged. Otherwise, it processes each JSONL file in the directory in alphabetical order. For each file, if os.stat fails (OSError), the file is skipped entirely with no change to its offset. If the file’s size is less than the stored offset, the offset is reset to 0. If after any reset the size equals the offset, the file is skipped and no records are ingested. Otherwise, the file is opened at the determined offset, every non-empty line is attempted to be parsed as JSON; successful parses are passed to self._ingest_opencode, which updates the State’s aggregated metrics, while lines that fail parsing are ignored. After processing all lines, the offset for that file is updated to the current file pointer position (f.tell()), which marks the end of the consumed content. If an exception occurs during opening any file, it propagates upward and the method terminates; in that case all files processed before the exception have their offsets updated and records ingested, while the failing file and subsequent files remain unmodified. After successful completion, all files that could be stat'd and had new content have been fully ingested, and for all such files the stored offset equals the file pointer at the end of the last read line. Files that were skipped or for which stat failed retain their prior offsets. The method is idempotent when re-run immediately: unless external changes occur, no work will be done because offsets will match file sizes.
+
+Formal logic: Let O_old and O_new be the _opencode_offsets dict before and after normal termination (no unhandled exception). Let D = self.opencode_dir. If not D.exists() then O_new = O_old and State metrics unchanged. If D.exists(), let F = sorted(D.glob('*.jsonl')). For each p in F, let name = p.name. Define success_stat(p) as True if p.stat() succeeds, else False. If success_stat(p), let s = p.stat().st_size, o = O_old.get(name, 0). else s is undefined. Processed(p) := success_stat(p) ∧ (after reset: o' = 0 if s < o else o; and s > o'). If Processed(p) ∧ no exception during open, then open succeeds, all valid records from byte offset o' to end are ingested via _ingest_opencode, and O_new[name] = f.tell() (file pointer after reading all lines). If ¬Processed(p) and no exception, O_new[name] = o (unchanged). If an OS exception occurs during open at file p_k, then for all j < k, Processed(p_j) holds and O_new[p_j.name] is updated as above; for j ≥ k, O_new[p_j.name] = O_old.get(p_j.name, 0) and no ingestion from those files. For any name not in {p.name | p ∈ F}, O_new[name] = O_old.get(name, 0). Additionally, the aggregated metrics of the State (token usage, cost, etc.) are updated exactly once per valid record from processed files.
+
+Condition B (what the specification requires):
+- If self.opencode_dir does not exist, returns immediately with no side effects.
+  - All files ending in ".jsonl" in self.opencode_dir are visited in ascending
+    lexicographic order of filename.
+  - For each such file: any content appended since the previous call to
+    tail_opencode is consumed; if no previous offset was recorded for the file,
+    all content is consumed.
+  - If a file has fewer bytes than its previously recorded offset (indicating
+    truncation or rotation), the offset is silently reset to zero before reading.
+  - If a file has no new content since the last recorded offset, it is skipped.
+  - Every non-empty line in the new content that decodes as a valid JSON object
+    is ingested by the State; lines that fail JSON decoding are silently skipped.
+  - After processing all files, the byte position immediately after the last
+    consumed byte in each file is recorded so that a subsequent call to
+    tail_opencode only reads content appended after that point.
+  - The State's aggregated metrics derived from OpenCode trace data are updated
+    to reflect all newly ingested records.
+
+Additional context:
+_ingest_opencode(rec, name) -> None
+Pre-condition: rec is a dict parsed from a single line of a JSONL trace file.
+    name is a string identifying the source JSONL filename.
+  Post-condition: The State's internal aggregated metrics (token usage, cost,
+    cache hit rate, stage progress, and any other dashboard-displayed data)
+    are updated to include the information contained in rec.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/types_path.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns the absolute file path to the domain context types file for phase num,\n    constructed as <domain_dir>/phase_<num:02d>_types.txt where num is zero-padded to\n    at least 2 digits\n  - The returned path uses the operating system's native path separator\n  - The return value is purely a path string  no filesystem side effects occur",
+    "actual_behavior": "After executing the function definition, the name 'types_path' is bound to a function object in the current scope. The function captures the enclosing scope's variable 'domain_dir' at its current value. For any integer argument x, a call to types_path(x) returns the string obtained by os.path.join(domain_dir, f'phase_{x:02d}_types.txt'), where domain_dir is the captured directory path string. No other program state (other variables, global state) is changed by the definition. The definition itself raises no exceptions. Formal logic: types_path = ( x. os.path.join(domain_dir_pre, f'phase_{x:02d}_types.txt')), where domain_dir_pre is the value of domain_dir before the block execution, and the binding of domain_dir is unaltered.",
+    "code_evidence": "Line 2:         return os.path.join(domain_dir, f\"phase_{num:02d}_types.txt\")",
+    "trigger_condition": "The specification requires the returned file path to be absolute. The code joins the captured domain_dir with the file name without ensuring domain_dir is absolute. If domain_dir is a relative path, the resulting path will be relative, contrary to the specification."
+  }
+}

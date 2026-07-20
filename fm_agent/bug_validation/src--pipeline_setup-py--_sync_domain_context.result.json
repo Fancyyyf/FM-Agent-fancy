@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_sync_domain_context",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_sync_domain_context",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_sync_domain_context.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_sync_domain_context.md",
+  "probe_stdout": "WARNING:root:Domain-context sync attempt 1/5 failed: opencode exited 1\nWARNING:root:Domain-context sync attempt 2/5 failed: opencode exited 1\nWARNING:root:Domain-context sync attempt 3/5 failed: opencode exited 1\nWARNING:root:Domain-context sync attempt 4/5 failed: opencode exited 1\nWARNING:root:Domain-context sync attempt 5/5 failed: opencode exited 1\nWARNING:root:Domain-context sync did not complete after 5 attempts; phase_NN_types.txt files may be out of sync with phases.json.\nNOT CONFIRMED — _sync_domain_context retried 5 times and returned without raising, matching the spec (OPENCODE_MAX_RETRIES=5)",
+  "trigger_summary": "Agent invocation fails; spec requires retry up to OPENCODE_MAX_RETRIES with delay, then warn and return without raising. Code already implements this."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input: phases.json contains {\"phases\": [{\"modules\": [{\"name\": \"m\", \"source_files\": [\"x.py\"]}]}]} (no \"phase\" key in the phase object), submodules = [\"y\"]. The file x.py does not start with \"y\", so it is removed. The code returns modified_modules[0][\"phase\"] = None, but the specification requires a phase number.",
+  "offending_statements": "Line 24:                 \"phase\": phase.get(\"phase\"),",
+  "reason": "Specification states that each modified module record must contain the phase number. When the phase object lacks a 'phase' key, phase.get(\"phase\") returns None, which is not a number, violating the post-condition."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_get_call_regex",
+  "source_file": "src/generate_topdown_layers.py",
+  "function_name": "_get_call_regex",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_get_call_regex.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_get_call_regex.md",
+  "probe_stdout": "Testing lang_key='cpp', regex pattern: \\b(\\w+)\\s*(?:<[^>]*>)?\\s*\\(\n  [PASS] simple single-level template foo<int>(x)\n    input:        'foo<int>(x)'\n    expected:     match=True, group1='foo'\n    actual:       match=True, group1='foo'\n  [FAIL] nested template bar<map<int,string>>(k)\n    input:        'bar<map<int,string>>(k)'\n    expected:     match=True, group1='bar'\n    actual:       match=False, group1=None\n  [FAIL] deeply nested baz<vector<pair<int,int>>>(v)\n    input:        'baz<vector<pair<int,int>>>(v)'\n    expected:     match=True, group1='baz'\n    actual:       match=False, group1=None\n\nBug CONFIRMED — 2 failure(s):\n  nested template bar<map<int,string>>(k): actual group1=None, expected='bar'\n  deeply nested baz<vector<pair<int,int>>>(v): actual group1=None, expected='baz'\nCONFIRMED",
+  "trigger_summary": "The regex uses [^>]* to skip angle-bracket template arguments, which fails on nested templates (e.g., foo<bar<int>>(x)) valid in C++, Java, and similar languages."
+}

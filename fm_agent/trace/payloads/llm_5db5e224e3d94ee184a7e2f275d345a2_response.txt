@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Consider a phases.json file with a single phase: {\"phases\": [{\"id\": 1, \"files\": [\"src/a.py\"]}]}. Set required_source_files=None, submodules=None, and one_phase=True. All transformations (ensure, filter, deduplicate, update descriptions, clean empty phases, collapse to one) leave phases.json unchanged. The code returns True because one_phase is truthy, but the specification requires False since phases.json was unchanged.",
+  "offending_statements": "Line 37:         or one_phase",
+  "reason": "The specification states: \"Returns False if phases.json is unchanged by all transformations.\" The code unconditionally includes `or one_phase` in the modification check (lines 28-38). When one_phase is truthy but phases.json is already a single phase, collapsing does nothing and the file is unchanged, yet the code returns True, contradicting the requirement."
+}

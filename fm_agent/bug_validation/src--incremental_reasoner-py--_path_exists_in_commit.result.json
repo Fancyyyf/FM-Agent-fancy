@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_path_exists_in_commit",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_path_exists_in_commit.py",
+  "function_name": "_path_exists_in_commit",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_path_exists_in_commit.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_path_exists_in_commit.md",
+  "probe_stdout": "CONFIRMED — Spec requires returning False when git command fails for any reason, but subprocess.run(check=False) raises FileNotFoundError (an OSError subclass) instead of returning: [Errno 2] No such file or directory: '_fm_agent_probe_nonexistent_git_'\n",
+  "trigger_summary": "Specification requires returning False when the git command fails for any reason, but the code raises an OSError (e.g., FileNotFoundError) if git cannot be started, giving no return value."
+}

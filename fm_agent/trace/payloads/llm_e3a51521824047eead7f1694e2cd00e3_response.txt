@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": "",
+  "offending_statements": "",
+  "reason": ""
+}

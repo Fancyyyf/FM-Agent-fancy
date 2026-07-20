@@ -1,0 +1,16 @@
+Programming language: Python
+
+Pre-condition:
+- fingerprint is a tuple whose elements are all JSON-serializable
+    (each element is one of: str, int, float, bool, None, list, dict, or
+    tuple — any value that json.dumps can serialize without raising
+    TypeError)
+
+Code block:
+```python
+Line 1: def _fingerprint_digest(fingerprint: tuple) -> str:
+Line 2:     payload = json.dumps(fingerprint, ensure_ascii=False, separators=(",", ":"))
+Line 3:     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

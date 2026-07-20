@@ -1,0 +1,30 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _phase_plan_complete(work_dir):
+Line 2:     """Return True only if phases.json exists and is valid JSON."""
+Line 3:     phases_path = os.path.join(work_dir, "phases.json")
+Line 4:     return _json_file_is_valid(phases_path)
+```
+
+Condition A (what the code actually does):
+The function returns True if and only if the file formed by joining work_dir with 'phases.json' exists, is a regular file, and its contents are valid JSON. Otherwise, it returns False. The function has no side effects.
+
+Condition B (what the specification requires):
+- Returns True when the file phases.json exists under work_dir, is a
+    regular file, and parses as valid JSON.
+  - Returns False when phases.json does not exist under work_dir, is not a
+    regular file, or exists but does not parse as valid JSON.
+  - The return value is idempotent for the same filesystem state: repeated
+    calls with the same work_dir and same phases.json content return the same
+    boolean.
+
+Additional context:
+_json_file_is_valid(file_path) -> bool
+Pre-condition: file_path is a string path.
+  Post-condition: Returns True when the file at file_path exists, is a
+    regular file, and its content parses as valid JSON; returns False when
+    the file does not exist, is not a regular file, or its content does not
+    parse as valid JSON.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

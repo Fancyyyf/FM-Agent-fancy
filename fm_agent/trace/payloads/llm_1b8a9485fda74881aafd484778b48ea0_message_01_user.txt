@@ -1,0 +1,50 @@
+Programming language: Python
+
+Pre-condition:
+- fqn is a non-empty FQN string identifying a function
+  - callers_map maps FQN strings to iterables of caller FQN strings
+  - file_map maps FQN strings to filesystem path strings
+  - edge_aliases_map, if provided, maps callee FQNs to dicts that map caller FQNs to iterables of alias strings
+
+Code block:
+```python
+Line 1: def _collect_caller_context(fqn, callers_map, file_map, edge_aliases_map=None):
+Line 2:     """
+Line 3:     Gather the context an existing caller provides about fqn, mirroring the caller context
+Line 4:     run_pipeline feeds into spec generation: each caller's own [SPEC] block and the entry in
+Line 5:     its [INFO] block that records what the caller expects from fqn (as one of its callees).
+Line 6:     Returns a list of (caller_fqn, caller_spec, callee_expectation) tuples — caller_spec and
+Line 7:     callee_expectation are None when the caller has no such block — for every caller of fqn
+Line 8:     whose extracted-function file exists and yields at least one of the two. Callers with no
+Line 9:     file or no usable block are skipped.
+Line 10:     """
+Line 11:     context = []
+Line 12:     for caller_fqn in sorted(callers_map.get(fqn, ())):
+Line 13:         cpath = file_map.get(caller_fqn)
+Line 14:         if not cpath or not os.path.isfile(cpath):
+Line 15:             continue
+Line 16:         cpath_p = Path(cpath)
+Line 17:         caller_spec = extract_spec_block(cpath_p)
+Line 18:         info_block = extract_info_block(cpath_p)
+Line 19:         aliases = ()
+Line 20:         if edge_aliases_map:
+Line 21:             aliases = tuple(edge_aliases_map.get(fqn, {}).get(caller_fqn, ()))
+Line 22:         expectation = extract_callee_spec_from_info(info_block, fqn, aliases) if info_block else None
+Line 23:         if caller_spec or expectation:
+Line 24:             context.append((caller_fqn, caller_spec, expectation))
+Line 25:     return context
+```
+
+Additional context:
+extract_spec_block(file_path) -> Optional[str]
+Pre-condition: file_path is a pathlib.Path pointing to an extracted function file
+  Post-condition: If the file contains a [SPEC] block (delimited by "# [SPEC]" start and end markers), returns its full textual content excluding the markers; returns None if the file exists but contains no [SPEC] block
+
+extract_info_block(file_path) -> Optional[dict]
+Pre-condition: file_path is a pathlib.Path pointing to an extracted function file
+  Post-condition: If the file contains an [INFO] block (delimited by "# [INFO]" start and end markers), returns a parsed representation of the block; returns None if the file exists but contains no [INFO] block
+
+extract_callee_spec_from_info(info_block, fqn, aliases) -> Optional[str]
+Pre-condition: info_block is a parsed [INFO] block; fqn is a non-empty FQN string; aliases is an iterable of alias strings
+  Post-condition: Searches the info block for an entry whose callee FQN matches fqn or any string in aliases; when exactly one match is found, returns its full textual content; when no entry matches, returns None
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

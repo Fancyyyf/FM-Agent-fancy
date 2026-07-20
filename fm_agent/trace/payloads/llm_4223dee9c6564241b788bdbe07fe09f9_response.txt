@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "work_dir pointing to a directory containing fm_agent/phases.json with content {\"phases\": []} (or a phases list with no modules, resulting in no extracted-function files).",
+  "offending_statements": "Line 19: ( ... Line 27: ) = _build_call_graph( ... Line 30: )",
+  "reason": "The code unconditionally passes all_files to _build_call_graph even when the list is empty (no phases or no files from any phase). The pre-condition of _build_call_graph requires a non-empty all_files list. When all_files is empty, the call violates this contract and likely raises an exception or behaves unexpectedly, failing to return the expected 4-tuple of (possibly empty) mappings. The specification requires returning a valid 4-tuple for any valid input, including projects with no functions."
+}

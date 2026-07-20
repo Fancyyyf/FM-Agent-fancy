@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_locate_workdir",
+  "source_file": "dashboard-py/_locate_workdir.py",
+  "function_name": "_locate_workdir",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_locate_workdir.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_locate_workdir.md",
+  "probe_stdout": "CONFIRMED \u2014 spec: resolve to workspace dir (/tmp/tmppmv9wkgb) when trace data present, but code returned /tmp/tmppmv9wkgb/fm_agent (appended fm_agent)",
+  "trigger_summary": "_locate_workdir checks for a trace/ subdirectory with is_dir(), but the spec requires detecting trace output data generically (e.g. a trace file); when trace exists as a file the function incorrectly appends fm_agent."
+}

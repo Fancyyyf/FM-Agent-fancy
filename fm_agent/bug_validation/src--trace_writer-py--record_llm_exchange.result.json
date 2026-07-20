@@ -1,0 +1,11 @@
+{
+  "id": "src--trace_writer-py--record_llm_exchange",
+  "source_file": "src/trace_writer-py/record_llm_exchange.py",
+  "function_name": "record_llm_exchange",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--trace_writer-py--record_llm_exchange.py",
+  "detail_file": "fm_agent/bug_validation/src--trace_writer-py--record_llm_exchange.md",
+  "probe_stdout": "CONFIRMED — event had no 'metadata' key before call (keys: ['id', 'type']), but after call has metadata={}. The setdefault() on line 51 added an unauthorized key to the event dict.",
+  "trigger_summary": "When event dict lacks a 'metadata' key, setdefault() on line 51 unconditionally adds one, modifying event beyond what the spec permits."
+}

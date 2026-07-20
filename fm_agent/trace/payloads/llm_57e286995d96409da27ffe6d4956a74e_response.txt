@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "model=\"gpt-4\", prompt=\"Test\", cwd=\"/tmp\", files=[\"/tmp/a.txt\", \"/tmp/b.txt\"], backend=\"codex-cli\", effort=None",
+  "offending_statements": "Line 8: files are only used to compute stdin via _compose_stdin; no further statements add file path arguments to argv. Line 12-21 (codex-cli argv building) and Line 28-39 (claude-cli argv building) do not include file path arguments.",
+  "reason": "The specification requires that when 'files' is a non-empty list, each file path is attached as context to the backend invocation (e.g., passed as arguments). The code only combines prompt and file contents into stdin but does not add any file path arguments to the argv list, so the backend receives no direct context of the file paths."
+}

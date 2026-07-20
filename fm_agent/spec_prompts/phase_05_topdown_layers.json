@@ -1,0 +1,93 @@
+{
+  "phase": 5,
+  "phase_name": "Bug Diagnosis & Verification",
+  "total_functions": 6,
+  "total_layers": 2,
+  "layers": [
+    {
+      "layer": 0,
+      "functions": [
+        {
+          "name": "src::verification-py::_validate_single_bug",
+          "file": "extracted_functions/src/verification-py/_validate_single_bug.py",
+          "unit": "verification",
+          "phase5_callers": [],
+          "phase5_callees": [],
+          "all_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::function_id_from_result_path",
+            "src::opencode_trace-py::run_opencode_traced"
+          ]
+        },
+        {
+          "name": "src::verification-py::_verify_single_file",
+          "file": "extracted_functions/src/verification-py/_verify_single_file.py",
+          "unit": "verification",
+          "phase5_callers": [],
+          "phase5_callees": [],
+          "all_callees": [
+            "src::domain_knowledge-py::load_staged_domain_knowledge_text",
+            "src::parser-py::parse_input_function",
+            "src::reasoner-py::_parse_spec_conditions",
+            "src::reasoner-py::_sanitize_strings",
+            "src::reasoner-py::reasoner"
+          ]
+        },
+        {
+          "name": "src::verification-py::streaming_reasoner",
+          "file": "extracted_functions/src/verification-py/streaming_reasoner.py",
+          "unit": "verification",
+          "phase5_callers": [],
+          "phase5_callees": [
+            "src::verification-py::_generate_validation_summary",
+            "src::verification-py::_spec_task_done",
+            "src::verification-py::_spec_task_exit_code"
+          ],
+          "all_callees": [
+            "src::file_utils-py::is_file_ready",
+            "src::verification-py::_generate_validation_summary",
+            "src::verification-py::_spec_task_done",
+            "src::verification-py::_spec_task_exit_code"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "functions": [
+        {
+          "name": "src::verification-py::_generate_validation_summary",
+          "file": "extracted_functions/src/verification-py/_generate_validation_summary.py",
+          "unit": "verification",
+          "phase5_callers": [
+            "src::verification-py::streaming_reasoner"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::verification-py::_spec_task_done",
+          "file": "extracted_functions/src/verification-py/_spec_task_done.py",
+          "unit": "verification",
+          "phase5_callers": [
+            "src::verification-py::streaming_reasoner"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::verification-py::_spec_task_exit_code",
+          "file": "extracted_functions/src/verification-py/_spec_task_exit_code.py",
+          "unit": "verification",
+          "phase5_callers": [
+            "src::verification-py::streaming_reasoner"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _wait_for_response(self, request_id: int, deadline: float):
+Line 2:         while True:
+Line 3:             message = self._next_message(deadline)
+Line 4:             if message.get("id") == request_id and "method" not in message:
+Line 5:                 error = message.get("error")
+Line 6:                 if error:
+Line 7:                     if isinstance(error, dict) and error.get("code") == _CONTENT_MODIFIED_ERROR:
+Line 8:                         raise _ContentModifiedError(error)
+Line 9:                     raise RuntimeError(f"ELP request failed: {error}")
+Line 10:                 return message.get("result")
+Line 11:             self._handle_server_message(message)
+```
+
+Condition A (what the code actually does):
+The function terminates either normally by returning a value or by raising an exception. If it returns, the returned value is the 'result' field of a JSON-RPC response message M that was read from the backend output stream before the deadline, satisfying M['id'] == request_id and 'method' not in M, and M does not contain a truthy 'error' field. All messages read prior to M were non-matching (either 'id' != request_id or 'method' present) and were processed by _handle_server_message. If it raises _ContentModifiedError, a matching response M was received before the deadline with 'error' being a dict with 'code' equal to _CONTENT_MODIFIED_ERROR. If it raises RuntimeError, a matching response M was received before the deadline with a truthy 'error' that is not such a content-modified error. If an exception from _next_message is raised (e.g., a timeout), no matching response was received by the deadline, and all messages read before the timeout were non-matching and processed by _handle_server_message. Formally: 
+- (normal return) ∃ M ∈ ReceivedMessages : (M['id'] = request_id ∧ 'method' ∉ M ∧ ¬ M.get('error') ∧ time_received ≤ deadline ∧ ∀ N ∈ ReceivedMessages before M: (N['id'] ≠ request_id ∨ 'method' ∈ N) ⇒ _handle_server_message_processed(N)) ∧ return = M['result']. 
+- (_ContentModifiedError) ∃ M : (M['id'] = request_id ∧ 'method' ∉ M ∧ M['error'] is dict ∧ M['error']['code'] = _CONTENT_MODIFIED_ERROR) ∧ exception is _ContentModifiedError(M['error']). 
+- (RuntimeError) ∃ M : (M['id'] = request_id ∧ 'method' ∉ M ∧ M.get('error') ∧ not (isinstance(M['error'], dict) and M['error'].get('code') == _CONTENT_MODIFIED_ERROR)) ∧ exception is RuntimeError(...). 
+- (timeout/other exception from _next_message) no such M received by deadline, all received messages processed.
+
+Condition B (what the specification requires):
+- Reads and parses JSON-RPC messages from the backend's output stream until
+    a response message whose "id" field equals request_id and that lacks a
+    "method" field (i.e., is a response, not a notification) is received
+  - When a matching response is received and contains no error, returns its
+    "result" field
+  - Raises _ContentModifiedError when the matching response contains an error
+    whose code equals the content-modified error code, indicating the document
+    was modified during indexing and the request should be retried by the caller
+  - Raises RuntimeError when the matching response contains any other error
+  - Raises an exception when no matching response arrives before the deadline
+  - Messages that do not match request_id (including server notifications and
+    responses for other requests) are dispatched for side-effect handling and
+    do not prevent continued waiting for the matching response
+
+Additional context:
+ElpClient._next_message(self, deadline: float) -> Any
+Pre-condition: deadline is a monotonic clock time
+  Post-condition: Blocks until a JSON-RPC message is available from the backend's
+    output stream; returns the parsed message; raises an exception when no message
+    arrives before the deadline
+
+ElpClient._handle_server_message(self, message: Any) -> None
+Pre-condition: message is a parsed JSON-RPC message from the backend that does
+    not match the awaited request_id
+  Post-condition: Processes the message according to server-initiated protocol
+    semantics without raising under normal operation
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

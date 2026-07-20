@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_cache_rate",
+  "source_file": "dashboard-py/_cache_rate.py",
+  "function_name": "_cache_rate",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_cache_rate.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_cache_rate.md",
+  "probe_stdout": "CONFIRMED — actual: (None, 0, 0) | expected: (0.0, 0, 0)",
+  "trigger_summary": "When input_sum == 0 (e.g. empty rows []), the code returns None as rate instead of the specified 0.0."
+}

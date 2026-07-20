@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--java-py--function_spans",
+  "source_file": "src/languages/java-py/function_spans.py",
+  "function_name": "function_spans",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--java-py--function_spans.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--java-py--function_spans.md",
+  "probe_stdout": "CONFIRMED — function_spans does NOT order by appearance.\n  actual (unordered, matches mock):  [('func_b', 29, 39), ('func_a', 9, 19)]\n  expected (spec-ordered):           [('func_a', 9, 19), ('func_b', 29, 39)]\n",
+  "trigger_summary": "function_spans delegates to cg.get_function_spans without reordering, so an unordered backend result violates the spec's 'ordered by appearance' guarantee."
+}

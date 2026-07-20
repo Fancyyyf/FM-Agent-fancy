@@ -1,0 +1,19 @@
+Programming language: Python
+
+Pre-condition:
+- self is an initialized StdoutTee instance configured with a writable console output and a log file stream.
+  - data is a string.
+
+Code block:
+```python
+Line 1:     def write(self, data):
+Line 2:         self._console.write(data)
+Line 3:         # The log stream is owned by the logging FileHandler; at interpreter shutdown (or if
+Line 4:         # the handler is closed) it may already be closed, so tolerate that rather than raise
+Line 5:         # — the console copy still gets through.
+Line 6:         if not self._log_stream.closed:
+Line 7:             self._log_stream.write(data)
+Line 8:         return len(data)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

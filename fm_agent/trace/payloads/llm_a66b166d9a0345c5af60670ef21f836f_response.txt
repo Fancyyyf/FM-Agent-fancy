@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Assume proj_dir and work_dir exist, spec_prompts/domain_context/ directory is present, and phases.json contains a phase 1 with source file ['src/module.py']. Input: changed_phases = {1}, phase_cleanup = None. The LLM agent subprocess (e.g., an external model call) terminates with a non‑zero exit code (e.g., network error or invalid API key).",
+  "offending_statements": "The code after the early‑return checks invokes the agent via a subprocess but does not implement any retry logic; upon non‑zero exit it raises subprocess.CalledProcessError instead of retrying and finally logging a warning.",
+  "reason": "Specification requires that the agent invocation be retried up to OPENCODE_MAX_RETRIES with a delay, and after exhaustion a warning is logged and the function returns without raising. The actual implementation raises on the first failure, violating the best‑effort behaviour specified."
+}

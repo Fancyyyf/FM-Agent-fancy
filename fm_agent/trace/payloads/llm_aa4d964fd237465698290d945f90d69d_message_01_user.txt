@@ -1,0 +1,45 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans_for_file(proj_dir: str, filepath: str, lang_key: str):
+Line 2:     """Return codegraph function spans for one file, or None to fall back.
+Line 3:     Delegates to the registered language handler's function_spans backend.
+Line 4:     Returns [(func_name, start_idx, end_idx)] (0-indexed, inclusive) when
+Line 5:     codegraph indexes the file, or None when the language is unregistered,
+Line 6:     codegraph does not support it, or the file is not in the index — in every
+Line 7:     such case the caller should fall back to the regex extractor.
+Line 8:     """
+Line 9:     handler = REGISTRY.get(lang_key)
+Line 10:     if handler is None:
+Line 11:         return None
+Line 12:     return handler.function_spans(proj_dir, filepath)
+```
+
+Condition A (what the code actually does):
+Natural language: If `lang_key` is not present in `REGISTRY` (i.e., `REGISTRY.get(lang_key)` returns `None`), the function returns `None` immediately. Otherwise, it delegates to `handler.function_spans(proj_dir, filepath)` and returns whatever that call returns. The return value is therefore either `None` (when the handler does not support the file, the file is not in the codegraph index, or the language is unregistered) or a list of tuples `(func_name, start_idx, end_idx)` where `start_idx` and `end_idx` are 0‑based inclusive line numbers; `handler.function_spans` never returns anything else according to its specification. If the call to `handler.function_spans` raises an exception, that exception is not caught and propagates to the caller; in that case no normal return occurs.
+
+Formal logic: Let \( H = \text{REGISTRY.get}(\text{lang_key}) \). 
+If \( H = \text{None} \), then the function terminates normally and \( \text{returned\_value} = \text{None} \). 
+If \( H \neq \text{None} \), then exactly one of the following holds:
+- The call \( H.\text{function\_spans}(\text{proj\_dir}, \text{filepath}) \) evaluates normally to \( R \), and \( R = \text{None} \) or \( R \) is a finite list of triples \((s_i, e_i, n_i)\) where each \( s_i, e_i \in \mathbb{Z} \), \( 0 \le s_i \le e_i \), and `str` type for names; the function then returns \( R\).
+- The call raises an exception \( E \), and the function terminates abruptly with the same exception \( E\).
+The post‑condition does not constrain the values of `proj_dir`, `filepath`, or `lang_key` (they are immutable strings and remain unchanged).
+
+Condition B (what the specification requires):
+- When lang_key is not present in REGISTRY, returns None
+  - When lang_key is present in REGISTRY, returns the registered handler's
+    function_spans result for (proj_dir, filepath) without modification
+  - A non-None return value is a list where each element is a tuple (name, start, end):
+      * name is the function name string
+      * start is the 0-based inclusive start-line index of a top-level function body
+      * end is the 0-based inclusive end-line index of a top-level function body
+  - None signals codegraph unavailability; the caller must fall back to regex extraction
+
+Additional context:
+handler.function_spans(proj_dir, filepath) -> [(str, int, int)] | None
+Pre-condition: handler is a LanguageHandler registered for lang_key in REGISTRY
+  Post-condition: When a codegraph backend indexes filepath under proj_dir, returns
+    a list of (name, start, end) identifying top-level functions with 0-based
+    inclusive line indices; otherwise returns None
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

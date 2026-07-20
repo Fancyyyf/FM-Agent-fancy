@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/rust-py/batch_extract.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a dictionary where each key is an absolute filesystem path (str) to a Rust source\n    file located within or under the project directory\n  - Each value is a non-empty list of (str, str) tuples: the first element is a function name\n    declared in that file, and the second element is the complete source text of the function body\n  - A source file containing N detected functions produces N entries in its value list\n  - Returns an empty dictionary when no Rust codegraph backend is available for the given project",
+    "actual_behavior": "If the function returns normally, it yields a dictionary. Calling CodeGraphExtractor.from_proj_dir(proj_dir) either returns a configured instance (cg  None) or None. When cg is None the result is {}. When cg is not None the result is cg.get_functions_by_file(\"rust\", proj_dir), a dict mapping each absolute path of a Rust source file under proj_dir to a list of (function_name, function_body) tuples. No sideeffects on proj_dir occur. Any exception raised by from_proj_dir or get_functions_by_file propagates uncaught to the caller, and the function does not return a value in that case.",
+    "code_evidence": "Line 4",
+    "trigger_condition": "The specification requires every value in the returned dictionary to be a non-empty list of (function_name, function_body) tuples. The code delegates to cg.get_functions_by_file without filtering out files that contain zero functions, thus potentially returning a dictionary with empty lists."
+  }
+}

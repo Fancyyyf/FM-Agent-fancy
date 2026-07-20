@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "http://example.com/__init__.py",
+  "offending_statements": "Line 3: return PurePosixPath(path.replace(\"\\\\\", \"/\")).stem",
+  "reason": "The code extracts the stem without ensuring conformance to the specification's double-underscore and non-empty restrictions. For the counterexample 'http://example.com/__init__.py', the path is '/__init__.py' and PurePosixPath.stem returns '__init__', which contains '__', violating the requirement that the result contains no double-underscore sequence."
+}

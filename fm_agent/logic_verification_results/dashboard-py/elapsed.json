@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/elapsed.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns None when self.first_event_time is None (no events have\n    been recorded yet)\n  - Otherwise returns the elapsed wall-clock duration between\n    self.first_event_time and the endpoint timestamp, expressed as a\n    possibly-fractional number of seconds\n  - The endpoint timestamp is self.last_event_time when\n    self.last_event_time is truthy; when self.last_event_time is\n    falsy (None or absent), the current UTC wall-clock instant is\n    used as the endpoint instead",
+    "actual_behavior": "If `self.first_event_time` is None, the method returns None with no side effects. Otherwise, let `end` be `self.last_event_time` if it is not None, else the result of `datetime.now(timezone.utc)` evaluated at the time of the call. Then the method returns `(end - self.first_event_time).total_seconds()`, a float representing the duration in seconds between `self.first_event_time` and `end`. No side effects on the object state.",
+    "code_evidence": "Line 4: end = self.last_event_time or datetime.now(timezone.utc)",
+    "trigger_condition": "The specification explicitly states that when self.last_event_time is falsy (None or absent), the current UTC wall-clock instant should be used. The code accesses self.last_event_time directly without guarding against its absence, causing an AttributeError when the attribute does not exist. This violates the specification, which expects the method to handle the absent case gracefully by using the current time."
+  }
+}

@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+- path is a string containing a file path that may use either "/" or "\\" as path separators
+
+Code block:
+```python
+Line 1: def function_id_from_extracted_path(path):
+Line 2:     rel = path.replace("\\", "/")
+Line 3:     for prefix in ("fm_agent/extracted_functions/", "extracted_functions/"):
+Line 4:         if rel.startswith(prefix):
+Line 5:             rel = rel[len(prefix):]
+Line 6:             break
+Line 7:     return os.path.splitext(rel)[0].replace("/", "::")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

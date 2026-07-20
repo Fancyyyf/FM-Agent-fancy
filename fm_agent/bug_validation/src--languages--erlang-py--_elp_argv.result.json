@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_elp_argv",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_elp_argv.py",
+  "function_name": "_elp_argv",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_elp_argv.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_elp_argv.md",
+  "probe_stdout": "CONFIRMED — shlex.split raised ValueError on unbalanced quoting (spec requires non-empty list)\n",
+  "trigger_summary": "Setting ELP_COMMAND to an unbalanced-quoted string causes shlex.split to raise ValueError instead of returning a list"
+}

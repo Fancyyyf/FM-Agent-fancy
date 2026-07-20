@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "state.recent_events = [(\"[red]2023-01-01 10:00[/red]\", \"init\", \"success\", \"All good\")]",
+  "offending_statements": "Line 14: table.add_row(when, stage, f\"[{color}]{status}[/]\", summary)",
+  "reason": "The code passes time, stage, and summary strings directly to the Rich table without escaping Rich markup, allowing embedded markup to override the intended column styles. For example, a time value containing '[red]...[/red]' will be rendered in red instead of the required dimmed style, violating the specification that the time column be dimmed. The summary column also risks unwanted formatting instead of plain ellipsized text."
+}

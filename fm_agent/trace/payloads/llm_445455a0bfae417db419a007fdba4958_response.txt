@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "work_dir='/tmp', event_id='/etc/passwd'",
+  "offending_statements": "Line 2: return os.path.join(_trace_dir(work_dir), \"opencode\", f\"{event_id}.jsonl\")",
+  "reason": "If event_id is an absolute path like '/etc/passwd', os.path.join will discard the preceding parts and return '/etc/passwd.jsonl', which is not under work_dir. This violates the specification requirement that the returned path must be a filesystem path under work_dir. The code fails to sanitize event_id against path-traversal characters."
+}

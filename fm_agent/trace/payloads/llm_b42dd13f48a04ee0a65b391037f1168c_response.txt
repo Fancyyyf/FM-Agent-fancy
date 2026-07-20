@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "42",
+  "offending_statements": "Line 10: except ValueError as exc:",
+  "reason": "When response is 42 (an integer), isinstance(response, str) is False, so text is ''. _parse_json_response(42) is called, but it expects a string and may raise TypeError. The except clause only catches ValueError, so TypeError is not translated to json.JSONDecodeError. The specification requires json.JSONDecodeError for any unextractable JSON, including non-string inputs."
+}

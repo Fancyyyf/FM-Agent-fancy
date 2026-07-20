@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--render_recent",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/render_recent.py",
+  "function_name": "render_recent",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--render_recent.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--render_recent.md",
+  "probe_stdout": "02:00:41 - LiteLLM:WARNING: get_model_cost_map.py:271 - LiteLLM: Failed to fetch remote model cost map from https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json: timed out. Falling back to local backup.\nCONFIRMED — Rich markup [red] in time field was parsed, overriding the dim column style",
+  "trigger_summary": "Rich markup in data values (time, stage, summary) is parsed by Rich instead of being escaped, allowing inline markup to override column-level styles — e.g., [red] markup in time field renders red instead of required dimmed."
+}

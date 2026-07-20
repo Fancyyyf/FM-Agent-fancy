@@ -1,0 +1,107 @@
+Programming language: Python
+
+Pre-condition:
+- phase_files is a non-empty list of (filepath, module_name) tuples, where
+    filepath is a path to an extracted function source file that exists and is
+    readable, and module_name is a string from phases.json
+  - proj_dir is the project root directory path
+  - global_stem_to_fqns, if not None, is a dict mapping function-name stems
+    to sets of FQN strings across all phases
+  - extra_call_edges, if not None, is an iterable of CallEdge objects each
+    specifying a caller (by exact FQN and/or callsite names) and a callee
+    (by exact FQN with optional info_names)
+
+Code block:
+```python
+Line 1: def _build_call_graph(phase_files, proj_dir, global_stem_to_fqns=None, extra_call_edges=None):
+Line 2:     """Build callees_map and callers_map for a set of phase files.
+Line 3:     Args:
+Line 4:         phase_files: list of (filepath, module_name) tuples
+Line 5:         proj_dir: project root directory
+Line 6:         global_stem_to_fqns: optional global stem->set(fqn) mapping across all phases,
+Line 7:                              used to compute all_callees (cross-phase)
+Line 8:         extra_call_edges: optional iterable of supplemental CallEdge objects.
+Line 9:                           caller.fqn is exact; caller.callsite_names are matched
+Line 10:                           only against explicitly listed source callsite names.
+Line 11:     Returns:
+Line 12:         (callees_map, callers_map, all_callees_map, file_map, module_map,
+Line 13:         edge_aliases_map) where keys are FQNs.
+Line 14:         callees_map/callers_map contain only within-phase edges.
+Line 15:         all_callees_map contains callees from any phase.
+Line 16:         edge_aliases_map maps callee -> caller -> supplemental callee labels
+Line 17:         that may appear in a caller's [INFO] block.
+Line 18:     """
+Line 19:     # Build FQN mappings
+Line 20:     fqn_map = {}  
+Line 21:     stem_to_fqns = defaultdict(set)  
+Line 22:     file_map = {}  
+Line 23:     module_map = {}  
+Line 24:     for filepath, module_name in phase_files:
+Line 25:         fqn = _file_to_fqn(filepath, proj_dir)
+Line 26:         fqn_map[filepath] = fqn
+Line 27:         file_map[fqn] = filepath
+Line 28:         module_map[fqn] = module_name
+Line 29:         stem = fqn.split("::")[-1]
+Line 30:         stem_to_fqns[stem].add(fqn)
+Line 31:     phase_fqns = set(fqn_map.values())
+Line 32:     # For call-site detection, use global stems if available
+Line 33:     effective_stem_to_fqns = global_stem_to_fqns if global_stem_to_fqns else stem_to_fqns
+Line 34:     # All extracted FQNs (across phases when a global map is supplied), used to
+Line 35:     # keep only codegraph callees that correspond to an extracted function.
+Line 36:     known_fqns = {
+Line 37:         fqn
+Line 38:         for fqns in effective_stem_to_fqns.values()
+Line 39:         for fqn in fqns
+Line 40:     }
+```
+
+Additional context:
+_file_to_fqn(filepath: str, proj_dir: str) -> str
+Pre-condition: filepath is a path to an extracted function file under proj_dir
+  Post-condition: returns the FQN derived from filepath by stripping the
+    extension and joining directory components with "::"
+
+_resolve_extra_call_edges(extra_call_edges, phase_fqns, known_fqns) -> tuple[dict, dict]
+Pre-condition: extra_call_edges is None or an iterable of CallEdge objects;
+    phase_fqns is a set of FQNs within the current phase; known_fqns is a set
+    of all known FQNs across all phases
+  Post-condition: returns (edges_by_caller_fqn, edges_by_callsite) where both
+    are dicts; edges_by_caller_fqn maps exact caller FQNs to lists of edges,
+    and edges_by_callsite maps callsite name strings to lists of edges; only
+    edges whose callee FQN is in known_fqns are retained
+
+_detect_lang_from_ext(filepath: str) -> str | None
+Pre-condition: filepath is a string ending with a file extension
+  Post-condition: returns the language key string corresponding to the file
+    extension, or None if the extension is not recognized
+
+call_edges_all(proj_dir: str, phase_langs: set[str]) -> tuple[dict, set[str]]
+Pre-condition: proj_dir is the project root; phase_langs is a set of
+    language key strings
+  Post-condition: returns (registry_edges, registry_langs) where
+    registry_edges maps caller FQNs to sets of callee FQNs resolved by
+    codegraph, and registry_langs is the subset of phase_langs for which
+    codegraph resolution is available
+
+_get_keywords_for_lang(lang_key: str) -> set[str]
+Pre-condition: lang_key is a recognized language key string
+  Post-condition: returns the set of language-reserved keywords to exclude
+    from call-site detection for the given language
+
+_find_call_sites(text: str, lang_key: str, stems_to_find: set[str], keywords: set[str]) -> set[str]
+Pre-condition: text is source code text; lang_key is a recognized language
+    key; stems_to_find is a set of function-name stems; keywords is a set of
+    reserved keywords to exclude
+  Post-condition: returns the subset of stems_to_find that appear as bare-name
+    call sites in text (not preceded by a definition keyword or within a
+    string/comment context for the given language)
+
+_add_resolved_extra_edge(caller_fqn, edge, phase_fqns, callees_map, callers_map,
+all_callees_map, edge_aliases_map)
+  Pre-condition: caller_fqn is a string; edge is a CallEdge object with
+    callee.fqn; the remaining arguments are mutable dicts keyed by FQN
+  Post-condition: adds edge.callee.fqn to all_callees_map[caller_fqn]; if
+    edge.callee.fqn is in phase_fqns, also adds it to callees_map and
+    callers_map; if edge.callee.info_names is non-empty, adds them to
+    edge_aliases_map[edge.callee.fqn][caller_fqn]
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

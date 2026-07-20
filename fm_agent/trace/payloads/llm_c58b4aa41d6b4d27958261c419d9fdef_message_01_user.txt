@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+- rel_path is a string representing a file path that may use '/' or '\' separators
+
+Code block:
+```python
+Line 1:     def _is_workspace_file(rel_path):
+Line 2:         norm = rel_path.replace("\\", "/")
+Line 3:         return norm == "fm_agent" or norm.startswith("fm_agent/")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

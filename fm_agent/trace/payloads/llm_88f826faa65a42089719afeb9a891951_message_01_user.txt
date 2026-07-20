@@ -1,0 +1,34 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _build_func_list_text(funcs_info: list[dict], source_lines: list[str]) -> str:
+Line 2:     lines = []
+Line 3:     for f in funcs_info:
+Line 4:         sig_line = source_lines[f['start'] - 1].strip()
+Line 5:         doc = f.get('docstring', '') or ''
+Line 6:         if doc:
+Line 7:             doc = doc.split('\n')[0][:120]
+Line 8:         lines.append(f"- {f['name']} | {sig_line} | {doc}")
+Line 9:     return '\n'.join(lines)
+```
+
+Condition A (what the code actually does):
+The function returns a string assembled by iterating over `funcs_info` in order. For each dictionary `f` in `funcs_info`: let `sig = source_lines[f['start']-1].strip()`. Let `d = f.get('docstring', '') or ''`. If `d` is truthy, let `doc = d.split('\n')[0][:120]`; else `doc = ''`. The line generated is `"- " + f['name'] + " | " + sig + " | " + doc`. All such lines are joined with newline characters. No exceptions are raised. Formally, post-condition: result = '\n'.join( 
+  "- " + f['name'] + " | " + source_lines[f['start']-1].strip() + " | " + 
+  ((f.get('docstring','') or '').split('\n')[0][:120] if (f.get('docstring','') or '') else '') 
+  for f in funcs_info
+).
+
+Condition B (what the specification requires):
+- Returns a string formed by joining one formatted line per element of
+    funcs_info with '\n', preserving the input order.
+  - For each entry f in funcs_info, the line has the structure:
+    "- <f['name']> | <signature_stripped> | <doc_summary>", where:
+    * signature_stripped is source_lines[f['start'] - 1] with leading and
+      trailing whitespace removed.
+    * doc_summary is the prefix of f.get('docstring', '') up to and excluding
+      the first '\n', truncated to at most 120 characters. If the docstring is
+      absent, empty, or None, doc_summary is the empty string.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

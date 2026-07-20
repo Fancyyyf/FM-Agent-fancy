@@ -1,0 +1,43 @@
+Programming language: Python
+
+Pre-condition:
+- name is a non-empty string; the function name
+  - start0 and end0 are 0-based line indices with start0 ≤ end0
+  - source_lines is a list[str] of the source file text, with
+    len(source_lines) > end0
+  - lang_cfg is a dict containing a 'keywords' key whose value is
+    a set[str] of language reserved words
+
+Code block:
+```python
+Line 1: def _generic_func_info(name: str, start0: int, end0: int,
+Line 2:                        source_lines: list[str], lang_cfg: dict) -> dict:
+Line 3:     """
+Line 4:     Build a funcs_info dict for one function in a non-Python (or AST-fallback) source.
+Line 5:     start0/end0 are 0-based inclusive line indices as returned by the extract.py
+Line 6:     brace/indent extractors. The 'start'/'end' fields are stored 1-based to match the AST
+Line 7:     convention used throughout scope.py (source_lines[start - 1] is the signature line).
+Line 8:     Identifiers, calls and exception types are recovered by regex over the function body.
+Line 9:     """
+Line 10:     body_text = '\n'.join(source_lines[start0:end0 + 1])
+Line 11:     keywords = lang_cfg.get('keywords', set())
+Line 12:     idents = {t.lower() for t in _IDENT_RE.findall(body_text)}
+Line 13:     body_words = {w for w in re.findall(r'\b([a-zA-Z]{4,})\b', body_text.lower())
+Line 14:                   if w not in _STOP}
+Line 15:     exc_types = {e.lower() for e in _EXC_TOKEN_RE.findall(body_text)}
+Line 16:     # Keep call names in their original case so call-graph propagation can match them
+Line 17:     # against function names (which preserve case), excluding language control keywords.
+Line 18:     calls = {m for m in _CALL_RE.findall(body_text) if m not in keywords}
+Line 19:     return {
+Line 20:         'name':       name,
+Line 21:         'start':      start0 + 1,
+Line 22:         'end':        end0 + 1,
+Line 23:         'calls':      calls,
+Line 24:         'idents':     idents,
+Line 25:         'body_words': body_words,
+Line 26:         'exc_types':  exc_types,
+Line 27:         'docstring':  '',
+Line 28:     }
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

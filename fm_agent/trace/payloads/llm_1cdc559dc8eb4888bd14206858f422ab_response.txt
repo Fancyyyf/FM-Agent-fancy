@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "func = 'def foo(x):\\n    if True:\\n        return 42\\n    return 0'\\nspec = 'Pre: x is an integer.\\nPost: the return value is 42.'\\ninfo = {}\\nlanguage = 'Python'\\ntrace_context = {}",
+  "offending_statements": "Line 12: for i, block in enumerate(blocks):\nLine 34: if _has_terminating_statement(block, language) or is_last_block:\nLine 51: current_pre = post_condition",
+  "reason": "The code processes all blocks sequentially even after encountering a terminating statement. If a block contains a return satisfying the specification, but an unreachable subsequent block would violate the specification, the analysis incorrectly checks the dead code and flags a violation. According to the specification, only reachable states should be considered; the function should not report a violation caused by unreachable code."
+}

@@ -1,0 +1,98 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a string path to the project root directory
+  - work_dir is a string path to the fm_agent workspace directory
+  - attempt is a positive integer: 1 for initial run, >1 for retry
+  - phase_num and layer_idx identify the phase and layer of the batch
+  - batch_rel_dir is the relative directory path containing the batch prompt file
+  - batch_info is a dict containing at minimum the key "file" whose value is the batch prompt filename; it may also contain a "functions" key whose value is a list of extracted function file paths relative to the project root
+
+Code block:
+```python
+Line 1: def _run_spec_generation_batch(
+Line 2:     proj_dir,
+Line 3:     work_dir,
+Line 4:     attempt,
+Line 5:     phase_num,
+Line 6:     layer_idx,
+Line 7:     batch_rel_dir,
+Line 8:     batch_info,
+Line 9: ):
+Line 10:     # Run one batch end-to-end so the executor can refill slots as soon as a
+Line 11:     # batch finishes, instead of waiting for a whole chunk barrier.
+Line 12:     batch_file = batch_info["file"]
+Line 13:     batch_prompt_rel = os.path.join(batch_rel_dir, batch_file)
+Line 14:     function_files = batch_info.get("functions", [])
+Line 15:     function_ids = [
+Line 16:         function_id_from_extracted_path(func_rel)
+Line 17:         for func_rel in function_files
+Line 18:     ]
+Line 19:     fm_reminder = ("IMPORTANT: fm_agent/ is your output workspace, not project source. "
+Line 20:                     "Do NOT modify any existing project files.")
+Line 21:     if attempt == 1:
+Line 22:         prompt = (
+Line 23:             f"Process the batch prompt file at {batch_prompt_rel}. "
+Line 24:             f"Read it and fm_agent/spec_prompts/system_prompt.md, "
+Line 25:             f"generate behavioral specs for each function listed, "
+Line 26:             f"and write the complete specced files directly. {fm_reminder}"
+Line 27:         )
+Line 28:     else:
+Line 29:         prompt = (
+Line 30:             f"Continue processing the batch prompt file at {batch_prompt_rel}. "
+Line 31:             f"Some functions may already have specs from a previous attempt. "
+Line 32:             f"Check each function file — only generate specs for those "
+Line 33:             f"that don't have [SPEC] blocks yet. "
+Line 34:             f"Read fm_agent/spec_prompts/system_prompt.md for the format rules. {fm_reminder}"
+Line 35:         )
+Line 36:     prompt_file = os.path.join(proj_dir, "fm_agent", "workflow_spec_step4_batch.md")
+Line 37:     command = build_llm_cli_command(
+Line 38:         model=OPENCODE_SPEC_MODEL,
+Line 39:         prompt=prompt,
+Line 40:         cwd=proj_dir,
+Line 41:         files=[prompt_file],
+Line 42:     )
+Line 43:     try:
+Line 44:         result = run_opencode_traced(
+Line 45:             proj_dir=proj_dir,
+Line 46:             work_dir=work_dir,
+Line 47:             command=command,
+Line 48:             stage="spec_generation",
+Line 49:             function_ids=function_ids,
+Line 50:             input_files=[
+Line 51:                 "fm_agent/workflow_spec_step4_batch.md",
+Line 52:                 batch_prompt_rel,
+Line 53:                 "fm_agent/spec_prompts/system_prompt.md",
+Line 54:                 *list_staged_domain_knowledge_relpaths(work_dir),
+Line 55:             ],
+Line 56:             output_files=function_files,
+Line 57:             summary=f"OpenCode spec generation for {batch_file}",
+Line 58:             metadata={
+Line 59:                 "attempt": attempt,
+Line 60:                 "phase": phase_num,
+Line 61:                 "layer": layer_idx,
+Line 62:                 "batch_file": batch_file,
+Line 63:             },
+Line 64:         )
+Line 65:         return result.returncode
+Line 66:     except subprocess.CalledProcessError as exc:
+Line 67:         return exc.returncode
+```
+
+Additional context:
+function_id_from_extracted_path(func_rel) -> str
+Pre-condition: func_rel is a relative path to an extracted function file, using "/" separators
+  Post-condition: Returns the fully-qualified function name (FQN) derived by replacing the file extension separator with "::" and joining all path components with "::"
+
+build_llm_cli_command(model, prompt, cwd, files) -> list[str]
+Pre-condition: model is a model identifier string; prompt is the instruction text; cwd is the working directory; files is an optional list of file paths to include as context
+  Post-condition: Returns a CLI argument list that, when executed, invokes the configured LLM backend with the given model, prompt, working directory, and context files
+
+run_opencode_traced(proj_dir, work_dir, command, stage, function_ids, input_files, output_files, summary, metadata) -> CompletedProcess
+Pre-condition: command is a CLI argument list; stage identifies the pipeline stage; function_ids, input_files, output_files are optional lists; summary and metadata are optional
+  Post-condition: Executes command as a subprocess with timeout handling; writes a structured trace event recording start/end time, exit status, metadata, and file references; returns a CompletedProcess with the exit code
+
+list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+Pre-condition: work_dir is a string path to the fm_agent workspace directory
+  Post-condition: Returns a sorted list of project-relative paths (using "/" separators) of all domain knowledge files staged under spec_prompts/domain_context/user_knowledge/
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

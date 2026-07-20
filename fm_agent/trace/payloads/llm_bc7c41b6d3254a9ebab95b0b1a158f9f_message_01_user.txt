@@ -1,0 +1,35 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def parse_args() -> argparse.Namespace:
+Line 2:     parser = argparse.ArgumentParser(description="Generate spec batch prompts for one phase/layer range.")
+Line 3:     parser.add_argument("--phase", type=int, required=True, help="Phase number, e.g. 3")
+Line 4:     parser.add_argument("--layers", required=True, help="Layer index or inclusive range, e.g. 0 or 0-5")
+Line 5:     parser.add_argument("--batch-size", type=int, default=2, help="Functions per prompt file")
+Line 6:     parser.add_argument("--output-dir", default=None, help="Output directory for batch prompt files")
+Line 7:     parser.add_argument("--dry-run", action="store_true", help="Show plan without writing files")
+Line 8:     parser.add_argument(
+Line 9:         "--resume",
+Line 10:         action="store_true",
+Line 11:         help="Skip functions already specced (file_utils.is_file_ready) when building batches",
+Line 12:     )
+Line 13:     return parser.parse_args()
+```
+
+Condition A (what the code actually does):
+If the command-line arguments in sys.argv are valid according to the defined argument specification, the function returns an argparse.Namespace object containing the following attributes: 'phase' (int), 'layers' (str), 'batch_size' (int, default 2), 'output_dir' (str or None, default None), 'dry_run' (bool, default False), and 'resume' (bool, default False). The returned namespace values correspond to the parsed command-line arguments after applying any type conversions and defaults. If the arguments are invalid (e.g., missing required arguments, type conversion failures), argparse will raise a SystemExit exception (via parser.error() or similar), causing the program to terminate, and no Namespace is returned. In formal terms, let ArgsValid denote that sys.argv[1:] satisfy the parser's expected syntax: '--phase' with an int, '--layers' with a string of the form '<int>' or '<int>-<int>', optional '--batch-size' with an int, optional '--output-dir' with a string, optional '--dry-run' (flag), and optional '--resume' (flag). Then the function ensures: ArgsValid ⇒ (∃ ns ∈ Namespace s.t. ns.phase: int ∧ ns.layers: str ∧ ns.batch_size: int ∧ ns.output_dir: str ∨ None ∧ ns.dry_run: bool ∧ ns.resume: bool) ∧ (¬ArgsValid ⇒ SystemExit is raised and no return value). Additionally, the function has no side effects on global or external state other than possibly writing to stderr during error handling (via argparse). The argparse parser itself is a local variable and does not persist beyond the function call.
+
+Condition B (what the specification requires):
+- Returns an argparse.Namespace with attributes: phase (int), layers (str),
+    batch_size (int), output_dir (str | None), dry_run (bool), resume (bool)
+  - phase is the integer value of the required --phase argument
+  - layers is the raw string value of the required --layers argument
+  - batch_size is an integer parsed from --batch-size; defaults to 2 when absent
+  - output_dir is the string value of --output-dir; None when absent
+  - dry_run is True when --dry-run is present, False otherwise
+  - resume is True when --resume is present, False otherwise
+  - If a required argument (--phase, --layers) is missing or a type conversion
+    fails (e.g., --phase given a non-integer), raises SystemExit with exit code 2
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

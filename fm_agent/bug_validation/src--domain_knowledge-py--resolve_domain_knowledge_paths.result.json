@@ -1,0 +1,11 @@
+{
+  "id": "src--domain_knowledge-py--resolve_domain_knowledge_paths",
+  "source_file": "src/domain_knowledge-py/resolve_domain_knowledge_paths.py",
+  "function_name": "resolve_domain_knowledge_paths",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--resolve_domain_knowledge_paths.py",
+  "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--resolve_domain_knowledge_paths.md",
+  "probe_stdout": "CONFIRMED — ValueError raised instead of excluding invalid entry: domain knowledge file does not exist: nonexistent_markdown_file.md\n",
+  "trigger_summary": "Passing a non-existent file path causes a ValueError instead of silently excluding it from the returned list."
+}

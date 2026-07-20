@@ -1,0 +1,116 @@
+Programming language: Python
+
+Pre-condition:
+- ev is a dict parsed from a single JSONL trace event, containing at
+    minimum the string keys "type", "stage", and "status".
+  - ev may optionally contain "start_time" and "end_time" as ISO 8601
+    timestamp strings, "summary" as a string, and "metadata" as a dict.
+  - self is an initialized State with aggregate counters (stage_counts,
+    totals, cost_native, verification_success, verification_mismatch,
+    verification_error), time tracking (first_event_time, last_event_time),
+    a cache-hit-rate window (cache_window), a model tracker (model_seen),
+    and activity histories.
+  - All numeric accumulators are initialized to zero or None (for
+    first/last); defaultdicts are seeded to produce integer counters.
+
+Code block:
+```python
+Line 1:     def _ingest_event(self, ev):
+Line 2:         et = ev.get("type")
+Line 3:         stage = ev.get("stage", "?")
+Line 4:         status = ev.get("status", "?")
+Line 5:         start = _parse_iso(ev.get("start_time"))
+Line 6:         end = _parse_iso(ev.get("end_time"))
+Line 7:         if start and (self.first_event_time is None or start < self.first_event_time):
+Line 8:             self.first_event_time = start
+Line 9:         if end and (self.last_event_time is None or end > self.last_event_time):
+Line 10:             self.last_event_time = end
+Line 11:         self.stage_counts[stage][status] += 1
+Line 12:         if et == "llm_call":
+Line 13:             md = ev.get("metadata", {})
+Line 14:             model = md.get("model")
+Line 15:             if model and not self.model_seen:
+Line 16:                 self.model_seen = model
+Line 17:             usage = md.get("usage") or {}
+Line 18:             if usage:
+Line 19:                 # Anthropic-native shape (from new llm_client)
+Line 20:                 inp = usage.get("input_tokens", 0) or 0
+Line 21:                 out = usage.get("output_tokens", 0) or 0
+Line 22:                 cr = usage.get("cache_read_input_tokens", 0) or 0
+Line 23:                 cw = usage.get("cache_creation_input_tokens", 0) or 0
+Line 24:                 if not any([inp, out, cr, cw]):
+Line 25:                     # OpenAI shape (svip compat path or older runs)
+Line 26:                     inp = usage.get("prompt_tokens", 0) or 0
+Line 27:                     out = usage.get("completion_tokens", 0) or 0
+Line 28:                     # DeepSeek reports cache as flat fields; prompt_tokens is the
+Line 29:                     # TOTAL (hit + miss). Split into disjoint in:new / in:read.
+Line 30:                     hit = usage.get("prompt_cache_hit_tokens")
+Line 31:                     if hit is not None:
+Line 32:                         cr = hit
+Line 33:                         inp = usage.get("prompt_cache_miss_tokens", inp - hit)
+Line 34:                 self.totals["input"] += inp
+Line 35:                 self.totals["output"] += out
+Line 36:                 self.totals["cache_read"] += cr
+Line 37:                 self.totals["cache_write"] += cw
+Line 38:                 self.cost_native += _cost_from_usage(model, usage)
+Line 39:                 total_in = inp + cr + cw
+Line 40:                 if total_in > 0:
+Line 41:                     self.cache_window.append((cr, total_in))
+Line 42:             if status == "success" and md.get("purpose") == "check_post_implies_spec":
+Line 43:                 self.verification_success += 1
+Line 44:             elif status == "mismatch":
+Line 45:                 self.verification_mismatch += 1
+Line 46:             elif status == "error":
+Line 47:                 self.verification_error += 1
+Line 48:             summary = ev.get("summary") or md.get("purpose") or "llm_call"
+Line 49:             self._push_recent(end or start, stage, status, summary)
+Line 50:             self._push_llm_status(
+Line 51:                 ts=end or start,
+Line 52:                 source="direct",
+Line 53:                 label=md.get("purpose") or summary,
+Line 54:                 status=status,
+Line 55:                 model=model,
+Line 56:                 code=_llm_code_for_event(status),
+Line 57:                 detail=md.get("error"),
+Line 58:             )
+Line 59:         elif et == "opencode_call":
+Line 60:             summary = ev.get("summary") or "opencode_call"
+Line 61:             self._push_recent(end or start, stage, status, summary)
+```
+
+Additional context:
+_parse_iso(timestamp_str) -> Optional[datetime]
+Pre-condition: timestamp_str is a string or None.
+  Post-condition: Returns a timezone-aware datetime parsed from an
+    ISO 8601 string; returns None when timestamp_str is falsy or
+    cannot be parsed as a valid timestamp.
+
+_cost_from_usage(model, usage) -> float
+Pre-condition: model is a string or None; usage is a dict containing
+    token-count fields (input_tokens, output_tokens,
+    cache_read_input_tokens, cache_creation_input_tokens).
+  Post-condition: Returns the monetary cost in USD computed from the
+    model's per-token pricing and the token counts in usage.
+    Returns 0.0 when model is None or pricing data for the model is
+    unavailable.
+
+State._push_recent(self, ts, stage, status, summary) -> None
+Pre-condition: ts is a datetime or None; stage, status, and summary
+    are strings.
+  Post-condition: A record containing the given fields is appended to
+    the recent-event history, bounded to a fixed maximum length
+    (oldest entries evicted when at capacity).
+
+State._push_llm_status(self, ts, source, label, status, model, code, detail) -> None
+Pre-condition: ts is a datetime or None; source, label, status,
+    model, code, and detail are strings or None.
+  Post-condition: A record containing the given fields is appended to
+    the LLM-status history, bounded to a fixed maximum length
+    (oldest entries evicted when at capacity).
+
+_llm_code_for_event(status) -> str
+Pre-condition: status is a string.
+  Post-condition: Returns a non-empty status-code string derived from
+    status; returns an error-type code (e.g., "ERR") when status
+    does not correspond to any known success or mismatch value.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

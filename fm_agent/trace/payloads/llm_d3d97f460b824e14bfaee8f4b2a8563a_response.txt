@@ -1,0 +1,3 @@
+{
+  "post_condition": "If self.bug_dir does not exist at the start of the method, then self.bugs_confirmed = 0, self.bugs_not_confirmed = 0, and self.bugs_pending remains unchanged. Otherwise, let F be the set of paths in self.bug_dir.glob('*.result.json') for which open and json.load succeed without raising an Exception. For each f in F, let S(f) = (json.load(f).get('confirmation_status') or '').lower(). Define C = { f in F | 'confirm' in S(f) and 'not' not in S(f) }. Then self.bugs_confirmed = |C|, self.bugs_not_confirmed = |F \\ C|, and self.bugs_pending = max(0, sum(self.stage_counts.get('bug_validation', {}).values()) - (self.bugs_confirmed + self.bugs_not_confirmed)). No other attributes are modified."
+}

@@ -1,0 +1,20 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _is_workspace_file(rel_path):
+Line 2:         norm = rel_path.replace("\\", "/")
+Line 3:         return norm == "fm_agent" or norm.startswith("fm_agent/")
+```
+
+Condition A (what the code actually does):
+The function _is_workspace_file returns a boolean value. Let norm be the string obtained by replacing all occurrences of the backslash character '\' in rel_path with a forward slash '/'. The function returns True if and only if norm == 'fm_agent' or norm.startswith('fm_agent/'); otherwise it returns False. No exceptions are raised, and no other state is modified. Formally: (return = True) ↔ (norm = 'fm_agent' ∨ prefix(norm, 'fm_agent/')), where norm = replace(rel_path, '\\', '/').
+
+Condition B (what the specification requires):
+- Returns True when rel_path, after normalizing all path separators to '/', equals
+    exactly "fm_agent" or begins with "fm_agent/"
+  - Returns False for all other paths, including paths that contain "fm_agent" as a
+    substring that is not a leading path component (e.g., "src/fm_agent_utils/file.py")
+  - The result is independent of whether the input uses '\' or '/' as the path separator
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

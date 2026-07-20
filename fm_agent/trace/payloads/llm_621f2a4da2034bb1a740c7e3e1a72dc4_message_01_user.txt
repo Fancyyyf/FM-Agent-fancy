@@ -1,0 +1,32 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _locate_workdir(proj_dir):
+Line 2:     """Resolve which fm_agent workdir to monitor.
+Line 3:     Accepts either:
+Line 4:       - A project root: dashboard looks for <root>/fm_agent/ (the live workspace).
+Line 5:       - A workspace directly (any name like fm_agent.opus_partial_*): detected
+Line 6:         by the presence of a `trace/` subdir, used as-is.
+Line 7:     """
+Line 8:     p = Path(proj_dir).resolve()
+Line 9:     if (p / "trace").is_dir():
+Line 10:         return p
+Line 11:     return p / "fm_agent"
+```
+
+Condition A (what the code actually does):
+The function returns a pathlib.Path object. Let p = Path(proj_dir).resolve(). If (p / 'trace') is an existing directory, the return value is p; otherwise, it is p / 'fm_agent'. The returned path is absolute.
+
+Condition B (what the specification requires):
+- Returns a Path to the fm_agent workspace directory to monitor for
+    the given project directory
+  - When the resolved absolute path of proj_dir is itself an fm_agent
+    workspace (identified by the presence of trace output data within
+    that directory), returns that resolved path verbatim
+  - Otherwise, returns the resolved absolute path of proj_dir with
+    "fm_agent" appended as a child path component
+  - The caller is responsible for verifying that the returned path
+    exists or for creating any missing parent directories
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

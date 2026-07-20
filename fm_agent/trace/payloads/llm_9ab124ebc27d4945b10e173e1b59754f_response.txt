@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "self._proc is a subprocess.Popen instance running a long-living process. When the initial wait of 5 seconds times out, proc.terminate() is called. If the process has just exited (e.g., due to the previously sent shutdown request eventually taking effect), the terminate() call can raise an OSError (e.g., ProcessLookupError on Unix). This exception is not caught and will propagate to the caller.",
+  "offending_statements": "Line 18: proc.terminate()\nLine 22: proc.kill()",
+  "reason": "The specification requires that no exception raised during any shutdown or cleanup step propagates to the caller. The code catches exceptions from self.request, self.notify, the two proc.wait calls, and stream-close OSErrors, but it does not catch exceptions from proc.terminate() or proc.kill(). If either of those calls fails, the exception will leak out, violating the specification."
+}

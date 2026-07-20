@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/function_spans.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- When the Erlang Language Platform (ELP) backend is available and has indexed\n    filepath, returns a list of (func_name, start_line, end_line) tuples for every\n    function definition found in the file\n  - start_line and end_line are 0-based inclusive line numbers within the file\n  - Returns None when the ELP backend is unavailable or filepath has not been\n    indexed, signaling the caller to fall back to a regex-based extractor\n  - The returned list is empty when filepath contains no function definitions and\n    the backend is available",
+    "actual_behavior": "The function computes path = os.path.abspath(filepath) and returns _analysis_or_empty(proj_dir).spans.get(path). The return value is either a list of (func_name: str, start_line: int, end_line: int) tuples, each representing a function's 0based inclusive sourceline span, or None if the path is not present in the spans mapping. Formally: let  p = os.path.abspath(filepath),  s = _analysis_or_empty(proj_dir).spans.  Then result = s.get(p).  result is None  (result is a list   t  result : t = (name, start, end)  name is str  start, end    start  end).",
+    "code_evidence": "Line 4: return _analysis_or_empty(proj_dir).spans.get(path)",
+    "trigger_condition": "When the ELP backend is available and a file has been indexed but contains no function definitions, the specification requires returning an empty list. However, the code returns None because the spans dictionary may lack an entry for that file (it only stores files that have at least one function). The .get call returns None in that case, violating the required empty-list response."
+  }
+}

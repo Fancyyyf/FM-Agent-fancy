@@ -1,0 +1,39 @@
+Programming language: Python
+
+Pre-condition:
+- model is a non-empty string identifying a configured LLM model
+  - prompt is a non-empty string
+  - cwd is a path to an existing directory
+  - files is either None or a list of file path strings (may be empty)
+
+Code block:
+```python
+Line 1: def build_llm_cli_command(model, prompt, cwd, files=None):
+Line 2:     """Build the configured CLI command for a file-oriented LLM task.
+Line 3:     The pipeline supports the configurable Codex/Claude agent backends as well
+Line 4:     as the legacy ``opencode run`` backend. Keeping that choice here ensures
+Line 5:     every caller passes files and prompts with the same command-line shape.
+Line 6:     """
+Line 7:     if is_cli_backend_enabled():
+Line 8:         return build_agent_command(model=model, prompt=prompt, cwd=cwd, files=files)
+Line 9:     command = ["opencode", "run", "--model", f"{OPENCODE_MODEL_PROVIDER}/{model}"]
+Line 10:     for file_path in files or []:
+Line 11:         command.extend(["--file", file_path])
+Line 12:     return command + ["--", prompt]
+```
+
+Additional context:
+is_cli_backend_enabled() -> bool
+Pre-condition: the backend configuration has been loaded and its
+    module-level state is initialized
+  Post-condition: returns True when a direct CLI backend (Codex or Claude)
+    is configured; returns False when the OpenCode backend is configured
+
+build_agent_command(model, prompt, cwd, files) -> list[str]
+Pre-condition: model is a non-empty string identifying an LLM model;
+    prompt is a non-empty string; cwd is a path to an existing directory;
+    files is None or a list of file path strings
+  Post-condition: returns a CLI argument list formatted for the configured
+    agent CLI backend that, when executed, invokes the model with the given
+    prompt, working directory, and file attachments
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

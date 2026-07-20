@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_prepare_workflow_file",
+  "source_file": "src/pipeline_setup-py/_prepare_workflow_file.py",
+  "function_name": "_prepare_workflow_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_prepare_workflow_file.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_prepare_workflow_file.md",
+  "probe_stdout": "CONFIRMED — replacement failed: instruction still contains 'repo root' instead of project root. Source used hyphen '-', code matches only em-dash '—'.\n",
+  "trigger_summary": "The source_files instruction rewrite uses a hard-coded em-dash (—) that fails to match source files using a regular hyphen (-), silently leaving the instruction unchanged."
+}

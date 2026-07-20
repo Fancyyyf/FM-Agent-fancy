@@ -1,0 +1,119 @@
+Phase 2 — Function Extraction & Call Graph Construction
+=========================================================
+
+This phase extracts individual functions from source files, parses them into structured
+representations, and constructs inter-procedural call graphs. It also handles [SPEC] and
+[INFO] annotations in extracted function files.
+
+Key Types and Structs
+---------------------
+
+LANG_CONFIG (src/extract.py):
+  Dict keyed by language key ("cpp", "c", "python", "go", "rust", "java",
+  "typescript", "javascript", "erlang", "cuda", "arkts"), each entry:
+  - comment_prefix: str       # "//", "#", or "%"
+  - spec_marker: str          # e.g. "// [SPEC]", "# [SPEC]", "% [SPEC]"
+  - skip_prefixes: tuple      # line-start patterns to skip during extraction
+  - skip_keywords_line: tuple # keywords whose leading lines skip entire construct
+  - keywords: set             # language keywords (excluded from call-site detection)
+  - body: "brace" | "indent" | "external"
+      "brace" → C-family languages (detect matching {} pairs)
+      "indent" → Python (detect indentation-based block boundaries)
+      "external" → Erlang (semantic-only, codegraph-backed)
+
+EXT_TO_LANG (src/extract.py):
+  Maps file extension → language key:
+  "cpp","cc","cxx"→"cpp", "c"→"c", "h","hpp"→"cpp",
+  "py"→"python", "erl"→"erlang", "go"→"go", "rs"→"rust",
+  "java"→"java", "ts","tsx"→"typescript", "js","jsx"→"javascript",
+  "cu","cuh"→"cuda", "ets"→"arkts"
+
+Extracted Function Layout:
+  Each source file <src_dir>/<base>.<ext> produces a directory:
+  extracted_functions/<src_dir>/<base>-<ext>/
+  containing one file per function named <func_name>.<ext>
+  where <func_name> is canonicalized (angle-bracket template params stripped,
+  operator overloads normalized). Duplicate names get _1, _2 suffixes.
+
+  Example: src/engine/loader.cpp containing functions load() and save()
+  → extracted_functions/src/engine/loader-cpp/load.cpp
+  → extracted_functions/src/engine/loader-cpp/save.cpp
+
+LanguageHandler (src/languages/registry.py):
+  @dataclass
+  - batch_extract: Callable   # (proj_dir) → {abs_filepath: [(func_name, body)]}
+  - call_edges: Callable      # (proj_dir) → {caller_fqn: {callee_fqns}}
+  - function_spans: Callable  # (proj_dir, filepath) → [(func_name, start, end)] | None
+    Returns None when backend unavailable → caller falls back to regex extractor.
+
+REGISTRY (src/languages/registry.py):
+  Dict mapping language key → LanguageHandler for: python, go, c, cpp, java, rust,
+  javascript, typescript, erlang.
+
+CallEdge (src/call_graph_edges.py):
+  @dataclass(frozen=True)
+  - caller: CallerSelector
+  - callee: CalleeTarget
+  - source: str           # origin of the edge (file path or evidence summary)
+
+CallerSelector (src/call_graph_edges.py):
+  @dataclass(frozen=True)
+  - fqn: str              # exact caller FQN (may be empty)
+  - callsite_names: tuple[str, ...]  # source callsite tokens
+  At least one of fqn or callsite_names must be non-empty.
+
+CalleeTarget (src/call_graph_edges.py):
+  @dataclass(frozen=True)
+  - fqn: str              # exact callee FQN (required, non-empty)
+  - info_names: tuple[str, ...]  # names for [INFO] block matching
+
+Extra-edge JSON format:
+  {"edges": [{"caller": {"fqn": ..., "callsite_names": [...]},
+              "callee": {"fqn": ..., "info_names": [...]},
+              "evidence": [...]}]}
+
+FQN Normalization (src/call_graph_edges.py):
+  "path/to/file.c::func" → "path::to::file-c::func"
+  The source file base "file.c" becomes the directory component "file-c".
+
+parse_input_function (src/parser.py):
+  Parses a specced extracted function file into three parts:
+  - func: str       # function body with line numbers (comments stripped)
+  - nl_spec: str    # content between [SPEC] markers
+  - knowledge: FunctionSpecMap  # callee specs from [INFO] block
+
+FunctionSpecMap (src/parser.py):
+  dict subclass mapping function_name → spec text, plus:
+  - signatures: dict[str, str]  # function_name → signature line
+
+Function Signatures (Entry Points)
+----------------------------------
+
+src/extract.py:
+  extract_functions_from_file(filepath, lang_key) → [(function_name, source_text)]
+    Regex-based extraction for a single file with fallback support.
+  run_extraction(proj_dir, work_dir=None, force=False, verbose=False) → (written, skipped)
+    Batch extraction driven by phases.json. Uses codegraph registry when available,
+    falls back to regex extractor.
+  _function_spans(filepath, lang_key, proj_dir=None) → ([(name, start, end)], raw_lines)
+    Returns function line ranges, codegraph-backed when proj_dir indexes the file.
+
+src/languages/registry.py:
+  batch_extract_all(proj_dir) → ({abs_path: [(name, body)]}, {lang_keys_that_returned_data})
+  function_spans_for_file(proj_dir, filepath, lang_key) → [(name, start, end)] | None
+  call_edges_all(proj_dir, lang_keys) → ({caller_fqn: {callee_fqns}}, {handled_lang_keys})
+
+src/call_graph_edges.py:
+  load_call_edges(path) → list[CallEdge]
+    Loads supplemental edges from a JSON file or directory of JSON files.
+
+Invariants
+----------
+- Each extracted function file contains exactly one function (validation check).
+- FQN is stable: derived deterministically from file path, canonicalized name,
+  and dedup suffix.
+- Codegraph registry backends are authoritative for their languages; regex is a fallback.
+- Supplemental edges only apply when callee.fqn matches an extracted function.
+- Test files are excluded from extraction (via _is_test_file heuristics).
+- Incremental re-extraction skips files that already have [SPEC] and [INFO] blocks
+  (checked via is_file_ready: ≥2 [SPEC] markers AND ≥2 [INFO] markers).

@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_callgraph_project_root",
+  "source_file": "src/languages/erlang-py/_callgraph_project_root.py",
+  "function_name": "_callgraph_project_root",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_callgraph_project_root.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_callgraph_project_root.md",
+  "probe_stdout": "CONFIRMED — actual: '/tmp/bug_probe_p0y79qdo/parent/workspace' | expected: '/tmp/bug_probe_p0y79qdo/parent'\n  Trigger: .erl file at '/tmp/bug_probe_p0y79qdo/parent/test/dummy.erl' inside _SKIP_DIRS directory 'test'\n  was not found by _iter_project_files, so _callgraph_project_root\n  returned proj_dir instead of parent.\n",
+  "trigger_summary": "_callgraph_project_root returns proj_dir instead of parent when the only .erl files in the parent reside inside a _SKIP_DIRS directory (e.g., test/), because _iter_project_files silently skips those directories."
+}

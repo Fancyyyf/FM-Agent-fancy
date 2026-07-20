@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a directory path.
+  - submodules is None or a non-empty list of subdirectory name strings.
+
+Code block:
+```python
+Line 1: def _has_source_code(proj_dir, submodules=None):
+Line 2:     """Check whether proj_dir contains at least one source code file."""
+Line 3:     for _ in _iter_project_source_files(proj_dir, submodules):
+Line 4:         return True
+Line 5:     return False
+```
+
+Additional context:
+_iter_project_source_files(proj_dir, submodules=None) -> Iterator[str]
+Pre-condition: proj_dir is a directory path; submodules is None or a non-empty list
+    of subdirectory name strings.
+  Post-condition: yields every project-relative file path (using "/" separators) under
+    proj_dir whose extension matches a pipeline-supported language, optionally scoped
+    to the submodules tree(s) when submodules is provided; directories whose names begin
+    with "." and well-known build/package directories are excluded from traversal.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

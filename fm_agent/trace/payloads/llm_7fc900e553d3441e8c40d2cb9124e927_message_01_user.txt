@@ -1,0 +1,20 @@
+Programming language: Python
+
+Pre-condition:
+- code is an integer, string, or None, representing an HTTP-style
+    status code from a trace event
+  - status is a string or None, representing the "status" field of a
+    trace event
+
+Code block:
+```python
+Line 1: def _llm_status_style(code, status):
+Line 2:     text = str(code or status or "?")
+Line 3:     if text == "200" or status in ("success", "mismatch"):
+Line 4:         return "green", "200"
+Line 5:     if status == "format_error" or text.startswith("4") or text == "FMT":
+Line 6:         return "yellow", text
+Line 7:     return "red", text
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

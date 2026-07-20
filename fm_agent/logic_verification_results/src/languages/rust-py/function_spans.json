@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/rust-py/function_spans.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- If codegraph is available and indexes filepath: returns a list of\n    (function_name, start_line, end_line) tuples, one per top-level function\n    declared in the file. Each start_line and end_line is a 0-indexed\n    inclusive line number bounding the function's source span.\n  - If filepath contains no top-level function declarations: returns an\n    empty list.\n  - If codegraph is unavailable or does not index filepath: returns None.\n    A None return signals the caller to fall back to regex-based extraction.",
+    "actual_behavior": "The function returns either None (if the CodeGraphExtractor cannot be initialized for the project) or a list of tuples `(name: str, start_idx: int, end_idx: int)` for each top-level Rust function in `filepath`, where `start_idx` and `end_idx` are 0indexed inclusive line numbers. No side effects occur. Formally: let `cg = CodeGraphExtractor.from_proj_dir(proj_dir)`; then `(cg = None  result = None)  (cg  None  result = cg.get_function_spans(\"rust\", filepath)  result is a list of (name, start_idx, end_idx) with 0-indexed inclusive line indices)`. The preconditions of `get_function_spans` are satisfied because `\"rust\"` is a supported language and `filepath` lies within the project indexed by `cg`.",
+    "code_evidence": "Line 8: return cg.get_function_spans(\"rust\", filepath) if cg else None",
+    "trigger_condition": "When codegraph is available (cg != None) but the given filepath is not indexed (e.g., lies outside the project), the specification requires returning None. The code unconditionally calls cg.get_function_spans for any filepath, which can return a non-None value (such as an empty list) or raise an exception, violating the required None return."
+  }
+}

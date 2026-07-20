@@ -1,0 +1,34 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _callgraph_project_root(proj_dir: str) -> str:
+Line 2:     """Resolve a pipeline workspace back to the original source-project root."""
+Line 3:     root = os.path.abspath(proj_dir)
+Line 4:     if not os.path.isdir(os.path.join(root, "extracted_functions")):
+Line 5:         return root
+Line 6:     parent = os.path.dirname(root)
+Line 7:     if parent == root:
+Line 8:         return root
+Line 9:     # The parent scan ignores fm_agent via _SKIP_DIRS, so only original project
+Line 10:     # sources qualify; extracted function files cannot trigger this redirect.
+Line 11:     if next(_iter_project_files(parent, {".erl"}), None) is not None:
+Line 12:         return parent
+Line 13:     return root
+```
+
+Condition A (what the code actually does):
+Let `R = os.path.abspath(proj_dir)`. Let `HAS_EF = os.path.isdir(os.path.join(R, 'extracted_functions'))`. Let `P = os.path.dirname(R)`. Let `HAS_ERL = (next(_iter_project_files(P, {'.erl'}), None) is not None)`, where `_iter_project_files` yields absolute paths of files under `P` (recursively) with extension `.erl`, ignoring directories whose name appears in the global set `_SKIP_DIRS`. The function returns a string `result` such that: if `not HAS_EF` then `result == R`; else (`HAS_EF` is true), if `P == R` then `result == R`, else if `HAS_ERL` then `result == P`, else `result == R`. In all cases, `result` is the absolute path of either `proj_dir` or its immediate parent directory. The function does not modify the filesystem, raise exceptions under the given pre-condition, or have any other observable effect.
+
+Condition B (what the specification requires):
+- Returns the absolute, normalized path to the original source-project root directory
+  - If proj_dir does not contain an "extracted_functions" subdirectory, returns abspath(proj_dir)
+  - If proj_dir is the filesystem root (parent directory resolves to itself), returns abspath(proj_dir)
+  - If proj_dir contains "extracted_functions" and is not the filesystem root, and the parent directory contains at least one Erlang source file (.erl extension), returns the parent directory of proj_dir
+  - If proj_dir contains "extracted_functions" and is not the filesystem root, but the parent directory contains no Erlang source files, returns abspath(proj_dir)
+
+Additional context:
+_iter_project_files(dir: str, extensions: set[str]) -> Iterator[str]
+Pre-condition: dir is a valid filesystem path to an existing directory; extensions is a non-empty set of file extensions each prefixed with a dot
+  Post-condition: Yields absolute paths to files under dir (recursively) whose extensions are in extensions, skipping any path that contains a directory whose name is in _SKIP_DIRS
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

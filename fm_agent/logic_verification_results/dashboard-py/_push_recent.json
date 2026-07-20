@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/_push_recent.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- A 4-tuple (when_str, stage, status, summary) is present at the most\n    recently added position of self.recent_events, where when_str is the\n    \"HH:MM:SS\"-formatted string of ts if ts is not None, or \"\" (empty\n    string) if ts is None.\n  - If self.recent_events was at maximum capacity before the call, the\n    chronologically oldest entry is evicted.\n  - Every other entry in self.recent_events retains its relative\n    insertion order (all existing entries shift one position toward\n    the eviction boundary).\n  - self.recent_events does not grow beyond its fixed capacity.\n  - No value other than recent_events of self is modified.",
+    "actual_behavior": "The recent_events deque now has at its front (index 0) the tuple (when, stage, status, summary), where when is ts.strftime(\"%H:%M:%S\") if ts is not None else \"\". If the deque was at maximum capacity before the operation, the oldest element (the rightmost) has been removed; otherwise its size has increased by one. All other attributes of self remain unchanged. Formally, let L be the previous length of recent_events and M be its fixed maximum capacity. Then len(recent_events) = min(L+1, M). recent_events[0] = (when, stage, status, summary). For 1 <= i < min(L+1, M), recent_events[i] = old recent_events[i-1]. All other parts of self's state are preserved.",
+    "code_evidence": "Line 2:         when = ts.strftime(\"%H:%M:%S\") if ts else \"\"",
+    "trigger_condition": "The specification requires that when_str be the formatted string if ts is not None, regardless of its truth value. The code uses 'if ts', which treats any falsy nonNone object as None and produces an empty string, violating the spec for ts values that are not None but evaluate to False."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "order_index = {'moduleA': 5}, call _order_key('moduleB') which is not in order_index. Condition A returns (1, 'moduleB') because len(order_index)=1. For comparison, _order_key('moduleA') returns (5, 'moduleA'). Sorting these two keys places (1, 'moduleB') before (5, 'moduleA'), so the absent FQN sorts before the present one, violating the requirement 'Any FQN not present in order_index sorts after all FQNs that are present in order_index.'",
+  "offending_statements": "Line 2:     return (order_index.get(fqn, len(order_index)), fqn)",
+  "reason": "The default for absent keys is len(order_index), which can be smaller than the integer value stored for some present key. The specification requires that absent entries sort after all present entries, but if order_index contains a value >= len(order_index), the tuple ordering makes the absent entry appear first, breaking the guarantee."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "phases_json points to a file containing a valid JSON array, e.g., [].",
+  "offending_statements": "Line 13: for phase in data.get(\"phases\", []):",
+  "reason": "The specification states that if the JSON is valid and contains no phase numbers, the function should return an empty dict. The code does not verify that `data` is a dictionary before calling `.get()`, so a valid JSON array causes an unhandled `AttributeError` instead of returning `{}`."
+}

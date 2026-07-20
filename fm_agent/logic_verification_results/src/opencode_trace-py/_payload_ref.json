@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/opencode_trace-py/_payload_ref.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a relative path string from trace_dir to path, resolving to the file\n    or directory identified by path when combined with trace_dir\n  - The returned path is suitable for use as a content reference in a trace event\n    payload",
+    "actual_behavior": "After execution of _payload_ref(trace_dir, path):\n- If the function returns normally, the return value is a string r such that r == os.path.relpath(path, os.path.dirname(trace_dir)). This string is the relative filesystem path from the parent directory of trace_dir to path.\n- If the function raises an exception, it is a ValueError (or, rarely, an OSError derived from path manipulation) because the relative path cannot be computed (e.g., path and the start directory reside on different Windows drives and no relative path exists).\n\nFormal logic:\n( returns(r)  r = relpath(path, dirname(trace_dir)) )  ( raises(e)  (e is ValueError)  (e is OSError) )",
+    "code_evidence": "Line 2: return os.path.relpath(path, os.path.dirname(trace_dir))",
+    "trigger_condition": "The specification requires a relative path computed from trace_dir to path. The code computes the relative path from the parent directory of trace_dir (os.path.dirname(trace_dir)) instead. For the given inputs, the code returns 'tmp/foo', but the correct relative path from '/tmp' to '/tmp/foo' is 'foo'. Joining the return value with trace_dir yields '/tmp/tmp/foo', which does not resolve to the original path."
+  }
+}

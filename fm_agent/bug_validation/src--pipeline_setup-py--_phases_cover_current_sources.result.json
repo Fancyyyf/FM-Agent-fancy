@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_phases_cover_current_sources",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_phases_cover_current_sources",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_phases_cover_current_sources.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_phases_cover_current_sources.md",
+  "probe_stdout": "submodules=None result: True (expected: True, sanity check)\nsubmodules=[]  result: True (expected: False per spec)\nCONFIRMED — actual: True | expected: False",
+  "trigger_summary": "Pass submodules=[] (empty list, not None); 'if submodules' treats [] as falsy and skips the submodule check, returning True when spec condition (d) requires False."
+}

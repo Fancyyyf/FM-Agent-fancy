@@ -1,0 +1,30 @@
+Programming language: Python
+
+Pre-condition:
+- filepath is a Path to an existing, readable regular file whose content is
+    source code that may begin with a [SPEC] annotation block
+
+Code block:
+```python
+Line 1: def extract_spec_block(filepath: Path) -> Optional[str]:
+Line 2:     """Return the '<comment> [SPEC]' block as a string, or None if not specced."""
+Line 3:     content = filepath.read_text(errors="replace")
+Line 4:     prefix = _detect_comment_prefix(content)
+Line 5:     if prefix is None:
+Line 6:         return None
+Line 7:     tag = f"{prefix} [SPEC]"
+Line 8:     if not content.startswith(tag):
+Line 9:         return None
+Line 10:     end = content.find(tag, len(tag))
+Line 11:     if end == -1:
+Line 12:         return None
+Line 13:     return content[: end + len(tag)].strip()
+```
+
+Additional context:
+_detect_comment_prefix(content) -> Optional[str]
+Pre-condition: content is a non-empty string of source code text
+  Post-condition: returns the single-line comment prefix ("#", "//", or "%")
+    detected in content, or None if no recognized comment prefix appears in
+    the content
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

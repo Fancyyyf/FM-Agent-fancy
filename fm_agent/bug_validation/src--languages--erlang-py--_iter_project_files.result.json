@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_iter_project_files",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_iter_project_files.py",
+  "function_name": "_iter_project_files",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_iter_project_files.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_iter_project_files.md",
+  "probe_stdout": "CONFIRMED — lowercase suffix matched: True | uppercase suffix matched: False | spec requires case-insensitive match",
+  "trigger_summary": "When suffixes contains uppercase characters, the all-lowercase extension computed by Path(filename).suffix.lower() never matches, violating the case-insensitive comparison required by the spec."
+}

@@ -1,0 +1,22 @@
+Programming language: Python
+
+Pre-condition:
+- edge_path is a pathlib.Path referring to an existing file on the filesystem
+
+Code block:
+```python
+Line 1: def _load_call_edge_file(edge_path: Path) -> list[CallEdge]:
+Line 2:     text = edge_path.read_text(errors="replace")
+Line 3:     if not text.strip():
+Line 4:         return []
+Line 5:     return _load_json_edges(text, str(edge_path))
+```
+
+Additional context:
+_load_json_edges(text, source) -> list[CallEdge]
+Pre-condition: text is a non-empty string containing valid JSON that conforms to the
+    extra-edge JSON schema; source is a string identifying the origin file path
+  Post-condition: Returns a list of CallEdge objects deserialized from the JSON text;
+    each CallEdge has a caller (with at least one of fqn or callsite_names non-empty)
+    and a callee (with a non-empty fqn)
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

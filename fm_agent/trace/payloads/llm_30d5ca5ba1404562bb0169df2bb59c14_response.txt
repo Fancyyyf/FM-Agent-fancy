@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "File content:\n[INFO]\n[INFO]\nx = 1 # inline comment",
+  "offending_statements": "Line 13: nl_spec, _, spec_end_idx = _extract_marked_section(lines, \"SPEC\")\nLine 24: func = _remove_func_comments(func)",
+  "reason": "The specification requires nl_spec to be an empty string when no [SPEC] section is present, but the code returns None (from _extract_marked_section). Also, the specification only removes comment-only lines (lines where the first non-whitespace character is '#'), but _remove_func_comments additionally strips inline comments from non-comment lines. For the input above, func should be 'Line 1: x = 1 # inline comment' but the code produces 'Line 1: x = 1'."
+}

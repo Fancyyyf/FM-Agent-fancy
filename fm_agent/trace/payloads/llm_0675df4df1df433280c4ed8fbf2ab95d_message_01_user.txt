@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+- self is a newly allocated FunctionSpecMap instance
+
+Code block:
+```python
+Line 1:     def __init__(self):
+Line 2:         super().__init__()
+Line 3:         self.signatures = {}
+```
+
+Additional context:
+super().__init__()
+Pre-condition: (none)
+  Post-condition: self is initialized as an empty dict with no entries
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

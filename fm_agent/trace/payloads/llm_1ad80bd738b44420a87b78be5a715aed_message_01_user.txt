@@ -1,0 +1,74 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _compute_brace_depth_per_line(lines):
+Line 2:     """
+Line 3:     Compute brace depth after each line, respecting strings and comments.
+Line 4:     Returns list of depths (depth after processing each line).
+Line 5:     """
+Line 6:     depths = []
+Line 7:     depth = 0
+Line 8:     for line in lines:
+Line 9:         i = 0
+Line 10:         while i < len(line):
+Line 11:             ch = line[i]
+Line 12:             # Skip string literals
+Line 13:             if ch == '"':
+Line 14:                 i += 1
+Line 15:                 while i < len(line):
+Line 16:                     if line[i] == '\\':
+Line 17:                         i += 2
+Line 18:                         continue
+Line 19:                     if line[i] == '"':
+Line 20:                         i += 1
+Line 21:                         break
+Line 22:                     i += 1
+Line 23:                 continue
+Line 24:             # Skip char literals
+Line 25:             if ch == "'":
+Line 26:                 i += 1
+Line 27:                 while i < len(line):
+Line 28:                     if line[i] == '\\':
+Line 29:                         i += 2
+Line 30:                         continue
+Line 31:                     if line[i] == "'":
+Line 32:                         i += 1
+Line 33:                         break
+Line 34:                     i += 1
+Line 35:                 continue
+Line 36:             # Line comment — skip rest of line
+Line 37:             if ch == '/' and i + 1 < len(line) and line[i + 1] == '/':
+Line 38:                 break
+Line 39:             # Block comment
+Line 40:             if ch == '/' and i + 1 < len(line) and line[i + 1] == '*':
+Line 41:                 i += 2
+Line 42:                 while i < len(line):
+Line 43:                     if line[i] == '*' and i + 1 < len(line) and line[i + 1] == '/':
+Line 44:                         i += 2
+Line 45:                         break
+Line 46:                     i += 1
+Line 47:                 # If block comment spans lines, we ignore braces inside it (simplified)
+Line 48:                 continue
+Line 49:             if ch == '{':
+Line 50:                 depth += 1
+Line 51:             elif ch == '}':
+Line 52:                 depth -= 1
+Line 53:             i += 1
+Line 54:         depths.append(depth)
+Line 55:     return depths
+```
+
+Condition A (what the code actually does):
+The function returns a list `depths` of integers such that `len(depths) == len(lines)`. For all indices `k` with 0 ≤ k < len(lines), `depths[k]` is the cumulative brace depth after processing the first `k+1` lines, computed as follows: let `d_0 = 0`; for each `j` from 0 to `k`, define `d_{j+1} = process(lines[j], d_j)`, where `process(line, d)` scans the line left to right, maintaining a depth counter starting at `d`. While scanning, the following syntactic regions are skipped (their characters are ignored for brace counting, exactly as implemented): (i) a double-quoted string literal starting with `"` and ending with the matching unescaped `"`, where a backslash `\` escapes the next character (the scanner advances two characters for an escape), (ii) a single-quoted character literal analogously, (iii) a line comment beginning with `//`, which causes the rest of the line to be skipped, (iv) a block comment starting with `/*`; if a closing `*/` is encountered on the same line, all characters between are skipped; otherwise the rest of the line after `/*` is skipped (block comments are not tracked across lines). Outside these skipped regions, each occurrence of `{` increments the counter by 1 and each `}` decrements it by 1. The final counter after scanning the whole line is `d_{j+1}`. Then `depths[k] = d_{k+1}`. The function has no side effects and always terminates normally.
+
+Condition B (what the specification requires):
+- Returns a list of non-negative integers whose length equals the number of elements in lines
+  - For each position i (0-indexed), the integer at that position is the cumulative net count of opening brace characters '{' minus closing brace characters '}' encountered across lines[0] through lines[i], inclusive
+  - Brace characters that occur inside a double-quoted string literal do not contribute to the count: upon encountering an unescaped '"' character, counting of braces is suspended until the next unescaped '"', where a backslash preceding the quote is considered an escape
+  - Brace characters that occur inside a single-quoted character literal do not contribute to the count: upon encountering an unescaped "'" character, counting of braces is suspended until the next unescaped "'", where a backslash preceding the quote is considered an escape
+  - When the character sequence "//" is encountered outside of a string or character literal, all remaining characters on that line do not contribute to the count
+  - When the character sequence "/*" is encountered outside of a string or character literal, brace counting is suspended until the corresponding "*/" sequence is encountered; braces appearing between these delimiters, on any line, do not contribute to the count
+  - Every closing brace '}' in the input has a matching opening brace '{' at or before its position, so the accumulated net count is never negative for any prefix of lines
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

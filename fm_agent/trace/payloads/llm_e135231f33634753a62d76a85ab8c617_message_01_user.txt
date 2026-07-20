@@ -1,0 +1,53 @@
+Programming language: Python
+
+Pre-condition:
+- lines is a list of strings representing source code lines with trailing
+    whitespace stripped
+  - lang_cfg is a LANG_CONFIG entry whose body type is "indent"
+
+Code block:
+```python
+Line 1: def _extract_functions_indent(lines, lang_cfg):
+Line 2:     """Extract functions from an indent-delimited language (Python)."""
+Line 3:     functions = []
+Line 4:     i = 0
+Line 5:     while i < len(lines):
+Line 6:         line = lines[i]
+Line 7:         stripped = line.lstrip()
+Line 8:         # Look for 'def ' at any indentation level
+Line 9:         m = re.match(r'^(\s*)def\s+(\w+)\s*\(', line)
+Line 10:         if not m:
+Line 11:             i += 1
+Line 12:             continue
+Line 13:         indent = len(m.group(1))
+Line 14:         name = m.group(2)
+Line 15:         func_start = i
+Line 16:         # Handle decorators — walk backwards to include them
+Line 17:         while func_start > 0 and lines[func_start - 1].strip().startswith('@'):
+Line 18:             func_start -= 1
+Line 19:         # Find end of function body: subsequent lines with greater indentation
+Line 20:         # (or blank lines interspersed)
+Line 21:         j = i + 1
+Line 22:         while j < len(lines):
+Line 23:             l = lines[j]
+Line 24:             if l.strip() == '':
+Line 25:                 j += 1
+Line 26:                 continue
+Line 27:             line_indent = len(l) - len(l.lstrip())
+Line 28:             if line_indent == indent and re.match(r'\)\s*(:|->)', l.lstrip()):
+Line 29:                 j += 1
+Line 30:                 continue
+Line 31:             if line_indent <= indent:
+Line 32:                 break
+Line 33:             j += 1
+Line 34:         # j is now the first line after the function body
+Line 35:         func_end = j - 1
+Line 36:         # Trim trailing blank lines
+Line 37:         while func_end > i and lines[func_end].strip() == '':
+Line 38:             func_end -= 1
+Line 39:         functions.append((name, func_start, func_end))
+Line 40:         i = j
+Line 41:     return functions
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

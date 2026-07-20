@@ -1,0 +1,11 @@
+{
+  "id": "src--reasoner-py--_compute_brace_depth_per_line",
+  "source_file": "src/reasoner-py/_compute_brace_depth_per_line.py",
+  "function_name": "_compute_brace_depth_per_line",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_compute_brace_depth_per_line.py",
+  "detail_file": "fm_agent/bug_validation/src--reasoner-py--_compute_brace_depth_per_line.md",
+  "probe_stdout": "CONFIRMED — actual: [0, -1] | expected: [0, 0]",
+  "trigger_summary": "Multi-line block comment /* ... */ is not tracked across lines; braces on lines after an unclosed /* are incorrectly counted, producing negative depth."
+}

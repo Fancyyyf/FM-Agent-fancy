@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code satisfies all specified requirements: it returns a non-empty list of strings that, when executed with cwd as working directory, invokes the configured backend (agent or opencode) with the given prompt and file attachments."
+}

@@ -1,0 +1,36 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _extract_func_name_brace(signature_text, lang_cfg):
+Line 2:     """Extract the function name from a brace-delimited language signature."""
+Line 3:     lang_keywords = lang_cfg["keywords"]
+Line 4:     m = re.search(
+Line 5:         r'\b(operator\s*(?:\[\]|\(\)|[+\-*/%&|^~!=<>]+|new(?:\s*\[\s*\])?|delete(?:\s*\[\s*\])?))'
+Line 6:         r'\s*\(',
+Line 7:         signature_text,
+Line 8:     )
+Line 9:     if m:
+Line 10:         return m.group(1)
+Line 11:     cleaned = _strip_angle_brackets(signature_text)
+Line 12:     for m in re.finditer(r'\b(\w+)\s*\(', cleaned):
+Line 13:         name = m.group(1)
+Line 14:         if name not in lang_keywords:
+Line 15:             return name
+Line 16:     return None
+```
+
+Condition A (what the code actually does):
+The function returns a string containing the function name extracted from signature_text if one is found, otherwise None. The extraction proceeds as follows: (1) If signature_text contains a substring that matches the regular expression r'\b(operator\s*(?:\[\]|\(\)|[+\-*/%&|^~!=<>]+|new(?:\s*\[\s*\])?|delete(?:\s*\[\s*\])?))\s*\(', the matched operator string (e.g., 'operator+', 'operator new[]') is returned. (2) Otherwise, after applying _strip_angle_brackets to remove angle-bracket-delimited sections from signature_text, the function scans the cleaned text for substrings matching r'\b(\w+)\s*\(', i.e., word characters immediately followed by '(' (with possible whitespace). The first matched word that is not a member of lang_cfg['keywords'] is returned. (3) If neither step succeeds, the function returns None. No side effects on external state occur.
+
+Condition B (what the specification requires):
+- Returns the function name as a string when signature_text contains a recognized function-definition pattern and the identified name is not a language keyword; returns None otherwise
+  - For languages that support operator overloading, an operator definition signature (e.g., one containing `operator()`, `operator[]`, or an operator symbol following the `operator` keyword) is recognized and the full operator token is returned as the function name
+  - For other function-definition forms, returns the first non-keyword identifier that immediately precedes an opening parenthesis, after template angle-bracket content (i.e., text between `<` and matching `>`) has been removed from the signature text
+  - The returned name does not include any tokens of lang_cfg["keywords"]
+
+Additional context:
+_strip_angle_brackets(text: str) -> str
+Pre-condition: text is a string that may contain angle-bracket-delimited sections
+  Post-condition: Returns text with all content enclosed in matching angle brackets removed; characters outside angle brackets are preserved in their original order
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

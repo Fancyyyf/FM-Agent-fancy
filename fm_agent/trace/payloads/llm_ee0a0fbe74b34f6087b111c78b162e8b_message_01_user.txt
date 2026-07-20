@@ -1,0 +1,18 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def cli_effort():
+Line 2:     return os.environ.get("LLM_EFFORT", "").strip()
+```
+
+Condition A (what the code actually does):
+The function returns a string. If the environment variable 'LLM_EFFORT' exists, the return value is its stripped version (leading/trailing whitespace removed). If the variable does not exist, the return value is the empty string. No side effects occur on the program state. Formal: esult ∈ String; (LLM_EFFORT ∈ keys(os.environ) ⇒ esult = os.environ['LLM_EFFORT'].strip()) ∧ (LLM_EFFORT ∉ keys(os.environ) ⇒ esult = "")
+
+Condition B (what the specification requires):
+- Returns the value of the LLM_EFFORT environment variable with leading
+    and trailing whitespace removed
+  - Returns an empty string when LLM_EFFORT is not set or when its value
+    consists entirely of whitespace
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

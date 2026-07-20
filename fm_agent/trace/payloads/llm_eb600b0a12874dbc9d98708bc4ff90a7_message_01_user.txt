@@ -1,0 +1,14 @@
+Programming language: Python
+
+Pre-condition:
+- console is a writable stream-like object that supports a write(str) method
+  - log_stream is a writable stream-like object that supports a write(str) method
+
+Code block:
+```python
+Line 1:     def __init__(self, console, log_stream):
+Line 2:         self._console = console
+Line 3:         self._log_stream = log_stream
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

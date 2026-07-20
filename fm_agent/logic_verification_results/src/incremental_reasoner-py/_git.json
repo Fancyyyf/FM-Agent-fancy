@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_git.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Executes git with -C proj_dir subcommand args using subprocess\n  - Returns the stdout output of the git command as a single string\n  - Raises subprocess.CalledProcessError when the git command exits with\n    a nonzero exit code",
+    "actual_behavior": "If the `git` executable is found, the command `git -C proj_dir *args` is executed with `check=True`, `capture_output=True`, and `text=True`. Under the pre-condition that `args[0]` is a valid git subcommand and the rest are acceptable arguments, and `proj_dir` is a directory containing a git repository, execution yields exactly one of: (1) the command exits with code 0, and the returned value is the captured stdout as a string; (2) the command exits with a non-zero code, and a `subprocess.CalledProcessError` is raised, with `returncode`, `cmd`, `output`, and `stderr` attributes reflecting the failure. If the `git` executable does not exist, a `FileNotFoundError` is raised. No other side effects occur beyond any performed by the git command itself on the repository.",
+    "code_evidence": "Line 2:         return subprocess.run(",
+    "trigger_condition": "The specification requires that the code 'executes git'. In the case where git is not found, the code raises FileNotFoundError, failing to execute git and raising an exception not covered by the specification (which only allows CalledProcessError for nonzero exit codes)."
+  }
+}

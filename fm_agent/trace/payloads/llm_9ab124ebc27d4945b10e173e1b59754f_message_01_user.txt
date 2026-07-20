@@ -1,0 +1,56 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def close(self):
+Line 2:         proc = self._proc
+Line 3:         if proc is None:
+Line 4:             return
+Line 5:         try:
+Line 6:             if proc.poll() is None:
+Line 7:                 try:
+Line 8:                     self.request("shutdown")
+Line 9:                 except Exception:
+Line 10:                     pass
+Line 11:                 try:
+Line 12:                     self.notify("exit")
+Line 13:                 except Exception:
+Line 14:                     pass
+Line 15:                 try:
+Line 16:                     proc.wait(timeout=5)
+Line 17:                 except subprocess.TimeoutExpired:
+Line 18:                     proc.terminate()
+Line 19:                     try:
+Line 20:                         proc.wait(timeout=5)
+Line 21:                     except subprocess.TimeoutExpired:
+Line 22:                         proc.kill()
+Line 23:         finally:
+Line 24:             for stream in (proc.stdin, proc.stdout):
+Line 25:                 if stream:
+Line 26:                     try:
+Line 27:                         stream.close()
+Line 28:                     except OSError:
+Line 29:                         pass
+Line 30:             self._proc = None
+```
+
+Condition A (what the code actually does):
+self._proc is None. If the pre-call value of self._proc (denoted old(self._proc)) was a subprocess.Popen instance p, then p.stdin and p.stdout have been closed (or were already None). Additionally, if p was still running at the beginning of the method (p.poll() returned None), then p has been sent a shutdown request and an exit notification, and an attempt to wait for its termination was made; if the wait timed out, p.terminate() was called and another wait attempted; if that also timed out, p.kill() was called. No guarantees are made about whether p has fully terminated by the end of the method. These side effects are guaranteed even if an exception escapes the method, because they are performed in a finally block.
+
+Condition B (what the specification requires):
+- If self._proc was None on entry, the method returns immediately with no observable side effects
+  - If self._proc was a running process, it is no longer executing after the method returns
+  - The subprocess is first asked to shut down gracefully; if it does not exit within a bounded interval, it is forcibly terminated; if it still does not exit after a second bounded interval, it is forcibly killed
+  - All I/O streams connected to the subprocess (stdin and stdout) are closed before the method returns, regardless of whether individual shutdown or stream-close operations succeed or fail
+  - self._proc is set to None
+  - No exception raised during any shutdown or cleanup step propagates to the caller
+
+Additional context:
+self.request(method: str) -> Any
+Pre-condition: self has an active pipe connection to the subprocess stdin
+  Post-condition: Sends a JSON-RPC request with the given method name to the subprocess via stdin; raises an exception if the pipe is broken or closed
+
+self.notify(method: str) -> None
+Pre-condition: self has an active pipe connection to the subprocess stdin
+  Post-condition: Sends a JSON-RPC notification with the given method name to the subprocess via stdin; raises an exception if the pipe is broken or closed
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

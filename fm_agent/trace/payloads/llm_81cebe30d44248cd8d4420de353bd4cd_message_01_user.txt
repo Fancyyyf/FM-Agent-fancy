@@ -1,0 +1,45 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _normalize_endpoint_label(label: str) -> str:
+Line 2:     label = _clean_label(label)
+Line 3:     if _is_path_function_label(label):
+Line 4:         path, func = label.rsplit("::", 1)
+Line 5:         path = path.lstrip("./")
+Line 6:         src_path = PurePosixPath(path)
+Line 7:         base = src_path.name
+Line 8:         last_dot = base.rfind(".")
+Line 9:         func_dir = base[:last_dot] + "-" + base[last_dot + 1:] if last_dot > 0 else base
+Line 10:         parts = [p for p in src_path.parent.parts if p not in {"", "."}]
+Line 11:         return "::".join([*parts, func_dir, func])
+Line 12:     return label
+```
+
+Condition A (what the code actually does):
+The function terminates normally and returns a string r. Let c = _clean_label(label). If _is_path_function_label(c) is False, then r = c. If _is_path_function_label(c) is True, then c can be uniquely decomposed as p + '::' + f where f contains no '::', and r is computed as: let p' = the result of removing all leading occurrences of '.' and '/' from p; let src = PurePosixPath(p'); let b = src.name; let d = b.rfind('.'); let fd = (b[:d] + '-' + b[d+1:]) if d > 0 else b; let dirs = [x for x in src.parent.parts if x not in {'', '.'}]; then r = '::'.join(dirs + [fd, f]).
+
+Condition B (what the specification requires):
+- Returns a string
+  - When the input label represents a function reference qualified by a source-file
+    path, the returned FQN has the source-file extension dot in the filename
+    replaced with "-", leading "./" stripped, "." and empty parent-directory
+    components excluded, and components joined with "::"
+  - When the input label does not represent a path-qualified function reference,
+    the returned string equals the input
+  - The normalization is deterministic: the same input always produces the same
+    output
+
+Additional context:
+_clean_label(label: str) -> str
+Pre-condition: label is a non-empty string
+  Post-condition: Returns a string whose path-vs-non-path classification and
+    function-name suffix are preserved; the transformation is deterministic and
+    identity-preserving for function references
+
+_is_path_function_label(label: str) -> bool
+Pre-condition: label is a cleaned label string
+  Post-condition: Returns True when the label contains a source-file path prefix
+    whose filename extension dot must be replaced with "-" for FQN normalization;
+    returns False otherwise; the classification is deterministic
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

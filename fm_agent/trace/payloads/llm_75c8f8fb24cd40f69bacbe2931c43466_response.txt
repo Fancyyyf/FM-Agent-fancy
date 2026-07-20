@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Suppose `run_dir` already exists (e.g., a leftover directory from a previous run).  If the interpreter or OS terminates the process after `shutil.rmtree(run_dir)` executes (Line 10) but before `os.replace(tmp_dir, run_dir)` (Line 17), then `run_dir` is permanently removed and no new copy is installed.  An observer after the crash sees that `run_dir` does not exist, which is an intermediate state that violates the \"atomically installed\" requirement.",
+  "offending_statements": "Line 8: for stale in (run_dir, run_dir + \".tmp\"):\nLine 9: if os.path.exists(stale):\nLine 10: shutil.rmtree(stale)",
+  "reason": "The specification demands atomic installation so that no observer ever sees a partial or intermediate state at `run_dir`.  The code removes the old `run_dir` before the copy phase, creating a window where `run_dir` is absent.  If a failure or kill occurs during that window, the directory is lost entirely, breaking the atomicity guarantee."
+}

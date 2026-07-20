@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "parts={'Hello'}, signals={'backtick_idents': {'hello'}, 'plain_idents': set(), 'dotted_refs': set(), 'all_words': set()}, FUZZY_NAME_MIN_LEN=3, _STOP=set(), _PY_KEYWORDS=set(), FUZZY_NAME_THRESHOLD=0.6, W_FUZZY_NAME=1.0",
+  "offending_statements": "Line 19: if token in name_tokens:",
+  "reason": "The specification requires skipping intent tokens that have an exact case-insensitive match against any name part. The code checks for case-sensitive membership, so 'hello' (intent) does not match 'Hello' (name), leading to an incorrect fuzzy score contribution."
+}

@@ -1,0 +1,1 @@
+{"post_condition": "The function returns a string. Let s = str(value).strip(). If s is the empty string, return the empty string. Otherwise, let t = s.rstrip(';').strip(). If len(t) >= 2 and t[0] == t[-1] and t[0] is in {'\\'', '\"'} (either a single or double quote), then return t[1:-1].strip(); else return t."}

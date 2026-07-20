@@ -1,0 +1,11 @@
+{
+  "id": "src--llm_client-py--_stable_user_id",
+  "source_file": "src/llm_client.py",
+  "function_name": "_stable_user_id",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_stable_user_id.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--_stable_user_id.md",
+  "probe_stdout": "CONFIRMED — actual: '' | expected: non-empty string per spec\n",
+  "trigger_summary": "When INJECT_ID env var is unset and _DEFAULT_INJECT_USER_ID is empty, _stable_user_id() returns an empty string, violating the spec requirement of always returning a non-empty string."
+}

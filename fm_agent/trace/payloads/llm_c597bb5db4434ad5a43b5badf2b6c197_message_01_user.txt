@@ -1,0 +1,57 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _get_call_regex(lang_key):
+Line 2:     """Return the call-site regex for the given language."""
+Line 3:     if lang_key in ("cpp", "c", "java", "typescript", "javascript", "cuda", "arkts"):
+Line 4:         # identifier, optional template args, open paren
+Line 5:         return re.compile(r"\b(\w+)\s*(?:<[^>]*>)?\s*\(")
+Line 6:     elif lang_key == "rust":
+Line 7:         # identifier, optional turbofish, open paren
+Line 8:         return re.compile(r"\b(\w+)\s*(?:::<[^>]*>)?\s*\(")
+Line 9:     elif lang_key == "go":
+Line 10:         # identifier, optional type params [T], open paren
+Line 11:         return re.compile(r"\b(\w+)\s*(?:\[[^\]]*\])?\s*\(")
+Line 12:     else:
+Line 13:         # Python, Ruby, Shell, SQL, etc.
+Line 14:         return re.compile(r"\b(\w+)\s*\(")
+```
+
+Condition A (what the code actually does):
+The function returns a compiled regular expression Pattern object. The pattern depends on lang_key:
+- If lang_key ∈ {'cpp','c','java','typescript','javascript','cuda','arkts'}: pattern = r'\b(\w+)\s*(?:<[^>]*>)?\s*\('
+- If lang_key = 'rust': pattern = r'\b(\w+)\s*(?:::<[^>]*>)?\s*\('
+- If lang_key = 'go': pattern = r'\b(\w+)\s*(?:\[[^\]]*\])?\s*\('
+- Otherwise: pattern = r'\b(\w+)\s*\('
+Formally: result = _get_call_regex(lang_key) ⇒ result is a Pattern with result.pattern equal to the string defined above for the given lang_key, and result behaves as described by re.compile.
+
+Condition B (what the specification requires):
+- Returns a compiled regular expression pattern object whose matches
+    identify bare-name function-call sites in source code written in the
+    language identified by lang_key
+  - Capture group 1 of every match yields the identifier string (function
+    name) that appears immediately before the opening parenthesis of a call
+  - The pattern skips language-specific syntax that may appear between the
+    identifier and the opening parenthesis:
+    * For C, C++, Java, TypeScript, JavaScript, CUDA, and ArkTS: skips an
+      optional angle-bracket-enclosed segment (<...>) representing template
+      or generic arguments
+    * For Rust: skips an optional turbofish segment (::<...>) representing
+      generic type arguments
+    * For Go: skips an optional bracket-enclosed segment ([...]) representing
+      type parameters
+    * For all other language keys: matches a bare identifier directly followed
+      by an opening parenthesis with optional whitespace
+  - The function is deterministic: repeated calls with the same lang_key
+    return patterns with identical matching behavior
+  - The function has no side effects beyond creating and returning a compiled
+    regex pattern object
+
+Additional context:
+re.compile(pattern: str, flags: int = 0) -> Pattern
+Pre-condition: pattern is a string containing a valid regular expression
+  Post-condition: returns a compiled Pattern object that matches the same
+    strings as the given regular expression; the Pattern object supports
+    search and match operations against arbitrary strings
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,36 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _has_source_code(proj_dir, submodules=None):
+Line 2:     """Check whether proj_dir contains at least one source code file."""
+Line 3:     for _ in _iter_project_source_files(proj_dir, submodules):
+Line 4:         return True
+Line 5:     return False
+```
+
+Condition A (what the code actually does):
+The function returns True if and only if the underlying iterator `_iter_project_source_files(proj_dir, submodules)` produces at least one path (i.e., a file with a pipeline-supported extension exists in the directory tree rooted at `proj_dir`, optionally confined to the submodules listed in `submodules`, excluding hidden directories and build/package directories). Otherwise it returns False. The call has no side effects. Formally: let S = { p | p is yielded by `_iter_project_source_files(proj_dir, submodules)` } ; then `_has_source_code(proj_dir, submodules)` = True ⇔ S ≠ ∅.
+
+Condition B (what the specification requires):
+- Returns True when proj_dir (optionally scoped to submodules) contains at least one
+    file whose extension matches a pipeline-supported programming language.
+  - Returns False when no such file exists within the applicable scope, including when
+    proj_dir does not exist, is empty, contains no recognized source files, or when
+    submodules narrows the scope to a subset of the tree that contains no recognized
+    source files.
+  - When submodules is None, the search covers the entire directory tree under proj_dir,
+    excluding directories whose names begin with "." and well-known build/package
+    directories.
+  - When submodules is provided and non-empty, only files whose project-relative path
+    begins with one of the listed subdirectory names are considered.
+
+Additional context:
+_iter_project_source_files(proj_dir, submodules=None) -> Iterator[str]
+Pre-condition: proj_dir is a directory path; submodules is None or a non-empty list
+    of subdirectory name strings.
+  Post-condition: yields every project-relative file path (using "/" separators) under
+    proj_dir whose extension matches a pipeline-supported language, optionally scoped
+    to the submodules tree(s) when submodules is provided; directories whose names begin
+    with "." and well-known build/package directories are excluded from traversal.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

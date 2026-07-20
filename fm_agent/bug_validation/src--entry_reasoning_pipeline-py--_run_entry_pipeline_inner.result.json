@@ -1,0 +1,11 @@
+{
+  "id": "src--entry_reasoning_pipeline-py--_run_entry_pipeline_inner",
+  "source_file": "src/entry_reasoning_pipeline.py",
+  "function_name": "_run_entry_pipeline_inner",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--entry_reasoning_pipeline-py--_run_entry_pipeline_inner.py",
+  "detail_file": "fm_agent/bug_validation/src--entry_reasoning_pipeline-py--_run_entry_pipeline_inner.md",
+  "probe_stdout": "CONFIRMED — exception propagated (BOOM: injected failure inside try block) but mismatch count was NOT printed to stdout\n",
+  "trigger_summary": "When an exception propagates from inside the try block of _run_entry_pipeline_inner, the mismatch count print statement (lines 494-495) is skipped because it sits after the try-finally block, violating the spec that requires the count on every run."
+}

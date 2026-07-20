@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_caller_module",
+  "source_file": "src/languages/erlang.py",
+  "function_name": "_caller_module",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_caller_module.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_caller_module.md",
+  "probe_stdout": "CONFIRMED — actual: '.hidden' | expected: '-hidden'",
+  "trigger_summary": "Any path whose basename starts with a dot and contains at least one dot (e.g., '.hidden') — dot > 0 check causes the basename to be returned unchanged instead of replacing the leading dot with '-'."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--tail_opencode",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/tail_opencode.py",
+  "function_name": "tail_opencode",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--tail_opencode.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--tail_opencode.md",
+  "probe_stdout": "CONFIRMED — actual: 'exception propagated; subsequent files unprocessed' | expected: 'exception caught/skipped; all remaining files processed'\n  exception: [Errno 13] Permission denied: '/tmp/tmp089yjpj8/opencode/a_first.jsonl'\n  records ingested: 0",
+  "trigger_summary": "open() on .jsonl files is not guarded by try/except; when open() fails (e.g. permission denied), the exception propagates and all subsequent files are skipped, violating the spec's requirement that all files be visited."
+}

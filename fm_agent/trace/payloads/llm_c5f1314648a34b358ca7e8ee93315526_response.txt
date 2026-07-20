@@ -1,0 +1,6 @@
+{
+    "verdict": "MATCH",
+    "counterexample": null,
+    "offending_statements": null,
+    "reason": "The code returns True for 'codex-cli' and 'claude-cli', and False for 'opencode'. Since resolve_model_backend() only returns these three canonical identifiers, the behavior matches the specification exactly."
+}

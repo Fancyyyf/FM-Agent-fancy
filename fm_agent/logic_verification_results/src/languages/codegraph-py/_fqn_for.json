@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_fqn_for.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a fully-qualified function name (FQN) string whose components\n    are separated by \"::\"\n  - The FQN consists of, in order: the non-empty directory components of\n    file_path (excluding the source filename), a single file-derived\n    component, and name\n  - The file-derived component is obtained from the filename portion of\n    file_path: if the filename contains at least one \".\" after a non-empty\n    prefix, the last \".\" is replaced by \"-\"; otherwise the filename is\n    used unchanged\n  - Directory components are extracted independently of OS path separator\n    convention and empty components (from leading or consecutive\n    separators) are excluded\n  - The returned FQN is deterministic and identical to the FQN that the\n    call-graph builder computes for the extracted function file\n    corresponding to the same (file_path, name) pair",
+    "actual_behavior": "The function returns a string `fqn` defined as follows:\n\nLet `norm = file_path.replace(os.sep, '/')`\nLet `d = os.path.dirname(norm)`\nLet `base = os.path.basename(norm)`\nLet `last_dot = base.rfind('.')`\nIf `last_dot > 0`:\n    `dashed = base[:last_dot] + '-' + base[last_dot+1:]`\nElse:\n    `dashed = base`\nLet `parts = [p for p in d.split('/') if p] + [dashed, name]`\nThen `fqn = '::'.join(parts)`.\n\nNo side effects; the function always returns this value for given valid inputs (assuming `os.sep` and `os.path` functions behave standardly).",
+    "code_evidence": "Line 10: norm = file_path.replace(os.sep, \"/\")",
+    "trigger_condition": "The specification requires directory components to be extracted independently of OS path separator convention, meaning both '/' and '\\' should be treated as separators. The code only normalizes the platform-specific separator (os.sep). On Linux, os.sep is '/', so backslashes remain in the normalized path and are not split, causing them to appear inside component names instead of acting as separators."
+  }
+}

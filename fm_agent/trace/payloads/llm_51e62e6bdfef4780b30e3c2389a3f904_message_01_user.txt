@@ -1,0 +1,61 @@
+Programming language: Python
+
+Pre-condition:
+- work_dir is an absolute or relative filesystem path (the parent directory does not need to exist yet)
+
+Code block:
+```python
+Line 1: def _setup_incremental_logging(work_dir):
+Line 2:     """
+Line 3:     Route the incremental pipeline's progress output to a log file AND stdout.
+Line 4:     Configures the root logger with a FileHandler at
+Line 5:     work_dir/incremental_<YYYYmmdd_HHMMSS>.log (the timestamp is taken when this is called,
+Line 6:     so each pipeline run writes its own log file rather than overwriting the previous one) so
+Line 7:     every logging.* call in this module — the stage-by-stage progress that used to be
+Line 8:     print()ed, plus the existing warning/error/exception records — is preserved on disk. A
+Line 9:     second StreamHandler mirrors the same records to stdout, so callers that capture the
+Line 10:     subprocess output (e.g. the benchmark runner, which greps stdout for the final
+Line 11:     "confirmed bugs in N function(s)" marker) can see the result without reading the log
+Line 12:     file. The log file is wiped by the runner's per-trial revert, so stdout is the only
+Line 13:     place the result reliably survives. Any handlers a previous call (or import) installed
+Line 14:     are replaced, so invoking the pipeline repeatedly in one process does not duplicate log
+Line 15:     lines.
+Line 16:     Additionally, sys.stdout is wrapped in an _StdoutTee so the bare print() progress
+Line 17:     emitted by the shared helpers this pipeline calls (run_extraction's verbose output,
+Line 18:     generate_topdown_layers, rank_functions_in_file, and _run_setup_extract's retry/error
+Line 19:     messages) is mirrored into the same log file rather than only reaching the console. The
+Line 20:     console StreamHandler is bound to the underlying console stream (not the tee), so
+Line 21:     logging.* records are written to the file exactly once. Returns the absolute path of the
+Line 22:     log file.
+Line 23:     """
+Line 24:     os.makedirs(work_dir, exist_ok=True)
+Line 25:     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+Line 26:     log_path = os.path.join(work_dir, f"incremental_{timestamp}.log")
+Line 27:     # If a previous call already wrapped stdout, unwrap to the real console stream first so
+Line 28:     # repeated invocations don't stack tees (each adding another copy of every print()).
+Line 29:     console_stream = getattr(sys.stdout, "_console", sys.stdout)
+Line 30:     formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+Line 31:     file_handler = logging.FileHandler(log_path)
+Line 32:     file_handler.setFormatter(formatter)
+Line 33:     # Bind the console handler to the real console stream, NOT the tee below, so logging.*
+Line 34:     # records land in the file once (via file_handler) instead of twice (file_handler + tee).
+Line 35:     console_handler = logging.StreamHandler(console_stream)
+Line 36:     console_handler.setFormatter(formatter)
+Line 37:     root = logging.getLogger()
+Line 38:     root.setLevel(logging.INFO)
+Line 39:     # Replace existing handlers so repeated calls don't duplicate lines, then log to both
+Line 40:     # the per-run file and stdout.
+Line 41:     for existing in list(root.handlers):
+Line 42:         root.removeHandler(existing)
+Line 43:     root.addHandler(file_handler)
+Line 44:     root.addHandler(console_handler)
+Line 45:     # Mirror bare print() output (from the shared helpers above) into the same log file.
+Line 46:     sys.stdout = _StdoutTee(console_stream, file_handler.stream)
+Line 47:     return log_path
+```
+
+Additional context:
+_StdoutTee(console_stream, file_stream) -> _StdoutTee
+Pre-condition: console_stream is a writable stream (typically the real sys.stdout); file_stream is a writable stream open for append
+  Post-condition: Returns a file-like object whose write(str) method writes str to both console_stream and file_stream, and delegates other attributes (including flush) to console_stream
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

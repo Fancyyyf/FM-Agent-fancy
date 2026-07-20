@@ -1,0 +1,1 @@
+{"post_condition": "After execution, the instance attribute `_db` is set to the exact string value of the argument `db_path`. No other attributes of `self` are modified. The argument `db_path` is unchanged. The method implicitly returns `None`. Formally: `self._db == db_path` and `isinstance(self._db, str)`."}

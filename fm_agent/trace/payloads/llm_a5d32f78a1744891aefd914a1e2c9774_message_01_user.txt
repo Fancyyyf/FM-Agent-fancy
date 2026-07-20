@@ -1,0 +1,49 @@
+Programming language: Python
+
+Pre-condition:
+- info_block is a string containing zero or more callee entries, where each entry is a block of lines delimited by "[SPLIT]" markers; each entry begins with a signature line followed by Pre-condition and Post-condition lines
+  - callee_fqn is a non-empty string representing a fully qualified function name
+  - aliases is None or a sequence of alternative name strings for the same callee
+
+Code block:
+```python
+Line 1: def extract_callee_spec_from_info(
+Line 2:     info_block: str,
+Line 3:     callee_fqn: str,
+Line 4:     aliases: Optional[Sequence[str]] = None,
+Line 5: ) -> Optional[str]:
+Line 6:     """Find the [SPLIT]-separated entry for callee_fqn in an info_block."""
+Line 7:     # Detect comment prefix from the info_block content itself
+Line 8:     prefix = ""
+Line 9:     for line in info_block.splitlines():
+Line 10:         stripped = line.strip()
+Line 11:         if stripped:
+Line 12:             idx = stripped.find("[SPLIT]")
+Line 13:             if idx != -1:
+Line 14:                 prefix = stripped[:idx].rstrip()
+Line 15:                 break
+Line 16:     # If no [SPLIT] found in block, infer prefix from first non-empty line
+Line 17:     if not prefix:
+Line 18:         for line in info_block.splitlines():
+Line 19:             stripped = line.strip()
+Line 20:             if stripped:
+Line 21:                 m = re.match(r'^(\S+)\s', stripped)
+Line 22:                 if m:
+Line 23:                     prefix = m.group(1)
+Line 24:                 break
+Line 25:     split_tag = f"{prefix} [SPLIT]" if prefix else "[SPLIT]"
+Line 26:     names = _callee_match_names(callee_fqn, aliases or ())
+Line 27:     for entry in info_block.split(split_tag):
+Line 28:         entry = entry.strip()
+Line 29:         if not entry or "(no callees)" in entry:
+Line 30:             continue
+Line 31:         first_line = entry.split("\n")[0].strip()
+Line 32:         # Strip the comment prefix to get the actual content
+Line 33:         if prefix and first_line.startswith(prefix):
+Line 34:             first_line = first_line[len(prefix):].strip()
+Line 35:         if any(_info_line_mentions_name(first_line, name) for name in names):
+Line 36:             return entry
+Line 37:     return None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

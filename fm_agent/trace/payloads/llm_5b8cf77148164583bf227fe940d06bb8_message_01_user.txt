@@ -1,0 +1,19 @@
+Programming language: Python
+
+Pre-condition:
+- obj is any Python value (str, dict, list, or any other type).
+
+Code block:
+```python
+Line 1: def _sanitize_strings(obj):
+Line 2:     """Remove non-ASCII characters from all string values in a dict/list."""
+Line 3:     if isinstance(obj, str):
+Line 4:         return obj.encode("ascii", "ignore").decode("ascii")
+Line 5:     if isinstance(obj, dict):
+Line 6:         return {k: _sanitize_strings(v) for k, v in obj.items()}
+Line 7:     if isinstance(obj, list):
+Line 8:         return [_sanitize_strings(v) for v in obj]
+Line 9:     return obj
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

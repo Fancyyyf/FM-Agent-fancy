@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns the Python object obtained by parsing the contents of the file at the path `os.path.join(proj_dir, 'phases.json')` as JSON. The file is closed after the read. The value of `proj_dir` remains unchanged, and no global or persistent state is modified. Under the given pre-condition, no exception is raised. Formal: Let `phases_path = os.path.join(proj_dir, 'phases.json')`. Then `\\result = json.load(open(phases_path, 'r').read())` and the file handle for `phases_path` is closed. All other aspects of the program state are identical to the pre-state."
+}

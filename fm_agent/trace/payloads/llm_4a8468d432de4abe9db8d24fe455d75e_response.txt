@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "An object 'exc' with a method read() that raises KeyboardInterrupt (which inherits from BaseException, not Exception). When _read_error_body(exc) is called, the KeyboardInterrupt propagates out of the function instead of being caught and returning ''.",
+  "offending_statements": "Line 7:     except Exception:",
+  "reason": "The specification requires that the function returns an empty string when read() raises any exception. The code's except clause only catches exceptions derived from Exception, missing exceptions derived directly from BaseException (e.g., KeyboardInterrupt, SystemExit). This allows such exceptions to propagate, violating the 'any exception' tolerance mandate."
+}

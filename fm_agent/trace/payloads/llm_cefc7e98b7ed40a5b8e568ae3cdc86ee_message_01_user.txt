@@ -1,0 +1,19 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def add_test_file_exemption(rel_path):
+Line 2:     """Exempt a project-relative source path from the test-file heuristics."""
+Line 3:     _TEST_FILE_EXEMPTIONS.add(rel_path.replace('\\', '/'))
+```
+
+Condition A (what the code actually does):
+After successful execution, the global set _TEST_FILE_EXEMPTIONS contains the string resulting from `rel_path.replace('\\', '/')` (all backslashes replaced with forward slashes), and all other elements of the set remain unchanged. The function returns None. Formally: _TEST_FILE_EXEMPTIONS_post = _TEST_FILE_EXEMPTIONS_pre ∪ {rel_path.replace('\\', '/')} ∧ return_value is None.
+
+Condition B (what the specification requires):
+- The module-level set of exempted test-file paths contains a normalized form of
+    rel_path where every backslash ('\\') is replaced by a forward slash ('/').
+  - A subsequent invocation of any test-file classification function will exclude
+    this normalized path from classification as a test file.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

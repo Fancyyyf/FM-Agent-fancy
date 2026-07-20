@@ -1,0 +1,37 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for Rust."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("rust") if cg else None
+```
+
+Condition A (what the code actually does):
+After call_edges(proj_dir) executes, one of three outcomes holds: (1) An exception raised during CodeGraphExtractor.from_proj_dir(proj_dir) or get_call_edges('rust') propagates outward; (2) from_proj_dir returns None, causing call_edges to return None without calling get_call_edges; (3) from_proj_dir returns a non‑None CodeGraphExtractor instance cg, and call_edges returns cg.get_call_edges('rust'), a dictionary whose keys are (caller_stem, caller_module) tuples and whose values are sets of callee_stems. Formally: 
+call_edges(proj_dir) = 
+  (exception propagated) 
+  ∨ ( None  ∧ from_proj_dir(proj_dir) = None ) 
+  ∨ ( ∃ cg∈CodeGraphExtractor, D∈dict ∙ cg = from_proj_dir(proj_dir) ≠ None ∧ D = cg.get_call_edges('rust') ∧ call_edges(proj_dir) = D ).
+
+Condition B (what the specification requires):
+- When the codegraph backend initializes successfully, returns a dictionary whose keys are
+    2-tuples of (caller_stem: str, caller_module: str) and whose values are sets of callee_stem
+    strings, describing caller-callee relationships among Rust source files within the project
+  - Each key-value pair maps one identified caller entity to the set of callee stems it directly
+    invokes
+  - Returns None when no Rust codegraph backend is available for the given project
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string representing a valid project directory path
+  Post-condition: Returns a configured CodeGraphExtractor instance for the project when the
+    backend initializes successfully; returns None when the backend cannot be initialized
+
+CodeGraphExtractor.get_call_edges(lang) -> dict
+Pre-condition: lang is a recognized language key string
+  Post-condition: Returns a dictionary mapping (caller_stem, caller_module) tuples to sets of
+    callee_stems describing all direct caller-callee relationships for source files of the given
+    language
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

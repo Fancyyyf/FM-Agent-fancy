@@ -1,0 +1,22 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _required_string(value, key: str, source: str) -> str:
+Line 2:     if not isinstance(value, str) or not value.strip():
+Line 3:         raise ValueError(f"{source}: missing non-empty string '{key}'")
+Line 4:     return _clean_label(value)
+```
+
+Condition A (what the code actually does):
+If value is a string and after stripping leading/trailing whitespace it is non-empty (i.e., isinstance(value, str) and value.strip() != ''), then the function returns value with all leading and trailing whitespace removed (result of _clean_label(value)), which is a non-empty string with no leading/trailing whitespace. Otherwise, a ValueError is raised with the message f"{source}: missing non-empty string '{key}'". Formally: (isinstance(value, str) ∧ value.strip() ≠ '' ⇒ result = _clean_label(value) ∧ result ≠ '' ∧ isinstance(result, str)) ∧ (¬(isinstance(value, str) ∧ value.strip() ≠ '') ⇒ ValueError raised with appropriate message).
+
+Condition B (what the specification requires):
+- Raises ValueError whose error message contains source and key when value is None, not a str, or a str that consists entirely of whitespace after stripping
+  - Returns a non-empty string whose content equals value with all leading and trailing whitespace characters removed when value is a str containing at least one non-whitespace character
+
+Additional context:
+_clean_label(value: str) -> str
+Pre-condition: value is a str
+  Post-condition: Returns value with all leading and trailing whitespace characters removed
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

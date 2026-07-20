@@ -1,0 +1,11 @@
+{
+  "id": "src--trace_writer-py--append_event",
+  "source_file": "src/trace_writer.py",
+  "function_name": "append_event",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--trace_writer-py--append_event.py",
+  "detail_file": "fm_agent/bug_validation/src--trace_writer-py--append_event.md",
+  "probe_stdout": "CONFIRMED — new event concatenated to incomplete line: '{\"partial\": {\"event\": \"new\", \"data\": \"test\"}\\n'\\n",
+  "trigger_summary": "When events.jsonl contains content that does not end with a newline, append_event concatenates the new event to the last incomplete line instead of writing it on a new line."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "café()",
+  "offending_statements": "Line 2:     match = re.search(r'([A-Za-z_][A-Za-z0-9_]*)\\s*\\(', signature_line)",
+  "reason": "The code uses a regular expression that only matches ASCII letters (A-Z, a-z) for the initial character of the identifier. The specification requires recognition of identifiers starting with any alphabetic character, which in Python includes Unicode letters. A function name like 'café' (with a non-ASCII letter é) is a valid identifier and should be extracted, but the code returns None instead of 'café'."
+}

@@ -1,0 +1,1 @@
+{"post_condition": "If no exception is raised, the function returns the string obtained by joining trace_dir and 'payloads' (using os.path.join), and the directory at that path exists. The original trace_dir directory is not modified."}

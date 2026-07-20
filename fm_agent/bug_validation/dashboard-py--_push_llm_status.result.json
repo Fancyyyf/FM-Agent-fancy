@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_push_llm_status",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/_push_llm_status.py",
+  "function_name": "_push_llm_status",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_push_llm_status.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_push_llm_status.md",
+  "probe_stdout": "NOT CONFIRMED — deque maxlen=80 correctly enforces capacity limit. oldest evicted (was \"label0\", now \"label1\"), final len=80",
+  "trigger_summary": "_push_llm_status allegedly fails to evict oldest entry when deque exceeds capacity, but Python's deque(maxlen=N) append() automatically enforces the limit."
+}

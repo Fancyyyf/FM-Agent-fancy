@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a tuple (pre, post). Define pre_match = re.search(r'Pre-condition:\\s*\\n(.*?)(?=\\nPost-condition:|\\Z)', spec, re.DOTALL); pre = pre_match.group(1).strip() if pre_match else None. Define post_match = re.search(r'Post-condition:\\s*\\n(.*)', spec, re.DOTALL); post = post_match.group(1).strip() if post_match else None. Therefore, pre is the stripped content of the 'Pre-condition:' section if it exists (i.e., the substring after the newline following 'Pre-condition:', up to the next 'Post-condition:' line or end of spec), else None; post is the stripped content of the 'Post-condition:' section if it exists (i.e., the substring after the newline following 'Post-condition:' to the end of spec), else None."
+}

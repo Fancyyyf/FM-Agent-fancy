@@ -1,0 +1,88 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a string path to the project root directory.
+  - work_dir is a string path to a writable fm_agent workspace directory.
+  - modified_modules is an iterable of module name strings (may be empty).
+
+Code block:
+```python
+Line 1: def _update_module_description(proj_dir, work_dir, modified_modules):
+Line 2:     """Delegate refreshing module descriptions to the agent after deduplication.
+Line 3:     ``_ensure_source_files_in_phases`` can force-add source files to a module and
+Line 4:     ``_deduplicate_phases`` can strip duplicate source files from a module while
+Line 5:     leaving it in place. A module's ``description`` is prose written by the setup
+Line 6:     agent about a specific set of files, so once that set changes the description
+Line 7:     can be inaccurate. Rather than editing it mechanically, we hand the agent the
+Line 8:     exact list of modules whose file list changed and let it rewrite their
+Line 9:     descriptions against the freshly written phases.json.
+Line 10:     ``modified_modules`` is the list from ``_collect_changed_modules``; an empty
+Line 11:     list (no module's files changed) skips the agent call entirely.
+Line 12:     """
+Line 13:     if not modified_modules:
+Line 14:         return
+Line 15:     phases_path = os.path.join(work_dir, "phases.json")
+Line 16:     if not os.path.exists(phases_path):
+Line 17:         logging.info("No phases.json to update module descriptions in; skipping.")
+Line 18:         return
+Line 19:     prompt = _build_module_description_prompt(modified_modules, phases_path)
+Line 20:     if not prompt:
+Line 21:         logging.info(
+Line 22:             "No changed module still owns source files; skipping description update."
+Line 23:         )
+Line 24:         return
+Line 25:     fm_reminder = ("IMPORTANT: fm_agent/ is your output workspace, not project source. "
+Line 26:                    "Do NOT modify any existing project files.")
+Line 27:     prompt = f"{prompt}\n\n{fm_reminder}"
+Line 28:     command = build_llm_cli_command(
+Line 29:         model=OPENCODE_SETUP_MODEL,
+Line 30:         prompt=prompt,
+Line 31:         cwd=proj_dir,
+Line 32:     )
+Line 33:     for attempt in range(1, OPENCODE_MAX_RETRIES + 1):
+Line 34:         try:
+Line 35:             run_opencode_traced(
+Line 36:                 proj_dir=proj_dir,
+Line 37:                 work_dir=work_dir,
+Line 38:                 command=command,
+Line 39:                 stage="update_module_description",
+Line 40:                 input_files=["fm_agent/phases.json"],
+Line 41:                 output_files=["fm_agent/phases.json"],
+Line 42:                 summary=f"Update module descriptions after phase dedup (attempt {attempt})",
+Line 43:                 metadata={"attempt": attempt},
+Line 44:             )
+Line 45:             return
+Line 46:         except subprocess.CalledProcessError as e:
+Line 47:             logging.warning(
+Line 48:                 "Module-description update attempt %d/%d failed: opencode exited %s",
+Line 49:                 attempt, OPENCODE_MAX_RETRIES, e.returncode,
+Line 50:             )
+Line 51:             if attempt < OPENCODE_MAX_RETRIES:
+Line 52:                 time.sleep(10)
+Line 53:     # Best effort: a stale description is not fatal to the pipeline, so warn and
+Line 54:     # let the run continue rather than aborting.
+Line 55:     logging.warning(
+Line 56:         "Module-description update did not complete after %d attempts; some module "
+Line 57:         "descriptions in phases.json may still reference deduplicated files.",
+Line 58:         OPENCODE_MAX_RETRIES,
+Line 59:     )
+```
+
+Additional context:
+build_llm_cli_command(model, prompt, cwd) -> list[str]
+Pre-condition: model is a non-empty string identifying an LLM; prompt
+    is a non-empty string; cwd is a writable directory path.
+  Post-condition: Returns a list of strings forming a CLI command that,
+    when executed, invokes the configured agent backend with the given
+    model, prompt, and working directory.
+
+run_opencode_traced(proj_dir, work_dir, command, stage, ...) -> CompletedProcess
+Pre-condition: proj_dir is the project root path; work_dir is the
+    fm_agent workspace path; command is a non-empty list of CLI arguments;
+    stage is a pipeline stage identifier string.
+  Post-condition: Executes command as a subprocess, capturing stdout and
+    stderr. On successful completion (exit code 0), durably writes a
+    structured event record under fm_agent/trace/. On non-zero exit,
+    raises CalledProcessError with the exit code; the event record written
+    before the exception reflects the failure.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

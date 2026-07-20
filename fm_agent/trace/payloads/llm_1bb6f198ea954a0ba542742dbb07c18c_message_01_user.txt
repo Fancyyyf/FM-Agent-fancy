@@ -1,0 +1,94 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _parse_python_file(src_path: Path) -> tuple[list[dict], list[str], list[dict]] | tuple[None, None, None]:
+Line 2:     """Parse a Python source file with the ast module (richest signal extraction)."""
+Line 3:     try:
+Line 4:         content = src_path.read_text(errors='replace')
+Line 5:         tree = ast.parse(content)
+Line 6:         source_lines = content.splitlines()
+Line 7:     except Exception as exc:
+Line 8:         logger.warning("Could not parse %s: %s", src_path, exc)
+Line 9:         return None, None, None
+Line 10:     funcs = []
+Line 11:     for node in ast.walk(tree):
+Line 12:         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+Line 13:             continue
+Line 14:         calls = _collect_calls(node)
+Line 15:         idents, body_words, exc_types = _collect_func_idents(node, source_lines)
+Line 16:         docstring = ast.get_docstring(node) or ''
+Line 17:         funcs.append({
+Line 18:             'name':       node.name,
+Line 19:             'start':      node.lineno,
+Line 20:             'end':        node.end_lineno,
+Line 21:             'calls':      calls,
+Line 22:             'idents':     idents,
+Line 23:             'body_words': body_words,
+Line 24:             'exc_types':  exc_types,
+Line 25:             'docstring':  docstring,
+Line 26:         })
+Line 27:     classes = _extract_classes(tree, source_lines)
+Line 28:     return funcs, source_lines, classes
+```
+
+Condition A (what the code actually does):
+After execution, the function returns a tuple. If an exception was raised during the reading, parsing, or splitting of the file (i.e., any Exception caught in the try block), the return value is (None, None, None). Otherwise, the return value is a 3‑tuple (funcs, source_lines, classes) where: (1) funcs is a list of dicts, one for each top‑level ast.FunctionDef or ast.AsyncFunctionDef node walked in the tree, each dict containing keys 'name', 'start', 'end', 'calls' (result of _collect_calls on that node), 'idents', 'body_words', 'exc_types' (results of _collect_func_idents on that node), 'docstring' (the function's docstring or ''); (2) source_lines is a list of strings, the lines obtained by splitting the file content; and (3) classes is the result of _extract_classes(tree, source_lines), a list of dicts per top‑level class with analogous fields. The function has no side‑effects other than logging a warning on failure. Formal post‑condition: (∃ e: Exception, e raised inside the try block ⇔ result = (None, None, None)) ∧ (¬∃ e: Exception, e raised inside the try block ⇔ ∃ content, tree, L: content = src_path.read_text() ∧ tree = ast.parse(content) ∧ L = content.splitlines() ∧ result = (funcs, L, _extract_classes(tree, L)) ∧ funcs = [ { 'name':n.name, 'start':n.lineno, 'end':n.end_lineno, 'calls':_collect_calls(n), 'idents':i, 'body_words':bw, 'exc_types':et, 'docstring':ast.get_docstring(n) or '' } for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) ] where (i,bw,et) = _collect_func_idents(n, L) ).
+
+Condition B (what the specification requires):
+- If the source text is syntactically valid Python and can be parsed into an AST
+    without raising an exception, returns a 3‑tuple (funcs_info, source_lines, classes)
+    where:
+      * funcs_info is a list of dicts, one per function defined at module scope.
+        Each dict contains at minimum the following keys:
+          - 'name' (str): the function name as written in the source
+          - 'start' (int): 1‑based line number of the `def` or `async def` header
+          - 'end' (int): 1‑based line number of the last line of the function body
+          - 'calls' (collection of str): every name that is the direct target of a
+            function‑call expression within the function body
+          - 'idents' (collection of str): every identifier whose value is read
+            within the function body
+          - 'body_words' (collection of str): every distinct alphabetic token of at
+            least 3 characters appearing in the function body source text, excluding
+            tokens inside comments, string literals, and the docstring
+          - 'exc_types' (collection of str): every exception type name that is
+            raised, caught, or bound within the function body
+          - 'docstring' (str): the docstring text of the function, or the empty
+            string when no docstring is present
+      * funcs_info includes both synchronous functions (FunctionDef) and
+        asynchronous functions (AsyncFunctionDef); the schema of entries is identical
+        regardless of the function kind.
+      * source_lines is a list[str] containing every line of the source file in
+        original order, with trailing newline characters removed
+      * classes is a list of dicts, one per class defined at module scope, each
+        containing the class name, 1‑based line range, method line numbers, and
+        per‑method entries following the same field schema as funcs_info entries
+  - If AST construction raises any exception (including SyntaxError, memory errors,
+    or IO errors during file read), returns (None, None, None).
+  - The function does not write to or rename any file; src_path is read only.
+
+Additional context:
+_collect_calls(node: ast.AST) -> collection[str]
+Pre-condition: node is an AST node rooted at a function or method definition.
+  Post-condition: Returns every name that is the direct target of a function‑call
+    expression anywhere within the subtree rooted at node.
+
+_collect_func_idents(node: ast.AST, source_lines: list[str]) -> tuple[collection[str], collection[str], collection[str]]
+Pre-condition: node is an AST node rooted at a function or method definition.
+    source_lines is the list of source lines for the file containing node.
+  Post-condition: Returns a 3‑tuple (idents, body_words, exc_types) where:
+    - idents is every identifier whose value is read within the function body
+    - body_words is every distinct alphabetic token of at least 3 characters
+      extracted from the function body source text, excluding tokens inside
+      comments, string literals, and the docstring
+    - exc_types is every exception type name that is raised, caught, or bound
+      within the function body
+
+_extract_classes(tree: ast.AST, source_lines: list[str]) -> list[dict]
+Pre-condition: tree is a valid AST for a Python module. source_lines is the
+    corresponding source text as a list of lines.
+  Post-condition: Returns a list of dicts, one per class defined at module scope.
+    Each dict contains at minimum the class name, 1‑based line range, method line
+    numbers, and per‑method entries following the same field schema as funcs_info
+    entries.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

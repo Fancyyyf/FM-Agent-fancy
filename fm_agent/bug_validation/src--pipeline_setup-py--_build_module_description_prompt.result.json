@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_build_module_description_prompt",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_build_module_description_prompt.py",
+  "function_name": "_build_module_description_prompt",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_build_module_description_prompt.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_build_module_description_prompt.md",
+  "probe_stdout": "CONFIRMED — source_files was a string, but list() turned it into a non-empty char list, incorrectly including the module.\n  actual  : Here is a list of modules in fm_agent/phases.json:\n\n  - phase 1 module \"buggy_module\"\n\nPlease update the \"description\" f...",
+  "trigger_summary": "When source_files is a string (not an array), list() converts it to a non-empty character list, causing the truthiness check to incorrectly include the module in the prompt."
+}

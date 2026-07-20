@@ -1,0 +1,198 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _ingest_opencode(self, rec, trace_file=None):
+Line 2:         # opencode-trace alternates request and response; usage lives on responses.
+Line 3:         # The @lucentia plugin prefixes streaming-delta keys with "*" (e.g. "*usage",
+Line 4:         # "*input_tokens"). Older runs used plain names. Strip the prefix so both work.
+Line 5:         rec = _strip_star(rec)
+Line 6:         kind = rec.get("_kind")
+Line 7:         call_id = rec.get("_id")
+Line 8:         trace_key = rec.get("_trace_file") or trace_file
+Line 9:         if kind == "request" and call_id is not None:
+Line 10:             self._opencode_requests[(trace_key, call_id)] = {
+Line 11:                 "ts": _parse_iso(rec.get("_ts")),
+Line 12:                 "model": rec.get("model"),
+Line 13:                 "url": rec.get("_url"),
+Line 14:                 "purpose": rec.get("_purpose"),
+Line 15:             }
+Line 16:             return
+Line 17:         if kind == "error":
+Line 18:             req = self._opencode_requests.get((trace_key, call_id), {})
+Line 19:             self._push_llm_status(
+Line 20:                 ts=_parse_iso(rec.get("_ts")) or req.get("ts"),
+Line 21:                 source="opencode",
+Line 22:                 label=req.get("purpose") or rec.get("_purpose") or rec.get("_url") or "opencode",
+Line 23:                 status="error",
+Line 24:                 model=rec.get("model") or req.get("model"),
+Line 25:                 code=_trace_value(rec, "_status", "status", "status_code") or "ERR",
+Line 26:                 detail=_trace_value(rec, "_error", "error", "message"),
+Line 27:             )
+Line 28:             return
+Line 29:         if kind != "response":
+Line 30:             return
+Line 31:         req = self._opencode_requests.get((trace_key, call_id), {})
+Line 32:         status_code = _trace_value(rec, "_status", "status", "status_code")
+Line 33:         if status_code and str(status_code) != "200":
+Line 34:             self._push_llm_status(
+Line 35:                 ts=_parse_iso(rec.get("_ts")) or req.get("ts"),
+Line 36:                 source="opencode",
+Line 37:                 label=req.get("purpose") or rec.get("_purpose") or rec.get("_url") or "opencode",
+Line 38:                 status="error",
+Line 39:                 model=rec.get("model") or req.get("model"),
+Line 40:                 code=status_code,
+```
+
+Condition A (what the code actually does):
+After completing execution of _ingest_opencode, the state of self is transformed as follows:
+
+Case 1: rec._kind is "request" and rec._id is not None.
+    - self._opencode_requests is updated: for fresh_key = (trace_key, call_id) where trace_key = rec.get("_trace_file") or trace_file, and call_id = rec["_id"], the entry self._opencode_requests[fresh_key] is set to a dict with keys "ts" (datetime or None, parsed from rec._ts), "model" (value of rec.model, or None), "url" (value of rec._url, or None), and "purpose" (value of rec._purpose, or None).
+    - All other attributes of self (opencode_calls, opencode_token_totals, opencode_cost, cache_window, LLM-status history, and _opencode_requests entries for other keys) remain unchanged.
+
+Case 2: rec._kind is "error".
+    - A new error record is appended to the LLM-status history (the bounded internal list). The record contains the keys:
+        ts: _parse_iso(rec.get("_ts")) if truthy, otherwise req.get("ts") (where req = self._opencode_requests.get((trace_key, call_id), {})).
+        source: "opencode".
+        label: req.get("purpose") if truthy, else rec.get("_purpose") or rec.get("_url") or "opencode".
+        status: "error".
+        model: rec.get("model") if truthy, else req.get("model").
+        code: _trace_value(rec, "_status", "status", "status_code") if truthy, else "ERR".
+        detail: _trace_value(rec, "_error", "error", "message") (could be None).
+    - self._opencode_requests is not modified.
+    - All other attributes remain unchanged.
+
+Case 3: rec._kind is "response" and the extracted status_code (via _trace_value(rec, "_status", "status", "status_code")) is truthy and not equal to the string "200".
+    - An error record is appended to the LLM-status history with:
+        ts: _parse_iso(rec.get("_ts")) if truthy, else req.get("ts") (req as above).
+        source: "opencode".
+        label: req.get("purpose") if truthy, else rec.get("_purpose") or rec.get("_url") or "opencode".
+        status: "error".
+        model: rec.get("model") if truthy, else req.get("model").
+        code: the status_code value (as string or original type).
+        detail: None (not provided).
+    - self._opencode_requests is not modified.
+    - All other attributes remain unchanged.
+
+Case 4: All other scenarios (rec._kind is not "request", not "error", not "response"; or rec._kind is "request" but rec._id is None; or rec._kind is "response" with no status_code or status_code == "200"; etc.).
+    - self is completely unchanged: all attributes have their original values.
+
+In all cases, no exceptions are raised by the helpers under normal operation (they handle missing/falsy inputs gracefully, returning None where appropriate). If an unexpected exception occurs, self may be partially updated up to the point of failure and the exception propagates.
+
+Formal logic (using S for self, S0 for initial state, _oreqs for _opencode_requests, _llm_hist for the LLM-status history list, and letting rec′ = _strip_star(rec)):
+((rec′._kind = "request" ∧ rec′._id ≠ None) ⇒
+   (∃ fresh_key = (rec′._trace_file or trace_file, rec′._id).
+    S._oreqs = S0._oreqs ⊕ {fresh_key ↦ {"ts": _parse_iso(rec′._ts),
+                                       "model": rec′.model,
+                                       "url": rec′._url,
+                                       "purpose": rec′._purpose}}) ∧
+    S.opencode_calls = S0.opencode_calls ∧
+    S.opencode_token_totals = S0.opencode_token_totals ∧
+    S.opencode_cost = S0.opencode_cost ∧
+    S.cache_window = S0.cache_window ∧
+    S._llm_hist = S0._llm_hist))
+∧ ((rec′._kind = "error") ⇒
+   (S._llm_hist = S0._llm_hist ⌢ [error_record] ∧
+    S._oreqs = S0._oreqs ∧
+    S.opencode_calls = S0.opencode_calls ∧
+    S.opencode_token_totals = S0.opencode_token_totals ∧
+    S.opencode_cost = S0.opencode_cost ∧
+    S.cache_window = S0.cache_window))
+∧ ((rec′._kind = "response" ∧ (let sc = _trace_value(rec′, "_status", "status", "status_code") in sc truthy ∧ str(sc) ≠ "200")) ⇒
+   (S._llm_hist = S0._llm_hist ⌢ [resp_error_record] ∧
+    S._oreqs = S0._oreqs ∧
+    ... same other fields unchanged ...))
+∧ (otherwise ⇒ S = S0)
+
+where ⊕ denotes dictionary update (fresh key added or old value replaced with new dict), and ⌢ denotes list append with possible bounded eviction as per _push_llm_status. The exact records are specified in the natural language cases above.
+
+Condition B (what the specification requires):
+- Records with "_kind" == "request" AND a non-None "_id": the
+    request metadata (timestamp, model, URL, purpose) is stored
+    internally keyed by (trace_file, call_id).  No user-visible
+    aggregated metric changes.
+  - Records with "_kind" == "error": an error entry is appended to
+    the LLM-status history.  No token or cost totals change.
+  - Records with "_kind" != "response": no side effects beyond the
+    request and error handling described above.
+  - Records with "_kind" == "response":
+      * If the HTTP status code (from any of "_status", "status",
+        "status_code") is present and not 200, an error entry is
+        appended to the LLM-status history.  No token or cost totals
+        change.
+      * If "usage" is not a dict (missing or non-dict value), a
+        success entry is appended to the LLM-status history.  No
+        token or cost totals change.
+      * If "usage" is a dict but contains no token counts (i.e.,
+        both input and output tokens resolve to zero), a success
+        entry is appended to the LLM-status history.  No token or
+        cost totals change.
+      * Otherwise (usage is a dict with non-zero token counts):
+        - A success entry is appended to the LLM-status history.
+        - self.opencode_calls is incremented by 1.
+        - self.opencode_token_totals["input"],
+          self.opencode_token_totals["output"],
+          self.opencode_token_totals["cache_read"], and
+          self.opencode_token_totals["cache_write"] are increased
+          by the corresponding token counts resolved from the usage
+          dict, supporting both Anthropic-native and OpenAI-compat
+          shapes (with DeepSeek cache-hit/miss splitting for the
+          OpenAI compat path).
+        - self.opencode_cost is increased by the cost computed from
+          the model and resolved usage.
+        - If total input tokens (input + cache_read + cache_write)
+          for this response are positive, the pair
+          (cache_read_tokens, total_input_tokens) is appended to
+          self.cache_window.
+  - Missing optional fields (keys absent or None) do not cause
+    errors; the corresponding metric updates or status entries are
+    simply skipped.
+  - The strip-started normalization is applied transparently so
+    that records from streaming-delta key formats and plain-key
+    formats are handled identically.
+
+Additional context:
+_strip_star(d) -> dict
+Pre-condition: d is a dict.
+  Post-condition: Returns a new dict where every key that starts
+    with "*" has that prefix removed.  Keys without the prefix are
+    unchanged.  The returned dict has the same values as d for
+    each (possibly renamed) key.
+
+_parse_iso(timestamp_str) -> Optional[datetime]
+Pre-condition: timestamp_str is a string or None.
+  Post-condition: Returns a timezone-aware datetime parsed from an
+    ISO 8601 string; returns None when timestamp_str is falsy or
+    cannot be parsed as a valid timestamp.
+
+_trace_value(d, *keys) -> Optional[str]
+Pre-condition: d is a dict; keys is a sequence of string key
+    names.
+  Post-condition: Returns the value associated with the first key
+    in keys that exists in d and has a truthy value.  Returns None
+    if no key in keys maps to a truthy value in d.
+
+State._push_llm_status(self, ts, source, label, status, model, code, detail) -> None
+Pre-condition: ts is a datetime or None; source, label, status,
+    model, code, and detail are strings or None.
+  Post-condition: A record containing the given fields is appended
+    to the LLM-status history, bounded to a fixed maximum length
+    (oldest entries evicted when at capacity).
+
+_cost_from_usage(model, usage) -> float
+Pre-condition: model is a string or None; usage is a dict containing
+    token-count fields.
+  Post-condition: Returns the monetary cost in USD computed from the
+    model's per-token pricing and the token counts in usage.
+    Returns 0.0 when model is None or pricing data for the model is
+    unavailable.
+
+_get_nested(d, *keys) -> Optional[Any]
+Pre-condition: d is a dict; keys is a sequence of string key
+    names.
+  Post-condition: Returns the value at d[k1][k2]...[kN] for the
+    given key chain, where each intermediate value must be a dict.
+    Returns None when any intermediate key is missing or the
+    corresponding value is not a dict.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

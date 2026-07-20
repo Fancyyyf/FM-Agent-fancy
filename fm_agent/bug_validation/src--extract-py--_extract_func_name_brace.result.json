@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--_extract_func_name_brace",
+  "source_file": "src/extract.py",
+  "function_name": "_extract_func_name_brace",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--_extract_func_name_brace.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--_extract_func_name_brace.md",
+  "probe_stdout": "CONFIRMED — actual extracted count: 0 | expected: 1",
+  "trigger_summary": "C++ operator, (comma) is not in the operator regex character class, causing operator, signatures to return None instead of 'operator,'"
+}

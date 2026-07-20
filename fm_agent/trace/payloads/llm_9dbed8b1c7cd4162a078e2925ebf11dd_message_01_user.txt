@@ -1,0 +1,96 @@
+Programming language: Python
+
+Pre-condition:
+- funcs_info is a non-empty list of dicts. Each dict contains at minimum:
+    'name' (str, function name), 'start' (int, 1-based start line), 'end'
+    (int, 1-based end line), 'idents' (collection of str, identifiers used
+    within the function body), 'body_words' (collection of str, distinct
+    words from the function body), 'exc_types' (collection of str, exception
+    type names referenced in the body), and 'calls' (collection of str, names
+    of functions called within this function).
+  - classes is a list of dicts. Each dict contains at minimum a key
+    identifying the class by name and 'method_linenos' (collection of int,
+    1-based start-line numbers of methods belonging to the class).
+  - signals is a dict[str, set[str]] mapping distinct signal categories to
+    sets of tokens extracted from the developer intent text. The dict has
+    a fixed set of keys: categories for traceback function names, backtick
+    identifiers, dotted class-method references (split into class names and
+    method names), plain identifiers, exception type names, and all
+    alphabetic words of sufficient length.
+
+Code block:
+```python
+Line 1: def _rank_functions(funcs_info: list[dict],
+Line 2:                     classes: list[dict],
+Line 3:                     signals: dict[str, set[str]]) -> list[dict]:
+Line 4:     """
+Line 5:     Score every function, apply all enrichments, return sorted list.
+Line 6:     Enrichments (applied additively after base score):
+Line 7:         1. Intra-file call-graph propagation
+Line 8:         2. Class-scope narrowing: boost methods of top-matching classes
+Line 9:     """
+Line 10:     # ── base scores ──
+Line 11:     for f in funcs_info:
+Line 12:         f['score'] = _base_score(
+Line 13:             f['name'], f['idents'], f['body_words'], f['exc_types'],
+Line 14:             f['end'] - f['start'] + 1, signals,
+Line 15:         )
+Line 16:     # ── 1. call-graph propagation ──
+Line 17:     name_to_linenos: dict[str, list[int]] = defaultdict(list)
+Line 18:     for f in funcs_info:
+Line 19:         name_to_linenos[f['name']].append(f['start'])
+Line 20:     bonus: dict[int, float] = defaultdict(float)
+Line 21:     for f in funcs_info:
+Line 22:         bscore = f['score']
+Line 23:         if bscore <= 0:
+Line 24:             continue
+Line 25:         for called_name in f['calls']:
+Line 26:             for tl in name_to_linenos.get(called_name, []):
+Line 27:                 bonus[tl] += bscore * CALLEE_INHERIT
+Line 28:         for other in funcs_info:
+Line 29:             if f['name'] in other['calls']:
+Line 30:                 bonus[other['start']] += bscore * CALLER_INHERIT
+Line 31:     for f in funcs_info:
+Line 32:         f['score'] += bonus[f['start']]
+Line 33:     # ── 2. class-scope narrowing ──
+Line 34:     if classes:
+Line 35:         class_bonus: dict[int, float] = defaultdict(float)
+Line 36:         for cls in classes:
+Line 37:             cls_score = _score_class(cls, signals)
+Line 38:             if cls_score <= 0:
+Line 39:                 continue
+Line 40:             raw_bonus = cls_score * CLASS_METHOD_INHERIT
+Line 41:             capped_bonus = min(raw_bonus, CLASS_BOOST_CAP)
+Line 42:             for method_lineno in cls['method_linenos']:
+Line 43:                 class_bonus[method_lineno] += capped_bonus
+Line 44:         for f in funcs_info:
+Line 45:             f['score'] += class_bonus[f['start']]
+Line 46:     return sorted(funcs_info, key=lambda x: -x['score'])
+```
+
+Additional context:
+_base_score(name: str,
+idents: collection[str],
+            body_words: collection[str],
+            exc_types: collection[str],
+            loc: int,
+            signals: dict[str, set[str]]) -> float
+  Pre-condition: name is a non-empty string. idents, body_words, and
+    exc_types are collections of strings extracted from the function body.
+    loc is a positive integer representing the line count of the function.
+    signals has the structure described in the caller pre-condition.
+  Post-condition: Returns a non-negative float representing the heuristic
+    relevance of the function to the developer intent, computed from
+    weighted intersection of the function's textual elements with the
+    signal token sets, divided by a function of loc. Returns 0.0 when no
+    signal token matches any part of the function.
+
+_score_class(cls: dict, signals: dict[str, set[str]]) -> float
+Pre-condition: cls is a dict containing at minimum a class-name string
+    key and a documentation-text key (which may hold an empty string).
+    signals has the structure described in the caller pre-condition.
+  Post-condition: Returns a non-negative float representing the heuristic
+    relevance of the class to the developer intent, computed from weighted
+    intersection of the class name and documentation against the signal
+    token sets. Returns 0.0 when no signal token matches the class.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

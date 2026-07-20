@@ -1,0 +1,42 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def list_staged_domain_knowledge_relpaths(work_dir, prefix="fm_agent"):
+Line 2:     """Return project-relative staged markdown paths, sorted for stable prompts."""
+Line 3:     knowledge_dir = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR)
+Line 4:     if not os.path.isdir(knowledge_dir):
+Line 5:         return []
+Line 6:     relpaths = []
+Line 7:     for root, _dirs, files in os.walk(knowledge_dir):
+Line 8:         for fname in files:
+Line 9:             if fname == USER_KNOWLEDGE_MANIFEST:
+Line 10:                 continue
+Line 11:             ext = os.path.splitext(fname)[1].lower()
+Line 12:             if ext not in VALID_DOMAIN_KNOWLEDGE_EXTENSIONS:
+Line 13:                 continue
+Line 14:             abs_path = os.path.join(root, fname)
+Line 15:             rel_to_work = os.path.relpath(abs_path, work_dir).replace(os.sep, "/")
+Line 16:             relpaths.append(f"{prefix.rstrip('/')}/{rel_to_work}")
+Line 17:     return sorted(relpaths)
+```
+
+Condition A (what the code actually does):
+The function returns a sorted list of strings, each of the form `<normalized_prefix>/<relative_path>` where `normalized_prefix` is `prefix` with trailing slashes removed, and `<relative_path>` is the relative path from `work_dir` to a file, using forward slash separators, under the directory `<work_dir>/USER_KNOWLEDGE_REL_DIR` (with `USER_KNOWLEDGE_REL_DIR` a known constant). Only regular files whose lowercased file extension belongs to `VALID_DOMAIN_KNOWLEDGE_EXTENSIONS` and whose filename is not `USER_KNOWLEDGE_MANIFEST` are included. If `<work_dir>/USER_KNOWLEDGE_REL_DIR` does not exist or is not a directory, an empty list is returned. No side effects occur.
+
+Formally: let K = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR) and p = prefix.rstrip('/'). If ¬os.path.isdir(K) then the return value R = []. Otherwise, let F be the set of all regular files discovered recursively by os.walk(K) (including files in subdirectories). For each f ∈ F with os.path.basename(f) ≠ USER_KNOWLEDGE_MANIFEST and os.path.splitext(f)[1].lower() ∈ VALID_DOMAIN_KNOWLEDGE_EXTENSIONS, define s_f = p + '/' + os.path.relpath(f, work_dir).replace(os.sep, '/'). Then R is the list of all such s_f sorted in ascending lexicographic order.
+
+Condition B (what the specification requires):
+- Returns a sorted list of path strings identifying the domain knowledge
+    files currently staged under work_dir
+  - When no staging directory exists under work_dir, returns an empty list
+  - Each returned path begins with prefix (with any trailing "/" removed),
+    followed by "/" and the path of the staged file relative to work_dir,
+    using "/" as the path separator regardless of the host platform
+  - Paths that correspond to a manifest file rather than a domain knowledge
+    file are excluded from the result
+  - Only files whose lowercase extension is a recognized domain-knowledge
+    file extension are included
+  - The list is sorted in ascending lexicographic order
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

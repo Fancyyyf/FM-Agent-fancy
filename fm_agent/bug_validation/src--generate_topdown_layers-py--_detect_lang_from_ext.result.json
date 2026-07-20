@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_detect_lang_from_ext",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/generate_topdown_layers-py/_detect_lang_from_ext.py",
+  "function_name": "_detect_lang_from_ext",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_detect_lang_from_ext.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_detect_lang_from_ext.md",
+  "probe_stdout": "EXT_TO_LANG total keys: 18\nEXT_TO_LANG dotted keys (e.g. '.py'): []\nEXT_TO_LANG dotless keys (e.g. 'py'): ['cpp', 'cc', 'cxx', 'c', 'h', 'hpp', 'py', 'erl', 'go', 'rs', 'java', 'ts', 'tsx', 'js', 'jsx', 'cu', 'cuh', 'ets']\n\nTest 1: _detect_lang_from_ext('test.py')\n  Actual:   'python'\n  Expected: 'python'\n\nTest 2: _detect_lang_from_ext('foo.cpp')\n  Actual:   'cpp'\n  Expected: 'cpp'\n\nTest 3: _detect_lang_from_ext('foo.xyz')\n  Actual:   None\n  Expected: None\n\nTest 4: _detect_lang_from_ext('foo')\n  Actual:   None\n  Expected: None\n\nNOT CONFIRMED — function behaves correctly with current EXT_TO_LANG (dotless keys match dot-stripped extension lookup)",
+  "trigger_summary": "The code strips the leading dot from extensions (e.g., 'py' not '.py'). The bug would manifest if EXT_TO_LANG had dotted keys, but currently all 18 keys are dotless, so the function works correctly."
+}

@@ -1,0 +1,26 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _elp_argv() -> list[str]:
+Line 2:     command = os.environ.get("ELP_COMMAND", "elp").strip() or "elp"
+Line 3:     argv = shlex.split(command, posix=os.name != "nt")
+Line 4:     if not argv:
+Line 5:         argv = ["elp"]
+Line 6:     return [*argv, "server"]
+```
+
+Condition A (what the code actually does):
+The function returns a list of strings with no other side effects. The returned list is computed as follows: let env_val = os.environ.get('ELP_COMMAND', 'elp'); let stripped = env_val.strip(); let command = stripped if stripped else 'elp'; let posix = (os.name != 'nt'); let argv = shlex.split(command, posix=posix); then the return value is argv + ['server']. Since command is never empty, argv is never empty and the dead-code fallback to ['elp'] is unreachable.
+
+Condition B (what the specification requires):
+- Returns a non-empty list of strings representing the argument vector used to
+    launch the Erlang Language Platform server subprocess
+  - The last element of the returned list is the string "server"
+  - The returned value is deterministic across calls: given an unchanged value of
+    the ELP_COMMAND environment variable and the same operating-system platform
+    (POSIX vs non-POSIX), repeated calls return the same list
+  - When the ELP_COMMAND environment variable changes, the returned list reflects
+    the new command
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

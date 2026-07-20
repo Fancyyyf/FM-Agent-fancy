@@ -1,0 +1,91 @@
+Programming language: Python
+
+Code block:
+```python
+Line 41:         usage = {}
+Line 42:         try:
+Line 43:             response, usage = _retry_create(_llm_provider_client, REASONER_SPEC_CHECK_MODEL, messages)
+Line 44:         except Exception as exc:
+Line 45:             event = {
+Line 46:                 "event_id": event_id,
+Line 47:                 "type": "llm_call",
+Line 48:                 "stage": "verification",
+Line 49:                 "status": "error",
+Line 50:                 "start_time": started,
+Line 51:                 "end_time": utc_now_iso(),
+Line 52:                 "summary": f"LLM implication check failed: {exc}",
+Line 53:                 "metadata": {
+Line 54:                     **trace_meta,
+Line 55:                     "purpose": "check_post_implies_spec",
+Line 56:                     "model": REASONER_SPEC_CHECK_MODEL,
+Line 57:                     "attempt": attempt,
+Line 58:                     "error": str(exc),
+Line 59:                 },
+Line 60:             }
+Line 61:             record_llm_exchange(trace_dir, event_id, event, messages)
+Line 62:             raise
+Line 63:         parsed_result = None
+Line 64:         parse_error = None
+Line 65:         try:
+Line 66:             has_violation, stmts, reason, parsed_result = _parse_spec_check_json(response)
+Line 67:             status = "mismatch" if has_violation else "success"
+Line 68:         except ValueError as exc:
+Line 69:             has_violation = None
+Line 70:             stmts = reason = None
+Line 71:             parse_error = str(exc)
+Line 72:             status = "format_error"
+Line 73:         event = {
+Line 74:             "event_id": event_id,
+Line 75:             "type": "llm_call",
+Line 76:             "stage": "verification",
+Line 77:             "status": status,
+Line 78:             "start_time": started,
+Line 79:             "end_time": utc_now_iso(),
+Line 80:             "summary": "Checked whether actual post-condition implies the spec",
+Line 81:             "metadata": {
+Line 82:                 **trace_meta,
+Line 83:                 "purpose": "check_post_implies_spec",
+Line 84:                 "model": REASONER_SPEC_CHECK_MODEL,
+Line 85:                 "attempt": attempt,
+Line 86:                 "usage": usage,
+Line 87:                 "parsed_json": parsed_result,
+Line 88:                 "parse_error": parse_error,
+Line 89:             },
+Line 90:         }
+Line 91:         record_llm_exchange(trace_dir, event_id, event, messages, response)
+Line 92:         if has_violation is not None:
+Line 93:             if has_violation:
+Line 94:                 stmts = stmts or "(unable to extract)"
+Line 95:                 reason = reason or "(unable to extract)"
+Line 96:                 return False, stmts, post_condition, reason
+Line 97:             else:
+Line 98:                 return True, None, None, None
+Line 99:         messages = messages + [
+Line 100:             {"role": "assistant", "content": response or ""},
+Line 101:             {
+Line 102:                 "role": "user",
+Line 103:                 "content": (
+Line 104:                     "Return only valid JSON with schema: "
+Line 105:                     "{\"verdict\": \"MATCH|MISMATCH\", "
+Line 106:                     "\"counterexample\": string|null, "
+Line 107:                     "\"offending_statements\": string|null, "
+Line 108:                     "\"reason\": string}. "
+Line 109:                     "For MISMATCH, all evidence fields must be non-empty strings. "
+Line 110:                     "For MATCH, counterexample and offending_statements must be null or empty, and reason may be empty."
+Line 111:                 ),
+Line 112:             }
+Line 113:         ]
+Line 114:     raise ValueError("Could not parse a valid structured JSON verdict from spec-check response.")
+```
+
+Condition A (what the code actually does):
+If _retry_create raises an exception E, then response remains None, usage remains {}, an event with status 'error' is recorded, and the exception E is re‑raised. If _retry_create succeeds, returning (resp, usg), then response = resp and usage = usg. In that case, if _parse_spec_check_json(resp) raises a ValueError exc_parse, then has_violation = None, stmts = None, reason = None, parse_error = str(exc_parse), status = 'format_error', messages is extended with an assistant message containing resp and a user message requesting valid JSON, and a new ValueError with message 'Could not parse a valid structured JSON verdict from spec-check response.' is raised. If _parse_spec_check_json(resp) succeeds, returning (hv, stm, rsn, prs), then parsed_result = prs, parse_error = None, and status = 'mismatch' if hv else 'success'. After recording an event, if hv is False, the function returns (True, None, None, None). If hv is True, stmts is replaced by stm if stm is truthy else '(unable to extract)', reason is replaced by rsn if rsn is truthy else '(unable to extract)', and the function returns (False, stmts, post_condition, reason). In all non‑exception paths that reach a return, messages remains as it was before the code block. All variables from the pre‑condition not explicitly modified (attempt, info_str, lang_expertise, trace_meta, event_id, started, language, block, spec_post_condition, etc.) retain their original values. Formally: (∃ E : _retry_create raised E ∧ response = None ∧ usage = {} ∧ ¬∃ return ∧ raised(E)) ∨ (∃ resp, usg : _retry_create returned (resp, usg) ∧ response = resp ∧ usage = usg ∧ ( (∃ exc_parse : _parse_spec_check_json(resp) raised ValueError exc_parse ∧ has_violation = None ∧ stmts = None ∧ reason = None ∧ parse_error = str(exc_parse) ∧ status = 'format_error' ∧ messages = old_messages + [{'role':'assistant','content':resp or ''}, {'role':'user','content':'Return only valid JSON...'}] ∧ raised(ValueError('Could not parse a valid structured JSON verdict from spec-check response.'))) ∨ (∃ hv, stm, rsn, prs : _parse_spec_check_json(resp) returned (hv, stm, rsn, prs) ∧ parsed_result = prs ∧ parse_error = None ∧ has_violation = hv ∧ ( (hv = False ∧ status = 'success' ∧ return = (True, None, None, None)) ∨ (hv = True ∧ status = 'mismatch' ∧ stmts = (stm if stm else '(unable to extract)') ∧ reason = (rsn if rsn else '(unable to extract)') ∧ return = (False, stmts, post_condition, reason)) ) ∧ messages = old_messages ) ) )
+
+Condition B (what the specification requires):
+- Returns a tuple (passed: bool, offending_stmts: str|None, computed_post_cond: str|None, violation_reason: str|None)
+  - When the set of program states described by post_condition is a subset of the set described by spec_post_condition (i.e., post_condition logically implies spec_post_condition for all valid inputs), returns (True, None, None, None)
+  - When there exists a concrete valid input for which post_condition does not guarantee spec_post_condition, returns (False, offending_stmts, post_condition, violation_reason) where offending_stmts and violation_reason are non-empty strings
+  - offending_stmts preserves "Line N:" prefixes from block when present, identifying the specific statements responsible for the violation
+  - When no definitive MATCH or MISMATCH verdict can be reached after exhausting retry attempts, raises ValueError
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

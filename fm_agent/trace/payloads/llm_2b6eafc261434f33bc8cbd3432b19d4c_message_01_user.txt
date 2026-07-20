@@ -1,0 +1,71 @@
+Programming language: Python
+
+Pre-condition:
+- self is an ElpClient instance with a running LSP backend process and an open JSON-RPC
+    communication channel
+  - self.root_uri is a non-empty string, self.proj_dir is a non-empty string, and
+    self.timeout is a positive number
+  - bootstrap_path is a non-empty string
+
+Code block:
+```python
+Line 1:     def initialize(self, bootstrap_path: str, bootstrap_source: str | None = None):
+Line 2:         result = self.request(
+Line 3:             "initialize",
+Line 4:             {
+Line 5:                 "processId": os.getpid(),
+Line 6:                 "clientInfo": {"name": "fm-agent", "version": "0.1.0"},
+Line 7:                 "rootUri": self.root_uri,
+Line 8:                 "workspaceFolders": [
+Line 9:                     {"uri": self.root_uri, "name": os.path.basename(self.proj_dir)}
+Line 10:                 ],
+Line 11:                 "capabilities": {
+Line 12:                     "experimental": {"serverStatusNotification": True},
+Line 13:                     "workspace": {"configuration": True, "workspaceFolders": True},
+Line 14:                     "textDocument": {
+Line 15:                         "documentSymbol": {
+Line 16:                             "dynamicRegistration": False,
+Line 17:                             "hierarchicalDocumentSymbolSupport": True,
+Line 18:                         }
+Line 19:                     },
+Line 20:                 },
+Line 21:             },
+Line 22:         )
+Line 23:         server_info = (result or {}).get("serverInfo") if isinstance(result, dict) else None
+Line 24:         self.notify("initialized")
+Line 25:         self.open_document(bootstrap_path, bootstrap_source)
+Line 26:         deadline = time.monotonic() + self.timeout
+Line 27:         while str(self._status).lower() != "running":
+Line 28:             self._handle_server_message(self._next_message(deadline))
+Line 29:         return server_info
+```
+
+Additional context:
+self.request(method: str, params: dict) -> dict | None
+Pre-condition: method is a non-empty string, params is a dict, and the LSP backend channel is open
+  Post-condition: Sends a JSON-RPC request to the LSP backend with the given method and params;
+    returns the response body as a dict when the request succeeds and produces a response;
+    returns None when the request fails or produces no response body
+
+self.notify(method: str) -> None
+Pre-condition: method is a non-empty string and the LSP backend channel is open
+  Post-condition: Sends a JSON-RPC notification with the given method to the LSP backend;
+    does not wait for or return a response
+
+self.open_document(path: str, source: str | None) -> None
+Pre-condition: path is a non-empty string and the LSP backend channel is open
+  Post-condition: Opens the document at path in the LSP backend; when source is a non-None string,
+    provides that text as the initial document content; when source is None, the backend reads
+    the file from disk at path
+
+self._handle_server_message(msg: dict) -> None
+Pre-condition: msg is a non-empty dict representing a JSON-RPC message received from the LSP
+    backend
+  Post-condition: Processes the server message, updating internal client state including
+    self._status to reflect the server state reported in the message
+
+self._next_message(deadline: float) -> dict
+Pre-condition: deadline is a monotonic-time value in seconds and the LSP backend channel is open
+  Post-condition: Blocks until a message is received from the LSP backend and returns it as a dict;
+    raises an exception when no message arrives before the wall-clock monotonic time exceeds deadline
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

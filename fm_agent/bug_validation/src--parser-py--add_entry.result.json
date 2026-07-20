@@ -1,0 +1,11 @@
+{
+  "id": "src--parser-py--add_entry",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/parser-py/add_entry.py",
+  "function_name": "add_entry",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--parser-py--add_entry.py",
+  "detail_file": "fm_agent/bug_validation/src--parser-py--add_entry.md",
+  "probe_stdout": "CONFIRMED — actual self[fn]: 'expected sig value' | expected spec: 'expected spec value'",
+  "trigger_summary": "When self.signatures is aliased to self, add_entry stores signature in place of spec due to the second assignment overwriting the first."
+}

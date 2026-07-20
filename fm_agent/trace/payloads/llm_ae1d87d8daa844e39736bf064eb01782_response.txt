@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "rel_path = \"tests/\" where \"tests\" is a known test-directory name (e.g., in _TEST_DIR_NAMES case-insensitively)",
+  "offending_statements": "Line 8: for part in parts[:-1]:\nLine 9:     if part.lower() in _TEST_DIR_NAMES:\nLine 10:         return True",
+  "reason": "When rel_path ends with a separator (e.g., \"tests/\"), the split results in parts = ['tests', ''], and parts[:-1] includes \"tests\". The code returns True because the directory component matches, but the path identifies a directory, not a file. The specification states the function returns True only when rel_path identifies a file, so this is a violation."
+}

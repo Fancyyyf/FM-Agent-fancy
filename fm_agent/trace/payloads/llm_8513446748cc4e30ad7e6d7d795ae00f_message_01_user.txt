@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _symbol_uri(symbol: dict, fallback: str):
+Line 2:     return symbol.get("uri") or (symbol.get("location") or {}).get("uri") or fallback
+```
+
+Condition A (what the code actually does):
+Natural language: The function returns the first non-empty string among the following: the value associated with key 'uri' directly in `symbol`; if that is missing or empty, then the value associated with key 'uri' inside the `symbol['location']` dict (provided `symbol['location']` exists and is itself truthy); if both are missing or empty, it returns the `fallback` string. If `fallback` is also empty, the return value is an empty string. Formal logic: return_val = (symbol.get('uri') if symbol.get('uri') else ((symbol.get('location') or {}).get('uri') if (symbol.get('location') or {}).get('uri') else fallback)). Equivalently, in terms of keys and non-emptiness: let u = (symbol['uri'] if 'uri' in symbol and symbol['uri'] != '' else None), l = (symbol['location']['uri'] if 'location' in symbol and symbol['location'] and 'uri' in symbol['location'] and symbol['location']['uri'] != '' else None); then return_val = u if u is not None else (l if l is not None else fallback). The evaluation respects Python's short-circuit `or` semantics: the first truthy value is returned; truthiness for strings means non-empty.
+
+Condition B (what the specification requires):
+- Returns a string value determined by the first of the
+    following that is both present and truthy, evaluated in
+    order:
+    1. The value mapped by key "uri" in symbol
+    2. The value mapped by key "uri" within the dict-like
+       value at symbol["location"] (treated as an empty dict
+       when symbol["location"] is absent or falsy)
+    3. fallback
+  - When neither "uri" key maps to a truthy value, returns
+    fallback exactly as given
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

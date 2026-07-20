@@ -1,0 +1,3 @@
+{
+  "post_condition": "If _parse_file returns funcs_info that is None or empty, the function prints the message and returns the empty list []. Otherwise, funcs_info is non-empty, _rank_functions computes a scored list, deduplication by name produces deduped_ranked, and the function prints a formatted table header; after printing it reaches the end of the block and returns None (implicit return). The arguments filepath, src_path, issue, signals, top_k, llm_client, llm_model, llm_trigger, llm_top_k, llm_confidence_threshold, proj_dir are unchanged. No exceptions are raised under the given pre-conditions. Stdout receives the relevant output lines."
+}

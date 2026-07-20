@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_tarjan_scc",
+  "source_file": "src/generate_topdown_layers-py/_tarjan_scc.py",
+  "function_name": "_tarjan_scc",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_tarjan_scc.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_tarjan_scc.md",
+  "probe_stdout": "CONFIRMED — actual result: [{2}, {1}] | got i=1, j=0 for edge 1→2 | spec requires i <= j but 1 <= 0 = False",
+  "trigger_summary": "Tarjan's SCC returns reverse topological order (sinks first, i > j for edge i→j), but the [SPEC] claims i ≤ j — a simple 1→2 DAG returns [{2},{1}] where edge 1→2 gives i=1, j=0 violating i ≤ j."
+}

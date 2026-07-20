@@ -1,0 +1,11 @@
+{
+  "id": "src--entry_reasoning_pipeline-py--_enumerate_source_files",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_enumerate_source_files.py",
+  "function_name": "_enumerate_source_files",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--entry_reasoning_pipeline-py--_enumerate_source_files.py",
+  "detail_file": "fm_agent/bug_validation/src--entry_reasoning_pipeline-py--_enumerate_source_files.md",
+  "probe_stdout": "CONFIRMED — dotless files included: ['README', 'subdir/Makefile'] | actual result: ['README', 'real.py', 'subdir/Makefile'] | expected (spec): no dotless files",
+  "trigger_summary": "Files without a dot in their filename are mapped to '' extension and incorrectly included when EXT_TO_LANG[''] is truthy, violating the spec that requires an actual file extension."
+}

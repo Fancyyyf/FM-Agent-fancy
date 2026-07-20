@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a string assembled by iterating over `funcs_info` in order. For each dictionary `f` in `funcs_info`: let `sig = source_lines[f['start']-1].strip()`. Let `d = f.get('docstring', '') or ''`. If `d` is truthy, let `doc = d.split('\\n')[0][:120]`; else `doc = ''`. The line generated is `\"- \" + f['name'] + \" | \" + sig + \" | \" + doc`. All such lines are joined with newline characters. No exceptions are raised. Formally, post-condition: result = '\\n'.join( \n  \"- \" + f['name'] + \" | \" + source_lines[f['start']-1].strip() + \" | \" + \n  ((f.get('docstring','') or '').split('\\n')[0][:120] if (f.get('docstring','') or '') else '') \n  for f in funcs_info\n)."
+}

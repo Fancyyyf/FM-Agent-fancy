@@ -1,0 +1,3 @@
+{
+  "post_condition": "If calling exc.read() raises an exception or returns a falsy value (e.g., None or empty bytes), the function returns an empty string. Otherwise, let raw_bytes be the returned bytes. The function decodes raw_bytes using UTF-8 with replacement characters for errors, strips surrounding whitespace, yielding text. It then returns text if its length ≤ limit; otherwise returns the first limit characters of text followed by '…'. Formally: (∀ result ∈ str)(result = '' ↔ (RaisedException(exc.read()) ∨ ¬bool(raw_bytes := exc.read()))) ∧ (result = (t[:limit] + '…' if len(t) > limit else t) ↔ (¬RaisedException(exc.read()) ∧ bool(raw_bytes := exc.read()) ∧ t = raw_bytes.decode('utf-8','replace').strip()))."
+}

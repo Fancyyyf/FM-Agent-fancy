@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns the value from the global dictionary EXT_TO_LANG corresponding to the file's extension if the extension is a key in EXT_TO_LANG; otherwise returns None. The extension is the substring after the last '.' in the basename of filepath. Formally, let base = os.path.basename(filepath) and ext = base.rsplit('.', 1)[-1] (the pre-condition ensures '.' exists in base and ext is non‑empty). Then the return value is EXT_TO_LANG[ext] if ext ∈ dom(EXT_TO_LANG) else None."
+}

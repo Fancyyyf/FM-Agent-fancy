@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "lines = ['def f(a,', 'b):', '    pass']",
+  "offending_statements": "Line 28:             if line_indent == indent and re.match(r'\\)\\s*(:|->)', l.lstrip())\nLine 31:             if line_indent <= indent:\nLine 32:                 break",
+  "reason": "The code only treats a same‑indentation line as a header continuation if it begins with a closing parenthesis followed by ':' or '->'. This misses valid continuation lines like 'b):' that do not start with ')'. The specification requires that any line at the same indentation that continues the function header be included in the span."
+}

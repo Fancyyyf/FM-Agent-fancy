@@ -1,0 +1,18 @@
+Programming language: Python
+
+Pre-condition:
+- command is one of:
+    a) an object that carries its argument list in an `argv` attribute
+       whose value is a list of strings, or
+    b) a string, or
+    c) an iterable of strings
+
+Code block:
+```python
+Line 1: def command_argv(command):
+Line 2:     if isinstance(command, AgentCommand):
+Line 3:         return command.argv
+Line 4:     return list(command)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

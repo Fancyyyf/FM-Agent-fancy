@@ -1,0 +1,11 @@
+{
+  "id": "src--reasoner-py--_has_terminating_statement",
+  "source_file": "src/reasoner-py/_has_terminating_statement.py",
+  "function_name": "_has_terminating_statement",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_has_terminating_statement.py",
+  "detail_file": "fm_agent/bug_validation/src--reasoner-py--_has_terminating_statement.md",
+  "probe_stdout": "CONFIRMED — actual: True | expected: False\n",
+  "trigger_summary": "An if/else Python block where the if-branch contains 'return' but the else-branch falls through without terminating triggers the bug: the regex finds 'return' and returns True, but the spec requires False because not every path terminates."
+}

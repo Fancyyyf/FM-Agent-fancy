@@ -1,0 +1,3 @@
+{
+  "post_condition": "If trace_dir is falsy (None or empty string), no side effects occur and the function returns None. Otherwise, trace_dir is a writable directory path and the call to append_event(trace_dir, event) durably appends event as a single JSON line to the trace event log under trace_dir, creating the file and parent directories if they do not exist; the append is thread-safe under a global lock, and append_event returns None. The function then returns None. In all cases, event remains unchanged."
+}

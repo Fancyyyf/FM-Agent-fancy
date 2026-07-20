@@ -1,0 +1,121 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _start_opencode_process(proj_dir, work_dir, event_id, command, trace_log_path):
+Line 2:     stdin_text = command_stdin(command)
+Line 3:     proc = subprocess.Popen(
+Line 4:         command_argv(command),
+Line 5:         cwd=proj_dir,
+Line 6:         env=_opencode_env(work_dir, event_id),
+Line 7:         stdin=subprocess.PIPE if stdin_text is not None else None,
+Line 8:         stdout=subprocess.PIPE,
+Line 9:         stderr=subprocess.STDOUT,
+Line 10:         text=True,
+Line 11:         encoding="utf-8",
+Line 12:         errors="replace",
+Line 13:     )
+Line 14:     stdin_thread = None
+Line 15:     if stdin_text is not None:
+Line 16:         stdin_thread = threading.Thread(
+Line 17:             target=_write_command_stdin,
+Line 18:             args=(proc.stdin, stdin_text),
+Line 19:             daemon=True,
+Line 20:         )
+Line 21:         stdin_thread.start()
+Line 22:     log_thread = threading.Thread(
+Line 23:         target=_copy_opencode_output,
+Line 24:         args=(proc.stdout, trace_log_path),
+Line 25:         daemon=True,
+Line 26:     )
+Line 27:     log_thread.start()
+Line 28:     return proc, log_thread, stdin_thread
+```
+
+Condition A (what the code actually does):
+Function _start_opencode_process returns a tuple (proc, log_thread, stdin_thread). proc is a subprocess.Popen instance representing a child process that was launched with the command arguments from command_argv(command), working directory proj_dir, environment variables from _opencode_env(work_dir, event_id) merged with the current environment, and with stdout and stderr both redirected to a subprocess.PIPE that will provide UTF-8 encoded text with replacement errors. If command_stdin(command) returned a non‑None string stdin_text, the child’s stdin is connected to a subprocess.PIPE and a newly created daemon thread stdin_thread is running the target _write_command_stdin(proc.stdin, stdin_text), which will write the text, flush, and close the pipe; if stdin_text was None, proc.stdin is None and stdin_thread is None. log_thread is a newly created daemon thread running the target _copy_opencode_output(proc.stdout, trace_log_path), which will read lines from proc.stdout until EOF, write them to the file at trace_log_path, flush, and close the file. Both threads have been started by calling .start() but have not been joined; they are alive at the time of return. The subprocess proc is still running, and its stdin (if present) and stdout pipes are owned by the corresponding threads and must not be used elsewhere until the threads finish. No exceptions were raised during subprocess creation, thread creation, or thread start. 
+
+Formal logic:
+
+∃ proc, log_thread, stdin_thread :
+  (proc is a subprocess.Popen) ∧
+  (proc.args = command_argv(command)) ∧
+  (proc.cwd = proj_dir) ∧
+  (env = _opencode_env(work_dir, event_id)) ∧
+  (proc.env ⊇ current_process_env) ∧
+  (proc.stdin = (subprocess.PIPE if stdin_text ≠ None else None)) ∧
+  (proc.stdout = subprocess.PIPE) ∧
+  (proc.stderr = subprocess.STDOUT) ∧
+  (proc.text = True) ∧
+  (proc.encoding = "utf-8") ∧
+  (proc.errors = "replace") ∧
+  (log_thread is a threading.Thread) ∧
+  (log_thread.daemon = True) ∧
+  (log_thread.target = _copy_opencode_output) ∧
+  (log_thread.args = (proc.stdout, trace_log_path)) ∧
+  (log_thread.is_alive() after .start()) ∧
+  ((stdin_text ≠ None) ⇒
+    (stdin_thread is a threading.Thread) ∧
+    (stdin_thread.daemon = True) ∧
+    (stdin_thread.target = _write_command_stdin) ∧
+    (stdin_thread.args = (proc.stdin, stdin_text)) ∧
+    (stdin_thread.is_alive() after .start()) ∧
+    (stdin_thread will eventually close proc.stdin)
+  ) ∧
+  ((stdin_text = None) ⇒ stdin_thread = None) ∧
+  (return_value = (proc, log_thread, stdin_thread))
+
+Condition B (what the specification requires):
+- Launches command as a subprocess whose working directory is proj_dir,
+    whose environment variables are derived from work_dir and event_id, and
+    whose stdout and stderr are merged into a single pipeline for capture
+  - The subprocess receives input via a connected stdin pipe if and only if
+    the command carries non-None stdin text; otherwise stdin is not connected
+    to the subprocess
+  - The subprocess text stream encoding is UTF-8 with replacement on decode
+    errors, guaranteeing no UnicodeDecodeError on output read
+  - Starts a background daemon thread that copies the subprocess merged output
+    to trace_log_path as it is produced, ensuring every byte written by the
+    subprocess is recorded
+  - If the command carries non-None stdin text, starts a background daemon
+    thread that writes that text to the subprocess stdin pipe and then closes
+    it; if the command carries no stdin text, no stdin-writing thread is
+    started
+  - Returns a tuple of (process_handle, log_thread, stdin_thread) where
+    log_thread is always a started threading.Thread, and stdin_thread is
+    either a started threading.Thread or None
+  - All launched threads are daemon threads: they will not prevent the calling
+    process from exiting
+  - The subprocess has not yet been waited on; its exit code is not available
+
+Additional context:
+command_stdin(command) -> Optional[str]
+Pre-condition: command is an AgentCommand or list of strings
+  Post-condition: returns the stdin text payload of the command, or None
+    if the command has no stdin text
+
+command_argv(command) -> list[str]
+Pre-condition: command is an AgentCommand or list of strings
+  Post-condition: returns the argument list suitable for passing to
+    subprocess.Popen as the command to execute
+
+_opencode_env(work_dir, event_id) -> dict
+Pre-condition: work_dir is an existing directory path; event_id is a
+    non-empty string
+  Post-condition: returns a dictionary of environment variables for the
+    subprocess, derived from work_dir and event_id, that is a superset of
+    the current process environment
+
+_write_command_stdin(pipe, text) -> None
+Pre-condition: pipe is a writable file-like object connected to a
+    subprocess stdin; text is a string
+  Post-condition: writes text to pipe, flushes, and closes the pipe,
+    after which no further writes to the subprocess stdin are possible
+
+_copy_opencode_output(stream, path) -> None
+Pre-condition: stream is a readable text stream producing lines; path
+    is a writable filesystem path
+  Post-condition: reads from stream line by line until the stream is
+    exhausted (EOF), writing each line to the file at path, then flushes
+    and closes the output file
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

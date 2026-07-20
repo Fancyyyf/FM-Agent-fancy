@@ -1,0 +1,20 @@
+Programming language: Python
+
+Pre-condition:
+- d is a mapping (dict) or a non-mapping value.
+  - keys is a sequence of string key names.
+
+Code block:
+```python
+Line 1: def _trace_value(d, *keys):
+Line 2:     """Read plain or opencode-trace delta-prefixed fields."""
+Line 3:     if not isinstance(d, dict):
+Line 4:         return None
+Line 5:     for key in keys:
+Line 6:         for candidate in (key, f"+{key}", f"*{key}"):
+Line 7:             if candidate in d:
+Line 8:                 return d[candidate]
+Line 9:     return None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

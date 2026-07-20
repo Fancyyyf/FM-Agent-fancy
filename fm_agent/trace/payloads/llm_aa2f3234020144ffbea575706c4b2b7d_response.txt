@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Assume REGISTRY contains a single handler for language 'x' whose batch_extract returns the dict {'/root/sub/../file.py': [('func', 'body')]}. Calling batch_extract_all('/root/sub') returns ({'/root/sub/../file.py': [('func', 'body')]}, {'x'}), but the specification requires normalized absolute file paths (e.g., '/root/file.py').",
+  "offending_statements": "Line 11: funcs.update(result)",
+  "reason": "The specification post-condition states that funcs must map normalized absolute file paths, but the code directly merges handler results without normalizing paths. A handler that returns an absolute but non-normalized path (still valid per its own contract) causes the output to violate the normalization requirement."
+}

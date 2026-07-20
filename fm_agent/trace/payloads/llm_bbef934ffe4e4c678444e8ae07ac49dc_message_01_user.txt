@@ -1,0 +1,22 @@
+Programming language: Python
+
+Pre-condition:
+- handle is an object whose completion has been confirmed
+    (_spec_task_done(handle) returned True)
+
+Code block:
+```python
+Line 1: def _spec_task_exit_code(handle):
+Line 2:     # Normalize exit status reporting across Popen and Future-backed tasks.
+Line 3:     if hasattr(handle, "returncode"):
+Line 4:         return handle.returncode
+Line 5:     if hasattr(handle, "done") and handle.done():
+Line 6:         try:
+Line 7:             result = handle.result()
+Line 8:             return result if isinstance(result, int) else 0
+Line 9:         except Exception:
+Line 10:             return 1
+Line 11:     return None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

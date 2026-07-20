@@ -1,0 +1,39 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _fmt_duration(seconds):
+Line 2:     if seconds is None:
+Line 3:         return "—"
+Line 4:     s = int(seconds)
+Line 5:     h, rem = divmod(s, 3600)
+Line 6:     m, s = divmod(rem, 60)
+Line 7:     if h:
+Line 8:         return f"{h}h {m:02d}m {s:02d}s"
+Line 9:     if m:
+Line 10:         return f"{m}m {s:02d}s"
+Line 11:     return f"{s}s"
+```
+
+Condition A (what the code actually does):
+If the input 'seconds' is None, the function returns the string '—'. If 'seconds' is a non-negative numeric value, let s = int(seconds) (truncation toward zero), h = s // 3600, m = (s % 3600) // 60, sec = s % 60. Then the return value is: if h > 0, return f'{h}h {m:02d}m {sec:02d}s'; if h == 0 and m > 0, return f'{m}m {sec:02d}s'; otherwise (h == 0 and m == 0) return f'{sec}s'. The function always returns a string and does not raise exceptions for inputs satisfying the pre-condition.
+
+Condition B (what the specification requires):
+- When seconds is None, returns the literal string "—" (U+2014 EM DASH)
+  - When seconds is not None, returns a string composed of up to three
+    space-separated segments ordered by decreasing time-unit magnitude
+    (hours, then minutes, then seconds), where each segment has the form
+    "<value><unit-suffix>" with unit-suffix in {"h", "m", "s"}:
+    * The hour segment ("<H>h") appears only when floor(seconds) >= 3600;
+      its value is the whole-hour count, never zero-padded
+    * The minute segment ("<M>m" or "<MM>m") appears when
+      floor(seconds) >= 60; its value is zero-padded to two digits only
+      when the hour segment is present, otherwise it is the bare
+      whole-minute count
+    * The second segment ("<S>s" or "<SS>s") always appears; its value is
+      zero-padded to two digits when any higher-magnitude segment is
+      present, otherwise it is the bare whole-second count
+  - All segment values (H, M, S) are derived from the integer part of
+    seconds (fractional seconds are truncated via floor)
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

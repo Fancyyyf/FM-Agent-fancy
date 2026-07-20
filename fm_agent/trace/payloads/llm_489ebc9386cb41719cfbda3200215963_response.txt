@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "command = ['python', '-c', 'import sys; sys.stdin.read()']; command_stdin(command) returns None; proj_dir, work_dir, event_id, trace_log_path arbitrary. Parent process has an open stdin (e.g., a terminal).",
+  "offending_statements": "Line 7:         stdin=subprocess.PIPE if stdin_text is not None else None,",
+  "reason": "When stdin_text is None, the specification B states 'stdin is not connected to the subprocess', implying the subprocess should have no input stream (e.g., stdin should be closed or /dev/null). The code sets stdin=None, which makes the subprocess inherit the parent's stdin, thus connecting it to an input stream. In the counterexample, the subprocess reads from the inherited terminal stdin and blocks, whereas the specification expects it to receive EOF immediately and exit."
+}

@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a rich Panel object representing a header with the state's workdir, model_seen (or '?' if None), and formatted elapsed time. The state object is unchanged. Formal logic: result = Panel(Text.from_markup('  •  '.join([...]))) ∧ ∀ attr ∈ {workdir, model_seen, elapsed}: state.attr = old(state.attr)."
+}

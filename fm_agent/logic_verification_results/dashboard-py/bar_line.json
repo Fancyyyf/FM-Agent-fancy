@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/bar_line.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- When the total input tokens aggregated across rows is zero,\n    returns a Rich markup string indicating no data for the given\n    label.\n  - Otherwise, returns a Rich markup string containing:\n      * The label left-aligned to a fixed width.\n      * The cache-hit rate expressed as a percentage with one\n        decimal place, rendered in bold with a color determined\n        by the rate: green when  80%, yellow when  50%, and\n        red otherwise.\n      * A 20-character horizontal bar whose filled portion is\n        proportional to the hit rate (rendered with the same color\n        as the percentage), followed by the formatted cache-read\n        and total-input token counts separated by \" / \" in dim\n        style.",
+    "actual_behavior": "The function returns a string and has no side effects on the inputs. Let n be the number of pairs in rows, and for each i=1..n let a_i = cache_read_i  0, b_i = total_input_i  0. Define cr =  a_i, tot =  b_i. If tot = 0 the function returns \"[dim]\" + label left-justified to width 14 + \"(no data)[/]\". Otherwise, let rate = cr / tot, pct = 100 * rate, filled = 20 * rate, bar = \"\" repeated filled times + \"\" repeated (20filled) times, color = \"green\" if pct  80 else (\"yellow\" if pct  50 else \"red\"). The function returns f\"{label:<10}[bold {color}]{pct:5.1f}%[/]  [{color}]{bar}[/] [dim]{_fmt_tokens(cr)} / {_fmt_tokens(tot)}[/]\" where _fmt_tokens gives a humanreadable abbreviation. Precondition guarantees label is a nonempty string, so label alignment never fails.",
+    "code_evidence": "Line 6:         bar_w = 20\nLine 7:         filled = int(bar_w * rate)\nLine 8:         bar = \"\" * filled + \"\" * (bar_w - filled)",
+    "trigger_condition": "When total_input > 0 and rate > 1 (cache_read > total_input), filled = int(20*rate) exceeds 20, making the bar longer than 20 characters. The specification requires a 20-character horizontal bar, so the code violates it."
+  }
+}

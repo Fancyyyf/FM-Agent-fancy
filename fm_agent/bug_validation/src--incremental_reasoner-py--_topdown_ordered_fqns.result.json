@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_topdown_ordered_fqns",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_topdown_ordered_fqns.py",
+  "function_name": "_topdown_ordered_fqns",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_topdown_ordered_fqns.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_topdown_ordered_fqns.md",
+  "probe_stdout": "CONFIRMED — ascending layer sort gives bottom-up order: ['callee_a', 'callee_b', 'caller_x', 'caller_y'] (expected: ['callee_a', 'callee_b', 'caller_x', 'caller_y'])\n",
+  "trigger_summary": "Ascending layer sort places callees (lower layer numbers) before callers (higher layer numbers), producing bottom-up order instead of the spec-required top-down order."
+}

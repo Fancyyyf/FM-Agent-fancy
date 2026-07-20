@@ -1,0 +1,28 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _optional_string(value, key: str, source: str) -> str:
+Line 2:     if value is None:
+Line 3:         return ""
+Line 4:     if not isinstance(value, str):
+Line 5:         raise ValueError(f"{source}: '{key}' must be a string")
+Line 6:     return _clean_label(value)
+```
+
+Condition A (what the code actually does):
+If value is None, the function returns the empty string "". If value is not None and not an instance of str, the function raises a ValueError with the message "{source}: '{key}' must be a string". If value is a non-None string, the function returns the result of _clean_label(value), i.e., value with all leading and trailing whitespace characters removed. Formally:
+  (value = None) => returns ""
+  (value ≠ None ∧ ¬(isinstance(value, str))) => raises ValueError(f"{source}: '{key}' must be a string")
+  (isinstance(value, str)) => returns strip(value)
+
+Condition B (what the specification requires):
+- Returns an empty string when value is None
+  - Returns a string whose content equals value with all leading and trailing whitespace characters removed when value is a str
+  - Raises ValueError whose error message contains source and key when value is not None and not a str
+
+Additional context:
+_clean_label(value: str) -> str
+Pre-condition: value is a str
+  Post-condition: Returns value with all leading and trailing whitespace characters removed
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

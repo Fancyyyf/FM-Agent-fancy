@@ -1,0 +1,102 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def extract_functions_from_file(filepath, lang_key):
+Line 2:     """Extract all functions from a single source file.
+Line 3:     Returns a list of (function_name, source_text) tuples.
+Line 4:     """
+Line 5:     lang_cfg = LANG_CONFIG[lang_key]
+Line 6:     with open(filepath, 'r', errors='replace') as f:
+Line 7:         lines = f.readlines()
+Line 8:     # Normalize line endings
+Line 9:     lines = [l.rstrip('\n').rstrip('\r') for l in lines]
+Line 10:     if lang_cfg["body"] == "brace":
+Line 11:         raw_funcs = _extract_functions_brace(lines, lang_key, lang_cfg)
+Line 12:     elif lang_cfg["body"] == "indent":
+Line 13:         raw_funcs = _extract_functions_indent(lines, lang_cfg)
+Line 14:     else:
+Line 15:         # Semantic-only languages (currently Erlang) are extracted by their
+Line 16:         # registered backend and have no reliable file-local fallback.
+Line 17:         return []
+Line 18:     # Deduplicate names (applied after canonicalize so operator overloads
+Line 19:     # produce safe filenames and FQN components).
+Line 20:     name_counts = {}
+Line 21:     results = []
+Line 22:     for name, start, end in raw_funcs:
+Line 23:         cname = canonicalize(name)
+Line 24:         count = name_counts.get(cname, 0)
+Line 25:         name_counts[cname] = count + 1
+Line 26:         if count > 0:
+Line 27:             deduped = f"{cname}_{count}"
+Line 28:         else:
+Line 29:             deduped = cname
+Line 30:         source = '\n'.join(lines[start:end + 1]) + '\n'
+Line 31:         results.append((deduped, source))
+Line 32:     return results
+```
+
+Condition A (what the code actually does):
+The function returns a list `results` such that: 
+(1) If `LANG_CONFIG[lang_key]["body"]` is `"brace"`, let `raw_funcs = _extract_functions_brace(lines, lang_key, LANG_CONFIG[lang_key])`, where `lines` is the list of lines read from `filepath` with all trailing `\n` and `\r` stripped. 
+(2) If `LANG_CONFIG[lang_key]["body"]` is `"indent"`, let `raw_funcs = _extract_functions_indent(lines, LANG_CONFIG[lang_key])`. 
+(3) Otherwise `results = []`. 
+If not empty, for i = 0 .. len(raw_funcs)-1, let `(name_i, start_i, end_i) = raw_funcs[i]`, `cname_i = canonicalize(name_i)`. Define `count_i = |{j < i | cname_j == cname_i}|`. Set `deduped_i = cname_i` if `count_i = 0` else `f"{cname_i}_{count_i}"`. Set `source_i = "\n".join(lines[start_i : end_i+1]) + "\n"`. Then `results[i] = (deduped_i, source_i)`. The list preserves the order of `raw_funcs`. No unhandled exceptions occur; the file is closed after reading. The returned list contains deduplicated canonical function names and their exact source code (with a trailing newline).
+
+Condition B (what the specification requires):
+- Returns a list of (function_name, source_text) tuples
+  - When the language configuration for lang_key specifies body type
+    "brace" or "indent", the list contains one entry per function body
+    whose boundaries are determined by the structural rules of that
+    body type (brace-matching for "brace", indentation depth for
+    "indent")
+  - When the language configuration specifies a body type that is
+    neither "brace" nor "indent", returns an empty list
+  - Each source_text consists of the exact contiguous source lines of
+    the detected function body (from the line where the function
+    definition begins through the line where its body ends), with
+    line endings normalized to '\n' and with a trailing '\n' appended
+  - Each function_name is derived from the raw function name by
+    stripping angle-bracket template parameters and normalizing
+    operator overload names to safe identifier forms
+  - When multiple extracted functions canonicalize to the same name,
+    the first occurrence in the file keeps the canonicalized name
+    without a suffix, and each subsequent occurrence appends _N where
+    N equals the count of previous occurrences of that canonicalized
+    name (1, 2, ...) in order of appearance
+  - Returns an empty list when no function bodies are detected in the
+    file under a brace or indent body type
+  - If opening the file at filepath fails, the corresponding I/O
+    exception propagates to the caller
+  - If lang_key is absent from LANG_CONFIG, raises KeyError
+
+Additional context:
+_extract_functions_brace(lines, lang_key, lang_cfg) -> [(raw_name, start, end)]
+Pre-condition: lines is a list of source lines with line endings stripped;
+    lang_key is a recognized language key; lang_cfg is the LANG_CONFIG
+    entry for that language with body type "brace"
+  Post-condition: Returns a list of (raw_name, start_line, end_line)
+    tuples for every span of lines between matching open/close brace
+    pairs that begins with a function-definition declarator, using
+    language-specific keyword and syntax rules to identify function
+    definitions; start and end are zero-based line indices into lines
+
+_extract_functions_indent(lines, lang_cfg) -> [(raw_name, start, end)]
+Pre-condition: lines is a list of source lines with line endings
+    stripped; lang_cfg is the LANG_CONFIG entry with body type
+    "indent"
+  Post-condition: Returns a list of (raw_name, start_line, end_line)
+    tuples for every top-level indented block whose header line matches
+    the language's function-definition pattern; a block spans from the
+    header line through the last consecutive line whose indentation
+    level is strictly greater than or equal to the block's base
+    indentation; start and end are zero-based line indices into lines
+
+canonicalize(name) -> str
+Pre-condition: name is a raw function name string extracted from
+    source code
+  Post-condition: Returns a string where angle-bracket template
+    parameter lists are removed and operator overload names are
+    normalized to safe identifier forms suitable for use as filenames
+    and FQN components
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

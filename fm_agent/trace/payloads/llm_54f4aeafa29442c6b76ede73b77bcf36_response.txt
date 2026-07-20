@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "class Outer:\n    class Inner:\n        pass",
+  "offending_statements": "Line 8: for node in ast.walk(tree):\nLine 9: if not isinstance(node, ast.ClassDef):\nLine 10: continue",
+  "reason": "The code collects all ClassDef nodes in the entire AST tree, including nested classes. The specification requires only classes defined at module scope. For the given input, the output includes an extra dictionary for the nested class `Inner`, violating the specification. Additionally, required per-method detail sub-dicts are entirely missing from the output."
+}

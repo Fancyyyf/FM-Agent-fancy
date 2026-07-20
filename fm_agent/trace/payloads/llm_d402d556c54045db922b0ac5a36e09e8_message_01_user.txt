@@ -1,0 +1,32 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _load_call_edge_file(edge_path: Path) -> list[CallEdge]:
+Line 2:     text = edge_path.read_text(errors="replace")
+Line 3:     if not text.strip():
+Line 4:         return []
+Line 5:     return _load_json_edges(text, str(edge_path))
+```
+
+Condition A (what the code actually does):
+The function returns a list of CallEdge objects. If the file content after stripping is empty, the returned list is empty: edge_path.read_text(errors='replace').strip() == '' ⇒ result == []. Otherwise, the returned list equals _load_json_edges(text, str(edge_path)) where text is edge_path.read_text(errors='replace'), and for every element e in the list, isinstance(e, CallEdge) ∧ ((e.caller.fqn is not None and e.caller.fqn != '') ∨ (e.caller.callsite_names is not None and len(e.caller.callsite_names) > 0)) ∧ e.callee.fqn is not None and e.callee.fqn != ''.
+
+Condition B (what the specification requires):
+- When the file content at edge_path is empty or consists entirely of whitespace
+    characters, returns an empty list
+  - When the file content at edge_path is non-empty, returns a list of CallEdge objects
+    parsed from the file's JSON content
+  - Each returned CallEdge has a callee whose fqn is a non-empty string
+  - If the file at edge_path is unreadable or contains text that is not valid JSON
+    conforming to the CallEdge schema, the corresponding I/O exception or JSON decoding
+    exception propagates to the caller
+
+Additional context:
+_load_json_edges(text, source) -> list[CallEdge]
+Pre-condition: text is a non-empty string containing valid JSON that conforms to the
+    extra-edge JSON schema; source is a string identifying the origin file path
+  Post-condition: Returns a list of CallEdge objects deserialized from the JSON text;
+    each CallEdge has a caller (with at least one of fqn or callsite_names non-empty)
+    and a callee (with a non-empty fqn)
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

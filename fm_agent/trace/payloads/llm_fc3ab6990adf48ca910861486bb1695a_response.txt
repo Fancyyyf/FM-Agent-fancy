@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Command-line arguments: --phase 1 --layers 0 --batch-size 2. phases.json file exists and contains: {\"project\": \"test\", \"languages\": [\"python\"], \"file_extensions\": [\".py\", \".js\"]}. topdown.json file exists and contains: {\"layers\": [{\"layer\": 0, \"functions\": [{\"name\": \"test.foo\", \"file\": \"foo.js\"}]}]}. Other required directories exist.",
+  "offending_statements": "Line 14: ext_to_lang = {ext.lower().lstrip(\".\"): lang for ext, lang in zip(exts, languages)}",
+  "reason": "The code builds ext_to_lang by zipping exts and languages. If the two lists have different lengths, the resulting mapping is incomplete (only covers the shortest list). For the given input, .js is missing, so later when processing a function with that extension, the program will likely raise a KeyError or produce an incorrect prompt, violating the specification that the program returns 0 and correctly generates batch prompts."
+}

@@ -1,0 +1,33 @@
+Programming language: Python
+
+Pre-condition:
+- self is an ElpClient instance with an open LSP communication channel to the
+    backend
+  - path is a non-empty string
+
+Code block:
+```python
+Line 1:     def open_document(self, path: str, source: str | None = None):
+Line 2:         document = Path(path).resolve()
+Line 3:         if source is None:
+Line 4:             source = document.read_text(encoding="utf-8", errors="replace")
+Line 5:         self.notify(
+Line 6:             "textDocument/didOpen",
+Line 7:             {
+Line 8:                 "textDocument": {
+Line 9:                     "uri": document.as_uri(),
+Line 10:                     "languageId": "erlang",
+Line 11:                     "version": 1,
+Line 12:                     "text": source,
+Line 13:                 }
+Line 14:             },
+Line 15:         )
+```
+
+Additional context:
+self.notify(method: str, params: dict) -> None
+Pre-condition: method is a non-empty string identifying the LSP notification;
+    params is a dict containing the notification parameters
+  Post-condition: Sends an LSP notification to the backend with the given method
+    and params; does not wait for a response
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

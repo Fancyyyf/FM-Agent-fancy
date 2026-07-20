@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/generate_topdown_layers-py/_get_keywords_for_lang.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a non-empty set of strings, where each string is a keyword that\n    must be excluded from call-site detection for the given lang_key\n  - The returned set is the union of:\n      (a) the language-specific reserved keywords defined for lang_key, and\n      (b) a fixed cross-language set of additional keywords that are excluded\n          from call-site detection in every language\n  - If no language-specific keyword set is defined for lang_key, only the\n    cross-language set is returned\n  - The returned set does not depend on the caller or on any mutable state\n    outside the function",
+    "actual_behavior": "The function returns a set containing all keywords for the given language merged with a global set of additional keywords. Specifically, if lang_key is a key in LANG_CONFIG and its value is a dictionary that contains a 'keywords' key, then the returned set is the union of that 'keywords' set and the global _COMMON_EXTRA_KEYWORDS. Otherwise, the returned set is simply a copy of _COMMON_EXTRA_KEYWORDS. No side-effects occur. Formally: result = (LANG_CONFIG.get(lang_key, {}).get('keywords', set()))  _COMMON_EXTRA_KEYWORDS.",
+    "code_evidence": "Line 4: kw = set(lang_cfg.get(\"keywords\", set()))\nLine 5: kw.update(_COMMON_EXTRA_KEYWORDS)\nLine 6: return kw",
+    "trigger_condition": "The specification requires that the function returns a non-empty set of strings. However, if _COMMON_EXTRA_KEYWORDS is empty and the language configuration provides no keywords, the set kw remains empty. The code does not guarantee non-emptiness, so it can produce an output that violates the specification."
+  }
+}

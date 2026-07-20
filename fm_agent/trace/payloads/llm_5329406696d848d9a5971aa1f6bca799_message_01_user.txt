@@ -1,0 +1,27 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return module-qualified Erlang call edges in registry format."""
+Line 3:     return _analysis_or_empty(_callgraph_project_root(proj_dir)).edges
+```
+
+Condition A (what the code actually does):
+The function returns a dictionary resulting from the call-graph analysis of the effective project root (which may be a subdirectory of `proj_dir` as determined by `_callgraph_project_root`). If the analysis is available, the dictionary contains a module-qualified Erlang call edges mapping (caller to callees); otherwise, it is an empty dictionary. No exceptions are raised; the function always terminates normally under the given pre-condition. Formally: `result = _analysis_or_empty(_callgraph_project_root(proj_dir)).edges` and `isinstance(result, dict)` holds, with `result` being either the non‑empty edges dictionary or `{}` when analysis is unavailable.
+
+Condition B (what the specification requires):
+- Returns a mapping from caller fully-qualified names to sets of callee fully-qualified names
+  - FQNs follow the format: path::components::delimited::by::double::colons, where the last component is the function name
+  - Each callee in the returned graph is a function that exists within the analyzed Erlang project
+  - If Erlang-specific analysis is unavailable for the project at proj_dir, returns an empty dict
+
+Additional context:
+_callgraph_project_root(proj_dir: str) -> str
+Pre-condition: proj_dir is a filesystem path to a project directory
+  Post-condition: Returns the effective root directory used for call-graph analysis, which may differ from proj_dir when the project root is a subdirectory of proj_dir
+
+_analysis_or_empty(root: str) -> object
+Pre-condition: root is a filesystem path
+  Post-condition: Returns an analysis object whose .edges attribute yields the caller-to-callees mapping; returns an object whose .edges is an empty dict when analysis is unavailable for the given root
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

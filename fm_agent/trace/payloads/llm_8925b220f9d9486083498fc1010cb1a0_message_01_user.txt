@@ -1,0 +1,101 @@
+Programming language: Python
+
+Pre-condition:
+After execution, info_str is a string that is '
+Additional context:
+' concatenated with the string representation of knowledge if knowledge is truthy, otherwise the empty string. lang_expertise is a string obtained from _LANGUAGE_EXPERTISE with key language.lower() if present, otherwise the default string 'You are an expert in logic, formal verification, and {language} programming. '. messages is a list of two dictionaries: the first with 'role' set to 'system' and 'content' being the concatenation of lang_expertise and a fixed prompt describing the task; the second with 'role' set to 'user' and 'content' being a formatted string containing language, block, post_condition, spec_post_condition, and info_str. trace_meta is the original trace_meta if it was not None, otherwise an empty dictionary. The for-loop variable attempt equals 1. event_id is a string identifier produced by new_event_id('llm'). started is an ISO 8601 timestamp string returned by utc_now_iso(). response is None. No exception has been raised. Formally: ∃S where S = knowledge if knowledge else ''; info_str = ('' if not knowledge else '
+Additional context:
+' + str(knowledge)) ∧ lang_expertise = _LANGUAGE_EXPERTISE.get(language.lower(), f'You are an expert in logic, formal verification, and {language} programming. ') ∧ messages[0].role = 'system' ∧ messages[0].content = lang_expertise + 'Given a code block...' ∧ messages[1].role = 'user' ∧ messages[1].content = f'Programming language: {language}
+
+Code block:
+```{language.lower()}
+{block}
+```
+
+Condition A (what the code actually does):
+{post_condition}
+
+Condition B (what the specification requires):
+{spec_post_condition}
+{info_str}
+Is there...' ∧ (trace_meta = {} ⊂ old_trace_meta = None) ∨ (trace_meta = old_trace_meta ⊂ old_trace_meta ≠ None) ∧ attempt = 1 ∧ ∃e,s: event_id = e ⊂ e = new_event_id('llm') ∧ started = s ⊂ s = utc_now_iso() ∧ response = None ∧ no exceptions raised.
+
+Code block:
+```python
+Line 41:         usage = {}
+Line 42:         try:
+Line 43:             response, usage = _retry_create(_llm_provider_client, REASONER_SPEC_CHECK_MODEL, messages)
+Line 44:         except Exception as exc:
+Line 45:             event = {
+Line 46:                 "event_id": event_id,
+Line 47:                 "type": "llm_call",
+Line 48:                 "stage": "verification",
+Line 49:                 "status": "error",
+Line 50:                 "start_time": started,
+Line 51:                 "end_time": utc_now_iso(),
+Line 52:                 "summary": f"LLM implication check failed: {exc}",
+Line 53:                 "metadata": {
+Line 54:                     **trace_meta,
+Line 55:                     "purpose": "check_post_implies_spec",
+Line 56:                     "model": REASONER_SPEC_CHECK_MODEL,
+Line 57:                     "attempt": attempt,
+Line 58:                     "error": str(exc),
+Line 59:                 },
+Line 60:             }
+Line 61:             record_llm_exchange(trace_dir, event_id, event, messages)
+Line 62:             raise
+Line 63:         parsed_result = None
+Line 64:         parse_error = None
+Line 65:         try:
+Line 66:             has_violation, stmts, reason, parsed_result = _parse_spec_check_json(response)
+Line 67:             status = "mismatch" if has_violation else "success"
+Line 68:         except ValueError as exc:
+Line 69:             has_violation = None
+Line 70:             stmts = reason = None
+Line 71:             parse_error = str(exc)
+Line 72:             status = "format_error"
+Line 73:         event = {
+Line 74:             "event_id": event_id,
+Line 75:             "type": "llm_call",
+Line 76:             "stage": "verification",
+Line 77:             "status": status,
+Line 78:             "start_time": started,
+Line 79:             "end_time": utc_now_iso(),
+Line 80:             "summary": "Checked whether actual post-condition implies the spec",
+Line 81:             "metadata": {
+Line 82:                 **trace_meta,
+Line 83:                 "purpose": "check_post_implies_spec",
+Line 84:                 "model": REASONER_SPEC_CHECK_MODEL,
+Line 85:                 "attempt": attempt,
+Line 86:                 "usage": usage,
+Line 87:                 "parsed_json": parsed_result,
+Line 88:                 "parse_error": parse_error,
+Line 89:             },
+Line 90:         }
+Line 91:         record_llm_exchange(trace_dir, event_id, event, messages, response)
+Line 92:         if has_violation is not None:
+Line 93:             if has_violation:
+Line 94:                 stmts = stmts or "(unable to extract)"
+Line 95:                 reason = reason or "(unable to extract)"
+Line 96:                 return False, stmts, post_condition, reason
+Line 97:             else:
+Line 98:                 return True, None, None, None
+Line 99:         messages = messages + [
+Line 100:             {"role": "assistant", "content": response or ""},
+Line 101:             {
+Line 102:                 "role": "user",
+Line 103:                 "content": (
+Line 104:                     "Return only valid JSON with schema: "
+Line 105:                     "{\"verdict\": \"MATCH|MISMATCH\", "
+Line 106:                     "\"counterexample\": string|null, "
+Line 107:                     "\"offending_statements\": string|null, "
+Line 108:                     "\"reason\": string}. "
+Line 109:                     "For MISMATCH, all evidence fields must be non-empty strings. "
+Line 110:                     "For MATCH, counterexample and offending_statements must be null or empty, and reason may be empty."
+Line 111:                 ),
+Line 112:             }
+Line 113:         ]
+Line 114:     raise ValueError("Could not parse a valid structured JSON verdict from spec-check response.")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a string representing a filesystem path to a valid project directory
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for Java."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("java") if cg else None
+```
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a valid project directory path
+  Post-condition: Returns a CodeGraphExtractor instance initialized for the project,
+    or None when the Java code graph backend cannot be initialized
+
+cg.get_call_edges("java") -> dict
+Pre-condition: cg is a valid CodeGraphExtractor instance
+  Post-condition: Returns a dict mapping (caller_stem: str, caller_module: str) tuples
+    to sets of callee stems for all Java call-graph edges in the project
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

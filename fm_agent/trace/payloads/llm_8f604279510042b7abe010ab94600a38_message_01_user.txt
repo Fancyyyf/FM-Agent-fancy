@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+- first_line is a string
+  - name is a string
+
+Code block:
+```python
+Line 1: def _info_line_mentions_name(first_line: str, name: str) -> bool:
+Line 2:     if not name:
+Line 3:         return False
+Line 4:     if "::" in name:
+Line 5:         return name in first_line
+Line 6:     return bool(re.search(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?:\s*\(|\b)", first_line))
+```
+
+Additional context:
+re.search(pattern: str, string: str, flags: int = 0) -> Match | None
+Pre-condition: pattern is a string interpreted as a regular expression;
+    string is the text to search within
+  Post-condition: returns a Match object representing the first location where
+    pattern successfully matches within string; returns None when pattern does
+    not match at any position in string
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,6 @@
+{
+    "verdict": "MISMATCH",
+    "counterexample": "proj_dir = \"/tmp/empty_proj\" (an existing empty directory), entry_func = \"main\", end_funcs = [], resume = False, domain_knowledge_files = None, one_phase = False, extra_call_edges_path = None, only_spec = False. The function will raise an exception during run_pipeline because no source files exist, and the mismatch count will not be printed to stdout.",
+    "offending_statements": "Line 67: mismatches = _count_mismatches(os.path.join(work_dir, \"logic_verification_results\"))\nLine 68: print(f\"[EntryPipeline] Bugs (mismatches): {mismatches}\")",
+    "reason": "The specification requires that \"[t]he number of MISMATCH verdicts found in work_dir/logic_verification_results/ is printed to stdout on every run\", i.e., regardless of success or failure. The code only prints the mismatch count after the try-finally block (lines 67–68), which is only reached on normal return. When an exception propagates out of the function, the finally block executes but lines 67–68 are skipped, so the count is not printed, violating the specification."
+}

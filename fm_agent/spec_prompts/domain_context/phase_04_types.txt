@@ -1,0 +1,165 @@
+Phase 4 — Specification Generation & Code Reasoning
+==========================================================
+
+This phase generates behavioral correctness specifications via LLM agents, splits
+functions into granular blocks, and performs block-by-block Hoare-style reasoning to
+verify code against specifications.
+
+Key Types and Structs
+---------------------
+
+Spec/Info Block Format:
+  Prepended to extracted function files. Contains two sections:
+
+  [SPEC] section (specification):
+    <comment_prefix> [SPEC]
+    <comment_prefix> Unit: <file path relative to repo root>
+    <comment_prefix> <FunctionName>(<params>) -> <ReturnType>
+    <comment_prefix> Pre-condition:
+    <comment_prefix>   - <condition 1>
+    <comment_prefix>   - <condition 2>
+    <comment_prefix> Post-condition:
+    <comment_prefix>   - <guarantee 1>
+    <comment_prefix>   - <guarantee 2>
+    <comment_prefix> [SPEC]
+
+  [INFO] section (callee knowledge):
+    <comment_prefix> [INFO]
+    <comment_prefix> <callee_name>(<params>) -> <ReturnType>
+    <comment_prefix>   Pre-condition: <caller assumption>
+    <comment_prefix>   Post-condition: <caller expectation>
+    <comment_prefix> [SPLIT]
+    <comment_prefix> <another_callee>(<params>) -> <ReturnType>
+    <comment_prefix>   ...
+    <comment_prefix> [INFO]
+    Or: <comment_prefix> (no callees) [INFO]
+
+  Invariant: File is "ready" (is_file_ready) when it has ≥2 [SPEC] markers
+  AND ≥2 [INFO] markers.
+
+FunctionSpecMap (src/parser.py):
+  dict subclass:
+  - keys: function_name → spec text (from [INFO] block)
+  - signatures: dict[str, str]  # function_name → first line of [SPLIT] entry
+
+parse_input_function (src/parser.py):
+  Parses a specced function file into:
+  - func: str            # function body WITH "Line N: ..." prefixes, comments stripped
+  - nl_spec: str         # natural-language spec text between [SPEC] markers
+  - knowledge: FunctionSpecMap  # callee specs parsed from [INFO] block
+
+  Parsing rules:
+  - [SPEC] markers are standalone lines matching: ^\s*(?:(?://+|#+|--+|%+)\s*)?\[(SPEC|INFO)\]\s*$
+  - [INFO] block entries are separated by [SPLIT] markers
+  - Function name extracted from the signature line via regex: (\w+)\s*\(
+  - Comments are stripped from the function body (//, /* */, #)
+
+Language Expertise (src/prompts.py):
+  _LANGUAGE_EXPERTISE: dict mapping language key → system prompt prefix.
+  Provides per-language semantic knowledge (ownership model, type system,
+  exception semantics, standard library) for spec-check LLM calls.
+  Covers: rust, c, c++, python, java, go, c#, kotlin, swift, php, ruby,
+          scala, dart, cuda, javascript, typescript, erlang, arkts.
+
+Verification Result JSON (logic_verification_results/<rel_path>.json):
+  {
+    "function": string,    # absolute file path
+    "verdict": "MATCH" | "MISMATCH" | "ERROR" | "SKIPPED",
+    "gaps": null | {
+      "spec_claim": string,         # post-condition the spec requires
+      "actual_behavior": string,    # post-condition the code actually computes
+      "code_evidence": string,      # offending statements (with Line N: prefixes)
+      "trigger_condition": string   # concrete counterexample description
+    },
+    "error": string?       # present only in ERROR verdict
+  }
+
+  Verdict semantics:
+  - MATCH: code satisfies the specification (all blocks verified)
+  - MISMATCH: code violates the specification (counterexample found)
+  - ERROR: parsing or LLM call failed
+  - SKIPPED: function had no [SPEC] block (unprocessed in this run)
+
+Spec Check JSON (LLM response format):
+  {
+    "verdict": "MATCH" | "MISMATCH",
+    "counterexample": string | null,
+    "offending_statements": string | null,
+    "reason": string
+  }
+  Validity rules:
+  - MISMATCH: all three evidence fields must be non-empty strings
+    (counterexample, offending_statements, reason)
+  - MATCH: counterexample and offending_statements must be null; reason may be empty
+  - offencing_statements must preserve "Line N:" prefixes from the code block
+
+Post-condition Generation JSON (LLM response format):
+  {"post_condition": "non-empty string"}
+
+Terminating Statement Patterns (per language):
+  rust:    return|panic!|std::process::exit|unreachable!
+  c:       return|exit|_Exit|abort|longjmp
+  c++:     return|exit|_Exit|abort|throw|std::terminate|std::exit
+  python:  return|sys.exit|raise|exit|quit
+  java:    return|throw|System.exit
+  go:      return|panic|log.Fatal|os.Exit
+  typescript/javascript: return|throw|process.exit
+  erlang:  throw|exit|error|erlang:error|erlang:exit
+
+Reasoner Block Splitting (src/reasoner.py):
+  - Target block size: GRANULARITY lines (default 40)
+  - Brace-aware splitting: blocks split only when brace depth returns to entry depth
+    (ensures syntactic completeness)
+  - Indent-based languages (Python): simple line-count split when ≤ 2*GRANULARITY
+  - Last block: always checks spec implication (implicit return)
+
+Function Signatures (Entry Points)
+----------------------------------
+
+src/prompts.py:
+  _generate_block_post_condition(block, pre_condition, knowledge, language,
+                                 trace_dir=None, trace_meta=None) → string | None
+    Calls LLM to compute the strongest post-condition after executing a code block
+    given a pre-condition. Returns the post-condition string.
+
+  _check_post_implies_spec(block, post_condition, spec_post_condition, knowledge,
+                           language, trace_dir=None, trace_meta=None)
+    → (passed: bool, stmts: string?, post_cond: string?, reason: string?)
+    Checks whether the computed post-condition logically implies the spec's
+    post-condition. Returns (True, None, None, None) on MATCH; (False, evidence...)
+    on MISMATCH.
+
+  _parse_spec_check_json(response) → (has_violation, stmts, reason, parsed_data)
+    Validates and normalizes the structured spec-check verdict JSON.
+
+src/reasoner.py:
+  reasoner(func, spec, info, language, trace_context=None) → string
+    Parses spec, splits function into blocks, iterates block-by-block:
+    1. Generate post-condition for each block via LLM.
+    2. On terminating statements (or last block): check if post-condition implies
+       the spec's post-condition.
+    3. On mismatch: return "Verification FAILED" with evidence.
+    4. Otherwise: propagate post-condition as next block's pre-condition.
+    Returns "passes the verification" on MATCH.
+
+  _split_into_blocks_braced(func, language) → [string]
+    Brace-depth-aware block splitting.
+
+  _parse_spec_conditions(spec) → (pre_condition, post_condition)
+
+src/parser.py:
+  parse_input_function(file_path) → (func, nl_spec, knowledge)
+  _extract_marked_section(lines, marker) → (section_text, start_idx, end_idx)
+
+Invariants
+----------
+- Every ready file (is_file_ready=True) has been processed by the spec generation
+  agent and carries both [SPEC] and [INFO] blocks.
+- Block splitting respects brace depth: a block never splits in the middle of a
+  compound statement.
+- Spec-check JSON verdict "MATCH" must NOT contain non-null counterexample or
+  offending_statements fields.
+- Spec-check JSON verdict "MISMATCH" must contain non-empty counterexample,
+  offending_statements, and reason fields.
+- The reasoner processes blocks sequentially: each block's post-condition becomes
+  the next block's pre-condition (forward symbolic execution).

@@ -1,0 +1,11 @@
+{
+  "id": "src--prompts-py--_parse_spec_check_json",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/prompts-py/_parse_spec_check_json.py",
+  "function_name": "_parse_spec_check_json",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--prompts-py--_parse_spec_check_json.py",
+  "detail_file": "fm_agent/bug_validation/src--prompts-py--_parse_spec_check_json.md",
+  "probe_stdout": "CONFIRMED — actual: no error (returned tuple: (False, None, None, {'verdict': 'MATCH', 'counterexample': None, 'offending_statements': None, 'reason': 'all good'})) | expected: ValueError\n",
+  "trigger_summary": "WHITESPACE ONLY: MATCH verdict with counterexample='   ' (whitespace-only string) should raise ValueError per spec but code's _nonempty_string() strips first and treats it as empty, returning a tuple instead."
+}

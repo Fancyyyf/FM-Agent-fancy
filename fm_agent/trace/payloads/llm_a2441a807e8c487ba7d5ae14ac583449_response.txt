@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input: funcs_info = [{'name': 'f1', 'start': 1, 'end': 2, 'idents': [], 'body_words': [], 'exc_types': [], 'calls': ['f2']}, {'name': 'f2', 'start': 3, 'end': 4, 'idents': [], 'body_words': [], 'exc_types': [], 'calls': []}, {'name': 'f3', 'start': 5, 'end': 6, 'idents': [], 'body_words': [], 'exc_types': [], 'calls': ['f1']}], classes = [], signals = {}. Global constants: CALLEE_INHERIT = 0.1, CALLER_INHERIT = 0.3. _base_score returns 10.0 for name == 'f1' else 0.0. The specification requires a single fixed fraction for the call‑graph propagation to both callees and callers. The code applies different fractions (0.1 to callee f2, 0.3 to caller f3), producing scores f2=1.0 and f3=3.0. No single fraction k can satisfy both, so the output does not meet the spec.",
+  "offending_statements": "Line 27: bonus[tl] += bscore * CALLEE_INHERIT\nLine 30: bonus[other['start']] += bscore * CALLER_INHERIT",
+  "reason": "The specification describes a call‑graph bonus where a single fixed fraction of the base score is added to every callee and every caller. The code uses two potentially different constants (CALLEE_INHERIT and CALLER_INHERIT), allowing the fractions to differ, which violates the requirement when they are not equal."
+}

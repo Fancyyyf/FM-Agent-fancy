@@ -1,0 +1,11 @@
+{
+  "id": "src--file_utils-py--collect_file_names",
+  "source_file": "src/file_utils.py",
+  "function_name": "collect_file_names",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--collect_file_names.py",
+  "detail_file": "fm_agent/bug_validation/src--file_utils-py--collect_file_names.md",
+  "probe_stdout": "CONFIRMED — re-scanned instead of returning cache: [] (expected: ['sub/hello.txt'])\n",
+  "trigger_summary": "collect_file_names unconditionally rescans input_dir via os.walk before checking the cache, violating the spec requirement that subsequent calls with a valid output_path return the cached list without re-scanning."
+}

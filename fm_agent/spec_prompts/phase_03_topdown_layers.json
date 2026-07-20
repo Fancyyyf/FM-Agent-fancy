@@ -1,0 +1,639 @@
+{
+  "phase": 3,
+  "phase_name": "Scope Analysis & Layer Organization",
+  "total_functions": 48,
+  "total_layers": 4,
+  "layers": [
+    {
+      "layer": 0,
+      "functions": [
+        {
+          "name": "src::generate_batch_prompts-py::main",
+          "file": "extracted_functions/src/generate_batch_prompts-py/main.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::generate_batch_prompts-py::build_prompt",
+            "src::generate_batch_prompts-py::chunked",
+            "src::generate_batch_prompts-py::parse_args",
+            "src::generate_batch_prompts-py::parse_layers_spec",
+            "src::generate_batch_prompts-py::read_json"
+          ],
+          "all_callees": [
+            "src::file_utils-py::is_file_ready",
+            "src::generate_batch_prompts-py::build_prompt",
+            "src::generate_batch_prompts-py::chunked",
+            "src::generate_batch_prompts-py::parse_args",
+            "src::generate_batch_prompts-py::parse_layers_spec",
+            "src::generate_batch_prompts-py::read_json"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::generate_topdown_layers",
+          "file": "extracted_functions/src/generate_topdown_layers-py/generate_topdown_layers.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_compute_layers",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_load_phases"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_compute_layers",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_load_phases"
+          ]
+        },
+        {
+          "name": "src::scope-py::_parse_issue_signals",
+          "file": "extracted_functions/src/scope-py/_parse_issue_signals.py",
+          "unit": "scope",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::scope-py::_extract_backtick_idents"
+          ],
+          "all_callees": [
+            "src::scope-py::_extract_backtick_idents"
+          ]
+        },
+        {
+          "name": "src::scope-py::rank_functions_in_file",
+          "file": "extracted_functions/src/scope-py/rank_functions_in_file.py",
+          "unit": "scope",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::scope-py::_llm_rerank",
+            "src::scope-py::_parse_file",
+            "src::scope-py::_rank_functions"
+          ],
+          "all_callees": [
+            "src::scope-py::_llm_rerank",
+            "src::scope-py::_parse_file",
+            "src::scope-py::_rank_functions"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "functions": [
+        {
+          "name": "src::generate_batch_prompts-py::build_prompt",
+          "file": "extracted_functions/src/generate_batch_prompts-py/build_prompt.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase3_callees": [
+            "src::generate_batch_prompts-py::detect_lang_and_comment",
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info",
+            "src::generate_batch_prompts-py::extract_info_block",
+            "src::generate_batch_prompts-py::extract_spec_block",
+            "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
+            "src::generate_batch_prompts-py::phase_callee_info_names_key",
+            "src::generate_batch_prompts-py::phase_callers_key"
+          ],
+          "all_callees": [
+            "src::generate_batch_prompts-py::detect_lang_and_comment",
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info",
+            "src::generate_batch_prompts-py::extract_info_block",
+            "src::generate_batch_prompts-py::extract_spec_block",
+            "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
+            "src::generate_batch_prompts-py::phase_callee_info_names_key",
+            "src::generate_batch_prompts-py::phase_callers_key"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::chunked",
+          "file": "extracted_functions/src/generate_batch_prompts-py/chunked.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::parse_args",
+          "file": "extracted_functions/src/generate_batch_prompts-py/parse_args.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::parse_layers_spec",
+          "file": "extracted_functions/src/generate_batch_prompts-py/parse_layers_spec.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::read_json",
+          "file": "extracted_functions/src/generate_batch_prompts-py/read_json.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_build_call_graph",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_build_call_graph.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ],
+          "phase3_callees": [
+            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
+            "src::generate_topdown_layers-py::_detect_lang_from_ext",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_find_call_sites",
+            "src::generate_topdown_layers-py::_get_keywords_for_lang",
+            "src::generate_topdown_layers-py::_resolve_extra_call_edges"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
+            "src::generate_topdown_layers-py::_detect_lang_from_ext",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_find_call_sites",
+            "src::generate_topdown_layers-py::_get_keywords_for_lang",
+            "src::generate_topdown_layers-py::_resolve_extra_call_edges",
+            "src::languages::registry-py::call_edges_all"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_collect_phase_files",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_compute_layers",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_compute_layers.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ],
+          "phase3_callees": [
+            "src::generate_topdown_layers-py::_tarjan_scc"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_tarjan_scc"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_load_phases",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_load_phases.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_extract_backtick_idents",
+          "file": "extracted_functions/src/scope-py/_extract_backtick_idents.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_parse_issue_signals"
+          ],
+          "phase3_callees": [
+            "src::scope-py::_add"
+          ],
+          "all_callees": [
+            "src::scope-py::_add"
+          ]
+        },
+        {
+          "name": "src::scope-py::_llm_rerank",
+          "file": "extracted_functions/src/scope-py/_llm_rerank.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::rank_functions_in_file"
+          ],
+          "phase3_callees": [
+            "src::scope-py::_build_func_list_text"
+          ],
+          "all_callees": [
+            "src::llm_client-py::_parse_json_response",
+            "src::scope-py::_build_func_list_text"
+          ]
+        },
+        {
+          "name": "src::scope-py::_parse_file",
+          "file": "extracted_functions/src/scope-py/_parse_file.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::rank_functions_in_file"
+          ],
+          "phase3_callees": [
+            "src::scope-py::_parse_generic_file",
+            "src::scope-py::_parse_python_file"
+          ],
+          "all_callees": [
+            "src::scope-py::_parse_generic_file",
+            "src::scope-py::_parse_python_file"
+          ]
+        },
+        {
+          "name": "src::scope-py::_rank_functions",
+          "file": "extracted_functions/src/scope-py/_rank_functions.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::rank_functions_in_file"
+          ],
+          "phase3_callees": [
+            "src::scope-py::_base_score",
+            "src::scope-py::_score_class"
+          ],
+          "all_callees": [
+            "src::scope-py::_base_score",
+            "src::scope-py::_score_class"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 2,
+      "functions": [
+        {
+          "name": "src::generate_batch_prompts-py::detect_lang_and_comment",
+          "file": "extracted_functions/src/generate_batch_prompts-py/detect_lang_and_comment.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::extract_callee_spec_from_info",
+          "file": "extracted_functions/src/generate_batch_prompts-py/extract_callee_spec_from_info.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase3_callees": [
+            "src::generate_batch_prompts-py::_callee_match_names",
+            "src::generate_batch_prompts-py::_info_line_mentions_name"
+          ],
+          "all_callees": [
+            "src::generate_batch_prompts-py::_callee_match_names",
+            "src::generate_batch_prompts-py::_info_line_mentions_name"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::extract_info_block",
+          "file": "extracted_functions/src/generate_batch_prompts-py/extract_info_block.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase3_callees": [
+            "src::generate_batch_prompts-py::_detect_comment_prefix"
+          ],
+          "all_callees": [
+            "src::generate_batch_prompts-py::_detect_comment_prefix"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::extract_spec_block",
+          "file": "extracted_functions/src/generate_batch_prompts-py/extract_spec_block.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase3_callees": [
+            "src::generate_batch_prompts-py::_detect_comment_prefix"
+          ],
+          "all_callees": [
+            "src::generate_batch_prompts-py::_detect_comment_prefix"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
+          "file": "extracted_functions/src/generate_batch_prompts-py/list_staged_domain_knowledge_relpaths.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::phase_callee_info_names_key",
+          "file": "extracted_functions/src/generate_batch_prompts-py/phase_callee_info_names_key.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::phase_callers_key",
+          "file": "extracted_functions/src/generate_batch_prompts-py/phase_callers_key.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_add_resolved_extra_edge",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_add_resolved_extra_edge.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_detect_lang_from_ext",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_detect_lang_from_ext.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_file_to_fqn",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_file_to_fqn.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_find_call_sites",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_find_call_sites.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase3_callees": [
+            "src::generate_topdown_layers-py::_get_call_regex",
+            "src::generate_topdown_layers-py::_strip_comments_from_source"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_get_call_regex",
+            "src::generate_topdown_layers-py::_strip_comments_from_source"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_get_keywords_for_lang",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_get_keywords_for_lang.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_resolve_extra_call_edges",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_resolve_extra_call_edges.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_tarjan_scc",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_tarjan_scc.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_compute_layers"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_add",
+          "file": "extracted_functions/src/scope-py/_add.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_extract_backtick_idents"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_base_score",
+          "file": "extracted_functions/src/scope-py/_base_score.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_rank_functions"
+          ],
+          "phase3_callees": [
+            "src::scope-py::_fuzzy_name_score",
+            "src::scope-py::_name_parts"
+          ],
+          "all_callees": [
+            "src::scope-py::_fuzzy_name_score",
+            "src::scope-py::_name_parts"
+          ]
+        },
+        {
+          "name": "src::scope-py::_build_func_list_text",
+          "file": "extracted_functions/src/scope-py/_build_func_list_text.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_llm_rerank"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_parse_generic_file",
+          "file": "extracted_functions/src/scope-py/_parse_generic_file.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_parse_file"
+          ],
+          "phase3_callees": [
+            "src::scope-py::_generic_func_info"
+          ],
+          "all_callees": [
+            "src::extract-py::_function_spans",
+            "src::scope-py::_generic_func_info"
+          ]
+        },
+        {
+          "name": "src::scope-py::_parse_python_file",
+          "file": "extracted_functions/src/scope-py/_parse_python_file.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_parse_file"
+          ],
+          "phase3_callees": [
+            "src::scope-py::_collect_calls",
+            "src::scope-py::_collect_func_idents",
+            "src::scope-py::_extract_classes"
+          ],
+          "all_callees": [
+            "src::scope-py::_collect_calls",
+            "src::scope-py::_collect_func_idents",
+            "src::scope-py::_extract_classes"
+          ]
+        },
+        {
+          "name": "src::scope-py::_score_class",
+          "file": "extracted_functions/src/scope-py/_score_class.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_rank_functions"
+          ],
+          "phase3_callees": [
+            "src::scope-py::_name_parts"
+          ],
+          "all_callees": [
+            "src::scope-py::_name_parts"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "functions": [
+        {
+          "name": "src::generate_batch_prompts-py::_callee_match_names",
+          "file": "extracted_functions/src/generate_batch_prompts-py/_callee_match_names.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::_detect_comment_prefix",
+          "file": "extracted_functions/src/generate_batch_prompts-py/_detect_comment_prefix.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::extract_info_block",
+            "src::generate_batch_prompts-py::extract_spec_block"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::_info_line_mentions_name",
+          "file": "extracted_functions/src/generate_batch_prompts-py/_info_line_mentions_name.py",
+          "unit": "generate_batch_prompts",
+          "phase3_callers": [
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_get_call_regex",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_get_call_regex.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_find_call_sites"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_strip_comments_from_source",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_strip_comments_from_source.py",
+          "unit": "generate_topdown_layers",
+          "phase3_callers": [
+            "src::generate_topdown_layers-py::_find_call_sites"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_collect_calls",
+          "file": "extracted_functions/src/scope-py/_collect_calls.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_collect_func_idents",
+          "file": "extracted_functions/src/scope-py/_collect_func_idents.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_extract_classes",
+          "file": "extracted_functions/src/scope-py/_extract_classes.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_fuzzy_name_score",
+          "file": "extracted_functions/src/scope-py/_fuzzy_name_score.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_base_score"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_generic_func_info",
+          "file": "extracted_functions/src/scope-py/_generic_func_info.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_parse_generic_file"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_name_parts",
+          "file": "extracted_functions/src/scope-py/_name_parts.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_base_score",
+            "src::scope-py::_score_class"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        }
+      ]
+    }
+  ]
+}

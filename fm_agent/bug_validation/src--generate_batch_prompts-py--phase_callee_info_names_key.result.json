@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_batch_prompts-py--phase_callee_info_names_key",
+  "source_file": "src/generate_batch_prompts-py/phase_callee_info_names_key.py",
+  "function_name": "phase_callee_info_names_key",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_batch_prompts-py--phase_callee_info_names_key.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_batch_prompts-py--phase_callee_info_names_key.md",
+  "probe_stdout": "CONFIRMED — AttributeError on non-string key: 'int' object has no attribute 'endswith'",
+  "trigger_summary": "Non-string dict key (int) before matching string key causes AttributeError on .endswith() call during iteration."
+}

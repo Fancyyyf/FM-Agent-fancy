@@ -1,0 +1,21 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a valid filesystem path to a project directory
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return module-qualified Erlang call edges in registry format."""
+Line 3:     return _analysis_or_empty(_callgraph_project_root(proj_dir)).edges
+```
+
+Additional context:
+_callgraph_project_root(proj_dir: str) -> str
+Pre-condition: proj_dir is a filesystem path to a project directory
+  Post-condition: Returns the effective root directory used for call-graph analysis, which may differ from proj_dir when the project root is a subdirectory of proj_dir
+
+_analysis_or_empty(root: str) -> object
+Pre-condition: root is a filesystem path
+  Post-condition: Returns an analysis object whose .edges attribute yields the caller-to-callees mapping; returns an object whose .edges is an empty dict when analysis is unavailable for the given root
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

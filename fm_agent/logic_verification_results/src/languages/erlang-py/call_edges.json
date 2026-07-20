@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/call_edges.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a mapping from caller fully-qualified names to sets of callee fully-qualified names\n  - FQNs follow the format: path::components::delimited::by::double::colons, where the last component is the function name\n  - Each callee in the returned graph is a function that exists within the analyzed Erlang project\n  - If Erlang-specific analysis is unavailable for the project at proj_dir, returns an empty dict",
+    "actual_behavior": "The function returns a dictionary resulting from the call-graph analysis of the effective project root (which may be a subdirectory of `proj_dir` as determined by `_callgraph_project_root`). If the analysis is available, the dictionary contains a module-qualified Erlang call edges mapping (caller to callees); otherwise, it is an empty dictionary. No exceptions are raised; the function always terminates normally under the given pre-condition. Formally: `result = _analysis_or_empty(_callgraph_project_root(proj_dir)).edges` and `isinstance(result, dict)` holds, with `result` being either the nonempty edges dictionary or `{}` when analysis is unavailable.",
+    "code_evidence": "Line 3: return _analysis_or_empty(_callgraph_project_root(proj_dir)).edges",
+    "trigger_condition": "The specification requires the returned mapping to use sets of callee FQNs and that every callee exists within the project. The code returns raw analysis results without any validation, so if the analysis produces a list instead of a set or includes a non-existent callee, the output violates the specification."
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--_extract_functions_brace",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/extract-py/_extract_functions_brace.py",
+  "function_name": "_extract_functions_brace",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--_extract_functions_brace.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--_extract_functions_brace.md",
+  "probe_stdout": "Result: [('add', 1, 3), ('main', 10, 12)]\nNumber of functions found: 2\nNOT CONFIRMED — all assertions passed: add_found=True, main_found=True, test_add_skipped=True, count=2\n",
+  "trigger_summary": "Rust functions are correctly extracted when not annotated with #[test]; only test-attributed functions are intentionally skipped."
+}

@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _clean_label(value) -> str:
+Line 2:     text = str(value).strip()
+Line 3:     if not text:
+Line 4:         return ""
+Line 5:     text = text.rstrip(";").strip()
+Line 6:     if len(text) >= 2 and text[0] == text[-1] and text[0] in {"'", '"'}:
+Line 7:         text = text[1:-1]
+Line 8:     return text.strip()
+```
+
+Condition A (what the code actually does):
+The function returns a string. Let s = str(value).strip(). If s is the empty string, return the empty string. Otherwise, let t = s.rstrip(';').strip(). If len(t) >= 2 and t[0] == t[-1] and t[0] is in {'\'', '"'} (either a single or double quote), then return t[1:-1].strip(); else return t.
+
+Condition B (what the specification requires):
+- Returns a string
+  - Returns the empty string when the string representation of value has no content
+    beyond whitespace, trailing semicolons, and outermost matching single or double
+    quote characters
+  - Otherwise, returns a string with no leading or trailing whitespace, with trailing
+    semicolons removed, and with outermost matching single or double quote characters
+    removed when present
+  - The transformation is deterministic: the same input always produces the same output
+  - The transformation is idempotent: applying _clean_label to its own output returns
+    the same string
+  - The returned label preserves the path-vs-non-path classification of the input label
+    (i.e., whether the label represents a source-file-qualified function reference or
+    a plain function name)
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

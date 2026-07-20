@@ -1,0 +1,1 @@
+{"post_condition": "Returns a dictionary. If cg = CodeGraphExtractor.from_proj_dir(proj_dir) is not None, the result is cg.get_functions_by_file('typescript', proj_dir), i.e., a dict mapping absolute file paths (str) of TypeScript source files under proj_dir to lists of (function_name: str, function_body: str) tuples. Otherwise, returns an empty dict {}."}

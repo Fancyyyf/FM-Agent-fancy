@@ -1,0 +1,50 @@
+Programming language: Python
+
+Pre-condition:
+- self is a valid CodeGraphExtractor instance
+  - lang_key is a string identifying a language
+  - abs_filepath is an absolute filesystem path to a source file
+
+Code block:
+```python
+Line 1:     def get_function_spans(self, lang_key: str, abs_filepath: str):
+Line 2:         """Return ``[(name, start_idx, end_idx), ...]`` for a single file, or None.
+Line 3:         Line indices are 0-indexed and inclusive, matching the convention the
+Line 4:         regex extractor (_extract_functions_brace / _extract_functions_indent)
+Line 5:         uses, so callers can rewrite the file by line index. Functions are
+Line 6:         ordered by their starting line.
+Line 7:         Returns None when codegraph does not support ``lang_key`` or when the
+Line 8:         file is not present in the index (e.g. it was never indexed) — the
+Line 9:         caller then falls back to the regex extractor. An indexed file that
+Line 10:         genuinely contains no functions also yields None, which is harmless:
+Line 11:         the regex fallback finds none either.
+Line 12:         """
+Line 13:         cg_langs = _CG_LANG.get(lang_key)
+Line 14:         if not cg_langs:
+Line 15:             return None
+Line 16:         # codegraph stores file paths relative to the project root, which is the
+Line 17:         # parent of the .codegraph/ directory holding the database.
+Line 18:         root = os.path.dirname(os.path.dirname(os.path.abspath(self._db)))
+Line 19:         rel = os.path.relpath(os.path.abspath(abs_filepath), root)
+Line 20:         conn = sqlite3.connect(self._db)
+Line 21:         cur = conn.cursor()
+Line 22:         placeholders = ",".join("?" * len(cg_langs))
+Line 23:         cur.execute(
+Line 24:             f"""
+Line 25:             SELECT name, start_line, end_line
+Line 26:             FROM nodes
+Line 27:             WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+Line 28:               AND file_path = ?
+Line 29:             ORDER BY start_line
+Line 30:             """,
+Line 31:             (*cg_langs, rel),
+Line 32:         )
+Line 33:         rows = cur.fetchall()
+Line 34:         conn.close()
+Line 35:         if not rows:
+Line 36:             return None
+Line 37:         # codegraph uses 1-indexed lines with an inclusive end_line.
+Line 38:         return [(canonicalize(_bare_function_name(name)), int(start) - 1, int(end) - 1) for name, start, end in rows]
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

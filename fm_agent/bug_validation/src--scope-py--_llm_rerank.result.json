@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_llm_rerank",
+  "source_file": "src/scope.py",
+  "function_name": "_llm_rerank",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_llm_rerank.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_llm_rerank.md",
+  "probe_stdout": "CONFIRMED — _llm_rerank returned foreign names: ['baz']\n  spec names in funcs_info: ['foo']\n  actual returned names: ['baz']",
+  "trigger_summary": "Mock LLM returns a function name not present in funcs_info; _llm_rerank accepts it without validating membership against funcs_info names."
+}

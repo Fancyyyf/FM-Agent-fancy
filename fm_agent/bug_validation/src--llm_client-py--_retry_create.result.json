@@ -1,0 +1,11 @@
+{
+  "id": "src--llm_client-py--_retry_create",
+  "source_file": "src/llm_client-py/_retry_create.py",
+  "function_name": "_retry_create",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_retry_create.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--_retry_create.md",
+  "probe_stdout": "WARNING:root:LLM error (URLError: <urlopen error Connection reset by peer>), sleeping 7.3s (attempt 1)\nCONFIRMED — treated as transient instead of rate limit: LLM request failed after 2 retries: <urlopen error Connection reset by peer>",
+  "trigger_summary": "URLError from Anthropic native endpoint (e.g. connection reset by rate-limiting proxy) is caught by except Exception and treated as transient, not rate-limit — violating per-category retry budgets."
+}

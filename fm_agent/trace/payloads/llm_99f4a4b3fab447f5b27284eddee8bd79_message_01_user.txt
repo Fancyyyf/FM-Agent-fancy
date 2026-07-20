@@ -1,0 +1,19 @@
+Programming language: Python
+
+Pre-condition:
+- method is a non-empty string identifying the LSP notification method to invoke
+  - The underlying communication channel to the LSP backend is open
+
+Code block:
+```python
+Line 1:     def notify(self, method: str, params: dict | list | None = None):
+Line 2:         actual_params = {} if params is None else params
+Line 3:         self._send({"jsonrpc": "2.0", "method": method, "params": actual_params})
+```
+
+Additional context:
+_send(self, message: dict) -> None
+Pre-condition: The underlying communication channel to the LSP backend is open
+  Post-condition: The given dict is serialized as a JSON-RPC message and sent to
+    the LSP backend; raises an exception when the channel cannot deliver the message
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

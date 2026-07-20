@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/parser-py/_extract_function_name.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns the function name extracted from the signature line; returns None if\n    no recognizable function name is found\n  - A function name is recognizable when signature_line contains an identifier\n    (starting with an alphabetic character or underscore, followed by zero or more\n    alphanumeric characters or underscores) immediately followed by optional\n    whitespace and an opening parenthesis `(`\n  - When multiple such patterns exist in signature_line, the first (leftmost) match\n    determines the returned function name",
+    "actual_behavior": "The function returns the first identifier-like substring immediately followed by an opening parenthesis in `signature_line`, or `None` if no such pattern exists. The input string `signature_line` remains unchanged. Formally: let `m = re.search(r'([A-Za-z_][A-Za-z0-9_]*)\\s*\\(', signature_line)`. Then: if `m` is not `None`, the return value is `m.group(1)` (a string); if `m` is `None`, the return value is `None`. That is, `( m  MatchObject  {None} : m = re.search(r'([A-Za-z_][A-Za-z0-9_]*)\\s*\\(', signature_line)  ( (m  None  return_value = m.group(1)  isinstance(return_value, str))  (m = None  return_value = None) ))`.",
+    "code_evidence": "Line 2:     match = re.search(r'([A-Za-z_][A-Za-z0-9_]*)\\s*\\(', signature_line)",
+    "trigger_condition": "The code uses a regular expression that only matches ASCII letters (A-Z, a-z) for the initial character of the identifier. The specification requires recognition of identifiers starting with any alphabetic character, which in Python includes Unicode letters. A function name like 'caf' (with a non-ASCII letter ) is a valid identifier and should be extracted, but the code returns None instead of 'caf'."
+  }
+}

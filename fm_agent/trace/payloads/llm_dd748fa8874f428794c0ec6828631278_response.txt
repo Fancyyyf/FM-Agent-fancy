@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "source_path = 'test.txt', used_names = {'test.txt'}",
+  "offending_statements": "Line 12: candidate = f\"{stem}_{index}{ext}\"",
+  "reason": "The specification requires a numeric suffix (i.e., only digits) to be appended to the stem when a candidate exists. The code inserts an underscore before the number, producing e.g., 'test_2.txt' instead of the required 'test2.txt'."
+}

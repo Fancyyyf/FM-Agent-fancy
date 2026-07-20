@@ -1,0 +1,37 @@
+Programming language: Python
+
+Pre-condition:
+- phases_data is a dict conforming to the phases.json schema: it has a "phases" key
+    whose value is a list of phase info dicts, each containing at least a "phase" field
+    (integer phase number).
+  - input_dir is an existing directory path under which extracted function files are stored.
+
+Code block:
+```python
+Line 1: def _get_all_phase_files(phases_data, input_dir):
+Line 2:     """Return extracted function files reachable from all phases in phases.json."""
+Line 3:     phase_files = []
+Line 4:     seen = set()
+Line 5:     for phase_info in phases_data.get("phases", []):
+Line 6:         phase_num = phase_info.get("phase")
+Line 7:         if phase_num is None:
+Line 8:             continue
+Line 9:         for rel in _get_phase_files(phases_data, phase_num, input_dir):
+Line 10:             if rel not in seen:
+Line 11:                 seen.add(rel)
+Line 12:                 phase_files.append(rel)
+Line 13:     return phase_files
+```
+
+Additional context:
+_get_phase_files(phases_data, phase_num, input_dir) -> iterable[str]
+Pre-condition:
+    - phases_data is a dict conforming to the phases.json schema.
+    - phase_num is an integer identifying a valid phase within phases_data.
+    - input_dir is an existing directory path.
+  Post-condition:
+    - Returns an iterable of relative file paths of extracted function files that
+      belong to the specified phase.
+    - Each returned path corresponds to a function declared in the source files
+      assigned to phase phase_num in phases_data.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "value = '\"\\'hello\\'\"' (a string containing single quote, double quote, hello, double quote, single quote)",
+  "offending_statements": "Line 6-7: quote removal is applied only once; after the first call, the output can still have outer matching quotes, breaking idempotency.",
+  "reason": "The specification requires the transformation to be idempotent (applying _clean_label to its own output returns the same string). For input '\"'hello'\"', the code returns \"hello\" on the first call, but a second call on \"hello\" returns \"hello\". Since the outputs differ, idempotence is violated."
+}

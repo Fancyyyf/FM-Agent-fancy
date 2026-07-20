@@ -1,0 +1,150 @@
+# [SPEC]
+# Unit: src/languages/erlang-py/_analyze_project_uncached.py
+#
+# _analyze_project_uncached(proj_dir: str) -> ErlangAnalysis
+#
+# Pre-condition:
+#   - proj_dir is a non-empty string representing a filesystem path
+#
+# Post-condition:
+#   - Returns an ErlangAnalysis object whose .functions attribute is a dict
+#     mapping each .erl file absolute path to a list of (function_id, source_text)
+#     tuples, where function_id is a canonical string identifier and source_text
+#     is the source code of that function
+#   - Returns an ErlangAnalysis whose .edges attribute is a dict mapping
+#     (function_id, caller_module) tuples to sets of callee function_ids
+#   - Returns an ErlangAnalysis whose .spans attribute is a dict mapping each
+#     .erl file absolute path to a list of (function_id, start_line, end_line)
+#     tuples, where start_line and end_line are 1-based inclusive line numbers
+#   - Returns an ErlangAnalysis whose .server_info attribute is populated from
+#     the ELP server initialization response
+#   - When no .erl files exist under the directory tree rooted at proj_dir after
+#     resolution to an absolute path, returns an ErlangAnalysis with all three
+#     dict attributes empty
+#   - Raises an exception when the ELP backend process cannot be started, the LSP
+#     communication channel fails, or the project at proj_dir cannot be analyzed
+#     (including cases where no valid function symbols are returned for any file)
+# [SPEC]
+
+# [INFO]
+# _erlang_files(dir: str) -> list[str]
+#   Pre-condition: dir is a path to an existing directory
+#   Post-condition: Returns a list of absolute paths to all .erl files found
+#     recursively under dir; returns an empty list when no .erl files are found
+# [SPLIT]
+# _caller_module(path: str) -> str
+#   Pre-condition: path is an absolute file path to a source file
+#   Post-condition: Returns the Erlang module name derived from the file path
+#     according to the Erlang module naming convention
+# [SPLIT]
+# _function_id(uri: str, name: str) -> str
+#   Pre-condition: uri is a valid URI string, name is a non-empty string
+#   Post-condition: Returns a canonical function identifier string constructed
+#     from the URI and symbol name; raises ValueError when the inputs cannot be
+#     resolved to a valid function identifier
+# [SPLIT]
+# _SourceIndex.build(source: str) -> _SourceIndex
+#   Pre-condition: source is the full text content of a source file as a string
+#   Post-condition: Returns a source index that can map line ranges (start line,
+#     end line) to the corresponding substring of source
+# [INFO]
+
+def _analyze_project_uncached(proj_dir: str) -> ErlangAnalysis:
+    proj_dir = os.path.abspath(proj_dir)
+    files = _erlang_files(proj_dir)
+    if not files:
+        return ErlangAnalysis(functions={}, edges={})
+
+    functions: dict[str, list[tuple[str, str]]] = {}
+    edges: dict[tuple[str, str], set[str]] = {}
+    spans: dict[str, list[tuple[str, int, int]]] = {}
+    sources = {
+        path: Path(path).read_text(encoding="utf-8", errors="replace")
+        for path in files
+    }
+
+    with ElpClient(proj_dir) as client:
+        server_info = client.initialize(files[0], sources[files[0]])
+        for path in files[1:]:
+            client.open_document(path, sources[path])
+        for path in files:
+            source = sources[path]
+            source_index = _SourceIndex.build(source)
+            caller_module = _caller_module(path)
+            uri = Path(path).as_uri()
+            symbols = client.request(
+                "textDocument/documentSymbol", {"textDocument": {"uri": uri}}
+            ) or []
+            file_functions = []
+            file_spans = []
+            seen = set()
+            for symbol in symbols:
+                if symbol.get("kind") != _FUNCTION_KIND:
+                    continue
+                symbol_range = _symbol_range(symbol)
+                if not symbol_range:
+                    continue
+                symbol_uri = _symbol_uri(symbol, uri)
+                try:
+                    function_id = _function_id(symbol_uri, symbol.get("name", ""))
+                except ValueError:
+                    logging.warning("Ignoring malformed ELP function symbol: %r", symbol)
+                    continue
+                if function_id in seen:
+                    continue
+                seen.add(function_id)
+                file_functions.append((function_id, source_index.source_for_range(symbol_range)))
+                start_line, end_line = _symbol_line_span(symbol_range)
+                file_spans.append((function_id, start_line, end_line))
+
+                caller_key = (function_id, caller_module)
+                edges.setdefault(caller_key, set())
+                selection = symbol.get("selectionRange") or symbol_range
+                prepared = client.request(
+                    "textDocument/prepareCallHierarchy",
+                    {
+                        "textDocument": {"uri": symbol_uri},
+                        "position": selection["start"],
+                    },
+                ) or []
+                if not prepared:
+                    continue
+                item = None
+                for candidate in prepared:
+                    if not isinstance(candidate, dict):
+                        continue
+                    try:
+                        candidate_id = _function_id(
+                            candidate.get("uri", symbol_uri),
+                            candidate.get("name", ""),
+                        )
+                    except (TypeError, ValueError):
+                        continue
+                    if candidate_id == function_id:
+                        item = candidate
+                        break
+                if item is None:
+                    continue
+                outgoing = client.request(
+                    "callHierarchy/outgoingCalls", {"item": item}
+                ) or []
+                for call in outgoing:
+                    target = call.get("to") or {}
+                    try:
+                        target_id = _function_id(
+                            target.get("uri", symbol_uri), target.get("name", "")
+                        )
+                    except ValueError:
+                        continue
+                    edges[caller_key].add(target_id)
+
+            if file_functions:
+                functions[path] = file_functions
+                spans[path] = file_spans
+
+    return ErlangAnalysis(
+        functions=functions,
+        edges=edges,
+        spans=spans,
+        server_info=server_info,
+    )

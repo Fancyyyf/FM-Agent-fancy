@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/_llm_status_style.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a pair (color, label) where color is a Rich-compatible\n    color name and label is a display string.\n  - The label is constructed by selecting the first truthy value from\n    code, status, and the string \"?\" in that priority order, converted\n    to a string.\n  - When the label is \"200\" or status is a completion-type status\n    (indicating the operation finished), the pair is (\"green\", \"200\").\n  - When status is a format-error type or the label begins with \"4\" or\n    equals \"FMT\", the pair is (\"yellow\", label).\n  - For all other code/status combinations, the pair is (\"red\", label).",
+    "actual_behavior": "Let t = str(code) if code else (str(status) if status else \"?\"). Then the function returns: (\"green\", \"200\") if t == \"200\" or status in (\"success\", \"mismatch\"); else (\"yellow\", t) if status == \"format_error\" or t.startswith('4') or t == \"FMT\"; else (\"red\", t). Formally, for the return value r: ( (t = \"200\"  status  {\"success\", \"mismatch\"})  r = (\"green\", \"200\") )  ( ((t = \"200\"  status  {\"success\", \"mismatch\"})  (status = \"format_error\"  t starts with \"4\"  t = \"FMT\"))  r = (\"yellow\", t) )  ( ((t = \"200\"  status  {\"success\", \"mismatch\"})  (status = \"format_error\"  t starts with \"4\"  t = \"FMT\"))  r = (\"red\", t) ).",
+    "code_evidence": "Line 3: if text == \"200\" or status in (\"success\", \"mismatch\"):",
+    "trigger_condition": "The specification requires ('green', '200') when status is any completion-type status, but the code only checks for 'success' and 'mismatch'. For code=None and status='completed' (a valid completion status), the label becomes 'completed', and the code returns ('red', 'completed') instead of the required ('green', '200')."
+  }
+}

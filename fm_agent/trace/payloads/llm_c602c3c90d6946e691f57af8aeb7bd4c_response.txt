@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input where a check fails (e.g., config lacking LLM API key) in any session (interactive or non-interactive).",
+  "offending_statements": "Line 30: lines.append(f\"  [!] {label}: {msg}\")",
+  "reason": "The specification requires each failing check to produce a warning in the exact format '[!] <label>: <message>'. The code prepends two spaces, resulting in '  [!] <label>: <message>', which does not match the required format."
+}

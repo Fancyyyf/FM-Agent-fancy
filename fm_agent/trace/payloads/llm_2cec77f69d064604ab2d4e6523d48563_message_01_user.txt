@@ -1,0 +1,39 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _file_to_fqn(filepath, proj_dir):
+Line 2:     """Convert an extracted function file path to its FQN.
+Line 3:     extracted_functions/src/engine/loader-cpp/loadData.cpp -> src::engine::loader-cpp::loadData
+Line 4:     """
+Line 5:     extracted_base = os.path.join(proj_dir, "extracted_functions")
+Line 6:     rel = os.path.relpath(filepath, extracted_base)
+Line 7:     # Strip file extension from the function file itself
+Line 8:     stem, _ = os.path.splitext(rel)
+Line 9:     # Join with :: separator
+Line 10:     parts = Path(stem).parts
+Line 11:     return "::".join(parts)
+```
+
+Condition A (what the code actually does):
+The function returns a fully qualified name (FQN) string constructed from the relative path of `filepath` with respect to `<proj_dir>/extracted_functions`. The file extension of the final component is removed, and all directory separators are replaced by '::'. No exceptions are raised; the return value is deterministic given the inputs. 
+
+Formal logic:
+Let `extracted_base = os.path.join(proj_dir, "extracted_functions")`.
+Let `rel = os.path.relpath(filepath, extracted_base)`.
+Let `(stem, _) = os.path.splitext(rel)`.
+Then the return value `result = "::".join(Path(stem).parts)`.
+
+Condition B (what the specification requires):
+- Returns the Fully-Qualified Name (FQN) derived from filepath by:
+    taking the path relative to <proj_dir>/extracted_functions/, stripping
+    the file extension to obtain the stem, and joining all directory
+    components together with the stem using "::" as the separator
+  - The returned FQN consists of one or more "::"-separated segments where
+    the final segment is the filename stem and preceding segments are the
+    directory components below extracted_functions/
+  - Each segment in the returned FQN is a non-empty string containing no
+    "::" substrings
+  - The return value is deterministic for a given (filepath, proj_dir) pair
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,127 @@
+Programming language: Python
+
+Pre-condition:
+- file_path is the absolute path to an extracted-function file under
+    input_dir (which is fm_agent/extracted_functions/ or equivalent)
+  - input_dir and output_dir are existing directories; output_dir is
+    writable (typically fm_agent/logic_verification_results/)
+  - language is a non-empty string identifying the source language of the
+    function (one of the keys in EXT_TO_LANG, e.g. "Python", "Rust")
+  - work_dir is either None or an existing directory containing a
+    fm_agent/ workspace tree
+  - resume is a boolean
+
+Code block:
+```python
+Line 1: def _verify_single_file(file_path, input_dir, output_dir, language, work_dir=None, resume=False):
+Line 2:     """Verify a single file and write the result JSON."""
+Line 3:     # Skip if resuming and a valid result already exists
+Line 4:     rel = os.path.relpath(file_path, input_dir)
+Line 5:     output_path = os.path.join(output_dir, os.path.splitext(rel)[0] + ".json")
+Line 6:     if resume and os.path.exists(output_path):
+Line 7:         try:
+Line 8:             with open(output_path) as f:
+Line 9:                 existing = json.load(f)
+Line 10:             verdict = existing.get("verdict", "ERROR")
+Line 11:             logging.info(f"Already verified, skipping: {file_path} (verdict={verdict})")
+Line 12:             return file_path, verdict
+Line 13:         except (json.JSONDecodeError, OSError):
+Line 14:             pass  
+Line 15:     os.makedirs(os.path.dirname(output_path), exist_ok=True)
+Line 16:     try:
+Line 17:         func, spec, knowledge = parse_input_function(file_path)
+Line 18:         if not spec:
+Line 19:             return file_path, "SKIPPED"
+Line 20:         _, spec_post = _parse_spec_conditions(spec)
+Line 21:         trace_context = None
+Line 22:         if work_dir:
+Line 23:             rel_function = os.path.relpath(file_path, input_dir)
+Line 24:             trace_context = {
+Line 25:                 "trace_dir": os.path.join(work_dir, "trace"),
+Line 26:                 "function_id": os.path.splitext(rel_function)[0].replace(os.sep, "::"),
+Line 27:                 "function_file": os.path.join("extracted_functions", rel_function).replace(os.sep, "/"),
+Line 28:             }
+Line 29:         domain_knowledge = load_staged_domain_knowledge_text(work_dir) if work_dir else ""
+Line 30:         if domain_knowledge:
+Line 31:             knowledge = f"{knowledge}\n\n{domain_knowledge}" if knowledge else domain_knowledge
+Line 32:         result = reasoner(func, spec, knowledge, language, trace_context=trace_context)
+Line 33:         if "passes the verification" in result:
+Line 34:             output = {"function": file_path, "verdict": "MATCH", "gaps": None}
+Line 35:         elif result.startswith("Failed to "):
+Line 36:             output = {"function": file_path, "verdict": "ERROR", "gaps": None, "error": result}
+Line 37:         else:
+Line 38:             stmts = post_cond = reason_text = ""
+Line 39:             stmts_match = re.search(
+Line 40:                 r"Statements triggering the violation:\n(.*?)\n\nPost-condition:", result, re.DOTALL
+Line 41:             )
+Line 42:             post_match = re.search(
+Line 43:                 r"Post-condition:\n(.*?)\n\nReason for violation:", result, re.DOTALL
+Line 44:             )
+Line 45:             reason_match = re.search(r"Reason for violation:\n(.*)", result, re.DOTALL)
+Line 46:             if stmts_match:
+Line 47:                 stmts = stmts_match.group(1).strip()
+Line 48:             if post_match:
+Line 49:                 post_cond = post_match.group(1).strip()
+Line 50:             if reason_match:
+Line 51:                 reason_text = reason_match.group(1).strip()
+Line 52:             output = {
+Line 53:                 "function": file_path,
+Line 54:                 "verdict": "MISMATCH",
+Line 55:                 "gaps": {
+Line 56:                     "spec_claim": spec_post or "",
+Line 57:                     "actual_behavior": post_cond,
+Line 58:                     "code_evidence": stmts,
+Line 59:                     "trigger_condition": reason_text,
+Line 60:                 },
+Line 61:             }
+Line 62:     except Exception as exc:
+Line 63:         logging.exception(f"Verification failed for {file_path}")
+Line 64:         output = {"function": file_path, "verdict": "ERROR", "gaps": None, "error": str(exc)}
+Line 65:     output = _sanitize_strings(output)
+Line 66:     with open(output_path, "w") as f:
+Line 67:         json.dump(output, f, indent=2, ensure_ascii=False)
+Line 68:     return file_path, output["verdict"]
+```
+
+Additional context:
+parse_input_function(file_path) -> (str, str, str) | (None, None, None)
+Pre-condition: file_path is the path to an extracted-function file that
+    may contain [SPEC] and [INFO] comment blocks prepended to source code
+  Post-condition: returns (function_body, spec_text, knowledge_text);
+    function_body is the source code after any prepended spec blocks;
+    spec_text is the content between [SPEC] markers, or None if absent;
+    knowledge_text is the content between [INFO] markers, or None if
+    absent
+
+_parse_spec_conditions(spec) -> (str, str)
+Pre-condition: spec is a non-empty string containing a [SPEC] block
+    with "Pre-condition:" and "Post-condition:" sections
+  Post-condition: returns (pre_condition_text, post_condition_text) where
+    each is the text of the respective section extracted from the spec
+
+load_staged_domain_knowledge_text(work_dir) -> str
+Pre-condition: work_dir is a valid directory path whose fm_agent/
+    subtree may contain staged domain-knowledge Markdown files
+  Post-condition: returns the concatenated text content of all staged
+    domain-knowledge Markdown files under work_dir, with a single newline
+    separating each file's content; returns an empty string when no
+    staged knowledge files exist
+
+reasoner(func, spec, knowledge, language, trace_context) -> str
+Pre-condition: func is the function source code as a string,
+    spec is the [SPEC] block text, knowledge is a string of domain
+    knowledge (may be empty), language identifies the source language,
+    trace_context is a dict with trace_dir, function_id, and
+    function_file keys or None
+  Post-condition: returns a string containing the reasoner's verdict:
+    either "passes the verification", a result starting with
+    "Failed to " indicating an error, or a structured mismatch report
+    with sections for statements, post-condition, and reason
+
+_sanitize_strings(obj) -> dict
+Pre-condition: obj is a dict whose values may contain non-printable
+    characters or other content that would break JSON serialization
+  Post-condition: returns a dict with the same keys as obj; every string
+    value in the returned dict is sanitized so that json.dump produces
+    a valid JSON output
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

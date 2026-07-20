@@ -1,0 +1,30 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is a filesystem path to a project directory
+  - filepath is a path to a single Rust source file within the project
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one Rust file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("rust", filepath) if cg else None
+```
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a filesystem path to a project directory
+  Post-condition: Returns an initialized CodeGraphExtractor instance for the
+    project at proj_dir, or None when the codegraph backend cannot be initialized
+
+CodeGraphExtractor.get_function_spans(language: str, filepath: str) -> list[tuple[str, int, int]]
+Pre-condition: language is a supported language key; filepath is a path to a
+    source file within the indexed project
+  Post-condition: Returns a list of (name, start_idx, end_idx) tuples for each
+    top-level function in filepath, with 0-indexed inclusive line indices
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

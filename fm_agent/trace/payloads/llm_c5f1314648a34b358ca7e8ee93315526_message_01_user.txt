@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def is_cli_backend_enabled():
+Line 2:     return resolve_model_backend() in {"codex-cli", "claude-cli"}
+```
+
+Condition A (what the code actually does):
+The function returns `True` if the canonical backend identifier obtained from `resolve_model_backend()` is either `'codex-cli'` or `'claude-cli'`; otherwise it returns `False`. The state of the backend configuration and module-level state remains unchanged. Formally: `result ⇔ (resolve_model_backend() ∈ {'codex-cli', 'claude-cli'})`.
+
+Condition B (what the specification requires):
+- Returns True when the configured model backend resolves to a direct CLI backend (Codex CLI or Claude CLI)
+  - Returns False when the configured model backend resolves to the OpenCode backend
+
+Additional context:
+resolve_model_backend() -> str
+Pre-condition: the backend configuration has been loaded and module-level state is initialized
+  Post-condition: returns the canonical backend identifier ("opencode", "codex-cli", or "claude-cli"),
+    with any configured alias resolved to its canonical form
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

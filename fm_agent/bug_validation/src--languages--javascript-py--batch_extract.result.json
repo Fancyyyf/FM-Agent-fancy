@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--javascript-py--batch_extract",
+  "source_file": "src/languages/javascript-py/batch_extract.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--javascript-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--javascript-py--batch_extract.md",
+  "probe_stdout": "NOT CONFIRMED — all JavaScript extensions present. Files found: ['script.cjs', 'script.js', 'script.mjs']\n  script.cjs: ['bar']\n  script.js: ['hello']\n  script.mjs: ['foo']\n",
+  "trigger_summary": "The spec claims .mjs files should be included but codegraph v1.4.1 assigns .mjs files the 'javascript' language tag, so they are already included."
+}

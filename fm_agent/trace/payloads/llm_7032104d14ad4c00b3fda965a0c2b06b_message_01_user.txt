@@ -1,0 +1,45 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all Java files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("java", proj_dir) if cg else {}
+```
+
+Condition A (what the code actually does):
+If the execution completes without exceptions, the function returns a dictionary `result`. If `CodeGraphExtractor.from_proj_dir(proj_dir)` returns `None`, then `result` is the empty dictionary `{}`. Otherwise, there exists a non‑`None` instance `cg` such that `cg = CodeGraphExtractor.from_proj_dir(proj_dir)` and `result = cg.get_functions_by_file("java", proj_dir)`. The returned dictionary maps each absolute file path (string) to a list of `(function_name: str, function_body: str)` tuples, covering all Java functions in that file within the project directory `proj_dir`. The dictionary is a new object, and its creation has no side effects. If during execution an exception is raised (e.g., by `from_proj_dir` or `get_functions_by_file`), the exception propagates and the function does not return normally.
+
+Formally:
+```
+let C := CodeGraphExtractor.from_proj_dir(proj_dir) in
+if normal_termination then
+  (result = {} ∧ C = None) ∨
+  (∃ cg (cg = C ∧ cg ≠ None ∧
+    result = cg.get_functions_by_file("java", proj_dir) ∧
+    ∀ k ∈ dom(result) : is_absolute_path(k) ∧
+    result[k] is a list of (str, str) tuples ∧
+    result[k] corresponds exactly to the (name, body) of all Java functions in the file at k within proj_dir))
+else
+  exception_propagated ∧ no_return_value
+```
+
+Condition B (what the specification requires):
+- When a Java code graph backend is available, returns a dict mapping each absolute
+    file path (str) in the project to a list of (function_name: str, function_body: str)
+    tuples, covering all Java functions discovered in the project
+  - When the Java backend is unavailable, returns an empty dict
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a valid project directory path
+  Post-condition: Returns a CodeGraphExtractor instance initialized for the project,
+    or None when the Java code graph backend cannot be initialized
+
+cg.get_functions_by_file("java", proj_dir) -> dict
+Pre-condition: cg is a valid CodeGraphExtractor instance; proj_dir is a valid
+    project directory path
+  Post-condition: Returns a dict mapping each absolute file path (str) to a list of
+    (function_name: str, function_body: str) tuples for all Java functions in the project
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

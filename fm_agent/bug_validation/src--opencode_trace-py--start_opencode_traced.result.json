@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--start_opencode_traced",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/src/opencode_trace-py/start_opencode_traced.py",
+  "function_name": "start_opencode_traced",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--start_opencode_traced.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--start_opencode_traced.md",
+  "probe_stdout": "NOT CONFIRMED — event_id starts with opencode_: 'opencode_fb4613466a20463780e4a317bea14cdc'",
+  "trigger_summary": "The specification requires event_id to start with 'opencode_', but new_event_id('opencode') already produces IDs with the 'opencode_' prefix because new_event_id inserts an underscore between the prefix argument and the UUID hex."
+}

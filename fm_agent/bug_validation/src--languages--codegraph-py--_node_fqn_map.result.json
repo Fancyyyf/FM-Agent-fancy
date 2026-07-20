@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--codegraph-py--_node_fqn_map",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_node_fqn_map.py",
+  "function_name": "_node_fqn_map",
+  "confirmation_status": "not_confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_node_fqn_map.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_node_fqn_map.md",
+  "probe_stdout": "NOT CONFIRMED — _node_fqn_map returned empty dict as spec requires\n  actual: {}  expected: {}\n  SQLite treats IN () as matching 0 rows (not a syntax error)",
+  "trigger_summary": "Calling _node_fqn_map with an empty cg_langs list after creating a nodes table with test data — the bug claim asserted invalid SQL, but SQLite treats IN () as matching 0 rows gracefully."
+}

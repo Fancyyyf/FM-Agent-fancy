@@ -1,0 +1,84 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _clean_domain_context_files(work_dir, removed_phase_nums, renumbered):
+Line 2:     """Delete removed phases' types files and rename renumbered ones to match.
+Line 3:     ``removed_phase_nums`` are the old numbers of phases dropped by
+Line 4:     ``_clean_empty_phase_module``; ``renumbered`` maps each surviving phase's old
+Line 5:     number to its new number. The domain-context directory may be absent (setup
+Line 6:     has not produced it yet), in which case there is nothing to sync.
+Line 7:     """
+Line 8:     domain_dir = os.path.join(work_dir, "spec_prompts", "domain_context")
+Line 9:     if not os.path.isdir(domain_dir):
+Line 10:         return
+Line 11:     def types_path(num):
+Line 12:         return os.path.join(domain_dir, f"phase_{num:02d}_types.txt")
+Line 13:     for old_num in removed_phase_nums:
+Line 14:         if old_num is None:
+Line 15:             continue
+Line 16:         path = types_path(old_num)
+Line 17:         if os.path.exists(path):
+Line 18:             os.remove(path)
+Line 19:             logging.info("Deleted domain-context file for removed phase %s", old_num)
+Line 20:     # Rename via temporary names first so a new number that collides with an
+Line 21:     # as-yet-unmoved file (e.g. phase 3 -> 2 while 2 -> 1) never overwrites it.
+Line 22:     pending = []  
+Line 23:     for old_num, new_num in renumbered.items():
+Line 24:         if old_num == new_num:
+Line 25:             continue
+Line 26:         src = types_path(old_num)
+Line 27:         if not os.path.exists(src):
+Line 28:             continue
+Line 29:         tmp = src + ".renumber_tmp"
+Line 30:         os.rename(src, tmp)
+Line 31:         pending.append((tmp, types_path(new_num)))
+Line 32:     for tmp, final_path in pending:
+Line 33:         os.rename(tmp, final_path)
+Line 34:         logging.info("Renamed domain-context file to %s", os.path.basename(final_path))
+```
+
+Condition A (what the code actually does):
+If the domain_context directory (`os.path.join(work_dir, 'spec_prompts', 'domain_context')`) does not exist initially, the file system is unmodified. Otherwise:
+
+- For every non‑None integer `n` in `removed_phase_nums`, the file `phase_{n:02d}_types.txt` (relative to the domain_context directory) is deleted if it existed; if it did not exist, nothing happens. No other files are deleted.
+- Define `types_path(num) = os.path.join(domain_dir, f"phase_{num:02d}_types.txt")`. Let `R` be the set of pairs `(old, new)` from `renumbered` where `old != new` and `types_path(old)` existed before the function ran. For each such pair, after execution:
+  - `types_path(new)` exists and its content equals the original content of `types_path(old)`.
+  - `types_path(old)` no longer exists.
+  - The temporary file `types_path(old) + ".renumber_tmp"` does not exist.
+- For any file in the domain_context directory not mentioned above, its existence and content are unchanged.
+
+Formally, with pre‑state filesystem `FS` and post‑state `FS'`:
+```
+(¬isdir(domain_dir, FS) → FS' = FS) ∧
+(isdir(domain_dir, FS) →
+  (∀ n ∈ removed_phase_nums ∖ {None} :
+     (∃ f=types_path(n) : exists(f, FS) ⇒ ¬exists(f, FS')) ∧
+     (∀ f ∈ files(domain_dir) \ {types_path(n) | n ∈ removed_phase_nums ∖ {None}} :
+        (¬∃ (old,new)∈R : f = types_path(old) ∨ f = types_path(old)+".renumber_tmp" ∨ f = types_path(new)) →
+           (exists(f, FS) ⇔ exists(f, FS') ∧ content(f, FS') = content(f, FS)))) ∧
+  (∀ (old,new) ∈ R :
+     exists(types_path(new), FS') ∧
+     content(types_path(new), FS') = content(types_path(old), FS) ∧
+     ¬exists(types_path(old), FS') ∧
+     ¬exists(types_path(old)+".renumber_tmp", FS')))
+```
+
+Condition B (what the specification requires):
+- If work_dir/spec_prompts/domain_context/ does not exist as a
+    directory, returns immediately with no side effects.
+  - For each non-None integer n in removed_phase_nums, the file
+    phase_{n:02d}_types.txt within the domain context directory is
+    deleted if it exists; non-existent files are silently skipped.
+  - For each (old, new) pair in renumbered where old != new, if
+    phase_{old:02d}_types.txt exists within the domain context
+    directory, it is renamed to phase_{new:02d}_types.txt.
+    The renaming is collision-safe: when two or more renumberings
+    form a chain or cycle (e.g., 3→2 and 2→1), an intermediate
+    temporary name is used to prevent overwriting a file that has
+    not yet been moved.
+  - Returns None. All file operations are confined to
+    work_dir/spec_prompts/domain_context/; no files outside that
+    directory are modified.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

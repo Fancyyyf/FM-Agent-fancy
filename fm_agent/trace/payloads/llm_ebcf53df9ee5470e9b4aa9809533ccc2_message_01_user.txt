@@ -1,0 +1,51 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _generate_block_post_condition(block, pre_condition, knowledge, language,
+Line 2:                                    trace_dir=None, trace_meta=None):
+Line 3:     info_str = f"\nAdditional context:\n{knowledge}" if knowledge else ""
+Line 4:     messages = [
+Line 5:         {"role": "system", "content": (
+Line 6:             f"You are an expert in formal verification of {language} programs. "
+Line 7:             f"Given a {language} code block and its pre-condition, generate the post-condition "
+Line 8:             "that describes the program state after the code block finishes execution. "
+Line 9:             "Cover all execution paths including early returns, exceptions, and normal flow-through. "
+Line 10:             f"Apply {language}-specific semantics (ownership, lifetimes, error handling, etc.) as appropriate. "
+Line 11:             "Be precise and unambiguous. Express the post-condition in natural language and formal logic."
+Line 12:         )},
+Line 13:         {"role": "user", "content": (
+Line 14:             f"Programming language: {language}\n\n"
+Line 15:             f"Pre-condition:\n{pre_condition}\n\n"
+Line 16:             f"Code block:\n```{language.lower()}\n{block}\n```\n"
+Line 17:             f"{info_str}\n"
+Line 18:             "Generate the post-condition. Return only a valid JSON object with this "
+Line 19:             "required field: {\"post_condition\": \"...\"}. Do not include Markdown, "
+Line 20:             "tags, or prose outside the JSON object."
+Line 21:         )}
+Line 22:     ]
+Line 23:     meta = {
+Line 24:         "purpose": "generate_block_post_condition",
+Line 25:         "summary": "Generated post-condition for code block",
+Line 26:         **(trace_meta or {}),
+Line 27:     }
+Line 28:     return _llm_json_call(
+Line 29:         _llm_provider_client,
+Line 30:         REASONER_POST_CONDITION_MODEL,
+Line 31:         messages,
+Line 32:         _parse_post_condition_json,
+Line 33:         '{"post_condition": "non-empty string"}',
+Line 34:         trace_dir=trace_dir,
+Line 35:         trace_meta=meta,
+Line 36:     )
+```
+
+Condition A (what the code actually does):
+Normal execution: The function constructs `info_str` (either an empty string or a formatted string containing `knowledge`), `messages` (list of two dicts with system and user prompts built from the given `language`, `pre_condition`, `block`, and `info_str`), and `meta` (a dict with fixed keys `purpose` and `summary`, merged with `trace_meta` if provided). It then returns the result of `_llm_json_call(_llm_provider_client, REASONER_POST_CONDITION_MODEL, messages, _parse_post_condition_json, '{"post_condition": "non-empty string"}', trace_dir=trace_dir, trace_meta=meta)`. Exceptional execution: If `_llm_provider_client`, `REASONER_POST_CONDITION_MODEL`, or `_parse_post_condition_json` are undefined, a `NameError` propagates. Any exception raised by `_llm_json_call` (e.g., `ValueError`, `TypeError`, `ConnectionError`, or a user-defined parsing error) propagates uncaught. The function does not mutate any global state or its input arguments. In formal terms: let `S` be the global scope. If `_llm_provider_client ∈ S`, `REASONER_POST_CONDITION_MODEL ∈ S`, `_parse_post_condition_json ∈ S`, then `_generate_block_post_condition` ≜ λ args. let `info_str` = (if knowledge then f"\nAdditional context:\n{knowledge}" else ""), `messages` = [system_msg(language), user_msg(language, pre_condition, block, info_str)] in let `meta` = {"purpose": "generate_block_post_condition", "summary": "Generated post-condition for code block", **trace_meta} in `_llm_json_call(_llm_provider_client, REASONER_POST_CONDITION_MODEL, messages, _parse_post_condition_json, '{"post_condition": "non-empty string"}', trace_dir=trace_dir, trace_meta=meta)`. Otherwise, `NameError`.
+
+Condition B (what the specification requires):
+- Returns a string describing the strongest post-condition that must hold after executing block from the given pre-condition, covering all execution paths through the block including normal flow-through, early returns, and exceptional exits
+  - Returns None when the post-condition could not be determined from the given inputs
+  - The returned post-condition is expressed in natural language suitable for subsequent logical implication checks against specification post-conditions
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

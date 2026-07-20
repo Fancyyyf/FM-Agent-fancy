@@ -1,0 +1,46 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def __enter__(self):
+Line 2:         self._proc = subprocess.Popen(
+Line 3:             _elp_argv(),
+Line 4:             cwd=self.proj_dir,
+Line 5:             stdin=subprocess.PIPE,
+Line 6:             stdout=subprocess.PIPE,
+Line 7:             stderr=subprocess.DEVNULL,
+Line 8:         )
+Line 9:         self._reader = _JsonRpcReader(self._proc.stdout, self._messages)
+Line 10:         self._reader.start()
+Line 11:         return self
+```
+
+Condition A (what the code actually does):
+If the method completes without raising an exception, then self._proc is bound to a subprocess.Popen instance representing a child process that was started with the argument vector returned by _elp_argv(), working directory set to self.proj_dir, stdin connected to a pipe (subprocess.PIPE), stdout connected to a pipe (subprocess.PIPE), and stderr directed to /dev/null (subprocess.DEVNULL); self._reader is bound to a _JsonRpcReader object that is a daemon thread reading from self._proc.stdout, deserializing each line as a JSON-RPC message, and enqueuing the resulting object into the thread-safe queue self._messages; the reader thread has been started via self._reader.start(); and the method returns self. If an exception is raised (e.g., during subprocess.Popen due to an invalid command, or during _JsonRpcReader initialization or start), then the method does not return normally; self._proc and/or self._reader may remain unassigned or partially assigned depending on the point of failure, and the exception propagates to the caller.
+
+Condition B (what the specification requires):
+- A child process running the Erlang Language Platform (ELP) binary is started with
+    working directory self.proj_dir, its stdin and stdout connected as pipes, and its
+    stderr discarded
+  - self._proc references the running Popen instance for the ELP subprocess
+  - A background daemon reader is active that reads lines from the ELP subprocess stdout,
+    deserializes each line as a JSON-RPC message object, and appends those objects to
+    self._messages (which is initially empty)
+  - Returns self
+
+Additional context:
+subprocess.Popen(args, *, cwd=None, stdin=None, stdout=None, stderr=None) -> subprocess.Popen
+Pre-condition: args is a sequence of program arguments; cwd if given is a valid directory
+  Post-condition: Executes the given program in a new child process and returns a Popen
+    instance whose stdin, stdout, and stderr handles are connected as specified
+
+_JsonRpcReader(stream, messages) -> _JsonRpcReader
+Pre-condition: stream is a readable binary stream providing newline-delimited JSON-RPC
+    messages; messages is a thread-safe queue.Queue
+  Post-condition: Returns a configured daemon Thread instance ready to read from stream
+
+_JsonRpcReader.start() -> None
+Pre-condition: The reader's stream is open and readable
+  Post-condition: A background thread begins reading lines from stream, deserializing each
+    as a JSON-RPC message object, and enqueuing each object into messages
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_opencode_select_json",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_opencode_select_json.py",
+  "function_name": "_opencode_select_json",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_opencode_select_json.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_opencode_select_json.md",
+  "probe_stdout": "CONFIRMED — actual: 'not_a_dict_or_list' (type: str) | expected type: dict or list | missing type check at line 106",
+  "trigger_summary": "The specification requires returning dict or list on success, but json.load(f) at line 106 returns any JSON value without type checking, so non-dict/list JSON values (e.g., strings, numbers) are returned in violation of the spec."
+}

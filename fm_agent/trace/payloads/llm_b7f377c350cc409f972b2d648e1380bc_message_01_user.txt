@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def parse_layers_spec(layers_spec: str) -> Tuple[int, int]:
+Line 2:     text = layers_spec.strip()
+Line 3:     if "-" not in text:
+Line 4:         idx = int(text)
+Line 5:         return idx, idx
+Line 6:     left, right = text.split("-", 1)
+Line 7:     start = int(left.strip())
+Line 8:     end = int(right.strip())
+Line 9:     if start > end:
+Line 10:         raise ValueError("invalid --layers range: start > end")
+Line 11:     return start, end
+```
+
+Condition A (what the code actually does):
+If the stripped input text doesn't contain a hyphen, it is entirely a non-negative integer N, and the function returns the tuple (N, N). If the stripped input contains a hyphen, it is parsed as two non-negative integers left and right separated by a single hyphen. If left <= right, the function returns (left, right); otherwise, a ValueError with the message 'invalid --layers range: start > end' is raised. Formally:
+- If layers_spec.strip() matches '^\d+$', then ∃ n ∈ ℕ₀: int(layers_spec.strip()) = n ∧ parse_layers_spec(layers_spec) = (n, n).
+- If layers_spec.strip() matches '^\d+-\d+$', let left_str = text.split('-',1)[0].strip(), right_str = text.split('-',1)[1].strip(), left = int(left_str), right = int(right_str). Then: (left ≤ right → parse_layers_spec(layers_spec) = (left, right)) ∧ (left > right → raises ValueError('invalid --layers range: start > end')).
+
+Condition B (what the specification requires):
+- Returns an inclusive (start, end) pair of integer layer indices
+  - When layers_spec contains no "-" character: returns (N, N) where N is the
+    integer value of the entire string
+  - When layers_spec contains a "-" character: splits on the first "-", parses
+    the left part as start and right part as end, returns (start, end)
+  - Raises ValueError if start > end, with a message indicating the range is invalid
+  - Raises ValueError if the string is not parseable as "N" or "N-M" with valid
+    integer components
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

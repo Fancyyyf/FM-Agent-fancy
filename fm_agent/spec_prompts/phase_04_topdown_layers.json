@@ -1,0 +1,188 @@
+{
+  "phase": 4,
+  "phase_name": "Specification Generation & Code Reasoning",
+  "total_functions": 13,
+  "total_layers": 4,
+  "layers": [
+    {
+      "layer": 0,
+      "functions": [
+        {
+          "name": "src::prompts-py::_parse_post_condition_json",
+          "file": "extracted_functions/src/prompts-py/_parse_post_condition_json.py",
+          "unit": "prompts",
+          "phase4_callers": [],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_sanitize_strings",
+          "file": "extracted_functions/src/reasoner-py/_sanitize_strings.py",
+          "unit": "reasoner",
+          "phase4_callers": [],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::reasoner",
+          "file": "extracted_functions/src/reasoner-py/reasoner.py",
+          "unit": "reasoner",
+          "phase4_callers": [],
+          "phase4_callees": [
+            "src::prompts-py::_check_post_implies_spec",
+            "src::prompts-py::_generate_block_post_condition",
+            "src::reasoner-py::_has_terminating_statement",
+            "src::reasoner-py::_parse_spec_conditions",
+            "src::reasoner-py::_split_into_blocks_braced"
+          ],
+          "all_callees": [
+            "src::prompts-py::_check_post_implies_spec",
+            "src::prompts-py::_generate_block_post_condition",
+            "src::reasoner-py::_has_terminating_statement",
+            "src::reasoner-py::_parse_spec_conditions",
+            "src::reasoner-py::_split_into_blocks_braced"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "functions": [
+        {
+          "name": "src::prompts-py::_check_post_implies_spec",
+          "file": "extracted_functions/src/prompts-py/_check_post_implies_spec.py",
+          "unit": "prompts",
+          "phase4_callers": [
+            "src::reasoner-py::reasoner"
+          ],
+          "phase4_callees": [
+            "src::prompts-py::_parse_spec_check_json"
+          ],
+          "all_callees": [
+            "src::llm_client-py::_retry_create",
+            "src::prompts-py::_parse_spec_check_json",
+            "src::trace_writer-py::new_event_id",
+            "src::trace_writer-py::record_llm_exchange",
+            "src::trace_writer-py::utc_now_iso"
+          ]
+        },
+        {
+          "name": "src::prompts-py::_generate_block_post_condition",
+          "file": "extracted_functions/src/prompts-py/_generate_block_post_condition.py",
+          "unit": "prompts",
+          "phase4_callers": [
+            "src::reasoner-py::reasoner"
+          ],
+          "phase4_callees": [],
+          "all_callees": [
+            "src::llm_client-py::_llm_json_call"
+          ]
+        },
+        {
+          "name": "src::reasoner-py::_has_terminating_statement",
+          "file": "extracted_functions/src/reasoner-py/_has_terminating_statement.py",
+          "unit": "reasoner",
+          "phase4_callers": [
+            "src::reasoner-py::reasoner"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_parse_spec_conditions",
+          "file": "extracted_functions/src/reasoner-py/_parse_spec_conditions.py",
+          "unit": "reasoner",
+          "phase4_callers": [
+            "src::reasoner-py::reasoner"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_split_into_blocks_braced",
+          "file": "extracted_functions/src/reasoner-py/_split_into_blocks_braced.py",
+          "unit": "reasoner",
+          "phase4_callers": [
+            "src::reasoner-py::reasoner"
+          ],
+          "phase4_callees": [
+            "src::reasoner-py::_compute_brace_depth_per_line",
+            "src::reasoner-py::_split_into_blocks"
+          ],
+          "all_callees": [
+            "src::reasoner-py::_compute_brace_depth_per_line",
+            "src::reasoner-py::_split_into_blocks"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 2,
+      "functions": [
+        {
+          "name": "src::prompts-py::_parse_spec_check_json",
+          "file": "extracted_functions/src/prompts-py/_parse_spec_check_json.py",
+          "unit": "prompts",
+          "phase4_callers": [
+            "src::prompts-py::_check_post_implies_spec"
+          ],
+          "phase4_callees": [
+            "src::prompts-py::_load_spec_check_json",
+            "src::prompts-py::_nonempty_string"
+          ],
+          "all_callees": [
+            "src::prompts-py::_load_spec_check_json",
+            "src::prompts-py::_nonempty_string"
+          ]
+        },
+        {
+          "name": "src::reasoner-py::_compute_brace_depth_per_line",
+          "file": "extracted_functions/src/reasoner-py/_compute_brace_depth_per_line.py",
+          "unit": "reasoner",
+          "phase4_callers": [
+            "src::reasoner-py::_split_into_blocks_braced"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_split_into_blocks",
+          "file": "extracted_functions/src/reasoner-py/_split_into_blocks.py",
+          "unit": "reasoner",
+          "phase4_callers": [
+            "src::reasoner-py::_split_into_blocks_braced"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "functions": [
+        {
+          "name": "src::prompts-py::_load_spec_check_json",
+          "file": "extracted_functions/src/prompts-py/_load_spec_check_json.py",
+          "unit": "prompts",
+          "phase4_callers": [
+            "src::prompts-py::_parse_spec_check_json"
+          ],
+          "phase4_callees": [],
+          "all_callees": [
+            "src::llm_client-py::_parse_json_response"
+          ]
+        },
+        {
+          "name": "src::prompts-py::_nonempty_string",
+          "file": "extracted_functions/src/prompts-py/_nonempty_string.py",
+          "unit": "prompts",
+          "phase4_callers": [
+            "src::prompts-py::_parse_spec_check_json"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        }
+      ]
+    }
+  ]
+}

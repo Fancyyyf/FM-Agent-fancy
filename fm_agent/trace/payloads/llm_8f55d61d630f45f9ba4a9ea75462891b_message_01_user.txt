@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def write(self, data):
+Line 2:         self._console.write(data)
+Line 3:         # The log stream is owned by the logging FileHandler; at interpreter shutdown (or if
+Line 4:         # the handler is closed) it may already be closed, so tolerate that rather than raise
+Line 5:         # — the console copy still gets through.
+Line 6:         if not self._log_stream.closed:
+Line 7:             self._log_stream.write(data)
+Line 8:         return len(data)
+```
+
+Condition A (what the code actually does):
+After execution: (1) If no exception is raised, then data has been written to self._console; if at the moment of the check self._log_stream was not closed, data has also been written to self._log_stream; and the method returns len(data). (2) If self._console.write(data) raises an exception, the method terminates immediately with that exception, data is not written to self._log_stream, and no value is returned. (3) If self._console.write(data) succeeds but self._log_stream is not closed and self._log_stream.write(data) raises an exception, the method terminates with that exception, the console write remains, and no value is returned.
+
+Condition B (what the specification requires):
+- The content of data has been delivered to the console output.
+  - If the log stream is open at the time of the call, the content of data has also been persisted to the log.
+  - If the log stream is closed, the log write is silently skipped; no exception is raised.
+  - Returns len(data), the number of characters in data.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,3 @@
+{
+  "post_condition": "A SyntaxError is raised during compilation because the function definition is incomplete (missing body for 'if' statement at line 40). The function _find_brace_end is not created, and no runtime state changes occur. Any variables in the enclosing scope remain unmodified."
+}

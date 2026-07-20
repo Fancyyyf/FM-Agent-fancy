@@ -1,0 +1,11 @@
+{
+  "id": "src--file_utils-py--_write_file_names",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/file_utils-py/_write_file_names.py",
+  "function_name": "_write_file_names",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--_write_file_names.py",
+  "detail_file": "fm_agent/bug_validation/src--file_utils-py--_write_file_names.md",
+  "probe_stdout": "CONFIRMED — result2: [\"file_list.json\", \"hello.txt\"] | file_after: [\"file_list.json\", \"hello.txt\"] | expected: [\"alpha\", \"beta\", \"gamma\"]",
+  "trigger_summary": "_write_file_names unconditionally overwrites output_path even when it already contains a valid JSON array of strings, violating the spec requirement to return the existing parsed array without modification."
+}

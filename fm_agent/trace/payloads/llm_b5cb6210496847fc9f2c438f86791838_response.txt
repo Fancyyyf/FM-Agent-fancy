@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "folder/.hidden",
+  "offending_statements": "Line 6: return os.path.splitext(rel)[0].replace(\"/\", \"::\")",
+  "reason": "The specification demands removal of the substring from the last '.' (inclusive) to the end of the final path segment. For an input like 'folder/.hidden', the final segment is '.hidden' and its last '.' is the leading dot, so the segment should be completely removed, yielding 'folder::'. However, os.path.splitext treats a leading dot as part of the basename and returns ('folder/.hidden', ''), leaving the segment intact, which results in 'folder::.hidden'. This violates the specification."
+}

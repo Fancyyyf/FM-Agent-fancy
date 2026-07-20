@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--cpp-py--batch_extract",
+  "source_file": "src/languages/cpp.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--cpp-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--cpp-py--batch_extract.md",
+  "probe_stdout": "CONFIRMED — TypeError raised for None: expected str, bytes or os.PathLike object, not NoneType",
+  "trigger_summary": "Passing None as proj_dir raises TypeError instead of returning empty dict as spec requires."
+}

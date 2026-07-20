@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--javascript-py--function_spans",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/javascript-py/function_spans.py",
+  "function_name": "function_spans",
+  "confirmation_status": "not_confirmed",
+  "attempts": 3,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--javascript-py--function_spans.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--javascript-py--function_spans.md",
+  "probe_stdout": "NOT CONFIRMED — get_function_spans returned sorted results for all 33 files with 2+ functions.\nThe SQL query in get_function_spans uses 'ORDER BY start_line' with INTEGER column,\nwhich guarantees numeric ordering. All language modules (javascript, python, go, etc.)\ndelegate to this same method without additional sorting, but the backend's ORDER BY\nclause already satisfies the ordering requirement from the spec.\n",
+  "trigger_summary": "function_spans delegates to get_function_spans without explicit sorting, but the backend SQL already uses ORDER BY start_line (INTEGER column), guaranteeing numeric ordering."
+}

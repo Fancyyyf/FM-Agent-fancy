@@ -1,0 +1,23 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return ``{abs_filepath: [(function_id, body)]}`` for Erlang files."""
+Line 3:     return _analysis_or_empty(proj_dir).functions
+```
+
+Condition A (what the code actually does):
+The return value is a dictionary. If the analysis of the project directory is successful, the dictionary maps absolute file paths (strings) of Erlang files to lists of (function_id, body) tuples; otherwise, it returns an empty dictionary. Formally, let `R` be the return value. Then `isinstance(R, dict)` is true. For all keys `k` in `R`, `k` is a string representing an absolute file path. For each `k`, `R[k]` is a list of tuples, where each tuple is of type `(str, str)`. The condition `R == {}` holds if and only if the analysis for `proj_dir` could not be performed (i.e., no Erlang sources or tool unavailable); otherwise, `R` is non-empty and contains all extracted function definitions from the project.
+
+Condition B (what the specification requires):
+- Returns a mapping from absolute .erl file paths to lists of (function_identifier, source_text) tuples
+  - Each function_identifier is a string uniquely naming a top-level Erlang function within its source module
+  - Each source_text is the complete function body as found in the corresponding file
+  - If Erlang-specific analysis is unavailable for the project at proj_dir, returns an empty dict
+
+Additional context:
+_analysis_or_empty(root: str) -> object
+Pre-condition: root is a filesystem path
+  Post-condition: Returns an analysis object whose .functions attribute yields the extracted-function mapping; returns an object whose .functions is an empty dict when analysis is unavailable for the given root
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "A State instance where the project path is /very/long/path/that/wraps/over/multiple/lines, causing render_header(state) to return a renderable that requires 4 or more lines of vertical space.",
+  "offending_statements": "Line 11: Layout(render_header(state), name=\"header\", size=3)",
+  "reason": "The specification requires that region heights are computed from the number of data rows each panel is expected to render, not from fixed absolute sizes. The header height is hardcoded to 3, so if render_header produces more than 3 rows, the header will be clipped, violating the specification."
+}

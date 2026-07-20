@@ -1,0 +1,26 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one Go file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("go", filepath) if cg else None
+```
+
+Condition A (what the code actually does):
+After the function call, either an exception was raised (due to an error in `CodeGraphExtractor.from_proj_dir(proj_dir)` or, if that succeeded and returned a truthy extractor `cg`, from `cg.get_function_spans("go", filepath)`), or the function returned a value. If it returned, then `cg = CodeGraphExtractor.from_proj_dir(proj_dir)` (without raising) and: if `cg` is falsy (i.e., `None`), the return value is `None`; otherwise, the return value is the list of `(name, start_idx, end_idx)` tuples produced by `cg.get_function_spans("go", filepath)` (which also completed without exception). Format: formal logic: (∃ E : Exception) ( (E raised during `CodeGraphExtractor.from_proj_dir(proj_dir)`) ∨ (∃ cg : cg = `CodeGraphExtractor.from_proj_dir(proj_dir)` completed ∧ cg is truthy ∧ E raised during `cg.get_function_spans("go", filepath)`) ) ∨ (∃ value : (cg = `CodeGraphExtractor.from_proj_dir(proj_dir)` completed without exception) ∧ ( (cg is falsy → value = None) ∧ (cg is truthy → value = `cg.get_function_spans("go", filepath)` completed without exception) ) ).
+
+Condition B (what the specification requires):
+- Returns a list of (function_name, start_line, end_line) tuples for every
+    top-level function definition found in the file at filepath.
+  - start_line and end_line are 0-indexed and inclusive.
+  - The returned list is ordered by function occurrence within the file.
+  - Returns None when the codegraph backend is unavailable or does not index
+    the file at filepath.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

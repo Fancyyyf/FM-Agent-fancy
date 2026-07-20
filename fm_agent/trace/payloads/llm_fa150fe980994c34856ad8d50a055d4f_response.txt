@@ -1,0 +1,1 @@
+{"post_condition": "The function returns a list of strings. If 'command' is an instance of AgentCommand, the returned list equals 'command.argv'. Otherwise, it equals 'list(command)'. Formally: (isinstance(command, AgentCommand) → result = command.argv) ∧ (¬isinstance(command, AgentCommand) → result = list(command)) ∧ ∀e : (e ∈ result → type(e) = str)"}

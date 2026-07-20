@@ -1,0 +1,42 @@
+Programming language: Python
+
+Pre-condition:
+- work_dir is a path to a writable directory containing a trace/ subdirectory
+  - prompt_content is a non-empty string forming a complete LLM prompt
+  - stage is a non-empty string identifying the pipeline stage for logging and tracing
+  - validator is a callable that accepts a single decoded JSON value (dict or list)
+    and returns a truthy value when validation passes, or raises/returns falsy on failure
+  - schema_description is a non-empty string describing the expected JSON schema
+  - trace_meta is None or a dict of trace metadata key-value pairs
+
+Code block:
+```python
+Line 1: def _llm_select_json(work_dir, prompt_content, stage, validator, schema_description,
+Line 2:                      trace_meta=None):
+Line 3:     """Run a direct LLM call and return validated structured JSON.
+Line 4:     This is for self-contained prompts whose context is already inlined. The
+Line 5:     shared JSON caller records the raw exchange, accepts exactly one JSON
+Line 6:     object or array (including a fenced or prose-wrapped one), validates the
+Line 7:     required fields, and retries on protocol failures.
+Line 8:     """
+Line 9:     messages = [{"role": "user", "content": prompt_content}]
+Line 10:     meta = {"stage": stage, "summary": f"LLM {stage}", **(trace_meta or {})}
+Line 11:     result = _llm_json_call(
+Line 12:         _llm_provider_client,
+Line 13:         LLM_MODEL,
+Line 14:         messages,
+Line 15:         validator,
+Line 16:         schema_description,
+Line 17:         trace_dir=os.path.join(work_dir, "trace"),
+Line 18:         trace_meta=meta,
+Line 19:     )
+Line 20:     if result is None:
+Line 21:         logging.error("%s: LLM produced no valid JSON response after retries.", stage)
+Line 22:     return result
+```
+
+Additional context:
+_llm_json_call(client, model, messages, validator, schema_description, trace_dir, trace_meta) -> dict | list | None
+Pre-condition: client is a configured LLM provider client capable of sending chat messages; model is a model identifier string; messages is a non-empty list of message dicts each with "role" and "content" keys; validator is a callable accepting a single decoded JSON value and returning truthy on success; schema_description is a string describing the expected JSON schema; trace_dir is a writable directory path; trace_meta is a dict of trace metadata
+  Post-condition: Sends messages to the LLM, receives exactly one JSON object or array (optionally fenced or prose-wrapped), validates the parsed value against validator, retries on protocol-level failures; returns the validated JSON value on success, None when all retries are exhausted
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

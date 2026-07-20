@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code's behavior condition A covers all cases required by specification condition B. For keys in all_by_source: if source file does not exist, no mutation occurs; if it exists and keep_by_source entry is missing or empty, file is deleted; if it exists and keep_by_source has non-empty set, the file is trimmed. No other files are modified. The printed summary includes the counts of preserved/removed function bodies and deleted files. Edge cases (non-regular files, exceptions) do not contradict the specification under valid inputs."
+}

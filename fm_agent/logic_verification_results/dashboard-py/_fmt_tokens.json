@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/dashboard-py/_fmt_tokens.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- When n is None, returns \"\" (U+2014 em dash).\n  - When n is a non-negative numeric value, returns a compact\n    human-readable string representation formatted as follows:\n      * n  1,000,000  value divided by 10, formatted to two\n        decimal places, suffixed with \"M\".\n      * 1,000  n < 1,000,000  value divided by 10, formatted\n        to one decimal place, suffixed with \"K\".\n      * n < 1,000  decimal string representation of the integer\n        value of n, with no suffix.\n  - The returned string is minimal in length for its magnitude\n    category; the original value can be approximately recovered by\n    multiplying the numeric prefix by the magnitude implied by the\n    suffix (10 for \"K\", 10 for \"M\").",
+    "actual_behavior": "If n is None, the function returns the string \"\". If n is a non-negative number, then: if n >= 1,000,000, returns f\"{n/1_000_000:.2f}M\"; if 1,000 <= n < 1,000,000, returns f\"{n/1_000:.1f}K\"; if n < 1,000, returns str(n). Formally, let r be the return value. (n = None  r = \"\")  (n  None  n  1000000  r = format(n/1000000, \".2f\") + \"M\")  (n  None  1000  n < 1000000  r = format(n/1000, \".1f\") + \"K\")  (n  None  0  n < 1000  r = str(n)).",
+    "code_evidence": "Line 8: return str(n)",
+    "trigger_condition": "The code returns the string representation of the float (e.g., '0.5'), but the specification requires 'decimal string representation of the integer value of n', which would be '0'."
+  }
+}

@@ -1,0 +1,37 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _write_command_stdin(stream, text):
+Line 2:     try:
+Line 3:         stream.write(text)
+Line 4:         stream.flush()
+Line 5:     finally:
+Line 6:         stream.close()
+```
+
+Condition A (what the code actually does):
+After the execution of the code block, `text` remains unchanged. The stream object `stream` is closed (i.e., `stream.close()` has been called, the underlying resource is released, and any further operations on `stream` raise `ValueError`). If the block completed without raising an exception (normal return), then the entire `text` has been successfully written to the stream's internal buffer via `stream.write(text)` and flushed to the underlying resource via `stream.flush()`. If an exception was raised during `stream.write(text)` or `stream.flush()`, the exception propagates out of the function; `stream` is still closed, but the amount of `text` written is unspecified. Formally: (invariant: `text` unchanged ∧ `stream.closed`) ∧ ((normal_return) → (written(text, stream) ∧ flushed(stream))) ∧ ((exception_raised) → (`stream.closed` ∧ ¬full_write_guaranteed))
+
+Condition B (what the specification requires):
+- text has been written to stream via write(text) and the stream internal
+    buffer has been flushed via flush()
+  - stream.close() has been called — the stream resource is released
+  - The stream is guaranteed to be closed even if write() or flush() raises
+    an exception
+
+Additional context:
+stream.write(text) -> int
+Pre-condition: text is a string
+  Post-condition: text is written to the stream internal buffer; returns the
+    number of characters written
+
+stream.flush() -> None
+Pre-condition: stream is open for writing
+  Post-condition: all buffered data is flushed to the underlying resource
+
+stream.close() -> None
+Pre-condition: stream is open
+  Post-condition: stream is closed; further operations on the stream object
+    raise ValueError
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.
