@@ -1,11 +1,11 @@
 {
   "id": "src--reasoner-py--_split_into_blocks_braced",
-  "source_file": "src/reasoner-py/_split_into_blocks_braced.py",
+  "source_file": "src/reasoner.py",
   "function_name": "_split_into_blocks_braced",
   "confirmation_status": "confirmed",
   "attempts": "1",
   "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_split_into_blocks_braced.py",
   "detail_file": "fm_agent/bug_validation/src--reasoner-py--_split_into_blocks_braced.md",
-  "probe_stdout": "CONFIRMED — Block[1] ends at depth 0 (line index 2), expected entry_depth 1. Block content: '}'\n  All blocks: ['{\\n    int a;', '}']\n  Entry depth: 1\n  Expected: all segments end at depth 1",
-  "trigger_summary": "For brace-delimited languages, the final block never returns to entry depth; with func='{...}' and GRANULARITY=1, block '}' ends at depth 0 instead of entry depth 1."
+  "probe_stdout": "CONFIRMED — first block starts at depth 0, not entry_depth 1. Block: 'int main()\\n{' | all_blocks: ['int main()\\n{', '    return 0;\\n}'] | depths: [0, 1, 1, 0]\n",
+  "trigger_summary": "C function body with opening brace on second line: entry_depth=1 but first block starts at depth 0, violating spec requirement that segments begin at entry depth."
 }

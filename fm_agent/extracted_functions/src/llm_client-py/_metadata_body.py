@@ -14,7 +14,7 @@
 # [INFO]
 # _stable_user_id() -> str
 #   Pre-condition: None (takes no arguments)
-#   Post-condition: Returns a string that uniquely and stably identifies the current user or installation context
+#   Post-condition: Returns a non-empty string: the value of `settings.inject.id` when truthy, otherwise a predefined static default.
 # [INFO]
 
 def _metadata_body():

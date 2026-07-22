@@ -1,95 +1,110 @@
-"""Probe script for bug: frozen_worktree — git add -A respects .gitignore,
-so untracked gitignored files are not captured in the snapshot.
+"""Probe script for bug: src--git-py--frozen_worktree
 
-Spec claim: "The snapshot commit captures ... all untracked files"
-Actual: git add -A silently skips gitignored paths.
-Trigger: gitignored untracked file present in proj_dir.
+Bug: git add -A skips gitignored untracked files, so they are omitted from the
+snapshot worktree. The spec requires capturing ALL untracked files.
 """
 
-import sys
 import os
-import tempfile
 import subprocess
 import shutil
+import tempfile
+import sys
 
-# Ensure the repo root is on sys.path so that `src.git` is importable
+# The probe is at fm_agent/bug_validation/probe_*.py, three levels deep.
+# Go up three levels to reach the repo root.
 _repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
+sys.path.insert(0, _repo_root)
 
 try:
     from src.git import frozen_worktree
 except Exception as e:
-    print(f'ERROR: {e}')
+    print(f"ERROR: Failed to import frozen_worktree: {e}")
     sys.exit(1)
 
-# Step 1: Create a temporary git repo
-repo_dir = tempfile.mkdtemp(prefix='fm_probe_repo_')
-try:
-    subprocess.run(['git', 'init', repo_dir], check=True, capture_output=True)
 
-    # Step 2: Create .gitignore that ignores *.log
-    with open(os.path.join(repo_dir, '.gitignore'), 'w') as f:
-        f.write('*.log\n')
+def main():
+    # Create a temporary git repo outside the FM-Agent workspace
+    tmp_root = tempfile.mkdtemp(prefix="bug_probe_")
+    proj_dir = os.path.join(tmp_root, "testrepo")
+    os.makedirs(proj_dir)
 
-    # Step 3: Create a tracked file (so we have at least one commit)
-    with open(os.path.join(repo_dir, 'main.py'), 'w') as f:
-        f.write('print("hello")\n')
-
-    subprocess.run(['git', '-C', repo_dir, 'add', '.'], check=True, capture_output=True)
-    subprocess.run(
-        ['git', '-C', repo_dir, 'commit', '-m', 'initial', '--quiet'],
-        check=True, capture_output=True,
-    )
-
-    # Step 4: Create an untracked gitignored file (data.log)
-    with open(os.path.join(repo_dir, 'data.log'), 'w') as f:
-        f.write('should be in snapshot per spec, but .gitignore excludes it\n')
-
-    # Step 5: Create an untracked non-gitignored file (should always be in snapshot)
-    with open(os.path.join(repo_dir, 'important.txt'), 'w') as f:
-        f.write('this should always be in the snapshot\n')
-
-    # Step 6: Call frozen_worktree
     try:
-        with frozen_worktree(repo_dir) as wt:
-            # PER SPEC: data.log (untracked) should be in snapshot
-            # ACTUAL BUG: git add -A respects .gitignore, so data.log is missing
-            data_log_present = os.path.exists(os.path.join(wt, 'data.log'))
-            important_present = os.path.exists(os.path.join(wt, 'important.txt'))
-            main_present = os.path.exists(os.path.join(wt, 'main.py'))
-            gitignore_present = os.path.exists(os.path.join(wt, '.gitignore'))
+        # Initialize a git repo
+        subprocess.run(["git", "init"], cwd=proj_dir, check=True,
+                       capture_output=True, text=True)
 
-            # The non-gitignored untracked file should ALWAYS be there
-            # (this is our sanity check that the snapshot captured untracked files)
-            if not important_present:
-                print('ERROR: non-gitignored untracked file important.txt is missing from snapshot')
-                sys.exit(1)
+        # Configure git user (required for commits)
+        subprocess.run(["git", "config", "user.email", "test@test.com"],
+                       cwd=proj_dir, check=True, capture_output=True, text=True)
+        subprocess.run(["git", "config", "user.name", "Test"],
+                       cwd=proj_dir, check=True, capture_output=True, text=True)
 
-            # The bug: data.log is gitignored and untracked, so git add -A skips it
-            # Spec says "all untracked files" — data.log should be present
-            if not data_log_present:
-                print(f'CONFIRMED — data.log (gitignored untracked file) missing from snapshot '
-                      f'(important.txt present={important_present}, '
-                      f'data.log present={data_log_present}, '
-                      f'main.py present={main_present}, '
-                      f'.gitignore present={gitignore_present})')
-            else:
-                print(f'NOT CONFIRMED — data.log was unexpectedly present in snapshot '
-                      f'(important.txt present={important_present}, '
-                      f'data.log present={data_log_present})')
+        # Create .gitignore that ignores *.secret files
+        gitignore_path = os.path.join(proj_dir, ".gitignore")
+        with open(gitignore_path, "w") as f:
+            f.write("*.secret\n")
+
+        # Create a tracked file
+        tracked_path = os.path.join(proj_dir, "tracked.txt")
+        with open(tracked_path, "w") as f:
+            f.write("hello\n")
+
+        # Stage and commit the tracked file + .gitignore
+        subprocess.run(["git", "add", ".gitignore", "tracked.txt"],
+                       cwd=proj_dir, check=True, capture_output=True, text=True)
+        subprocess.run(["git", "commit", "-m", "initial"],
+                       cwd=proj_dir, check=True, capture_output=True, text=True)
+
+        # Create an untracked file that matches .gitignore
+        secret_path = os.path.join(proj_dir, "test.secret")
+        with open(secret_path, "w") as f:
+            f.write("secret content\n")
+
+        # Also create an untracked file that does NOT match .gitignore
+        normal_path = os.path.join(proj_dir, "normal.txt")
+        with open(normal_path, "w") as f:
+            f.write("normal content\n")
+
+        # Call frozen_worktree through the public entry point.
+        # Use empty exclude and copy_excluded=False to keep the test simple.
+        snapshot_dir = None
+        with frozen_worktree(proj_dir, exclude=(), copy_excluded=False) as wt:
+            snapshot_dir = wt
+
+            # Check: does the gitignored untracked file exist in the snapshot?
+            snapshot_secret = os.path.join(wt, "test.secret")
+            secret_present = os.path.isfile(snapshot_secret)
+
+            # Check: does the normal untracked file exist?
+            snapshot_normal = os.path.join(wt, "normal.txt")
+            normal_present = os.path.isfile(snapshot_normal)
+
+            # Check: tracked file exists?
+            snapshot_tracked = os.path.join(wt, "tracked.txt")
+            tracked_present = os.path.isfile(snapshot_tracked)
+
+        # The spec claims: "HEAD tree + all tracked modifications + all untracked files"
+        # If the gitignored file is missing, the bug is CONFIRMED.
+        expected = True    # spec says it SHOULD be present
+        actual = secret_present
+
+        if actual != expected:
+            print(f"CONFIRMED — gitignored untracked file 'test.secret' is missing from snapshot. "
+                  f"present={secret_present}, normal_untracked_present={normal_present}, "
+                  f"tracked_present={tracked_present}")
+        else:
+            print(f"NOT CONFIRMED — gitignored untracked file 'test.secret' was present in snapshot. "
+                  f"secret_present={secret_present}, normal_untracked_present={normal_present}, "
+                  f"tracked_present={tracked_present}")
 
     finally:
-        # Clean up the worktree
-        if os.path.exists(wt):
-            try:
-                subprocess.run(
-                    ['git', '-C', repo_dir, 'worktree', 'remove', '--force', wt],
-                    capture_output=True,
-                )
-            except Exception:
-                pass
+        # Clean up: remove the snapshot worktree and the temp repo
+        if snapshot_dir and os.path.exists(snapshot_dir):
+            parent = os.path.dirname(snapshot_dir)
+            if os.path.exists(parent):
+                shutil.rmtree(parent, ignore_errors=True)
+        shutil.rmtree(tmp_root, ignore_errors=True)
 
-finally:
-    # Clean up the temp repo
-    shutil.rmtree(repo_dir, ignore_errors=True)
+
+if __name__ == "__main__":
+    main()

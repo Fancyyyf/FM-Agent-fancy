@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--c-py--batch_extract",
+  "source_file": "src/languages/c-py/batch_extract.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--c-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--c-py--batch_extract.md",
+  "probe_stdout": "CONFIRMED — actual: {} | expected: {'/fake/path.c': [('main', 'int main(void) {}\\n')]}\n",
+  "trigger_summary": "batch_extract uses truthiness check (if cg) instead of explicit None check, so a non-None but falsy CodeGraphExtractor incorrectly returns {} instead of extracted functions."
+}

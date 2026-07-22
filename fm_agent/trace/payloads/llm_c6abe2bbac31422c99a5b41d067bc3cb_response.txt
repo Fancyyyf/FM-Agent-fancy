@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/tmp/test', phase_data={'modules': [{'name': 'mod', 'source_files': ['.hidden']}]}. On disk, create /tmp/test/extracted_functions/-hidden/somefile.txt. The code will not find the directory because it computes dir_name = '.hidden' instead of '-hidden', resulting in an empty list, while the specification expects the file to be collected.",
+  "offending_statements": "Line 13: last_dot = src_base.rfind(\".\")\nLine 14: if last_dot > 0:\nLine 15: dir_name = src_base[:last_dot] + \"-\" + src_base[last_dot + 1:]\nLine 17: dir_name = src_base",
+  "reason": "When a source file's basename starts with a dot (e.g., '.hidden'), the last dot is at index 0, and the condition last_dot > 0 fails, causing dir_name to remain '.hidden'. The specification replaces the last '.' with '-', which would produce '-hidden'. This leads the code to look for a directory '.hidden' instead of the expected '-hidden', missing files that should have been included."
+}

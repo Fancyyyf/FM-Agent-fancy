@@ -1,0 +1,40 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one JavaScript file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("javascript", filepath) if cg else None
+```
+
+Condition A (what the code actually does):
+If CodeGraphExtractor.from_proj_dir(proj_dir) returns None, function_spans returns None. Otherwise, let cg be that returned CodeGraphExtractor; if cg.get_function_spans("javascript", filepath) returns None, then function_spans returns None; otherwise, it returns the list of (name, start_idx, end_idx) tuples with 0-indexed inclusive line numbers. Formally: let R = function_spans(proj_dir, filepath), C = CodeGraphExtractor.from_proj_dir(proj_dir). Then (C = None → R = None) ∧ ((C ≠ None ∧ C.get_function_spans("javascript", filepath) = None) → R = None) ∧ ((C ≠ None ∧ C.get_function_spans("javascript", filepath) ≠ None) → R = C.get_function_spans("javascript", filepath)).
+
+Condition B (what the specification requires):
+- Returns None when the codegraph backend is unavailable for the project, or when the
+    backend exists but does not index the given file.
+  - Otherwise returns a list of (name, start_idx, end_idx) tuples, one per function
+    defined in the file.
+  - start_idx and end_idx are 0-indexed inclusive line numbers.
+  - The list is ordered by appearance (ascending start_idx).
+  - The list is empty when no functions are defined in the file.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a valid path to the project root.
+  Post-condition: Returns a configured codegraph extractor instance, or None if the
+    codegraph backend is not available or cannot index the project.
+
+cg.get_function_spans(language_key: str, filepath: str) -> list[tuple] | None
+Pre-condition: cg is a successfully constructed CodeGraphExtractor; language_key is a
+    recognized language identifier; filepath is an absolute filesystem path to a source
+    file residing within the project root.
+  Post-condition: Returns a list of (name, start_line, end_line) tuples for each function
+    in the file with 0-indexed inclusive line numbers, or None when the file is not
+    indexed by the backend.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

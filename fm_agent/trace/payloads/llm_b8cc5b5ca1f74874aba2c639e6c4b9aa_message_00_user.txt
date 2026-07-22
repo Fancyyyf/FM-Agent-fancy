@@ -1,0 +1,75 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `_extracted_file_to_source_rel`'s behavioral specification was just updated. The caller `src::entry_reasoning_pipeline-py::_entry_func_source_rel` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_extracted_file_to_source_rel.py
+#
+# _extracted_file_to_source_rel(extracted_rel) -> str
+#
+# Pre-condition:
+#   - extracted_rel is a relative path string whose last path component is a
+#     function file name, and the path contains at least one directory component
+#     that was derived from a source filename by replacing the last dot with a
+#     hyphen followed by a known language extension (the "extraction directory
+#     component"). The extraction layout is such that the extraction directory
+#     component's suffix after its last hyphen matches a key in EXT_TO_LANG.
+#
+# Post-condition:
+#   - Returns the source-file relative path obtained by scanning the path
+#     components from right to left (skipping the filename) to find the
+#     extraction directory component. Once found, the component's last hyphen
+#     and its following extension are replaced by a dot and the extension
+#     (e.g., "loader-cpp" -> "loader.cpp"). The resulting filename is
+#     prepended with any leading directory prefix (components before the
+#     extraction directory component), and the function file component is
+#     dropped. If no extraction directory component is found (i.e., no
+#     component whose hyphen-suffix is in EXT_TO_LANG), falls back to using
+#     the immediate parent directory: its last hyphen is replaced with a dot
+#     (if a hyphen exists after the first character), and the result is
+#     prefixed with the parent directory of that parent, or used as is if no
+#     grandparent exists.
+#   - The returned path uses the OS-native path separator (os.sep).
+# [SPEC]
+
+## Caller's current source
+
+```python
+def _entry_func_source_rel(entry_func):
+    """Map an entry_func FQN back to its source file (project-relative path).
+
+    ``src::engine::loader-cpp::loadData`` -> ``src/engine/loader.cpp``;
+    ``src::storage-cpp::LocalStorage::Flush`` -> ``src/storage.cpp``. Reuse the
+    extracted-file inverse mapping by treating the ``::``-joined FQN as an
+    extracted-file path; _extracted_file_to_source_rel finds the ``<base>-<ext>``
+    directory regardless of any class components after it.
+    """
+    extracted_rel = os.path.join(*entry_func.split("::"))
+    return _extracted_file_to_source_rel(extracted_rel).replace(os.sep, "/")
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# _extracted_file_to_source_rel(extracted_rel) -> str
+#   Pre-condition: extracted_rel is a relative path referring to an extracted
+#     function file under the extracted_functions/ directory layout
+#   Post-condition: Returns the corresponding source-file relative path by
+#     reversing the extraction directory naming convention: the extraction
+#     directory name <basename>-<ext> is mapped back to <basename>.<ext>, and
+#     the function-name file component is removed
+#   Post-condition: The returned path uses "/" as the path separator
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `_extracted_file_to_source_rel` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `_extracted_file_to_source_rel` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

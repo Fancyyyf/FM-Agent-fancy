@@ -1,5 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_phase_plan_complete.py",
-  "verdict": "MATCH",
-  "gaps": null
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_phase_plan_complete.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns True when the file phases.json exists under work_dir, is a\n    regular file, its content parses as valid JSON, and it conforms to the\n    required schema (as determined by _phase_plan_schema_errors).\n  - Returns False when phases.json does not exist under work_dir, is not a\n    regular file, does not parse as valid JSON, or does not conform to the\n    required schema.\n  - The return value is idempotent for the same filesystem state: repeated\n    calls with the same work_dir and same file content yield the same boolean\n    result.",
+    "actual_behavior": "After a call to `_phase_plan_complete(work_dir)` finishes execution, no side effects have occurred and no exceptions have been raised. The return value `r` satisfies: `r` is `True` if and only if the file obtained by `os.path.join(work_dir, \"phases.json\")` exists, is readable, is valid JSON, and its decoded content fully conforms to the required schema (i.e., `_phase_plan_schema_errors` returns an empty list); otherwise `r` is `False`. In formal terms: let `p = os.path.join(work_dir, \"phases.json\")`. Then \\( \\textit{result} = \\mathbf{True} \\leftrightarrow (\\texttt{isfile}(p) \\land \\texttt{readable}(p) \\land \\textit{valid\\_json}(\\texttt{read}(p)) \\land \\textit{schema\\_conforms}(\\texttt{parse\\_json}(\\texttt{read}(p))))\\), which is equivalent to \\( \\textit{result} = \\mathbf{True} \\leftrightarrow \\textit{_phase_plan_schema_errors}(p) = [\\,] \\).",
+    "code_evidence": "Line 4: return not _phase_plan_schema_errors(phases_path)",
+    "trigger_condition": "The specification requires that phases.json be a regular file to return True. The code delegates entirely to _phase_plan_schema_errors, which, according to its post-condition, does not check whether the file is a regular file. If a non-regular file (e.g., a FIFO) exists, is readable, and contains valid schema-conforming JSON, _phase_plan_schema_errors returns an empty list, causing _phase_plan_complete to return True, violating the specification."
+  }
 }

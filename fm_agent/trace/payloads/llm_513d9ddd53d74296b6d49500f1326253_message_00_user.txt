@@ -1,0 +1,139 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `resolve_model_backend`'s behavioral specification was just updated. The caller `src::cli_backend-py::build_agent_command` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/cli_backend.py
+#
+# resolve_model_backend() -> str
+#
+# Pre-condition:
+#   - settings.llm.backend contains a string value (the configured model backend)
+#   - The process environment may or may not contain variables named
+#     FM_AGENT_HOST or FM_AGENT_CLIENT, whose values are any strings
+#   - The process environment may or may not contain any of the markers
+#     CLAUDE_PLUGIN_ROOT, CLAUDE_CODE_ENTRYPOINT, CODEX_HOME,
+#     CODEX_SANDBOX, or CODEX_EXECUTION_MODE
+#
+# Post-condition:
+#   - Returns a canonical backend identifier string: one of "opencode",
+#     "codex-cli", or "claude-cli"
+#   - The returned backend is first determined by normalizing
+#     settings.llm.backend via _normalize_backend; if the result is not
+#     "auto", that result is returned immediately
+#   - When the normalized value of settings.llm.backend is "auto", the
+#     backend is determined by inspecting environment markers in a fixed
+#     priority order:
+#       1. FM_AGENT_HOST or FM_AGENT_CLIENT (whichever is set) is checked
+#          case-insensitively for "claude" or "codex" substrings
+#       2. The presence of any Claude-specific environment variable
+#          (CLAUDE_PLUGIN_ROOT, CLAUDE_CODE_ENTRYPOINT)
+#       3. The presence of any Codex-specific environment variable
+#          (CODEX_HOME, CODEX_SANDBOX, CODEX_EXECUTION_MODE)
+#   - The first matching marker in this priority order determines the
+#     returned backend: "claude-cli" for Claude markers, "codex-cli" for
+#     Codex markers
+#   - When no marker matches, returns "codex-cli" (the default fallback)
+#   - The same input (settings.llm.backend value and environment state)
+#     always produces the same output (pure function with respect to its
+#     inputs at call time)
+# [SPEC]
+
+## Caller's current source
+
+```python
+def build_agent_command(model, prompt, cwd, files=None, backend=None, effort=None):
+    resolved = _normalize_backend(backend) if backend else resolve_model_backend()
+    if resolved == "auto":
+        resolved = resolve_model_backend()
+    if resolved not in {"codex-cli", "claude-cli"}:
+        raise ValueError(f"unsupported CLI backend: {resolved}")
+
+    cwd = os.path.abspath(cwd)
+    stdin = _compose_stdin(prompt, files or [])
+    model = (model or "").strip()
+    effort = (effort if effort is not None else cli_effort()).strip()
+
+    if resolved == "codex-cli":
+        argv = [
+            "codex",
+            "exec",
+            "--sandbox",
+            "danger-full-access",
+            "--dangerously-bypass-approvals-and-sandbox",
+            "--skip-git-repo-check",
+            "-C",
+            cwd,
+        ]
+        if model:
+            argv += ["--model", model]
+        if effort:
+            argv += ["-c", f'model_reasoning_effort="{effort}"']
+        argv.append("-")
+        return AgentCommand(argv=argv, stdin=stdin, backend=resolved)
+
+    argv = [
+        "claude",
+        "-p",
+        "--output-format",
+        "text",
+        "--no-session-persistence",
+        "--dangerously-skip-permissions",
+        "--permission-mode",
+        "bypassPermissions",
+        "--add-dir",
+        cwd,
+    ]
+    if model:
+        argv += ["--model", model]
+    if effort:
+        argv += ["--effort", effort]
+    return AgentCommand(argv=argv, stdin=stdin, backend=resolved)
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# _normalize_backend(backend_str) -> str
+#   Pre-condition: backend_str is a string (may be empty)
+#   Post-condition: Returns the canonical backend name; recognized aliases
+#     are normalized to their canonical forms (e.g., "codex" → "codex-cli",
+#     "claude" → "claude-cli")
+# [SPLIT]
+# resolve_model_backend() -> str
+#   Pre-condition: None (reads environment or configuration)
+#   Post-condition: Returns the canonical backend name of the configured
+#     model backend; "auto" resolves to a concrete backend
+# [SPLIT]
+# _compose_stdin(prompt, files) -> Optional[str]
+#   Pre-condition: prompt is a non-empty string; files is a list of file
+#     path strings (may be empty)
+#   Post-condition: Returns a string that combines the prompt text with the
+#     contents of the listed files, formatted for use as stdin to the
+#     backend subprocess; returns None when files is empty
+# [SPLIT]
+# cli_effort() -> str
+#   Pre-condition: `settings.llm.effort` is a string
+#   Post-condition: Returns the value of `settings.llm.effort` with leading
+#     and trailing whitespace removed; returns an empty string if the value
+#     is empty or whitespace-only
+# [SPLIT]
+# AgentCommand(argv, stdin, backend) -> AgentCommand
+#   Pre-condition: argv is a list of argument strings; stdin is a string
+#     or None; backend is a canonical backend name string
+#   Post-condition: Returns an AgentCommand dataclass whose argv field is
+#     argv, whose stdin field is stdin, and whose backend field is backend
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `resolve_model_backend` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `resolve_model_backend` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

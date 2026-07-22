@@ -1,66 +1,46 @@
-"""Probe script for bug src--prompts-py--_generate_block_post_condition.
+"""Probe for bug: _generate_block_post_condition does not catch exceptions from _llm_json_call.
 
-Spec claim: _generate_block_post_condition returns None when the post-condition
-could not be determined from the given inputs.
-
-Bug claim: The function propagates exceptions from _llm_json_call instead of
-returning None. We simulate an LLM call failure by monkey-patching
-_llm_json_call to raise a ValueError.
-
-Expected (spec-correct): returns None
-Actual (buggy): raises ValueError
+Spec says: "Returns None when the post-condition could not be determined from the given inputs"
+which implies all failure modes (including runtime errors) should be handled gracefully.
+The code does `return _llm_json_call(...)` without try/except, so exceptions propagate.
 """
-
 import sys
+sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot')
 
-# Ensure repo root is on path for package imports
-sys.path.insert(0, '.')
+import config  # noqa: E402, F401
+import src.prompts  # noqa: E402
+
+# Save the original function
+_original_llm_json_call = src.prompts._llm_json_call
+
+
+def _mock_llm_json_call(*args, **kwargs):
+    """Simulate an unrecoverable LLM runtime error (e.g. network failure)."""
+    raise RuntimeError("Simulated LLM API failure — network error")
+
 
 try:
-    from src.prompts import _generate_block_post_condition
-except Exception as e:
-    print(f'ERROR: Failed to import module: {e}')
-    sys.exit(1)
+    # Monkey-patch _llm_json_call so _generate_block_post_condition calls our mock
+    src.prompts._llm_json_call = _mock_llm_json_call
 
-
-def failing_llm_json_call(*args, **kwargs):
-    """Simulate an LLM call that cannot determine the post-condition."""
-    raise ValueError("Simulated LLM failure: could not determine post-condition from given inputs")
-
-
-# Monkey-patch _llm_json_call to simulate failure
-import src.prompts as prompts_module
-
-original = prompts_module._llm_json_call
-prompts_module._llm_json_call = failing_llm_json_call
-
-expected = None  # spec says return None when post-condition cannot be determined
-actual = None
-passed = False   # True means bug CONFIRMED (actual != expected)
-
-try:
-    actual = prompts_module._generate_block_post_condition(
+    result = src.prompts._generate_block_post_condition(
         block="x = 1",
-        pre_condition="x is uninitialized",
-        knowledge="",
+        pre_condition="x is undefined",
+        knowledge=None,
         language="python",
     )
-    # If we reach here, the function returned instead of raising
-    if actual is None:
-        passed = False  # spec-compliant: returned None
-    else:
-        passed = True   # returned wrong value instead of None
 
-except ValueError as e:
-    # Bug CONFIRMED: raised exception instead of returning None
-    actual = f"ValueError: {e}"
-    passed = True
+    # If we reach here, the function returned a value instead of propagating the exception.
+    # But our mock raises, so this path means the exception was caught somehow.
+    print(f"NOT CONFIRMED — function returned {result!r} instead of raising | "
+          f"spec requires None for undetermined post-conditions")
 
-except Exception as e:
-    print(f'ERROR: Unexpected exception: {e}')
-    sys.exit(1)
+except Exception as exc:
+    # The exception from _mock_llm_json_call propagated through _generate_block_post_condition
+    # without being caught. Per spec, it should have returned None.
+    print(f"CONFIRMED — exception propagated instead of returning None | "
+          f"exception type: {type(exc).__name__} | message: {exc}")
 
-if passed:
-    print(f'CONFIRMED — actual: {actual!r} | expected: {expected!r}')
-else:
-    print(f'NOT CONFIRMED — actual matched expected: {actual!r}')
+finally:
+    # Always restore the original function
+    src.prompts._llm_json_call = _original_llm_json_call

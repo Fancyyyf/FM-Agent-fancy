@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_setup_outputs_complete",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_setup_outputs_complete",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_setup_outputs_complete.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_setup_outputs_complete.md",
+  "probe_stdout": "CONFIRMED -- actual: False | expected: True\n",
+  "trigger_summary": "phases.json exists but contains invalid JSON; _phase_plan_complete checks JSON validity+ schema, but spec only requires file existence, so _setup_outputs_complete returns False instead of True."
+}

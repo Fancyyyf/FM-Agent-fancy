@@ -46,10 +46,9 @@
 #     processing ends (normal exit, early-exit on stalled specs, or interrupt),
 #     producing proj_dir/bug_validation/summary.json
 #   - Returns a set of file paths (absolute paths within input_dir) that were
-#     successfully verified; this set is a superset of already_processed when
-#     already_processed is provided
-#   - The returned set is the same object as the already_processed set when
-#     already_processed was provided (not a copy)
+#     successfully verified; when already_processed is provided, the returned set
+#     includes those files as well (it is a superset). The returned set is a distinct
+#     object (a copy) from already_processed.
 # [SPEC]
 
 # [INFO]

@@ -1,1 +1,11 @@
-{"id": "src--languages--codegraph-py--try_codegraph_init", "source_file": "src/languages/codegraph.py", "function_name": "try_codegraph_init", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--try_codegraph_init.py", "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--try_codegraph_init.md", "probe_stdout": "[Pipeline] Building codegraph index...\n[Pipeline] codegraph index built.\nCONFIRMED — marker file still exists (.codegraph/ not removed by function) | spec requires removal of .codegraph/ when codegraph.db is absent", "trigger_summary": "When .codegraph/ directory exists without codegraph.db and force=False, the function does not remove the existing .codegraph/ directory before running codegraph init, violating the spec's requirement."}
+{
+  "id": "src--languages--codegraph-py--try_codegraph_init",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/try_codegraph_init.py",
+  "function_name": "try_codegraph_init",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--try_codegraph_init.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--try_codegraph_init.md",
+  "probe_stdout": "[Pipeline] Rebuilding codegraph index for current working tree...\nCONFIRMED — .codegraph directory was removed before checking for codegraph executable. Spec violation: the spec requires that when the codegraph executable is not found, the function returns immediately without creating, modifying, or removing any files under proj_dir.",
+  "trigger_summary": "When force=True and .codegraph/codegraph.db exists but the codegraph executable is not found on PATH, shutil.rmtree() removes the .codegraph directory before the executable check, violating the spec requirement of no file modifications when the executable is missing."
+}

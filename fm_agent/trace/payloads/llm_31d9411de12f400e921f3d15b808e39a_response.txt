@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/tmp/testrepo' is a git repository with a commit. It contains .gitignore with pattern '*.log' and an untracked file 'debug.log'. Running frozen_worktree(proj_dir) results in a snapshot that does not include 'debug.log', violating the requirement to capture all untracked files.",
+  "offending_statements": "Line 45: _git(\"add\", \"-A\", env=env)",
+  "reason": "The code's use of `git add -A` skips files that match .gitignore patterns, so untracked gitignored files are not included in the snapshot. The specification requires capturing all untracked files without exception for .gitignore."
+}

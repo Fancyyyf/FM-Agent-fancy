@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "fqn = 'src::mylib-cpp' (assuming 'cpp' is a key in EXT_TO_LANG)",
+  "offending_statements": "Line 15: return \"::\".join(parts[i + 1:])",
+  "reason": "When the rightmost source-file component is the last component of the FQN, parts[i+1:] is empty, so the code returns an empty string, violating the specification requirement that the returned string is non-empty."
+}

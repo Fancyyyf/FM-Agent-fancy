@@ -1,0 +1,74 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::pipeline_setup-py::_phase_plan_complete` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _phase_plan_schema_errors.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _phase_plan_complete(work_dir):
+    """Return True only if phases.json exists and matches the required schema."""
+    phases_path = os.path.join(work_dir, "phases.json")
+    return not _phase_plan_schema_errors(phases_path)
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/pipeline_setup-py/_phase_plan_complete.py
+#
+# _phase_plan_complete(work_dir) -> bool
+#
+# Pre-condition:
+#   - work_dir is a string path to an existing directory.
+#
+# Post-condition:
+#   - Returns True when the file phases.json exists under work_dir, is a
+#     regular file, and parses as valid JSON.
+#   - Returns False when phases.json does not exist under work_dir, is not a
+#     regular file, or exists but does not parse as valid JSON.
+#   - The return value is idempotent for the same filesystem state: repeated
+#     calls with the same work_dir and same phases.json content return the same
+#     boolean.
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _json_file_is_valid(file_path) -> bool
+#   Pre-condition: file_path is a string path.
+#   Post-condition: Returns True when the file at file_path exists, is a
+#     regular file, and its content parses as valid JSON; returns False when
+#     the file does not exist, is not a regular file, or its content does not
+#     parse as valid JSON.
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_phase_plan_schema_errors) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_phase_plan_schema_errors). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

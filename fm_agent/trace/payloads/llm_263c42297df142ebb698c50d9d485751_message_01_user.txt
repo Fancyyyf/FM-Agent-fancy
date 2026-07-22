@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+- settings.codegraph.bin_dir is a string specifying a directory path, potentially beginning with a tilde (~) representing the current user's home directory.
+
+Code block:
+```python
+Line 1: def _codegraph_cmd() -> str:
+Line 2:     """Return the codegraph executable to invoke.
+Line 3:     ``install.sh`` installs the pinned fork build (from ``fm-agent.toml``'s
+Line 4:     ``[codegraph]``) into ``bin_dir`` (default ``~/.local/bin``); we invoke it
+Line 5:     from that same configured location. Invoking it by absolute path — rather than
+Line 6:     a bare ``codegraph`` resolved via PATH — uses the pinned build even when that
+Line 7:     directory is not on PATH (the macOS default) and cannot be shadowed by a
+Line 8:     different/older codegraph earlier on PATH. Falls back to a bare ``codegraph``
+Line 9:     when the pinned build is absent, so an externally provided one still works; a
+Line 10:     missing binary then becomes the regex-extractor fallback in the caller.
+Line 11:     """
+Line 12:     bin_dir = os.path.expanduser(settings.codegraph.bin_dir)
+Line 13:     local = os.path.join(bin_dir, "codegraph")
+Line 14:     return local if os.access(local, os.X_OK) else "codegraph"
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

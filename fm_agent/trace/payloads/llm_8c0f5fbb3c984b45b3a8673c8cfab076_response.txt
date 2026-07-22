@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _anthropic_create:\n#   - Pre: model non-empty string; messages list of dicts with \"role\" and \"content\"\n#   - Post: returns (text: str, usage: dict) on success; may raise RuntimeError on non-JSON response\n#   - Relies on global settings LLM_API_BASE_URL, LLM_API_KEY, _ANTHROPIC_MAX_TOKENS\n# [INFO]"
+}

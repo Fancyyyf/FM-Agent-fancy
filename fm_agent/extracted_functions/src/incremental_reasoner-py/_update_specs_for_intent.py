@@ -66,12 +66,15 @@
 #     edge_aliases_map mapping callee FQNs to alias name strings for cross-identity
 #     caller-context matching; all known FQNs are present as keys in file_map
 # [SPLIT]
-# _modified_function_targets(proj_dir, changed_functions, classes=...) -> dict[str, str]
-#   Pre-condition: changed_functions maps source-file paths to per-file dicts with
-#     "added" and "modified" keys; classes is a tuple of classification labels to include
-#   Post-condition: Returns a dict mapping each extracted-function relative path (for
-#     functions in the requested classes) to its FQN; functions classified only as
-#     "removed" are excluded from the result
+# _modified_function_targets(proj_dir, modified_functions, classes=...) -> dict[str, str]
+#   Pre-condition: proj_dir is an absolute path whose fm_agent/extracted_functions/
+#     subdirectory exists; modified_functions maps absolute source-file paths to
+#     dicts with keys drawn from {"added", "removed", "modified"} and list-of-string
+#     values; classes is a non-empty tuple of labels from that set
+#   Post-condition: Returns a dict mapping each fully-qualified function name (FQN)
+#     to the absolute extracted-function file path; a function is included when it
+#     appears in at least one of the classes within modified_functions; functions
+#     whose categories all fall outside classes are excluded
 # [SPLIT]
 # _file_to_fqn(extracted_path, work_dir) -> str
 #   Pre-condition: extracted_path is an absolute path under work_dir/extracted_functions/

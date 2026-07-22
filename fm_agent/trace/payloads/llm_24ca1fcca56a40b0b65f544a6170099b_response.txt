@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _phase_plan_complete(work_dir) -> bool\n#   Pre-condition: work_dir is a string path to an existing directory.\n#   Post-condition: Returns True if phases.json exists as a regular file under work_dir, its content parses as valid JSON, and it conforms to the required schema; returns False otherwise.\n# [SPLIT]\n# _domain_context_complete(work_dir) -> bool\n#   Pre-condition: work_dir is a valid directory path.\n#   Post-condition: Returns True if engine_overview.txt and at least one file matching the pattern phase_NN_types.txt (where NN is one or more digits) both exist as regular files under work_dir; returns False otherwise.\n# [INFO]"
+}

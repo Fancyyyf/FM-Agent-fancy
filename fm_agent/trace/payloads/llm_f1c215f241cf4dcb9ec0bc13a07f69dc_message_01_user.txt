@@ -1,0 +1,43 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def __init__(self, proj_dir: str):
+Line 2:         self.proj_dir = os.path.abspath(proj_dir)
+Line 3:         self.root_uri = Path(self.proj_dir).as_uri()
+Line 4:         self.timeout = _timeout_seconds()
+Line 5:         self._messages: queue.Queue = queue.Queue()
+Line 6:         self._next_id = 1
+Line 7:         self._status = None
+Line 8:         self._write_lock = threading.Lock()
+Line 9:         self._proc = None
+Line 10:         self._reader = None
+```
+
+Condition A (what the code actually does):
+The instance is fully initialized. self.proj_dir is a non-empty string and an absolute path equal to the result of os.path.abspath(proj_dir). self.root_uri is the file URI of that absolute path (a string starting with 'file://'). self.timeout is a positive integer (>=1). self._messages is a new empty queue.Queue instance. self._next_id is exactly 1. self._status is None. self._write_lock is a threading.Lock object in the unlocked state. self._proc is None. self._reader is None. Formal logic: (self.proj_dir ∈ String) ∧ (len(self.proj_dir) > 0) ∧ os.path.isabs(self.proj_dir) ∧ (self.proj_dir = os.path.abspath(proj_dir)) ∧ (self.root_uri = Path(self.proj_dir).as_uri()) ∧ (self.root_uri starts with 'file://') ∧ (self.timeout ∈ ℤ) ∧ (self.timeout ≥ 1) ∧ (self._messages ∈ queue.Queue) ∧ self._messages.empty() ∧ (self._next_id = 1) ∧ (self._status = None) ∧ (self._write_lock ∈ threading.Lock) ∧ (not self._write_lock.locked()) ∧ (self._proc = None) ∧ (self._reader = None).
+
+Condition B (what the specification requires):
+- The ELP project directory is set to the absolute path of proj_dir
+  - A file:// URI for that project directory is available for use in LSP
+    initialization requests
+  - A positive integer timeout for ELP request operations is configured
+  - An empty, thread-safe message queue exists for receiving JSON-RPC
+    responses from the ELP server
+  - Request identifiers start at 1 and increment atomically across
+    subsequent requests
+  - A thread-safe write lock for the subprocess standard-input stream is
+    initialized and unlocked
+  - The ELP server subprocess and its response reader are not running;
+    the instance is in a pre-connection state
+  - Calling request() or notify() before the context manager has been
+    entered raises an error
+  - Entering the context manager starts the ELP server subprocess in the
+    project directory and begins reading its JSON-RPC responses
+
+Additional context:
+_timeout_seconds() -> int
+Pre-condition: settings.erlang.timeout_s is a configured integer value
+  Post-condition: returns a positive integer (>= 1) representing the ELP
+    communication timeout in seconds
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -2,17 +2,13 @@
 
 **Source file:** `src/domain_knowledge.py`
 **Verdict:** MISMATCH
-**Confirmation status:** confirmed
+**Confirmation status:** not_confirmed
 
 ---
 
 ## Reasoning Process
 
-The specification requires that when `markdown_paths` is truthy and non-empty, the staging directory is **atomically replaced**: "a temporary directory is populated, then atomically swapped into place; a concurrent reader either sees the complete old state or the complete new state."
-
-The actual code at lines 167–168 does `shutil.rmtree(target_dir, ignore_errors=True)` followed by `os.replace(tmp_dir, target_dir)`. Between these two calls, `target_dir` does not exist on the filesystem, creating a window where a concurrent reader would observe an incomplete (missing) directory. This violates the atomicity guarantee described in the specification.
-
-The probe confirms this by monkey-patching `os.replace` to inspect the filesystem state immediately before the atomic rename occurs: at that point the target directory is already gone because `rmtree` has already executed, proving the non-atomic gap.
+The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
@@ -34,117 +30,109 @@ The probe confirms this by monkey-patching `os.replace` to inspect the filesyste
 
 ### Actual Behavior
 
-After executing stage_domain_knowledge_files(proj_dir, work_dir, markdown_paths):
+If markdown_paths is falsy (None or an empty iterable), the function returns the result of list_staged_domain_knowledge_relpaths(work_dir) without modifying the filesystem. The staging directory (work_dir/USER_KNOWLEDGE_REL_DIR) and its contents remain exactly as before the call.
 
-If markdown_paths is falsy (None or an empty iterable), then the function returns the list of currently staged domain knowledge file paths relative to the project root (each prefixed with 'fm_agent/') as returned by list_staged_domain_knowledge_relpaths(work_dir). The file system remains unchanged; no files in the staging directory are added, removed, or modified.
+If markdown_paths is truthy and no exception occurs, the function atomically replaces the staging directory with a new set of domain knowledge files:
+- resolve_domain_knowledge_paths resolves the provided paths to a list of absolute, valid file paths (raising ValueError otherwise).
+- Each resolved source file is copied into a temporary directory (<target_dir>.tmp) under a unique safe name (via _safe_staged_name).
+- A JSON manifest file (USER_KNOWLEDGE_MANIFEST) is written in the temporary directory containing an ordered list of objects, each with 'source_path' (the original resolved absolute path) and 'staged_path' (the path relative to the project root, prefixed with 'fm_agent/', using '/' separators).
+- The temporary directory is then atomically moved to replace the final target directory (work_dir/USER_KNOWLEDGE_REL_DIR), deleting the previous staging directory if it existed.
+- The function returns a sorted list of relative paths (as returned by list_staged_domain_knowledge_relpaths(work_dir)) corresponding to the newly staged files.
 
-If markdown_paths is truthy (a non-empty iterable of path strings), then:
-1. Let resolved = resolve_domain_knowledge_paths(markdown_paths, base_dir=proj_dir, fallback_base_dir=os.getcwd()). resolved is a list of existing absolute source file paths.
-2. Let target_dir = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR). The function atomically replaces the entire directory at target_dir with a new staging directory containing:
-   - For each source_path in resolved, a copy of that file under a unique safe filename target_name = _safe_staged_name(source_path, used_names) (no two target_names are the same). The copy preserves file metadata (via shutil.copy2).
-   - A manifest file named USER_KNOWLEDGE_MANIFEST containing a JSON object with a key 'files' whose value is a list of objects, each with 'source_path' (the resolved absolute path) and 'staged_path' ('fm_agent/' followed by the relative path from work_dir to the staged copy, using forward slashes).
-3. After the atomic replacement, the staging directory at target_dir contains exactly those files and the manifest; any previous contents (including files from earlier invocations) are permanently removed.
-4. The function returns the list of staged domain knowledge file paths as described by list_staged_domain_knowledge_relpaths(work_dir), which is a sorted list of strings, each beginning with 'fm_agent/', corresponding to the newly staged files (one per unique target_name).
+If resolve_domain_knowledge_paths raises a ValueError (e.g., due to a non-existent file, non-regular file, or invalid extension), that exception propagates and no changes are made to the staging directory (though a temporary directory may be left behind as a side effect).
+
+If any other exception (e.g., OSError during file operations) occurs before the atomic rename, the staging directory remains unchanged, but a temporary directory may remain on disk. After a successful return, the staging directory contains exactly the files described by the manifest, with no remnants of the temporary directory.
+
+Formally:
+assert mark... (line truncated to 2000 chars)
 
 ---
 
 ## Code Evidence
 
-```
-Line 167:     shutil.rmtree(target_dir, ignore_errors=True)
-Line 168:     os.replace(tmp_dir, target_dir)
-```
+Line 8: return list_staged_domain_knowledge_relpaths(work_dir); Line 38: return list_staged_domain_knowledge_relpaths(work_dir)
 
 ---
 
 ## Trigger Condition
 
-The atomicity specification requires that the directory replacement be atomic so that a concurrent reader sees either the full old state or the full new state, with no intermediate missing or empty directory. The code deletes the existing directory with rmtree, then renames the temporary directory; there is a window where the directory does not exist, violating atomicity.
+The specification requires returned paths to use '/' as the path separator regardless of platform, but the code returns the raw output of list_staged_domain_knowledge_relpaths, which may use OS-specific separators (e.g., backslashes on Windows). No conversion is performed.
 
 ---
 
 ## How to trigger the bug
 
-The function `stage_domain_knowledge_files` performs a non-atomic directory swap. Between `shutil.rmtree(target_dir)` and `os.replace(tmp_dir, target_dir)`, the target directory does not exist on the filesystem. A concurrent reader (another thread, process, or external observer) inspecting the staging directory during this window will see a missing directory rather than either the complete old contents or the complete new contents.
+The bug claim asserts that `stage_domain_knowledge_files` returns paths with OS-specific separators because it delegates to `list_staged_domain_knowledge_relpaths` without additional conversion. However, inspection of the source code reveals that `list_staged_domain_knowledge_relpaths` (line 124) already performs the necessary conversion:
+
+```python
+rel_to_work = os.path.relpath(abs_path, work_dir).replace(os.sep, "/")
+```
+
+This `replace(os.sep, "/")` call converts any OS-specific separators to "/" before the path is constructed. Therefore, both return sites in `stage_domain_knowledge_files` (lines 137 and 171) already return "/"-separated paths because the callee handles the conversion.
+
+**This is a false positive.** The probe script confirmed:
+1. On Linux (native "/" separator), all returned paths correctly use "/".
+2. With `os.sep` monkey-patched to `"\\"` (simulating Windows) and `os.path.relpath` mocked to return backslash paths, the `replace(os.sep, "/")` call correctly converts all separators to "/".
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `proj_dir` | temporary directory containing two `.md` files (`dk1.md`, `dk2.md`) |
-| `work_dir` | temporary workspace directory with pre-populated staging dir |
-| `markdown_paths` (call 1) | `["dk1.md"]` — populates the staging dir |
-| `markdown_paths` (call 2) | `["dk2.md"]` — triggers the non-atomic replacement |
+| `proj_dir` | Project root directory |
+| `work_dir` | Temporary work directory with staged `.md` files |
+| `markdown_paths` | `None` (empty path) and a list containing a `.md` file (full staging path) |
 
 ### Expected (spec-correct) Output
 
-The staging directory is atomically replaced. At no point does a reader observe a missing or empty directory. Either the old contents (from call 1) or the new contents (from call 2) are visible.
+Sorted list of strings like `"fm_agent/spec_prompts/domain_context/user_knowledge/test.md"` using "/" separators.
 
 ### Actual (buggy) Output
 
-Between `shutil.rmtree(target_dir)` (line 167) and `os.replace(tmp_dir, target_dir)` (line 168), the target directory does not exist. A reader checking `os.path.exists(target_dir)` or `os.listdir(target_dir)` during this window receives no directory / FileNotFoundError.
+Same as expected — the code correctly produces "/"-separated paths in all tested scenarios.
 
 ### How to Reproduce
+
+Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import os, sys, tempfile, shutil, time
+import os, tempfile
+from src.domain_knowledge import list_staged_domain_knowledge_relpaths
 
-# repo root on sys.path
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _repo_root)
-from src import domain_knowledge
+# Create a temporary work_dir with staged files
+tmpdir = tempfile.mkdtemp()
+work_dir = os.path.join(tmpdir, "work")
+knowledge_dir = os.path.join(work_dir, "spec_prompts", "domain_context", "user_knowledge")
+os.makedirs(knowledge_dir)
+with open(os.path.join(knowledge_dir, "test.md"), "w") as f:
+    f.write("# test\n")
 
-proj_dir = tempfile.mkdtemp()
-work_dir = tempfile.mkdtemp()
-md1 = os.path.join(proj_dir, "dk1.md")
-md2 = os.path.join(proj_dir, "dk2.md")
-with open(md1, "w") as f: f.write("# One\n")
-with open(md2, "w") as f: f.write("# Two\n")
-
-# pre-populate staging dir
-domain_knowledge.stage_domain_knowledge_files(proj_dir, work_dir, [md1])
-target_dir = os.path.join(work_dir, "spec_prompts", "domain_context", "user_knowledge")
-
-# monkey-patch os.replace to detect the gap
-original = domain_knowledge.os.replace
-missing = []
-
-def intercept(src, dst):
-    if not os.path.exists(dst):
-        missing.append(True)
-    time.sleep(0.05)
-    return original(src, dst)
-
-domain_knowledge.os.replace = intercept
-
-# trigger non-atomic swap
-domain_knowledge.stage_domain_knowledge_files(proj_dir, work_dir, [md2])
-
-if missing:
-    print("BUG CONFIRMED: directory was missing between rmtree and replace")
-    # actual (buggy) output: target_dir does not exist during the gap
-    # expected (correct) output: target_dir always exists (old or new state)
-else:
-    print("bug NOT confirmed")
-
-shutil.rmtree(proj_dir, ignore_errors=True)
-shutil.rmtree(work_dir, ignore_errors=True)
+# Call the function
+paths = list_staged_domain_knowledge_relpaths(work_dir)
+print(paths)
+# actual output: ['fm_agent/spec_prompts/domain_context/user_knowledge/test.md']
+# expected: same — all separators are "/"
 ```
+
+The `replace(os.sep, "/")` at line 124 of `src/domain_knowledge.py` already ensures "/" separators on all platforms.
 
 ---
 
 ## Probe Script
 
 ```python
-"""Probe: stage_domain_knowledge_files non-atomic directory replacement.
+"""Probe script: verify stage_domain_knowledge_files returns "/"-separated paths.
 
-The spec requires atomic replacement ("atomically swapped into place; a
-concurrent reader either sees the complete old state or the complete new
-state").  The code uses shutil.rmtree() followed by os.replace(), creating a
-window where the target directory does not exist — a non-atomic gap.
+Bug claim: The specification requires returned paths to use '/' as the path separator
+regardless of platform, but the code returns the raw output of
+list_staged_domain_knowledge_relpaths, which may use OS-specific separators.
+
+This probe creates a temp directory with staged domain knowledge files, calls the
+relevant functions, and verifies all returned paths use "/" as the separator.
+It also monkey-patches os.sep and os.path.relpath to simulate a non-"/" platform
+(Windows-style backslashes) to prove the replace() call handles the conversion.
 """
 
 import os
@@ -152,92 +140,172 @@ import sys
 import tempfile
 import shutil
 
-# Ensure the repo root is on sys.path so that "src" is importable.
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
+# Add project root to path so we can import the entry-point module
+PROJ_DIR = os.path.dirname(os.path.abspath(__file__))
+while not os.path.isfile(os.path.join(PROJ_DIR, "pyproject.toml")):
+    parent = os.path.dirname(PROJ_DIR)
+    if parent == PROJ_DIR:
+        sys.exit("ERROR: could not find project root")
+    PROJ_DIR = parent
 
+sys.path.insert(0, PROJ_DIR)
+
+# Import via entry point (src.domain_knowledge)
 try:
-    from src import domain_knowledge
+    from src.domain_knowledge import (
+        list_staged_domain_knowledge_relpaths,
+        stage_domain_knowledge_files,
+        USER_KNOWLEDGE_REL_DIR,
+        USER_KNOWLEDGE_MANIFEST,
+    )
 except Exception as e:
-    print(f"ERROR: {e}", file=sys.stderr)
+    print(f"ERROR: import failed: {e}")
     sys.exit(1)
 
 
-def main():
-    proj_dir = tempfile.mkdtemp(prefix="bug_probe_proj_")
-    work_dir = tempfile.mkdtemp(prefix="bug_probe_work_")
+def test_on_linux():
+    """Test on native Linux (os.sep == '/')."""
+    tmpdir = tempfile.mkdtemp(prefix="probe_")
+    work_dir = os.path.join(tmpdir, "work")
+    knowledge_dir = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR)
+    os.makedirs(knowledge_dir, exist_ok=True)
+
+    # Create a fake .md file in the knowledge dir
+    md_path = os.path.join(knowledge_dir, "test.md")
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write("# test\n")
+
+    # Test 1: list_staged_domain_knowledge_relpaths
+    relpaths = list_staged_domain_knowledge_relpaths(work_dir)
+    for p in relpaths:
+        if "\\" in p:
+            print(f"FAIL (linux): path contains backslash: {p!r}")
+            return False
+        if not p.startswith("fm_agent/"):
+            print(f"FAIL (linux): path does not start with fm_agent/: {p!r}")
+            return False
+    print(f"  list_staged: {relpaths}")
+
+    # Test 2: stage_domain_knowledge_files without markdown_paths (line 137 path)
+    empty_result = stage_domain_knowledge_files(PROJ_DIR, work_dir)
+    for p in empty_result:
+        if "\\" in p:
+            print(f"FAIL (linux): empty-result path contains backslash: {p!r}")
+            return False
+    print(f"  stage empty: {empty_result}")
+
+    # Test 3: stage_domain_knowledge_files with markdown_paths (line 171 path)
+    # Create a temp markdown file to stage
+    tmp_md = os.path.join(tmpdir, "input.md")
+    with open(tmp_md, "w", encoding="utf-8") as f:
+        f.write("# input\n")
+
+    # Remove previous knowledge dir so staging works cleanly
+    shutil.rmtree(work_dir, ignore_errors=True)
+    staged_result = stage_domain_knowledge_files(PROJ_DIR, work_dir, markdown_paths=[tmp_md])
+    for p in staged_result:
+        if "\\" in p:
+            print(f"FAIL (linux): staged-result path contains backslash: {p!r}")
+            return False
+    print(f"  stage full: {staged_result}")
+
+    # Cleanup
+    shutil.rmtree(tmpdir, ignore_errors=True)
+    return True
+
+
+def test_with_patched_separator():
+    """Monkey-patch os to simulate a non-"/" platform and test the replace() call."""
+    tmpdir = tempfile.mkdtemp(prefix="probe_patch_")
+    work_dir = os.path.join(tmpdir, "work")
+    knowledge_dir = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR)
+    os.makedirs(knowledge_dir, exist_ok=True)
+
+    # Create a fake .md file
+    md_path = os.path.join(knowledge_dir, "test.md")
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write("# test\n")
+
+    # Monkey-patch: simulate Windows backslash paths
+    orig_sep = os.sep
+    orig_relpath = os.path.relpath
+    orig_join = os.path.join
+    orig_isdir = os.path.isdir
 
     try:
-        # ── create two small markdown fixtures ──────────────────────
-        md1 = os.path.join(proj_dir, "dk1.md")
-        with open(md1, "w", encoding="utf-8") as f:
-            f.write("# Domain Knowledge 1\n")
+        os.sep = "\\"
+        os.path.sep = "\\"
 
-        md2 = os.path.join(proj_dir, "dk2.md")
-        with open(md2, "w", encoding="utf-8") as f:
-            f.write("# Domain Knowledge 2\n")
+        def fake_relpath(path, start):
+            """Return relative path with backslash separators."""
+            result = orig_relpath(path, start)
+            return result.replace("/", "\\")
 
-        # ── pre-populate staging dir (call 1) ───────────────────────
-        domain_knowledge.stage_domain_knowledge_files(proj_dir, work_dir, [md1])
+        os.path.relpath = fake_relpath
 
-        target_dir = os.path.join(
-            work_dir, "spec_prompts", "domain_context", "user_knowledge"
-        )
+        # Now call list_staged_domain_knowledge_relpaths
+        relpaths = list_staged_domain_knowledge_relpaths(work_dir)
 
-        # sanity: target_dir must exist before the second call
-        if not os.path.isdir(target_dir):
-            print(
-                "ERROR: staging dir was not created by first call",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-        # ── monkey-patch os.replace to observe the gap ──────────────
-        original_replace = domain_knowledge.os.replace
-        missing_detected = [False]
-
-        def intercept_replace(src, dst):
-            # At this point shutil.rmtree(target_dir) has already run,
-            # so the target directory should be gone.
-            if not os.path.exists(dst):
-                missing_detected[0] = True
-            # The real os.replace is fast — widen the observation
-            # window slightly so the race is unconditionally visible.
-            # (Without this the gap is a single Python bytecode
-            # boundary and may be missed by a concurrent reader;
-            # the sleep simulates what a real concurrent reader would
-            # observe in a multi-process or preemptive scenario.)
-            import time
-            time.sleep(0.05)
-            return original_replace(src, dst)
-
-        domain_knowledge.os.replace = intercept_replace
-
-        # ── trigger the non-atomic replacement (call 2) ─────────────
-        _result = domain_knowledge.stage_domain_knowledge_files(
-            proj_dir, work_dir, [md2]
-        )
-
-        # ── report ──────────────────────────────────────────────────
-        if missing_detected[0]:
-            print(
-                "CONFIRMED — directory missing between rmtree and os.replace;"
-                " spec requires 'atomically swapped' but code creates a"
-                " window where the staging directory does not exist."
-            )
-        else:
-            print(
-                "NOT CONFIRMED — directory still existed when os.replace was"
-                " called (unexpected)"
-            )
-
-    except Exception as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        sys.exit(1)
+        # The function should have converted backslashes to "/" via replace(os.sep, "/")
+        for p in relpaths:
+            if "\\" in p:
+                print(f"FAIL (patched): path contains backslash after conversion: {p!r}")
+                print(f"  The replace(os.sep, '/') at domain_knowledge.py:124 should have")
+                print(f"  converted all backslashes. Bug CONFIRMED.")
+                return False
+            if not p.startswith("fm_agent/"):
+                print(f"FAIL (patched): path does not start with fm_agent/: {p!r}")
+                return False
+            if "/" not in p[len("fm_agent/"):]:
+                print(f"WARN (patched): path has no '/' separators after prefix: {p!r}")
+                # This is ok — a single-level path would just be "fm_agent/file.md"
+        print(f"  patched list_staged: {relpaths}")
+        return True
     finally:
-        shutil.rmtree(proj_dir, ignore_errors=True)
-        shutil.rmtree(work_dir, ignore_errors=True)
+        os.sep = orig_sep
+        os.path.sep = orig_sep
+        os.path.relpath = orig_relpath
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def main():
+    all_passed = True
+
+    # Test 1: Linux native
+    print("--- Test 1: Linux native (os.sep='/') ---")
+    try:
+        if test_on_linux():
+            print("PASS: Linux native test — all paths use '/' separators")
+        else:
+            all_passed = False
+    except Exception as e:
+        print(f"FAIL: Linux native test crashed: {e}")
+        import traceback
+        traceback.print_exc()
+        all_passed = False
+
+    # Test 2: Patched separator
+    print("\n--- Test 2: Patched os (os.sep='\\\\') ---")
+    try:
+        if test_with_patched_separator():
+            print("PASS: Patched test — replace(os.sep, '/') correctly converted backslashes")
+        else:
+            all_passed = False
+    except Exception as e:
+        print(f"FAIL: Patched test crashed: {e}")
+        import traceback
+        traceback.print_exc()
+        all_passed = False
+
+    if all_passed:
+        print("\nNOT CONFIRMED — The code already converts paths to '/' separators")
+        print("  through list_staged_domain_knowledge_relpaths's replace(os.sep, '/') call at line 124.")
+        print("  Both stage_domain_knowledge_files return paths (lines 137 and 171) delegate to")
+        print("  list_staged_domain_knowledge_relpaths, which handles the conversion.")
+        sys.exit(0)
+    else:
+        print("\nCONFIRMED — Bug reproduced: paths contain non-'/' separators")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -247,5 +315,18 @@ if __name__ == "__main__":
 ### Probe Output
 
 ```
-CONFIRMED — directory missing between rmtree and os.replace; spec requires 'atomically swapped' but code creates a window where the staging directory does not exist.
+--- Test 1: Linux native (os.sep='/') ---
+  list_staged: ['fm_agent/spec_prompts/domain_context/user_knowledge/test.md']
+  stage empty: ['fm_agent/spec_prompts/domain_context/user_knowledge/test.md']
+  stage full: ['fm_agent/spec_prompts/domain_context/user_knowledge/input.md']
+PASS: Linux native test — all paths use '/' separators
+
+--- Test 2: Patched os (os.sep='\\') ---
+  patched list_staged: ['fm_agent/spec_prompts/domain_context/user_knowledge/test.md']
+PASS: Patched test — replace(os.sep, '/') correctly converted backslashes
+
+NOT CONFIRMED — The code already converts paths to '/' separators
+  through list_staged_domain_knowledge_relpaths's replace(os.sep, '/') call at line 124.
+  Both stage_domain_knowledge_files return paths (lines 137 and 171) delegate to
+  list_staged_domain_knowledge_relpaths, which handles the conversion.
 ```

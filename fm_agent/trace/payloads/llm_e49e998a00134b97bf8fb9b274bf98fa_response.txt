@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _strip_comments_from_source(text, lang_key) -> str\n#   Pre-condition: text is a string containing source code (may be empty); lang_key is a string identifying a programming language\n#   Post-condition: returns a string of the same length as text, where characters inside comments and string literals are replaced by spaces (newlines within comments are preserved); all other characters remain unchanged\n# [SPLIT]\n# _get_call_regex(lang_key) -> Pattern\n#   Pre-condition: lang_key is a recognized language key\n#   Post-condition: returns a compiled regex pattern whose matches identify\n#     bare-name function-call identifiers in the given language; capture group 1\n#     yields the matched identifier string\n# [INFO]"
+}

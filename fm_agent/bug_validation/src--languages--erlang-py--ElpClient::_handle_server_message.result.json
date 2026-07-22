@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--ElpClient::_handle_server_message",
+  "source_file": "src/languages/erlang.py",
+  "function_name": "ElpClient::_handle_server_message",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::_handle_server_message.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::_handle_server_message.md",
+  "probe_stdout": "CONFIRMED — actual: None | expected: 'INITIAL_VALUE'\n",
+  "trigger_summary": "params.get('status') returns None when 'status' key is absent, overwriting _status instead of leaving it unchanged"
+}

@@ -1,5 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/go-py/batch_extract.py",
-  "verdict": "MATCH",
-  "gaps": null
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/go-py/batch_extract.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a dict whose keys are absolute file paths (strings) of Go source files\n    and whose values are lists of (func_name, body) tuples for all function\n    definitions extracted from each file\n  - func_name is a string containing the canonicalized function identifier; body is\n    a string containing the full source text of the function definition\n  - Returns an empty dict {} when no codegraph backend is available for Go\n  - Only .go source files within proj_dir are processed",
+    "actual_behavior": "If CodeGraphExtractor.from_proj_dir(proj_dir) returns None, the function returns an empty dictionary {}. Otherwise, let cg be the returned instance; the function returns cg.get_functions_by_file('go', proj_dir), which is a dict mapping absolute file paths to lists of (func_name, body) tuples with each body ending with newline, tuples ordered by ascending line number, duplicate names disambiguated with numeric suffixes, unreadable source files silently skipped, and an empty dict if 'go' is not a recognized language. Formally: ret = ({} if cg is None else cg.get_functions_by_file('go', proj_dir)).",
+    "code_evidence": "Line 4: return cg.get_functions_by_file(\"go\", proj_dir) if cg else {}",
+    "trigger_condition": "The code's behavior does not guarantee that only .go files within proj_dir are processed; get_functions_by_file may return file paths outside proj_dir, violating the specification."
+  }
 }

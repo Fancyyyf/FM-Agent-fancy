@@ -1,0 +1,113 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::verification-py::_generate_validation_summary` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: (none).
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _generate_validation_summary(proj_dir):
+    """Scan bug_validation/*.result.json files and write summary.json."""
+    validation_dir = os.path.join(proj_dir, "bug_validation")
+    if not os.path.isdir(validation_dir):
+        logging.info("No bug_validation directory found, skipping summary.")
+        return
+
+    bugs = []
+    for fname in sorted(os.listdir(validation_dir)):
+        if not fname.endswith(".result.json"):
+            continue
+        fpath = os.path.join(validation_dir, fname)
+        try:
+            with open(fpath, "r") as f:
+                record = json.load(f)
+            bugs.append(record)
+        except (OSError, json.JSONDecodeError) as exc:
+            logging.warning(f"Could not read {fpath}: {exc}")
+
+    confirmed = sum(1 for b in bugs if b.get("confirmation_status") == "confirmed")
+    not_confirmed = sum(1 for b in bugs if b.get("confirmation_status") == "not_confirmed")
+    errors = sum(1 for b in bugs if b.get("confirmation_status") == "error")
+
+    # Sort: confirmed first, then not_confirmed, then error; alphabetical by id within each group
+    status_order = {"confirmed": 0, "not_confirmed": 1, "error": 2}
+    bugs.sort(key=lambda b: (status_order.get(b.get("confirmation_status"), 3), b.get("id", "")))
+
+    summary = {
+        "total_reported": len(bugs),
+        "total_confirmed": confirmed,
+        "total_not_confirmed": not_confirmed,
+        "total_error": errors,
+        "bugs": bugs,
+    }
+
+    summary_path = os.path.join(validation_dir, "summary.json")
+    tmp_path = summary_path + ".tmp"
+    with open(tmp_path, "w") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, summary_path)
+    logging.info(f"Validation summary written to {summary_path}")
+    logging.info(f"  confirmed: {confirmed}, not_confirmed: {not_confirmed}, error: {errors}")
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/verification-py/_generate_validation_summary.py
+#
+# _generate_validation_summary(proj_dir) -> None
+#
+# Pre-condition:
+#   - proj_dir is a string path to a directory
+#
+# Post-condition:
+#   - If proj_dir/bug_validation/ does not exist or is not a directory,
+#     the function returns with no file written
+#   - Otherwise, every entry in proj_dir/bug_validation/ whose name ends with
+#     ".result.json" and whose contents are valid JSON is included in the
+#     summary; entries that cannot be read or parsed produce a warning and are
+#     excluded from the summary
+#   - Writes proj_dir/bug_validation/summary.json via an atomic rename (temp
+#     file then os.replace) containing:
+#     - total_reported: the number of successfully parsed .result.json records
+#     - total_confirmed: count where confirmation_status == "confirmed"
+#     - total_not_confirmed: count where confirmation_status == "not_confirmed"
+#     - total_error: count where confirmation_status == "error"
+#     - bugs: array of all parsed records, sorted by status group then by id:
+#       confirmed (ascending by id), then not_confirmed (ascending), then error
+#       (ascending), then any other status (ascending)
+#   - Unknown confirmation_status values (neither "confirmed", "not_confirmed",
+#     nor "error") are sorted after the three known groups, alphabetically by id
+#   - The written JSON uses 2-space indentation and preserves non-ASCII
+#     characters (ensure_ascii=False)
+# [SPEC]
+
+This function has no callees, so there is no [INFO] block to maintain.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees ((none)). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

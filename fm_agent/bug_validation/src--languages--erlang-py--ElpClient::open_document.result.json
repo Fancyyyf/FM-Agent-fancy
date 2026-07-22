@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--ElpClient::open_document",
+  "source_file": "src/languages/erlang.py",
+  "function_name": "ElpClient.open_document",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::open_document.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::open_document.md",
+  "probe_stdout": "CONFIRMED — actual URI: 'file:///tmp/tmpn3s6sqex/real.erl' | expected URI: 'file:///tmp/tmpn3s6sqex/link.erl'\n",
+  "trigger_summary": "Path.resolve() follows symlinks, so open_document sends the target URI instead of the path argument URI when path is a symbolic link."
+}

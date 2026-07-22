@@ -7,29 +7,7 @@
 #   - block is a non-None string whose lines may contain zero or more [SPEC]-delimited
 #     regions and zero or more [INFO]-delimited regions, where a delimiter line is one
 #     whose stripped content equals the concatenation of comment_prefix and a space
-#     followed by the delimiter tag (e.g., "# [SPEC]" for Python, "// [INFO]" for C-family)
-#   - comment_prefix is a non-empty string (the language's single-line comment marker)
-#   - spec_marker is a non-empty string whose stripped form identifies the spec delimiter
-#     (e.g., "[SPEC]")
-#
-# Post-condition:
-#   - Returns a 2-tuple (spec_block, info_block)
-#   - When block contains at least two spec-delimiter lines, spec_block is the substring
-#     from (and including) the first spec-delimiter line through (and including) the second
-#     spec-delimiter line, with leading and trailing blank lines removed
-#   - When block contains zero or one spec-delimiter lines but at least one info-delimiter
-#     line, spec_block is the substring from the start of block through the line immediately
-#     preceding the first info-delimiter line, with leading and trailing blank lines removed
-#   - When block contains neither two spec-delimiters nor any info-delimiter, spec_block is
-#     block itself with trailing newlines removed and info_block is None
-#   - info_block is the substring from (and including) the first info-delimiter line through
-#     (and including) the second info-delimiter line when two or more info-delimiter lines
-#     exist; when exactly one exists, info_block extends from that line to the end of block;
-#     in both cases leading and trailing blank lines are removed
-#   - When no info-delimiter line exists anywhere in block, info_block is None
-#   - The operation is a deterministic, pure text transformation: it performs no file I/O,
-#     no network calls, and no mutation of any external state
-# [SPEC]
+#     followed by the delimiter tag (e.g., "# [SPEC]
 
 # [INFO]
 # (no callees)

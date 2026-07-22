@@ -1,0 +1,27 @@
+Programming language: Python
+
+Pre-condition:
+- messages is a list of dictionaries, each optionally containing keys
+    "role" and "content".
+
+Code block:
+```python
+Line 1: def _messages_to_anthropic(messages):
+Line 2:     """Split OpenAI-style messages into (system_text, anthropic_messages list)."""
+Line 3:     system_text = ""
+Line 4:     out = []
+Line 5:     for m in messages:
+Line 6:         role = m.get("role")
+Line 7:         content = m.get("content", "")
+Line 8:         if not isinstance(content, str):
+Line 9:             # Already a list-of-blocks; flatten to text to keep this path simple.
+Line 10:             content = "\n".join(c.get("text", "") for c in content if isinstance(c, dict))
+Line 11:         if role == "system":
+Line 12:             # Concatenate multiple system messages if present.
+Line 13:             system_text = (system_text + "\n\n" + content).strip() if system_text else content
+Line 14:         elif role in ("user", "assistant"):
+Line 15:             out.append({"role": role, "content": content})
+Line 16:     return system_text, out
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

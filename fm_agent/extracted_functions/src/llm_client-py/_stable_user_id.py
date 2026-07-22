@@ -7,8 +7,8 @@
 #   - None (takes no arguments)
 #
 # Post-condition:
-#   - Returns the value of the INJECT_ID environment variable when that variable is set and its value is non-empty
-#   - Returns a predefined static default value when INJECT_ID is not set or its value is empty
+#   - Returns the value of `settings.inject.id` when that value is truthy
+#   - Returns the predefined static default `_DEFAULT_INJECT_USER_ID` when `settings.inject.id` is falsy (empty or None)
 #   - The returned string is non-empty in all cases
 # [SPEC]
 
@@ -17,4 +17,4 @@
 # [INFO]
 
 def _stable_user_id():
-    return os.environ.get("INJECT_ID") or _DEFAULT_INJECT_USER_ID
+    return settings.inject.id or _DEFAULT_INJECT_USER_ID

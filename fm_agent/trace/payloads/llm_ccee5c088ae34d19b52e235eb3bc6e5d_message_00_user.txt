@@ -1,0 +1,72 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::trace_writer-py::record_trace_event` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: append_event.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def record_trace_event(trace_dir, event):
+    if not trace_dir:
+        return
+    append_event(trace_dir, event)
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/trace_writer-py/record_trace_event.py
+#
+# record_trace_event(trace_dir, event) -> None
+#
+# Pre-condition:
+#   - trace_dir is either a writable directory path or a falsy value (None or empty string)
+#   - event is a JSON-serializable dict
+#
+# Post-condition:
+#   - When trace_dir is falsy, returns immediately with no side effects
+#   - When trace_dir is a writable directory, the event dict is serialized as a single
+#     JSON line and durably appended to the trace event log under trace_dir, with parent
+#     directories created if they do not exist
+#   - Returns None — all effects are side effects on the persistent trace event log
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# append_event(trace_dir, event) -> None
+#   Pre-condition: trace_dir is a writable directory path; event is a JSON-serializable dict
+#   Post-condition: serializes event as a single JSON line and durably appends it to the
+#     trace event log under trace_dir, creating the file and parent directories if they do
+#     not exist; the append is guarded by a global lock for thread safety; returns None
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (append_event) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (append_event). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

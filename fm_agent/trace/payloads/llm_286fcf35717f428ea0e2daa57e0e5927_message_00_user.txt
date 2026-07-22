@@ -1,0 +1,67 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::languages::erlang-py::_symbol_uri` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: (none).
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _symbol_uri(symbol: dict, fallback: str):
+    return symbol.get("uri") or (symbol.get("location") or {}).get("uri") or fallback
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/languages/erlang-py/_symbol_uri.py
+#
+# _symbol_uri(symbol, fallback) -> str
+#
+# Pre-condition:
+#   - symbol is a dict-like mapping that may contain keys
+#     "uri" (str) and "location" (a dict-like with optional
+#     key "uri" mapping to a str)
+#   - fallback is a string
+#
+# Post-condition:
+#   - Returns a string value determined by the first of the
+#     following that is both present and truthy, evaluated in
+#     order:
+#     1. The value mapped by key "uri" in symbol
+#     2. The value mapped by key "uri" within the dict-like
+#        value at symbol["location"] (treated as an empty dict
+#        when symbol["location"] is absent or falsy)
+#     3. fallback
+#   - When neither "uri" key maps to a truthy value, returns
+#     fallback exactly as given
+# [SPEC]
+
+This function has no callees, so there is no [INFO] block to maintain.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees ((none)). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

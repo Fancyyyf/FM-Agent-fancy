@@ -32,13 +32,12 @@
 #     initialization fails.
 # [SPLIT]
 # CodeGraphExtractor.get_functions_by_file(lang_key: str, proj_dir: str) -> dict[str, list[tuple[str, str]]]
-#   Pre-condition: lang_key is a language identifier string recognized by the
-#     extractor (e.g., "cpp"); proj_dir is the project root used during
-#     initialization.
+#   Pre-condition: lang_key is a string; proj_dir is the project root directory path.
 #   Post-condition: Returns a dictionary mapping absolute file paths (str) to
-#     lists of (function_name: str, body: str) tuples, covering all top-level
-#     functions in files matching lang_key under proj_dir. Returns an empty
-#     dictionary if no matching functions are found.
+#     lists of (function_name: str, body: str) tuples for top-level functions in
+#     files matching lang_key under proj_dir. Files that cannot be opened for
+#     reading are omitted. Returns an empty dictionary if lang_key is unrecognized
+#     or no matching functions are found.
 # [INFO]
 
 def batch_extract(proj_dir: str) -> dict:

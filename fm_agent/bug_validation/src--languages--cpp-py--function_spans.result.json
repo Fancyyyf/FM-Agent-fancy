@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--cpp-py--function_spans",
+  "source_file": "src/languages/cpp-py/function_spans.py",
+  "function_name": "function_spans",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--cpp-py--function_spans.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--cpp-py--function_spans.md",
+  "probe_stdout": "CONFIRMED — exception propagated: TypeError: expected str, bytes or os.PathLike object, not NoneType | expected: None",
+  "trigger_summary": "Passing None as proj_dir causes CodeGraphExtractor.from_proj_dir() to raise TypeError via os.path.abspath(None), which propagates instead of returning None as the spec requires."
+}

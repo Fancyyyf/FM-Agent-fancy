@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir=/test, developer_intent='fix login bug', changed_functions=['/test/fm_agent/module/src/login.py'], range=None;\nphases.json contains one phase with one module: {description: 'UI layout', source_files: ['src/login.py']};\nLLM module selection (based solely on description) returns no modules.\nExpected per spec: module selected because src/login.py is in changed_functions, leading to non‑empty list.",
+  "offending_statements": "Line 1: def collect_relevent_function_scope(proj_dir, developer_intent, changed_functions, range=None):\nLine 40:     # Pass 1: module selection. The module descriptions are already parsed from phases.json",
+  "reason": "Specification requires that a module is selected when it contains at least one source file whose relative path matches a key in changed_functions, even if its description is not assessed as relevant. The code performs only an LLM‑based relevance assessment on module descriptions and does not incorporate the changed_functions criterion. In the counterexample, the module with an irrelevant description contains a file present in changed_functions, so it must be selected, but the code omits it, yielding an empty list instead of the required non‑empty result."
+}

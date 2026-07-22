@@ -85,6 +85,18 @@
 #     removed, or modified between old_commit_id and the current working tree.
 #     Source files with no function-level changes are omitted from the dict.
 # [SPLIT]
+# _remove_stale_extracted(proj_dir, modified_functions) -> None
+#   Pre-condition: proj_dir is an absolute path to the project root and
+#     fm_agent/extracted_functions/ and fm_agent/phases.json exist under it;
+#     modified_functions is a dict whose keys are absolute source-file paths.
+#   Post-condition: For every absolute source-file path that is a key in
+#     modified_functions or listed in phases.json, the corresponding
+#     extracted-function tree under fm_agent/extracted_functions/ is
+#     reconciled with current codegraph output; any extracted function file
+#     or directory that no longer corresponds to a current function is
+#     deleted, empty parent directories pruned. Other extracted-function
+#     files and directories are unchanged.
+# [SPLIT]
 # collect_relevent_function_scope(proj_dir, developer_intent,
 #                                 changed_functions, range=None) -> list[str]
 #   Pre-condition: developer_intent is a non-empty string describing a

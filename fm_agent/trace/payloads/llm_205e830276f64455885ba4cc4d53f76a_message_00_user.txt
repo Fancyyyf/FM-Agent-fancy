@@ -1,0 +1,111 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::scope-py::_parse_generic_file` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _function_spans, _generic_func_info.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _parse_generic_file(src_path: Path, lang_key: str,
+                        proj_dir: str | None = None) -> tuple[list[dict], list[str], list[dict]] | tuple[None, None, None]:
+    """
+    Parse a non-Python source into per-function signals, recovering per-function signals
+    by regex. Returns no classes (class-scope narrowing is Python-only).
+
+    Function boundaries are located by extract._function_spans, which draws them from
+    codegraph when proj_dir indexes the file (the same source of truth run_extraction uses
+    to name the extracted-function files) and falls back to extract.py's regex brace/indent
+    extractor otherwise. The names it returns are already deduped (foo, foo_1, ...) exactly
+    as run_extraction names those files, so a ranked function's 'name' maps straight onto its
+    extracted-function file.
+    """
+    try:
+        spans, raw_lines = _function_spans(str(src_path), lang_key, proj_dir=proj_dir)
+    except Exception as exc:
+        logger.warning("Could not read %s: %s", src_path, exc)
+        return None, None, None
+
+    # _function_spans keeps newline characters on raw_lines; strip them the same way
+    # extract.py normalizes before extraction so the 0-based span indices line up with
+    # source_lines (source_lines[start0] is the signature line).
+    source_lines = [l.rstrip('\n').rstrip('\r') for l in raw_lines]
+    lang_cfg = LANG_CONFIG[lang_key]
+
+    funcs = [
+        _generic_func_info(name, start0, end0, source_lines, lang_cfg)
+        for name, start0, end0 in spans
+    ]
+    return funcs, source_lines, []
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: fm_agent/extracted_functions/src/scope-py/_parse_generic_file.py
+#
+# _parse_generic_file(src_path: Path, lang_key: str,
+#                     proj_dir: str | None = None) -> tuple[list[dict], list[str], list[dict]] | tuple[None, None, None]
+#
+# Pre-condition:
+#   - src_path is a Path identifying an existing source file on disk.
+#   - lang_key is a non‑empty string identifying a language registered in the
+#     parser configuration.
+#   - proj_dir, if provided, is a string path to a project root directory used
+#     for codegraph‑backed function boundary detection.
+#
+# Post-condition:
+#   - If the file can be read and function boundaries can be determined, returns
+#     (funcs_info, source_lines, []) where:
+#     * funcs_info is a list of dicts, each representing one top‑level function
+#       defined in the file, with at minimum 'name' (str), 'start' (int, 1‑based
+#       start line), and 'end' (int, 1‑based end line) keys.
+#     * source_lines is a list[str] containing one element per line of the file,
+#       in order, with trailing '\n' and '\r' removed from each element.
+#     * The third element is always an empty list (class‑scope narrowing is
+#       Python‑only).
+#   - If the file cannot be read or function boundaries cannot be determined,
+#     returns (None, None, None).
+#   - The function does not modify the source file.
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _function_spans(filepath: str, lang_key: str, proj_dir: str | None) -> tuple[list[tuple[str, int, int]], list[str]]
+#   Pre-condition: filepath is a string identifying an existing source file; lang_key is a non‑empty language key.
+#   Post-condition: Returns (spans, raw_lines) where spans is a list of (name, start0, end0) tuples with 0‑based line indices identifying function boundaries, and raw_lines is a list of strings containing the file's lines. Raises an exception if the file cannot be read or function boundaries cannot be determined.
+# [SPLIT]
+# _generic_func_info(name: str, start0: int, end0: int, source_lines: list[str], lang_cfg: dict) -> dict
+#   Pre-condition: name is a non‑empty function name; start0 and end0 are 0‑based line indices (start0 ≤ end0); source_lines is a list[str] with at least end0 + 1 elements; lang_cfg is a dict with the parsed‑language configuration.
+#   Post-condition: Returns a dict with at minimum 'name' (str, the given name), 'start' (int, 1‑based start line), and 'end' (int, 1‑based end line) keys, plus any language‑specific signal fields extracted from the function body.
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_function_spans, _generic_func_info) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_function_spans, _generic_func_info). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

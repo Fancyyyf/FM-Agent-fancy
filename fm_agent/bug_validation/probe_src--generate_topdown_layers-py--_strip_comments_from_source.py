@@ -1,85 +1,190 @@
 import sys
-import os
-
-# probe_*.py -> fm_agent/bug_validation/ -> fm_agent/ -> repo_root
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _repo_root)
+sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot')
 
 try:
     from src.generate_topdown_layers import _strip_comments_from_source
-
-    bug_found = False  # True = bug confirmed
-
-    # Test 1: Pure string literal - spec says all chars must be spaces
-    inp = '"hello"'
-    actual = _strip_comments_from_source(inp, "python")
-    expected = " " * len(inp)
-    ok = actual == expected
-    print(f"Test 1 (pure string) - {inp!r} -> {actual!r}, expect {expected!r}: {'PASS' if ok else 'FAIL'}")
-    if not ok:
-        bug_found = True
-
-    # Test 2: Code+string - spec says string chars masked, code chars preserved
-    inp = 'x = "hi"'
-    actual = _strip_comments_from_source(inp, "python")
-    expected = "x = " + " " * 4  # "hi" (4 chars) masked
-    ok = actual == expected
-    print(f"Test 2 (code+string) - {inp!r} -> {actual!r}, expect {expected!r}: {'PASS' if ok else 'FAIL'}")
-    if not ok:
-        bug_found = True
-
-    # Test 3: Code+string+comment - spec: string & comment chars masked, code preserved
-    inp = 'x = "hi"  # note'
-    actual = _strip_comments_from_source(inp, "python")
-    expected = "x = " + " " * 4 + "  " + " " * 6
-    ok = actual == expected
-    print(f"Test 3 (code+string+comment) - {inp!r} -> {actual!r}, expect {expected!r}: {'PASS' if ok else 'FAIL'}")
-    if not ok:
-        bug_found = True
-
-    # Test 4: Triple-quoted string - spec says all chars inside triple quotes masked
-    inp = "x = '''hello'''"
-    actual = _strip_comments_from_source(inp, "python")
-    expected = "x = " + " " * 11
-    ok = actual == expected
-    print(f"Test 4 (triple-quoted) - {inp!r} -> {actual!r}, expect {expected!r}: {'PASS' if ok else 'FAIL'}")
-    if not ok:
-        bug_found = True
-
-    # Test 5: C-style with string and line comment (lang_key="cpp")
-    inp = 'const char* s = "hello"; // note'
-    actual = _strip_comments_from_source(inp, "cpp")
-    expected = "const char* s = " + " " * 7 + "; " + " " * 7
-    ok = actual == expected
-    print(f"Test 5 (C-style) - {inp!r} -> {actual!r}, expect {expected!r}: {'PASS' if ok else 'FAIL'}")
-    if not ok:
-        bug_found = True
-
-    # Test 6: String with escaped quote - spec says it's all one string, all masked
-    inp = 'x = "he\\"llo"'
-    actual = _strip_comments_from_source(inp, "python")
-    expected = "x = " + " " * 9  # "he\"llo" = 9 chars
-    ok = actual == expected
-    print(f"Test 6 (escaped quote) - {inp!r} -> {actual!r}, expect {expected!r}: {'PASS' if ok else 'FAIL'}")
-    if not ok:
-        bug_found = True
-
-    # Test 7: Comment only, no string - spec says comment chars masked
-    inp = "x = 1  # comment"
-    actual = _strip_comments_from_source(inp, "python")
-    expected = "x = 1  " + " " * 9
-    ok = actual == expected
-    print(f"Test 7 (comment only) - {inp!r} -> {actual!r}, expect {expected!r}: {'PASS' if ok else 'FAIL'}")
-    if not ok:
-        bug_found = True
-
-    if bug_found:
-        print("\nCONFIRMED -- string literal characters were NOT correctly masked with spaces")
-    else:
-        print("\nNOT CONFIRMED -- all tests pass: string literal characters ARE correctly masked with spaces")
-
 except Exception as e:
-    import traceback
-    traceback.print_exc()
-    print(f"ERROR: {e}")
+    print(f'ERROR: {e}')
     sys.exit(1)
+
+
+def build_hash_comment_expected(text):
+    """Build expected output for hash-style comment: #...→spaces, \\n preserved."""
+    expected = []
+    in_comment = False
+    for ch in text:
+        if not in_comment and ch == '#':
+            in_comment = True
+            expected.append(' ')
+        elif in_comment:
+            expected.append('\n' if ch == '\n' else ' ')
+        else:
+            expected.append(ch)
+    return ''.join(expected)
+
+
+def build_string_hash_expected(text):
+    """Simple expected: double-quoted strings→spaces, # comment→spaces."""
+    expected = []
+    in_string = False
+    in_comment = False
+    for ch in text:
+        if not in_string and not in_comment and ch == '#':
+            in_comment = True
+            expected.append(' ')
+        elif in_comment:
+            expected.append('\n' if ch == '\n' else ' ')
+        elif not in_string and ch == '"':
+            in_string = True
+            expected.append(' ')
+        elif in_string and ch == '"':
+            in_string = False
+            expected.append(' ')
+        elif in_string:
+            expected.append(' ')
+        else:
+            expected.append(ch)
+    return ''.join(expected)
+
+
+def build_doubleslash_expected(text):
+    """Build expected output for // comments→spaces."""
+    expected = []
+    i = 0
+    in_comment = False
+    while i < len(text):
+        ch = text[i]
+        if not in_comment and ch == '/' and i + 1 < len(text) and text[i + 1] == '/':
+            in_comment = True
+            expected.append(' ')
+            expected.append(' ')
+            i += 2
+            continue
+        if in_comment:
+            expected.append('\n' if ch == '\n' else ' ')
+        else:
+            expected.append(ch)
+        i += 1
+    return ''.join(expected)
+
+
+def build_blockcomment_expected(text):
+    """Build expected output for /* */ block comments→spaces."""
+    expected = []
+    i = 0
+    in_comment = False
+    while i < len(text):
+        ch = text[i]
+        if not in_comment and ch == '/' and i + 1 < len(text) and text[i + 1] == '*':
+            in_comment = True
+            expected.append(' ')
+            expected.append(' ')
+            i += 2
+            continue
+        if in_comment and ch == '*' and i + 1 < len(text) and text[i + 1] == '/':
+            expected.append(' ')
+            expected.append(' ')
+            in_comment = False
+            i += 2
+            continue
+        if in_comment:
+            expected.append('\n' if ch == '\n' else ' ')
+        else:
+            expected.append(ch)
+        i += 1
+    return ''.join(expected)
+
+
+# ── Test 1: Python hash comment ──
+text1 = "x = 1  # this is a comment\n"
+result1 = _strip_comments_from_source(text1, "python")
+expected1 = build_hash_comment_expected(text1)
+ok1 = result1 == expected1 and len(result1) == len(text1)
+
+print("=== Test 1: Python hash comment ===")
+print(f"  PASS: {ok1}")
+print(f"  Input:    {text1!r}")
+print(f"  Result:   {result1!r}")
+print(f"  Expected: {expected1!r}")
+
+# ── Test 2: string literal + hash comment ──
+text2 = 'print("hello")  # greet\n'
+result2 = _strip_comments_from_source(text2, "python")
+expected2 = build_string_hash_expected(text2)
+ok2 = result2 == expected2 and len(result2) == len(text2)
+
+print("\n=== Test 2: Python string + comment ===")
+print(f"  PASS: {ok2}")
+print(f"  Input:    {text2!r}")
+print(f"  Result:   {result2!r}")
+print(f"  Expected: {expected2!r}")
+
+# ── Test 3: C++ // comment ──
+text3 = "int x = 1; // comment\n"
+result3 = _strip_comments_from_source(text3, "cpp")
+expected3 = build_doubleslash_expected(text3)
+ok3 = result3 == expected3 and len(result3) == len(text3)
+
+print("\n=== Test 3: C++ // comment ===")
+print(f"  PASS: {ok3}")
+print(f"  Input:    {text3!r}")
+print(f"  Result:   {result3!r}")
+print(f"  Expected: {expected3!r}")
+
+# ── Test 4: C block comment ──
+text4 = "int /* block */ x;\n"
+result4 = _strip_comments_from_source(text4, "cpp")
+expected4 = build_blockcomment_expected(text4)
+ok4 = result4 == expected4 and len(result4) == len(text4)
+
+print("\n=== Test 4: C block comment ===")
+print(f"  PASS: {ok4}")
+print(f"  Input:    {text4!r}")
+print(f"  Result:   {result4!r}")
+print(f"  Expected: {expected4!r}")
+
+# ── Test 5: Unknown lang # (NOT a comment) ──
+text5 = "code # not a comment for unknown lang\n"
+result5 = _strip_comments_from_source(text5, "unknown_lang")
+expected5 = text5  # per spec, default is // so # unchanged
+ok5 = result5 == expected5 and len(result5) == len(text5)
+
+print("\n=== Test 5: Unknown lang # (NOT comment) ===")
+print(f"  PASS: {ok5}")
+print(f"  Input:    {text5!r}")
+print(f"  Result:   {result5!r}")
+print(f"  Expected: {expected5!r}")
+
+# ── Test 6 (edge case): backslash escape inside string ──
+text6 = 'print("hello\\"world") # comment\n'
+result6 = _strip_comments_from_source(text6, "python")
+# Verify: escaped quote inside string should be masked, comment masked
+ok6 = len(result6) == len(text6) and result6.find('"') == -1 and result6.find('#') == -1
+
+print("\n=== Test 6: Backslash escape in string + comment ===")
+print(f"  PASS: {ok6}")
+print(f"  Input:    {text6!r}")
+print(f"  Result:   {result6!r}")
+
+# ── Summary ──
+results = {
+    "Python # comment": ok1,
+    "String + # comment": ok2,
+    "C++ // comment": ok3,
+    "Block /* */ comment": ok4,
+    "Unknown lang #": ok5,
+    "Backslash escape": ok6,
+}
+
+print("\n" + "=" * 60)
+all_pass = all(results.values())
+for name, passed in results.items():
+    status = "PASS" if passed else "FAIL"
+    print(f"  {name}: {status}")
+
+if all_pass:
+    print("\nBug NOT CONFIRMED: function correctly masks both string literals AND comments.")
+    print('NOT CONFIRMED')
+else:
+    print("\nBug CONFIRMED: at least one test case showed incorrect behavior.")
+    print('CONFIRMED')

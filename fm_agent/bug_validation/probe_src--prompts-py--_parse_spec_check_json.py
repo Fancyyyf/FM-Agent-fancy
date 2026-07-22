@@ -1,44 +1,40 @@
-import sys
-import os
-import json
+"""Probe for bug: _nonempty_string treats whitespace-only strings as empty,
+violating the _parse_spec_check_json spec for MATCH verdict."""
 
-# Ensure repo root is on sys.path so 'import src' works
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import json
+import sys
+
+# Add repo root to path so src.prompts import resolves
+sys.path.insert(0, ".")
 
 try:
     from src.prompts import _parse_spec_check_json
-
-    # The spec says for MATCH verdict, any non-empty string in counterexample
-    # or offending_statements should raise ValueError.
-    # The code uses _nonempty_string() which strips whitespace first,
-    # so whitespace-only strings like "   " are treated as empty.
-    # This test passes a whitespace-only counterexample to trigger the bug.
-
-    input_json = json.dumps({
-        "verdict": "MATCH",
-        "counterexample": "   ",
-        "offending_statements": None,
-        "reason": "all good"
-    })
-
-    actual = None
-    expected = "ValueError"
-
-    result = _parse_spec_check_json(input_json)
-    # No ValueError raised → BUG CONFIRMED (spec violated)
-    actual = "no error (returned tuple: %s)" % str(result)
-
-    # Bug: spec says should raise ValueError, but code doesn't
-    passed = True  # True means bug reproduced (actual != expected)
-except ValueError as e:
-    # ValueError raised → spec-correct behavior, bug NOT reproduced
-    actual = "ValueError('%s')" % str(e)
-    passed = False
-except Exception as e:
-    print('ERROR:', str(e))
+except ImportError as e:
+    print(f"ERROR: Could not import _parse_spec_check_json: {e}")
     sys.exit(1)
 
-if passed:
-    print('CONFIRMED — actual: %s | expected: %s' % (actual, expected))
-else:
-    print('NOT CONFIRMED — actual matched expected: %s' % actual)
+# Build a MATCH-verdict JSON where counterexample is a whitespace-only string.
+# Per the spec, any non-empty string (length > 0) should trigger ValueError.
+# The code's _nonempty_string uses bool(value.strip()), which treats
+# whitespace-only as empty and does NOT raise.
+match_with_whitespace_counterexample = json.dumps({
+    "verdict": "MATCH",
+    "counterexample": "   ",
+    "offending_statements": "   ",
+    "reason": "The code behaves correctly.",
+})
+
+try:
+    result = _parse_spec_check_json(match_with_whitespace_counterexample)
+    # No ValueError → bug reproduced.
+    actual = result
+    expected = "ValueError"
+    print(f"CONFIRMED — _nonempty_string treats whitespace-only as empty, "
+          f"but spec requires ValueError for any non-empty string. "
+          f"Actual: returned tuple {result[:3]!r} (no error) | Expected: {expected!r}")
+except ValueError:
+    # ValueError raised → spec-correct behavior.
+    print("NOT CONFIRMED — ValueError correctly raised for whitespace-only counterexample/offending_statements")
+except Exception as e:
+    print(f"ERROR: Unexpected exception: {e}")
+    sys.exit(1)

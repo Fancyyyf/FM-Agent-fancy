@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Create a client instance where self._proc is not None and self._proc.stdin is not None but is a closed file (e.g., io.BytesIO() that has been closed), and call _send with message={\"method\": \"test\"}. The code does not raise RuntimeError; instead it allows the write to proceed, which raises ValueError because the stream is closed.",
+  "offending_statements": "Line 2:         if self._proc is None or self._proc.stdin is None:",
+  "reason": "The specification requires raising RuntimeError when the subprocess's standard input is unavailable. The code only checks for None, but stdin can be unavailable while still being a non-None object (e.g., closed or broken pipe), causing a different exception to propagate instead of RuntimeError."
+}

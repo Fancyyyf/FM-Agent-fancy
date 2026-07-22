@@ -24,8 +24,9 @@
 #   Pre-condition: language_key is a valid language identifier; proj_dir is the
 #     project root directory
 #   Post-condition: Returns a dict mapping absolute file paths to lists of
-#     (func_name, func_body) tuples for all functions in files of the given
-#     language within the project
+#     (func_name, func_body) tuples for functions in files of the given
+#     language that can be successfully read; unreadable files are omitted
+#     from the result.
 # [INFO]
 
 def batch_extract(proj_dir: str) -> dict:

@@ -1,0 +1,255 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `_modified_function_targets`'s behavioral specification was just updated. The caller `src::incremental_reasoner-py::_verify_incremental_functions` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: fm_agent/extracted_functions/src/incremental_reasoner-py/_modified_function_targets.py
+#
+# _modified_function_targets(proj_dir, modified_functions, classes=("added", "removed", "modified")) -> dict[str, str]
+#
+# Pre-condition:
+#   - proj_dir is an absolute path to a project root directory whose
+#     fm_agent/extracted_functions/ subdirectory exists
+#   - modified_functions is a dict mapping absolute source-file paths to dicts, where
+#     each inner dict has string-valued keys drawn from {"added", "removed", "modified"}
+#     with list-of-string values (function names declared in that source file)
+#   - classes is a non-empty tuple of string-valued change-category labels drawn from
+#     {"added", "removed", "modified"}
+#
+# Post-condition:
+#   - Returns a dict mapping each fully-qualified function name (FQN) to the absolute
+#     filesystem path of the corresponding extracted-function file under
+#     proj_dir/fm_agent/extracted_functions/
+#   - A (source-file, function-name) pair is included when the function name appears in
+#     at least one of the change-category lists specified by classes within
+#     modified_functions
+#   - Function names whose change categories all fall outside classes are excluded from
+#     the result
+#   - The FQN key is derived from the extracted-function file path via the project's FQN
+#     convention: the fm_agent/extracted_functions/ prefix is stripped, the file
+#     extension is removed, and remaining path components are joined with "::"
+#     separators, where the source file's final dot was already replaced by a hyphen
+#     in the extracted-function directory name
+#   - The extracted-function file path follows the extracted_functions/ layout
+#     convention: the source file's relative path from proj_dir has its final dot
+#     replaced by a hyphen to form the directory name, and each function name with the
+#     source file's original extension forms the leaf filename
+#   - When a source file's basename contains no dot, the directory name is the basename
+#     unchanged and the leaf filename has no extension
+#   - When the same function name appears in multiple change-category lists for the
+#     same source file, it is included exactly once
+#   - For each source file, the function directory is resolved via _src_rel_to_func_dir,
+#     and the available extracted-function files are indexed by bare method name via
+#     _extracted_files_by_method
+#   - For each changed function name, the function first looks for an exact match in the
+#     method-name index; if no match is found, it strips a trailing “_\d+” suffix (a
+#     regex deduplication disambiguator) from the name and retries with the resulting
+#     stem
+#   - When a bare name or its stem matches multiple extracted-function files (e.g.,
+#     because two classes in the source file define a method with the same name), every
+#     matching file is included in the result
+# [SPEC]
+
+## Caller's current source
+
+```python
+def _verify_incremental_functions(
+    proj_dir, work_dir, changed_functions, updated_spec_files, submodules=None
+):
+    """
+    Step 10: re-run the verification stage (reasoner + bug validation) on only the functions
+    whose implementation-vs-spec verdict may have drifted because of this modification.
+
+    A function is verified when it satisfies at least one of:
+      1) it was changed in the working tree (added or modified), or
+      2) its own [SPEC] or [INFO] block was updated in step 9.
+
+    Note on callees: a function whose callee's [SPEC] changed needs re-verification ONLY if
+    that change forced its own [INFO] block (the callee contract it reasons against) to be
+    updated. Step 9's upward reconciliation already rewrites exactly those callers' [INFO]
+    blocks and includes them in updated_spec_files, so condition (2) covers them — a caller
+    whose [INFO] did not need to change is left alone and is correctly NOT re-verified.
+
+    Each target is verified by invoking the reasoner (src/reasoner.py, via the per-file
+    wrapper verification._verify_single_file, which calls reasoner() and writes the result
+    JSON) — not the streaming watcher. The stale verification result of every target is
+    removed first so the reasoner re-runs against the current implementation and (possibly
+    updated) spec rather than reusing the cached verdict from the previous full run.
+
+    A reasoner MISMATCH is only a candidate bug; each one is then handed to bug validation
+    (verification._validate_single_bug, an opencode pass) which confirms or rejects it.
+
+    Returns the sorted list of extracted-function files (paths relative to the
+    extracted_functions dir) whose reasoner MISMATCH was confirmed a bug by bug validation.
+    """
+    extracted_dir = os.path.join(work_dir, "extracted_functions")
+    output_dir = os.path.join(work_dir, "logic_verification_results")
+
+    verify_targets = set()  # absolute extracted-function paths
+
+    # (1) Functions changed in the working tree (added/modified; removed ones are gone).
+    verify_targets.update(
+        _modified_function_targets(
+            proj_dir, changed_functions, classes=("added", "modified")
+        ).values()
+    )
+
+    # (2) Functions whose [SPEC] or [INFO] block was updated in step 9 (updated_spec_files
+    #     already includes both functions whose own spec changed and callers whose [INFO]
+    #     was reconciled against an updated callee).
+    for rel in updated_spec_files:
+        verify_targets.add(os.path.join(extracted_dir, rel))
+
+    # Keep only functions that still exist on disk; the reasoner reads these extracted files
+    # directly and skips any without a [SPEC] block.
+    file_list = sorted({
+        os.path.relpath(path, extracted_dir)
+        for path in verify_targets
+        if os.path.exists(path)
+    })
+    if submodules:
+        file_list = [
+            rel for rel in file_list
+            if _is_under_submodules(rel.replace(os.sep, "/"), submodules)
+        ]
+    if not file_list:
+        logging.info("    [verify] no functions require re-verification.")
+        return []
+    logging.info("    [verify] running reasoner on %d function(s)...", len(file_list))
+
+    # Drop stale verification results so the reasoner re-runs rather than reusing the cached
+    # verdict from the previous full run.
+    for rel in file_list:
+        stale = os.path.join(output_dir, os.path.splitext(rel)[0] + ".json")
+        if os.path.exists(stale):
+            os.remove(stale)
+
+    # Verify every target by invoking the reasoner (via _verify_single_file). The reasoner
+    # makes LLM calls, so run the targets concurrently like the full run does, bounded by
+    # MAX_WORKERS. _verify_single_file writes each verdict to output_dir and returns it.
+    mismatches = []
+
+    def _verify(rel):
+        fpath = os.path.join(extracted_dir, rel)
+        language = _VERIFY_EXT_TO_LANG.get(os.path.splitext(fpath)[1], "C")
+        _, verdict = _verify_single_file(fpath, extracted_dir, output_dir, language, work_dir=work_dir)
+        return rel, verdict
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(_verify, rel): rel for rel in file_list}
+        for future in concurrent.futures.as_completed(futures):
+            rel = futures[future]
+            try:
+                _, verdict = future.result()
+            except Exception:
+                logging.exception("Verification failed for %s", rel)
+                continue
+            if verdict == "MISMATCH":
+                mismatches.append(rel)
+
+    logging.info("    [verify] reasoner reported %d MISMATCH(es) (candidate bugs).", len(mismatches))
+    if not mismatches:
+        return []
+
+    # Bug validation: the reasoner's MISMATCH is only a candidate bug, so validate each one
+    # with opencode (_validate_single_bug writes work_dir/bug_validation/<bug_id>.result.json
+    # with a confirmation_status). Run them concurrently, bounded by MAX_WORKERS.
+    logging.info("    [verify] validating %d candidate bug(s) with opencode...", len(mismatches))
+
+    def _validate(rel):
+        result_json_rel = os.path.join(
+            os.path.relpath(output_dir, proj_dir),
+            os.path.splitext(rel)[0] + ".json",
+        )
+        _validate_single_bug(result_json_rel, proj_dir, work_dir)
+        return rel
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(_validate, rel): rel for rel in mismatches}
+        for future in concurrent.futures.as_completed(futures):
+            rel = futures[future]
+            try:
+                future.result()
+            except Exception:
+                logging.exception("Bug validation failed for %s", rel)
+
+    # Summarize all validation results into work_dir/bug_validation/summary.json, like run_pipeline.
+    _generate_validation_summary(work_dir)
+
+    # Collect the MISMATCHes that bug validation confirmed as real bugs. bug_id is the
+    # result-relative path with separators replaced by "--".
+    bug_validation_dir = os.path.join(work_dir, "bug_validation")
+    confirmed = []
+    for rel in mismatches:
+        bug_id = os.path.splitext(rel)[0].replace(os.sep, "--").replace("/", "--")
+        result_path = os.path.join(bug_validation_dir, f"{bug_id}.result.json")
+        if not os.path.exists(result_path):
+            continue
+        try:
+            with open(result_path) as rf:
+                data = json.load(rf)
+        except (ValueError, OSError):
+            continue
+        if data.get("confirmation_status") == "confirmed":
+            confirmed.append(rel)
+
+    return sorted(confirmed)
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# _modified_function_targets(proj_dir, changed_functions, classes=(...))
+#   -> dict
+#   Pre-condition: changed_functions maps source-file paths to status dicts
+#     with keys "added", "modified", "removed". classes is a tuple of status
+#     names to include.
+#   Post-condition: Returns a dict whose values are absolute paths to
+#     extracted-function files for functions whose status matches one of the
+#     given classes.
+# [SPLIT]
+# _is_under_submodules(rel, submodules) -> bool
+#   Pre-condition: rel is a relative path string with "/" separators.
+#     submodules is a list of directory path strings.
+#   Post-condition: Returns True when rel starts with any path in
+#     submodules, False otherwise.
+# [SPLIT]
+# _verify_single_file(fpath, extracted_dir, output_dir, language, work_dir=...)
+#   -> (str, str)
+#   Pre-condition: fpath is an absolute path to an extracted-function file
+#     that may contain a [SPEC] block. extracted_dir is the root of the
+#     extracted-functions tree. output_dir is a writable directory for
+#     verification results.
+#   Post-condition: Runs the reasoner on the function at fpath and writes
+#     the verdict JSON to output_dir at a mirrored relative path. Returns a
+#     tuple of (relative path from extracted_dir, verdict) where verdict is
+#     one of "MATCH", "MISMATCH", "ERROR", or "SKIPPED".
+# [SPLIT]
+# _validate_single_bug(result_json_rel, proj_dir, work_dir) -> None
+#   Pre-condition: result_json_rel is a path (relative to proj_dir) to a
+#     reasoner result JSON file whose verdict is "MISMATCH".
+#   Post-condition: Runs bug validation via opencode on the MISMATCH result
+#     and writes the validation outcome to
+#     work_dir/bug_validation/<bug_id>.result.json, where bug_id is derived
+#     by replacing path separators in the result-relative path with "--".
+# [SPLIT]
+# _generate_validation_summary(work_dir) -> None
+#   Pre-condition: work_dir/bug_validation/ contains zero or more
+#     <bug_id>.result.json files, each with a confirmation_status field.
+#   Post-condition: Writes work_dir/bug_validation/summary.json aggregating
+#     the count of total, confirmed, not-confirmed, and error-validation
+#     results across all result files present.
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `_modified_function_targets` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `_modified_function_targets` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

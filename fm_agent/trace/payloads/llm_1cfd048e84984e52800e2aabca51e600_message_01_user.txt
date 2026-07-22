@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all Rust files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("rust", proj_dir) if cg else {}
+```
+
+Condition A (what the code actually does):
+The function returns a dictionary mapping absolute file paths of Rust source files in the project directory `proj_dir` to lists of their contained function definitions as `(function_name: str, function_body: str)` tuples. If `CodeGraphExtractor.from_proj_dir(proj_dir)` fails (returns `None`), the function returns an empty dictionary `{}`. If the extractor initializes successfully, the dictionary may still be empty if no Rust sources are found or all such files are unreadable. Formally: `result = batch_extract(proj_dir) ⇒ result ∈ dict ∧ ( (CodeGraphExtractor.from_proj_dir(proj_dir) = None ⇒ result = {}) ∧ (CodeGraphExtractor.from_proj_dir(proj_dir) ≠ None ⇒ (∀k ∈ keys(result), k is an absolute path of a readable Rust file in proj_dir ∧ result[k] is a list of (name, body) pairs for functions in that file ∧ (∀f in project’s Rust sources, if f is readable then ∃ entry in result with key abs(f) and value that list, else f is omitted))) )`.
+
+Condition B (what the specification requires):
+- Returns a dictionary where each key is an absolute filesystem path (str) to a Rust source
+    file located within or under the project directory
+  - Each value is a non-empty list of (str, str) tuples: the first element is a function name
+    declared in that file, and the second element is the complete source text of the function body
+  - A source file containing N detected functions produces N entries in its value list
+  - Returns an empty dictionary when no Rust codegraph backend is available for the given project
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string representing a valid project directory path
+  Post-condition: Returns a configured CodeGraphExtractor instance for the project when the
+    backend initializes successfully; returns None when the backend cannot be initialized
+
+CodeGraphExtractor.get_functions_by_file(lang, proj_dir) -> dict
+Pre-condition: lang is a recognized language key string and proj_dir is the project root path
+  Post-condition: Returns a dictionary mapping absolute source-file paths (str) to lists of
+    (function_name, function_body) tuples for source files of the given language. Files that
+    cannot be read are omitted.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

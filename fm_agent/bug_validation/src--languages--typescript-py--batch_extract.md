@@ -1,6 +1,6 @@
 # Bug Report: batch_extract
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/typescript-py/batch_extract.py`
+**Source file:** `src/languages/typescript.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -26,39 +26,39 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-Returns a dictionary. If cg = CodeGraphExtractor.from_proj_dir(proj_dir) is not None, the result is cg.get_functions_by_file('typescript', proj_dir), i.e., a dict mapping absolute file paths (str) of TypeScript source files under proj_dir to lists of (function_name: str, function_body: str) tuples. Otherwise, returns an empty dict {}.
+The function returns a dictionary. Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is None, the result is the empty dictionary {}. Otherwise, the result is cg.get_functions_by_file("typescript", proj_dir). Formally: result  dict. (result = {}  (cg  None  result = cg.get_functions_by_file("typescript", proj_dir))). The values of result, if any, satisfy: for every key k (str), result[k] is a list of tuples; each tuple (name: str, body: str) represents a TypeScript function. The result may be empty for any of the following reasons: CodeGraphExtractor initialization failed, the language &quot;typescript&quot; is not recognized, or no TypeScript source files with extractable functions were found under proj_dir.
 
 ---
 
 ## Code Evidence
 
-Line 4: return cg.get_functions_by_file('typescript', proj_dir) if cg else {}
+Line 4: return cg.get_functions_by_file(&quot;typescript&quot;, proj_dir) if cg else {}
 
 ---
 
 ## Trigger Condition
 
-The specification requires the output to contain only top-level functions, but the code unconditionally returns the result of get_functions_by_file, which includes all function declarations (including nested/non-top-level functions) found in TypeScript files. A project containing a nested function results in an output that violates the specification by including that function.
+The specification (B) states values must contain only toplevel function definitions. The implementation delegates to `get_functions_by_file`, whose documented postcondition does not restrict results to toplevel functions. Consequently, a project directory with a file containing nested functions will produce an output that includes those nested declarations, failing requirement B.
 
 ---
 
 ## How to trigger the bug
 
-The `batch_extract` function delegates entirely to `CodeGraphExtractor.get_functions_by_file`, which queries codegraph's SQLite database for all nodes where `kind IN ('function', 'method')`. Codegraph stores nested functions (e.g., `function nestedInner()` declared inside `function outer()`) with `kind='function'`, identical to top-level functions. Since `batch_extract` performs no filtering, nested functions are returned alongside top-level ones, violating the spec.
+`batch_extract` blindly delegates to `CodeGraphExtractor.get_functions_by_file("typescript", proj_dir)`, which returns ALL TypeScript functions/methods — including nested function declarations inside other functions. The spec requires that only top-level functions be returned. When codegraph indexes a TypeScript file containing a nested function, `batch_extract` includes it in its output, violating the spec.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `proj_dir` | A directory containing a TypeScript file with nested function declarations, indexed by codegraph |
+| proj_dir  | A project directory containing TypeScript files with nested function declarations |
 
 ### Expected (spec-correct) Output
 
-`{"/path/to/index.ts": [("topLevel", "function topLevel..."), ("outer", "function outer..."), ("arrowTop", "const arrowTop = ...")]}` — only top-level functions.
+Only top-level function definitions: `{"exportData"}`
 
 ### Actual (buggy) Output
 
-`{"/path/to/index.ts": [("topLevel", ...), ("outer", ...), ("nestedInner", ...), ("arrowTop", ...)]}` — includes the nested `nestedInner` function.
+All functions including nested ones: `{"exportData", "formatItem"}` (where `formatItem` is a nested function)
 
 ### How to Reproduce
 
@@ -68,24 +68,27 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
+from unittest.mock import MagicMock, patch
 from src.languages.typescript import batch_extract
 
-# Create a temp TypeScript project with a nested function
-import tempfile, os, subprocess
-tmpdir = tempfile.mkdtemp()
-with open(os.path.join(tmpdir, "index.ts"), "w") as f:
-    f.write("function topLevel() {}\n"
-            "function outer() {\n"
-            "  function nestedInner() {}\n"
-            "  nestedInner();\n"
-            "}\n")
-subprocess.run(["codegraph", "init"], cwd=tmpdir, check=True)
-result = batch_extract(tmpdir)
-for filepath, funcs in result.items():
-    for name, _body in funcs:
-        print(f"  {name}")
-# actual (buggy) output: topLevel, outer, nestedInner
-# expected (correct) output: topLevel, outer
+# Mock codegraph returning both top-level and nested functions
+mock_cg = MagicMock()
+mock_cg.get_functions_by_file.return_value = {
+    "/tmp/proj/utils.ts": [
+        ("exportData", "export function exportData() {...}\n"),
+        ("formatItem", "function formatItem() {...}\n"),  # nested
+    ]
+}
+
+with patch('src.languages.typescript.CodeGraphExtractor') as mock_cls:
+    mock_cls.from_proj_dir.return_value = mock_cg
+    result = batch_extract("/tmp/proj")
+
+# Bug: result includes "formatItem" which is a nested function
+# Expected: only "exportData"
+print([name for name, _ in result.get("/tmp/proj/utils.ts", [])])
+# actual (buggy) output: ['exportData', 'formatItem']
+# expected (correct) output: ['exportData']
 ```
 
 ---
@@ -93,105 +96,79 @@ for filepath, funcs in result.items():
 ## Probe Script
 
 ```python
-import sys
-import os
-import tempfile
-import subprocess
-import shutil
-
-BUG_ID = "src--languages--typescript-py--batch_extract"
-
-def main():
-    # Add the repo root to sys.path so we can import from src.languages.typescript
-    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    if repo_root not in sys.path:
-        sys.path.insert(0, repo_root)
-
-    # Create a temp TypeScript project with a nested function
-    tmpdir = tempfile.mkdtemp(prefix="bug_probe_")
-    try:
-        # Write a TypeScript file with both top-level and nested functions
-        ts_content = """\
-function topLevel(): void {
-  console.log("top level");
-}
-
-function outer(): void {
-  function nestedInner(): void {
-    console.log("nested");
-  }
-  nestedInner();
-}
-
-const arrowTop = (): void => {
-  console.log("arrow top");
-};
 """
-        ts_path = os.path.join(tmpdir, "index.ts")
-        with open(ts_path, "w") as f:
-            f.write(ts_content)
+Probe script for bug: src--languages--typescript-py--batch_extract
 
-        # Run codegraph init to index the project
-        result = subprocess.run(
-            ["codegraph", "init"], cwd=tmpdir, capture_output=True, text=True
-        )
-        if result.returncode != 0:
-            print("ERROR: codegraph init failed:", result.stderr[:300])
-            sys.exit(1)
+The specification claims batch_extract returns only top-level function definitions,
+but get_functions_by_file (which it delegates to) returns ALL functions/methods
+including nested ones. This probe mocks CodeGraphExtractor to return both top-level
+and nested functions, then verifies batch_extract does not filter to top-level only.
+"""
 
-        # Check that codegraph.db was created
-        db_path = os.path.join(tmpdir, ".codegraph", "codegraph.db")
-        if not os.path.exists(db_path):
-            print("ERROR: codegraph did not produce codegraph.db")
-            sys.exit(1)
+import os
+import sys
 
-        # Import batch_extract from the public API
-        from src.languages.typescript import batch_extract
+# Add repo root to path so 'src' package is importable
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, repo_root)
 
-        # Call batch_extract on the temp project
-        result = batch_extract(tmpdir)
+from unittest.mock import MagicMock, patch
 
-        # Find all function names extracted
-        all_func_names = []
-        for filepath, funcs in result.items():
-            for name, body in funcs:
-                all_func_names.append(name)
+bug_id = "src--languages--typescript-py--batch_extract"
 
-        # Spec says: only TOP-LEVEL functions should be returned
-        # "nestedInner" is a nested function and should NOT appear
-        # "topLevel", "outer", "arrowTop" are top-level and SHOULD appear
+try:
+    from src.languages.typescript import batch_extract
 
-        top_level_expected = {"topLevel", "outer", "arrowTop"}
-        nested_names = set(all_func_names) - top_level_expected
+    # Create a mock scenario: codegraph returns a TypeScript file with both
+    # a top-level function and a nested function.
+    mock_filepath = "/tmp/test_project/src/utils.ts"
+    mock_functions = [
+        # Top-level function
+        ("exportData", "export function exportData(items: Item[]): string {\n  return JSON.stringify(items);\n}\n"),
+        # Nested function (should NOT appear per spec)
+        ("formatItem", "function formatItem(item: Item): string {\n  return item.name + ':' + item.value;\n}\n"),
+    ]
 
-        if nested_names:
-            # Bug confirmed: nested functions were included
-            print(f"CONFIRMED — actual includes nested function(s): {sorted(nested_names)!r} "
-                  f"| expected only top-level: {sorted(top_level_expected)!r}")
-            print(f"  full output: {sorted(all_func_names)}")
-        else:
-            print(f"NOT CONFIRMED — actual matched expected (only top-level): {sorted(all_func_names)}")
+    mock_cg = MagicMock()
+    mock_cg.get_functions_by_file.return_value = {mock_filepath: mock_functions}
 
-    except ImportError as e:
-        print(f"ERROR: Import failed: {e}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
-    finally:
-        # Cleanup
-        shutil.rmtree(tmpdir, ignore_errors=True)
+    with patch('src.languages.typescript.CodeGraphExtractor') as mock_cls:
+        mock_cls.from_proj_dir.return_value = mock_cg
 
-if __name__ == "__main__":
-    main()
+        actual = batch_extract("/tmp/test_project")
+
+    actual_funcs = actual.get(mock_filepath, [])
+    actual_names = [name for name, _ in actual_funcs]
+
+    # Spec says: only top-level functions → expected names = ["exportData"]
+    expected_names = ["exportData"]
+
+    # Bug CONFIRMED if nested function "formatItem" leaks through
+    has_nested = "formatItem" in actual_names
+    has_top_level = "exportData" in actual_names
+
+    if not has_top_level:
+        print("NOT CONFIRMED — top-level function missing from results:", actual_names)
+    elif has_nested:
+        print(f"CONFIRMED — batch_extract returns nested functions (violates spec).")
+        print(f"  Actual names:  {actual_names}")
+        print(f"  Expected names: {expected_names}")
+        print(f"  The nested function 'formatItem' should not appear per spec claim.")
+    else:
+        print(f"NOT CONFIRMED — only top-level functions returned as expected: {actual_names}")
+
+except Exception as e:
+    import traceback
+    print(f"ERROR: {e}")
+    traceback.print_exc()
+    sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual includes nested function(s): ['nestedInner'] | expected only top-level: ['arrowTop', 'outer', 'topLevel']
-  full output: arrowTop, nestedInner, outer, topLevel
-  expected:     topLevel, outer, arrowTop (top-level only)
+CONFIRMED — batch_extract returns nested functions (violates spec).
+  Actual names:  ['exportData', 'formatItem']
+  Expected names: ['exportData']
+  The nested function 'formatItem' should not appear per spec claim.
 ```

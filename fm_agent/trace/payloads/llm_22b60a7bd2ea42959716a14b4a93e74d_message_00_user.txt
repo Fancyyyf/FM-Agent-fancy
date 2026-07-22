@@ -1,0 +1,85 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::llm_client-py::_messages_to_anthropic` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: (none).
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _messages_to_anthropic(messages):
+    """Split OpenAI-style messages into (system_text, anthropic_messages list)."""
+    system_text = ""
+    out = []
+    for m in messages:
+        role = m.get("role")
+        content = m.get("content", "")
+        if not isinstance(content, str):
+            # Already a list-of-blocks; flatten to text to keep this path simple.
+            content = "\n".join(c.get("text", "") for c in content if isinstance(c, dict))
+        if role == "system":
+            # Concatenate multiple system messages if present.
+            system_text = (system_text + "\n\n" + content).strip() if system_text else content
+        elif role in ("user", "assistant"):
+            out.append({"role": role, "content": content})
+    return system_text, out
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/llm_client.py
+#
+# _messages_to_anthropic(messages) -> (str, list)
+#
+# Pre-condition:
+#   - messages is a list of dictionaries, each optionally containing keys
+#     "role" and "content".
+#
+# Post-condition:
+#   - Returns a pair (system_text, anthropic_messages) where:
+#     - anthropic_messages is a list of dicts, each with exactly the keys
+#       "role" and "content", containing every input message whose role is
+#       "user" or "assistant", in their original relative order.
+#     - For an input message whose "content" value is a string, it passes
+#       through unchanged. When "content" is a list of dicts (content blocks),
+#       it is replaced with a single string formed by joining the "text" value
+#       of each dict in the list with newline separators. A dict in the list
+#       without a "text" key contributes an empty string at that position.
+#     - system_text is the empty string when no input message has role
+#       "system". When one or more system-role messages are present,
+#       system_text is the concatenation of their (possibly flattened) content
+#       strings, joined by "\n\n", with leading and trailing whitespace
+#       removed.
+#     - Messages whose role is neither "system", "user", nor "assistant" are
+#       excluded from both outputs.
+# [SPEC]
+
+This function has no callees, so there is no [INFO] block to maintain.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees ((none)). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

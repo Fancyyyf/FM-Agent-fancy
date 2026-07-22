@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "[{'role': 'system', 'content': '  a  '}, {'role': 'system', 'content': '  b  '}]",
+  "offending_statements": "Line 13: system_text = (system_text + \"\\n\\n\" + content).strip() if system_text else content",
+  "reason": "When there are multiple system messages, the code strips whitespace after each concatenation, causing interior whitespace to be lost. The specification requires concatenating all contents first with '\\n\\n' and then stripping only the final result. With the input [{'role':'system','content':'  a  '}, {'role':'system','content':'  b  '}], the code produces 'a  \\n\\n  b' while the spec requires 'a  \\n\\n  b  ', which differ."
+}

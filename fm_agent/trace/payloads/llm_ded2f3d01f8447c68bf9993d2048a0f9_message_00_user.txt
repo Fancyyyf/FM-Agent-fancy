@@ -1,0 +1,50 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `source_for_range`'s behavioral specification was just updated. The caller `src::languages::erlang-py::_source_for_range` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/languages/erlang.py
+#
+# _SourceIndex.source_for_range(self, lsp_range) -> str
+#
+# Pre-condition:
+#   - self is a _SourceIndex instance whose .source attribute is a string and whose position resolution matches the encoding used for the character values in lsp_range
+#   - lsp_range is a dict with keys 'start' and 'end', each being a dict with keys 'line' (int, 0-based) and 'character' (int, 0-based UTF-16 code unit offset)
+#   - The position described by lsp_range["start"] does not follow the position described by lsp_range["end"] in source order
+#
+# Post-condition:
+#   - Returns the substring of self.source that spans from the byte offset corresponding to lsp_range["start"] (inclusive) to the byte offset corresponding to lsp_range["end"] (exclusive)
+# [SPEC]
+
+## Caller's current source
+
+```python
+def _source_for_range(source: str, lsp_range: dict) -> str:
+    """Compatibility wrapper for callers that do not reuse a source index."""
+    return _SourceIndex.build(source).source_for_range(lsp_range)
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# _SourceIndex.build(source) -> _SourceIndex
+#   Pre-condition: source is a string
+#   Post-condition: Returns a _SourceIndex instance whose operations are scoped to the given source string
+# [SPLIT]
+# _SourceIndex.source_for_range(lsp_range) -> str
+#   Pre-condition: lsp_range is a dict with keys 'start' and 'end', each having 'line' (int, 0-based) and 'character' (int, 0-based) keys, and the start position does not follow the end position
+#   Post-condition: Returns the substring of the indexed source that spans from the start position (inclusive) to the end position (exclusive)
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `source_for_range` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `source_for_range` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

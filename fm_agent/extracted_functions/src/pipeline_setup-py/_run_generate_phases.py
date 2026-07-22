@@ -41,11 +41,15 @@
 # [SPLIT]
 # _phases_cover_current_sources(phases_json, proj_dir, submodules=None) -> bool
 #   Pre-condition: phases_json is a path to an existing JSON file; proj_dir is an existing directory path; submodules is None or an iterable of subdirectory name strings
-#   Post-condition: Returns True when every source file under the specified subdirectories of proj_dir is referenced in phases_json; returns False when at least one source file is missing from phases_json
+#   Post-condition: Returns True when phases_json is a readable, valid JSON file with at least one source file entry, every listed source file exists under proj_dir (and under a submodule if submodules is given), and every source file under the relevant directories is listed; returns False when any condition fails. Backslash separators in paths are treated as forward slashes.
 # [SPLIT]
 # _json_file_is_valid(phases_json) -> bool
 #   Pre-condition: phases_json is a file path string
 #   Post-condition: Returns True when the path refers to an existing regular file whose content is valid JSON; returns False otherwise
+# [SPLIT]
+# _phase_plan_schema_errors(phases_path) -> list[str]
+#   Pre-condition: phases_path is a string.
+#   Post-condition: Returns a list of human-readable error message strings; empty list indicates the file is valid JSON conforming to the required phases schema; non-empty list indicates an error such as missing file, invalid JSON, or schema violation.
 # [INFO]
 
 def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
@@ -54,6 +58,11 @@ def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
     phases_json = os.path.join(work_dir, "phases.json")
     prev_mtime = os.path.getmtime(phases_json) if os.path.exists(phases_json) else None
 
+    phase_plan_errors = (
+        _phase_plan_schema_errors(phases_json)
+        if os.path.exists(phases_json)
+        else []
+    )
     _resume_skip = resume and _phase_plan_complete(work_dir)
     if _resume_skip:
         print("[Pipeline] Stage 1/6: RESUME — phases.json found, skipping phase plan generation.")
@@ -92,6 +101,19 @@ def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
                       f"regenerate or overwrite work that is already done. {fm_reminder} {submodule_reminder}")
         if is_incremental:
             prompt = f"{prompt} {incremental_reminder}"
+        if phase_plan_errors:
+            formatted_errors = "\n".join(
+                f"- {error}" for error in phase_plan_errors
+            )
+            schema_repair_prompt = (
+                "IMPORTANT: The existing fm_agent/phases.json is valid JSON or "
+                "partially generated, but it does not match the required schema. "
+                "Read the project source files and repair these problems:\n"
+                f"{formatted_errors}\n"
+                "Do not use an empty source_files array merely to satisfy the schema. "
+                "Use an empty array only when the module genuinely owns no source files."
+            )
+            prompt = f"{prompt}\n\n{schema_repair_prompt}"
         prompt_file = os.path.join(proj_dir, "fm_agent", "workflow_generate_phases.md")
         command = build_llm_cli_command(
             model=OPENCODE_SETUP_MODEL,
@@ -118,7 +140,14 @@ def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
         except subprocess.CalledProcessError as e:
             logging.warning(f"Stage 1 attempt {attempt}: opencode exited with code {e.returncode}")
 
-        if os.path.exists(phases_json):
+        phase_plan_errors = (
+            _phase_plan_schema_errors(phases_json)
+            if os.path.exists(phases_json)
+            else ["phases.json is missing"]
+        )
+
+        phase_plan_ready = False
+        if not phase_plan_errors:
             if submodules:
                 phase_plan_ready = _phases_cover_current_sources(
                     phases_json, proj_dir, submodules
@@ -129,16 +158,22 @@ def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
                     or _phases_cover_current_sources(phases_json, proj_dir)
                 )
             else:
-                phase_plan_ready = _json_file_is_valid(phases_json)
-            if phase_plan_ready:
-                break
+                phase_plan_ready = True
+        if phase_plan_ready:
+            break
 
         failure = "update phases.json" if is_incremental else "produce phases.json"
-        missing = (
-            "phases.json was not updated"
-            if is_incremental
-            else "phases.json missing or invalid"
-        )
+        if phase_plan_errors:
+            missing = (
+                "phases.json schema validation failed: "
+                + "; ".join(phase_plan_errors)
+            )
+        else:
+            missing = (
+                "phases.json was not updated"
+                if is_incremental
+                else "phases.json missing or invalid"
+            )
         if attempt < OPENCODE_MAX_RETRIES:
             delay = 10
             print(

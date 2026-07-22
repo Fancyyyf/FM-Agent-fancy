@@ -1,0 +1,57 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def resolve_model_backend():
+Line 2:     backend = _normalize_backend(settings.llm.backend)
+Line 3:     if backend != "auto":
+Line 4:         return backend
+Line 5:     host_hint = (os.environ.get("FM_AGENT_HOST") or os.environ.get("FM_AGENT_CLIENT") or "").lower()
+Line 6:     if "claude" in host_hint:
+Line 7:         return "claude-cli"
+Line 8:     if "codex" in host_hint:
+Line 9:         return "codex-cli"
+Line 10:     claude_markers = ("CLAUDE_PLUGIN_ROOT", "CLAUDE_CODE_ENTRYPOINT")
+Line 11:     if any(os.environ.get(name) for name in claude_markers):
+Line 12:         return "claude-cli"
+Line 13:     codex_markers = ("CODEX_HOME", "CODEX_SANDBOX", "CODEX_EXECUTION_MODE")
+Line 14:     if any(os.environ.get(name) for name in codex_markers):
+Line 15:         return "codex-cli"
+Line 16:     return "codex-cli"
+```
+
+Condition A (what the code actually does):
+The function returns a string that is the canonical backend identifier resolved from the configuration and environment. Let normalized = _normalize_backend(settings.llm.backend). If normalized != 'auto', the result is normalized. Otherwise, when normalized == 'auto', let H = (os.environ.get('FM_AGENT_HOST') or os.environ.get('FM_AGENT_CLIENT') or '').lower(). If 'claude' ∈ H or any of the environment variables CLAUDE_PLUGIN_ROOT or CLAUDE_CODE_ENTRYPOINT is set to a non-empty value, the result is 'claude-cli'. In all other cases (including when H contains 'codex' but not 'claude', when any of CODEX_HOME, CODEX_SANDBOX, or CODEX_EXECUTION_MODE is set, or when no environment hints are present), the result is 'codex-cli'.
+
+Condition B (what the specification requires):
+- Returns a canonical backend identifier string: one of "opencode",
+    "codex-cli", or "claude-cli"
+  - The returned backend is first determined by normalizing
+    settings.llm.backend via _normalize_backend; if the result is not
+    "auto", that result is returned immediately
+  - When the normalized value of settings.llm.backend is "auto", the
+    backend is determined by inspecting environment markers in a fixed
+    priority order:
+      1. FM_AGENT_HOST or FM_AGENT_CLIENT (whichever is set) is checked
+         case-insensitively for "claude" or "codex" substrings
+      2. The presence of any Claude-specific environment variable
+         (CLAUDE_PLUGIN_ROOT, CLAUDE_CODE_ENTRYPOINT)
+      3. The presence of any Codex-specific environment variable
+         (CODEX_HOME, CODEX_SANDBOX, CODEX_EXECUTION_MODE)
+  - The first matching marker in this priority order determines the
+    returned backend: "claude-cli" for Claude markers, "codex-cli" for
+    Codex markers
+  - When no marker matches, returns "codex-cli" (the default fallback)
+  - The same input (settings.llm.backend value and environment state)
+    always produces the same output (pure function with respect to its
+    inputs at call time)
+
+Additional context:
+_normalize_backend(name) -> str
+Pre-condition: name is a string identifier that may be a canonical
+    backend name ("opencode", "codex-cli", "claude-cli") or an alias
+    ("codex", "claude", "open-code") or any other string
+  Post-condition: returns the canonical backend name corresponding to
+    name when name is a recognized alias, or name itself unchanged when
+    name is not a recognized alias
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

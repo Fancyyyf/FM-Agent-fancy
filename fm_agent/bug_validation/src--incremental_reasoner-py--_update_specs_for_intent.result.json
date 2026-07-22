@@ -6,6 +6,6 @@
   "attempts": "1",
   "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_update_specs_for_intent.py",
   "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_update_specs_for_intent.md",
-  "probe_stdout": "NOT CONFIRMED — both empty-seed and non-empty-seed paths returned a list (actual: ['src/incremental_reasoner-py/_update_specs_for_intent.py'])",
-  "trigger_summary": "The spec requires a list return but the code evidence shows return None inside _plan_spec_update (an inner nested function), not the outer _update_specs_for_intent which always returns a list."
+  "probe_stdout": "NOT CONFIRMED — seed.update(changed_targets.keys()) found in _update_specs_for_intent; changed_targets are added to the seed alongside relevant_rel_files.",
+  "trigger_summary": "The seed set is populated from BOTH changed_targets (via seed.update) and relevant_rel_files; the logic verifier missed the seed.update(changed_targets.keys()) call."
 }

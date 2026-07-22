@@ -1,0 +1,156 @@
+Programming language: Python
+
+Pre-condition:
+After the code block finishes execution under the given pre-condition, the following holds:
+
+**Normal termination:**
+The function returns `None`. The local variables `work_dir`, `input_dir`, `output_dir`, `extra_call_edges`, and `staged_knowledge` are set as described in the code; they do not escape the function. The following side effects have occurred:
+- `_setup_incremental_logging(work_dir)` has configured logging for the incremental pipeline. Unless an earlier exception prevented it, a log file (or handler) is set up under `work_dir` (i.e., `proj_dir/fm_agent/`).
+- `load_call_edges(extra_call_edges_path)` has returned a value (a dict, `None`, or raised an exception) and the result is bound to `extra_call_edges`.
+- `stage_domain_knowledge_files(proj_dir, work_dir, domain_knowledge_files)` has been called. When `domain_knowledge_files` is not `None`, it has staged (copied/registered) those Markdown files into a location under `work_dir`, and the returned value (a list of paths or `None`) is stored in `staged_knowledge`.
+- The following informational log records have been emitted (assuming logging was successfully configured and no exception occurred earlier):
+  - If `staged_knowledge` is truthy, a line containing the number of Markdown file(s).
+  - A separator line of 70 "=" characters.
+  - "INCREMENTAL PIPELINE START".
+  - The project directory (`proj_dir`).
+  - The intent file path (`intent_file_path`).
+  - The base commit ID (`old_commit_id`).
+  - If `submodules` is not `None`/empty, the submodule scope.
+- No other persistent changes to the filesystem or global state are made by the code block itself, except those performed by the three helper functions.
+
+**Exception paths:**
+If any operation raises an exception (e.g., `os.path.join` fails, `import` fails, `load_call_edges` fails, `_setup_incremental_logging` fails, or `stage_domain_knowledge_files` fails), the exception propagates to the caller immediately. The program state is partially modified up to the point of failure: earlier side effects (e.g., logging configuration, partially staged files) may persist.
+
+**Formal logic (simplified):**
+\[
+\begin{aligned}
+&\text{pre}(\text{proj\_dir}, \text{intent\_file\_path}, \dots) \land \\
+&\text{normal\_exit} \implies \\
+&\quad \text{return} = \text{None} \\
+&\quad \land \exists \mathit{work\_dir},\mathit{input\_dir},\mathit{output\_dir},\mathit{extra\_call\_edges},\mathit{staged\_knowledge} \text{ as defined} \\
+&\quad \land \text{incremental\_logging\_configured}(\mathit{work\_dir}) \\
+&\quad \land (\text{domain\_knowledge\_files} \neq \text{None} \implies \text{domain\_files\_staged}(\mathit{staged\_knowledge})) \\
+&\quad \land \text{logs\_emitted}(\text{contents as above})
+\end{aligned}
+\]
+(Exception cases are omitted for brevity but are part of the complete post-condition.)
+
+Code block:
+```python
+Line 41:     logging.info("=" * 70)
+Line 42:     # 1. Check whether there is a last run to compare against; if not, fall back to a full run since we have no basis for incremental analysis.
+Line 43:     logging.info("[Stage 1/10] Checking for a previous full run to compare against...")
+Line 44:     has_last_run = check_last_run_existence(proj_dir, submodules=submodules)
+Line 45:     if not has_last_run:
+Line 46:         logging.warning(
+Line 47:             "No previous full run detected (phases.json missing or incomplete extracted_functions), so falling back to a full run rather than incremental."
+Line 48:         )
+Line 49:         run_pipeline(
+Line 50:             proj_dir,
+Line 51:             domain_knowledge_files=domain_knowledge_files,
+Line 52:             submodules=submodules,
+Line 53:             one_phase=one_phase,
+Line 54:             extra_call_edges_path=extra_call_edges_path,
+Line 55:         )
+Line 56:         return
+Line 57:     logging.info("  -> previous full run found; proceeding with incremental analysis.")
+Line 58:     # 2. Check whether the intent file is valid; if not, fail since we don't know what to analyze incrementally.
+Line 59:     logging.info("[Stage 2/10] Loading developer intent...")
+Line 60:     developer_intent = ""
+Line 61:     if not os.path.isfile(intent_file_path):
+Line 62:         logging.error("Intent file %s does not exist; cannot run incremental pipeline.", intent_file_path)
+Line 63:         return
+Line 64:     else:
+Line 65:         with open(intent_file_path, "r") as f:
+Line 66:             developer_intent = f.read().strip()
+Line 67:         if not developer_intent:
+Line 68:             logging.error("Intent file %s is empty; cannot run incremental pipeline.", intent_file_path)
+Line 69:             return
+Line 70:     logging.info("  -> intent loaded (%d chars).", len(developer_intent))
+Line 71:     # Wipe the previous run's verification artifacts. The prior full run wrote a verdict for
+Line 72:     # EVERY function into logic_verification_results/ and every confirmed bug into
+Line 73:     # bug_validation/, but this incremental run only re-verifies the changed/affected subset.
+Line 74:     # If left in place, those folders would mix stale full-run results with this run's fresh
+Line 75:     # ones, making it ambiguous which verdicts are the latest. Clear them so the folders hold
+Line 76:     # only this incremental run's output.
+Line 77:     for stale_dir in (output_dir, os.path.join(work_dir, "bug_validation")):
+Line 78:         if os.path.isdir(stale_dir):
+Line 79:             shutil.rmtree(stale_dir, ignore_errors=True)
+Line 80:             logging.info("  -> removed stale results dir %s.", stale_dir)
+```
+
+Additional context:
+check_last_run_existence(proj_dir, submodules=None) -> bool
+Pre-condition: proj_dir is a valid directory path; submodules is None or
+    a list of subdirectory names
+  Post-condition: Returns True when fm_agent/phases.json exists and
+    fm_agent/extracted_functions/ contains at least one spec-complete
+    extracted-function file per phase (scoped to submodules when provided).
+    Returns False otherwise.
+
+extract_existing_specs(proj_dir) -> dict[str, {"spec": str, "info": str?}]
+Pre-condition: fm_agent/extracted_functions/ exists and contains extracted
+    function files, some of which may have [SPEC] and [INFO] blocks
+  Post-condition: Returns a dict mapping each extracted-function relative path
+    to an object containing the text of its existing [SPEC] block and,
+    when present, its [INFO] block. Paths without [SPEC] blocks are omitted
+    from the returned dict.
+
+_collect_changed_functions(proj_dir, old_commit_id, submodules=None)
+-> dict[str, {"added": [str], "removed": [str], "modified": [str]}]
+  Pre-condition: proj_dir is a git repository containing old_commit_id;
+    submodules is None or a list of subdirectory names
+  Post-condition: Returns a dict keyed by source-file paths relative to
+    proj_dir. Each value contains lists of function names that were added,
+    removed, or modified between old_commit_id and the current working tree.
+    Source files with no function-level changes are omitted from the dict.
+
+_remove_stale_extracted(proj_dir, modified_functions) -> None
+Pre-condition: proj_dir is an absolute path to the project root and
+    fm_agent/extracted_functions/ and fm_agent/phases.json exist under it;
+    modified_functions is a dict whose keys are absolute source-file paths.
+  Post-condition: For every absolute source-file path that is a key in
+    modified_functions or listed in phases.json, the corresponding
+    extracted-function tree under fm_agent/extracted_functions/ is
+    reconciled with current codegraph output; any extracted function file
+    or directory that no longer corresponds to a current function is
+    deleted, empty parent directories pruned. Other extracted-function
+    files and directories are unchanged.
+
+collect_relevent_function_scope(proj_dir, developer_intent,
+changed_functions, range=None) -> list[str]
+  Pre-condition: developer_intent is a non-empty string describing a
+    modification goal; changed_functions maps source files to change sets
+  Post-condition: Returns a list of extracted-function relative paths
+    ordered by descending relevance to the developer intent, derived by
+    module-level, file-level, and function-level relevance scoring.
+
+_update_specs_for_intent(proj_dir, work_dir, developer_intent,
+changed_functions, spec_files,
+                         extra_call_edges=None) -> list[str]
+  Pre-condition: developer_intent is a non-empty string; changed_functions
+    maps source files to their change sets; spec_files lists candidate
+    extracted-function relative paths
+  Post-condition: Returns a list of extracted-function relative paths whose
+    [SPEC] and/or [INFO] blocks were modified. For each function that is
+    either changed or present in spec_files, re-evaluates whether the
+    intended behavior spec needs updating; when a callee's spec is updated,
+    cascading [INFO] updates are applied to all callers of that callee.
+
+_verify_incremental_functions(proj_dir, work_dir, changed_functions,
+updated_spec_files, submodules=None) -> list[str]
+  Pre-condition: updated_spec_files lists functions whose [SPEC] or [INFO]
+    blocks were modified in the spec-update stage
+  Post-condition: Returns a list of extracted-function relative paths where
+    the reasoner produced a MISMATCH verdict and bug validation confirmed the
+    violation. Verification scope is limited to: changed functions, functions
+    with updated specs, and functions that call a callee whose spec was
+    updated.
+
+run_pipeline(proj_dir, domain_knowledge_files=None, submodules=None,
+one_phase=False, extra_call_edges_path=None) -> None
+  Pre-condition: proj_dir is a valid directory containing source code
+  Post-condition: Executes the full 6-phase pipeline on proj_dir, producing
+    extracted functions, specs, verification results, and bug validation
+    reports under fm_agent/. Returns None.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

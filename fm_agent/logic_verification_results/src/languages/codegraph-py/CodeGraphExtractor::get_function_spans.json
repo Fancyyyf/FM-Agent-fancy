@@ -1,0 +1,5 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::get_function_spans.py",
+  "verdict": "MATCH",
+  "gaps": null
+}

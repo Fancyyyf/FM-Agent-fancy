@@ -1,0 +1,11 @@
+{
+  "id": "src--llm_client-py--_metadata_body",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/llm_client-py/_metadata_body.py",
+  "function_name": "_metadata_body",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_metadata_body.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--_metadata_body.md",
+  "probe_stdout": "CONFIRMED — user_id changed across calls after settings mutation.\n  First call  (settings.inject.id=''): user_id='stable-user-or-session-id-xxxxxxx123'\n  Second call (settings.inject.id='mutated-user-id-abc123'): user_id='mutated-user-id-abc123'\n  Spec requires: user_id is a stable, consistent string that identifies\n  the current environment across calls within the same installation.\n  Bug: settings.inject.id is mutable, so _stable_user_id() (called by\n  _metadata_body) can return different values between calls.",
+  "trigger_summary": "Mutating settings.inject.id between calls to _metadata_body() causes the returned user_id to change, violating the specification's stability guarantee."
+}

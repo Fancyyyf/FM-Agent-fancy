@@ -1,8 +1,8 @@
 # Bug Report: _remove_stale_extracted
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_remove_stale_extracted.py`
+**Source file:** `src/incremental_reasoner.py`
 **Verdict:** MISMATCH
-**Confirmation status:** not_confirmed
+**Confirmation status:** confirmed
 
 ---
 
@@ -12,78 +12,96 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- For every function name appearing in any "removed" list within modified_functions, the corresponding extracted-function file under fm_agent/extracted_functions/ no longer exists on the filesystem
-  - For every function directory under fm_agent/extracted_functions/ that contained only files deleted by this operation, the directory itself no longer exists
-  - Every file and directory under fm_agent/extracted_functions/ whose function does not appear in any "removed" list is unchanged
+- For every absolute source-file path that is either a key in modified_functions or listed in the "source_files" entries of all phases loaded from phases.json, the extracted-function tree under fm_agent/extracted_functions/ associated with that source file is reconciled with the current codegraph output. Any extracted function file or directory that no longer corresponds to a current source function (including when the source file itself is absent) is deleted, and any empty parent directories are pruned.
+  - Files and directories under fm_agent/extracted_functions/ that correspond to source files not in the union of modified_functions keys and phases.json entries are unchanged.
 
 ---
 
 ### Actual Behavior
 
-After the code block executes, either an exception (e.g., OSError) is raised, or it completes normally. In the normal case, for every sourcefile path S such that modified_functions[S]['removed'] is a nonempty list, let P = _modified_function_targets(proj_dir, modified_functions, classes=('removed',))[S]. Then os.path.isfile(P) is False (the extractedfunction file has been removed). Moreover, for each such P, letting D = os.path.dirname(P), if D existed and became an empty directory after the removal of P, then os.path.isdir(D) is False (D has been deleted). If an exception occurred, there exists a prefix of the iteration order of the values returned by _modified_function_targets such that for all paths in that prefix the same properties hold, and no guarantees are made for later paths. The arguments proj_dir and modified_functions are unchanged.
+After execution, the extracted-functions subdirectory tree under fm_agent/ has been updated such that for every source file path that belongs to the union S = modified_functions.keys()  (if loading phases.json succeeded) the set of absolute paths derived from all source_files entries in modules within phases of phases.json, the extracted directory corresponding to that source file (if it exists) contains only files that are currently expected according to the function spans of that source file, any stale extracted files have been deleted, and empty subdirectories have been pruned. For any source file path not in S, no changes have been made to its extracted directory. No other side effects occur. Formal logic: Let M = dom(modified_functions). Let P =  if an OSError, ValueError, or KeyError was raised during loading of phases.json; otherwise P = { os.path.abspath(os.path.join(proj_dir, rel)) | phase  phases_data['phases'], module  phase['modules'], rel  module['source_files'] }. Then S = M  P. For each abs_src  S, the effect of _reconcile_extracted_dir(proj_dir, abs_src) has been applied, meaning: the extracted directory for abs_src (if non-existent) was left untouched; otherwise, its contents now equal the set of expected extracted file paths derived from the current source, and all stale files/directories have been removed. For abs_src  S, its extracted directory (if any) is unchanged. The function returns None.
 
 ---
 
 ## Code Evidence
 
-Line 8-10: removed = _modified_function_targets(proj_dir, modified_functions, classes=('removed',))
+Line 23: for abs_src in srcs:
+Line 24:     _reconcile_extracted_dir(proj_dir, abs_src)
 
 ---
 
 ## Trigger Condition
 
-The code only removes the extracted file for the first removed function per source file (because _modified_function_targets returns a single path per source file). The specification requires all removed functions' files to be deleted. With two removed functions in the same source file, the second function's file is never deleted, violating the spec.
+The code only calls _reconcile_extracted_dir for each individual source file. This may leave empty parent directories (like a/) that are shared by multiple source-specific directories when all children are removed. The specification explicitly requires pruning any empty parent directories, which the code does not guarantee.
 
 ---
 
 ## How to trigger the bug
 
-The bug claim is that when two functions are marked as "removed" from the same source file, only the first function's extracted file gets deleted. However, empirical testing shows this claim is **incorrect** — the code correctly deletes ALL removed functions' files per source file.
-
-The [INFO] block describing `_modified_function_targets` (generated by the LLM spec generator) incorrectly states that it returns "the first function whose change category is in classes." The actual implementation at `src/incremental_reasoner.py:402-441` iterates all function names: `for name in names:` where `names` is a set collecting ALL functions in the requested classes. Therefore `_remove_stale_extracted` correctly receives paths for ALL removed functions and deletes them all.
+_remove_stale_extracted calls _reconcile_extracted_dir for each source file. _reconcile_extracted_dir removes stale extracted files and prunes subdirectories within `func_dir`, but explicitly does NOT remove `func_dir` itself (the `root != func_dir` guard on the pruning loop), and does NOT prune the empty parent directories above `func_dir`. When multiple deleted source files share a common parent directory under `fm_agent/extracted_functions/`, their empty `func_dir` directories are left behind, violating the spec's requirement that "any empty parent directories are pruned."
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `proj_dir` | Temporary project root with `fm_agent/extracted_functions/` subdirectory |
-| `modified_functions` | `{"/path/to/src/foo.py": {"removed": ["func1", "func2"], "added": [], "modified": []}}` |
+| `proj_dir` | A temp project directory |
+| `modified_functions` | Two absolute source paths (neither file exists on disk): `{<proj_dir>/pkg/a.py: {"removed": ["stale_func"]}, <proj_dir>/pkg/b.py: {"removed": ["stale_func"]}}` |
+| `phases.json` | Contains a module with `source_files: ["pkg/a.py", "pkg/b.py"]` |
+| Extracted tree | `fm_agent/extracted_functions/pkg/a-py/stale_func.py` and `fm_agent/extracted_functions/pkg/b-py/stale_func.py` exist |
 
 ### Expected (spec-correct) Output
 
-Both `fm_agent/extracted_functions/src/foo-py/func1.py` and `fm_agent/extracted_functions/src/foo-py/func2.py` are deleted from the filesystem. The empty `src/foo-py/` directory is also pruned.
+Empty `a-py/` and `b-py/` directories should be removed, and the now-empty shared parent `pkg/` should also be pruned. No orphaned directories should remain under `fm_agent/extracted_functions/`.
 
 ### Actual (buggy) Output
 
-Both files were deleted and the empty directory was pruned — matching the expected (spec-correct) behavior. The bug does not exist.
+`a-py/` and `b-py/` remain as empty directories under `pkg/`. The shared parent `pkg/` is not pruned because its children (`a-py/` and `b-py/`) were never removed by `_reconcile_extracted_dir`. The result is orphaned empty directories that violate the spec.
 
 ### How to Reproduce
-
-Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import sys, os, tempfile, shutil
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import os, json, tempfile
+
+# Add the FM-Agent source to the import path
+repo_root = os.path.dirname(os.path.abspath(__file__))
+import sys; sys.path.insert(0, repo_root)
 from src.incremental_reasoner import _remove_stale_extracted
 
-tmpdir = tempfile.mkdtemp()
-proj_dir = os.path.join(tmpdir, "project")
-extracted_base = os.path.join(proj_dir, "fm_agent", "extracted_functions")
-abs_src = os.path.join(proj_dir, "src", "foo.py")
-func_dir = os.path.join(extracted_base, "src", "foo-py")
-os.makedirs(func_dir)
-with open(os.path.join(func_dir, "func1.py"), "w") as f: f.write("# spec")
-with open(os.path.join(func_dir, "func2.py"), "w") as f: f.write("# spec")
+# Set up a project with stale extracted directories under a shared parent
+tmp = tempfile.mkdtemp()
+proj_dir = os.path.join(tmp, "project")
+os.makedirs(os.path.join(proj_dir, "pkg"))
 
-_remove_stale_extracted(proj_dir, {
-    abs_src: {"removed": ["func1", "func2"], "added": [], "modified": []}
-})
-# Both func1.py and func2.py are deleted. Directory pruned.
-# Result: NOT CONFIRMED — bug does not exist.
-shutil.rmtree(tmpdir, ignore_errors=True)
+fm = os.path.join(proj_dir, "fm_agent")
+os.makedirs(fm)
+with open(os.path.join(fm, "phases.json"), "w") as f:
+    json.dump({"phases": [{"phase": 1, "modules": [{"name": "m", "source_files": ["pkg/a.py", "pkg/b.py"]}]}]}, f)
+
+ext = os.path.join(fm, "extracted_functions")
+for name in ("a", "b"):
+    d = os.path.join(ext, f"pkg/{name}-py")
+    os.makedirs(d)
+    with open(os.path.join(d, "stale_func.py"), "w") as f:
+        f.write("# stale")
+
+# Source files pkg/a.py and pkg/b.py do NOT exist (deleted)
+modified = {
+    os.path.abspath(os.path.join(proj_dir, "pkg/a.py")): {"removed": ["stale_func"]},
+    os.path.abspath(os.path.join(proj_dir, "pkg/b.py")): {"removed": ["stale_func"]},
+}
+
+_remove_stale_extracted(proj_dir, modified)
+
+# Check: empty func directories remain
+a_py = os.path.join(ext, "pkg/a-py")
+b_py = os.path.join(ext, "pkg/b-py")
+print("a-py still exists:", os.path.isdir(a_py))  # True (BUG)
+print("b-py still exists:", os.path.isdir(b_py))  # True (BUG)
+# actual (buggy) output: both a-py and b-py remain as empty directories
+# expected (correct) output: both removed, pkg/ pruned
 ```
 
 ---
@@ -91,141 +109,110 @@ shutil.rmtree(tmpdir, ignore_errors=True)
 ## Probe Script
 
 ```python
-"""Probe for _remove_stale_extracted: verify all removed functions' files are deleted, even
-when multiple removed functions belong to the same source file.
-
-Bug claim: _modified_function_targets returns only one path per source file, so with two
-removed functions in the same source file, only the first function's extracted file is deleted.
-"""
 import sys
 import os
+import json
 import tempfile
 import shutil
 
-# Ensure the project root is on the Python path for import
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-_proj_root = os.path.dirname(os.path.dirname(_script_dir))
-if _proj_root not in sys.path:
-    sys.path.insert(0, _proj_root)
+# Import the function under test from the FM-Agent source.
+# The workspace root is the snapshot directory (repo root for imports).
+# The probe runs from the repo root; ensure the source package is importable.
+repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, repo_root)
+from src.incremental_reasoner import _remove_stale_extracted
 
-error_occurred = False
-error_msg = ""
+# ── Create a fresh temporary workspace ──────────────────────────────────────
+tmp = tempfile.mkdtemp(prefix="bv_rm_stale_")
+proj_dir = os.path.join(tmp, "project")
+src_dir = os.path.join(proj_dir, "pkg")
 
-try:
-    from src.incremental_reasoner import _remove_stale_extracted
-except ImportError as e:
-    print(f"ERROR: Could not import _remove_stale_extracted: {e}")
-    print("NOT CONFIRMED — import failed")
-    sys.exit(1)
+os.makedirs(src_dir, exist_ok=True)
 
-# Set up temporary directory structure simulating a project with:
-# - proj_dir = <tmp>/project
-# - Two extracted function files for the same source file (src/foo.py):
-#     fm_agent/extracted_functions/src/foo-py/func1.py
-#     fm_agent/extracted_functions/src/foo-py/func2.py
-# - Both functions are reported as "removed" in modified_functions
-tmpdir = tempfile.mkdtemp(prefix="fm_agent_probe_")
-try:
-    proj_dir = os.path.join(tmpdir, "project")
-    extracted_base = os.path.join(proj_dir, "fm_agent", "extracted_functions")
-
-    # Source file path (absolute)
-    abs_src = os.path.join(proj_dir, "src", "foo.py")
-
-    # Extracted function directory for src/foo.py -> src/foo-py/
-    func_dir = os.path.join(extracted_base, "src", "foo-py")
-    os.makedirs(func_dir, exist_ok=True)
-
-    # Create two extracted function files for two "removed" functions
-    func1_path = os.path.join(func_dir, "func1.py")
-    func2_path = os.path.join(func_dir, "func2.py")
-
-    with open(func1_path, "w") as f:
-        f.write("# [SPEC]\n# extracted function func1\n")
-    with open(func2_path, "w") as f:
-        f.write("# [SPEC]\n# extracted function func2\n")
-
-    # Verify files exist before calling the function
-    assert os.path.isfile(func1_path), "func1.py should exist before test"
-    assert os.path.isfile(func2_path), "func2.py should exist before test"
-
-    # Build modified_functions with BOTH functions as "removed"
-    modified_functions = {
-        abs_src: {
-            "removed": ["func1", "func2"],
-            "added": [],
-            "modified": [],
+# ── phases.json ─────────────────────────────────────────────────────────────
+fm_agent_dir = os.path.join(proj_dir, "fm_agent")
+os.makedirs(fm_agent_dir, exist_ok=True)
+phases_data = {
+    "phases": [
+        {
+            "phase": 1,
+            "modules": [
+                {
+                    "name": "test_module",
+                    "source_files": ["pkg/a.py", "pkg/b.py"]
+                }
+            ]
         }
-    }
+    ]
+}
+with open(os.path.join(fm_agent_dir, "phases.json"), "w") as f:
+    json.dump(phases_data, f)
 
-    # Call the function under test
-    _remove_stale_extracted(proj_dir, modified_functions)
+# ── Stale extracted-function directories (source files are DELETED) ─────────
+# They share the common parent directory  fm_agent/extracted_functions/pkg/
+extracted_base = os.path.join(fm_agent_dir, "extracted_functions")
 
-    # Check results
-    func1_exists = os.path.isfile(func1_path)
-    func2_exists = os.path.isfile(func2_path)
-    func_dir_exists = os.path.isdir(func_dir)
+for name in ("a", "b"):
+    func_dir = os.path.join(extracted_base, f"pkg/{name}-py")
+    os.makedirs(func_dir, exist_ok=True)
+    stale_file = os.path.join(func_dir, f"stale_func.py")
+    with open(stale_file, "w") as f:
+        f.write("# stale extracted function\n")
 
-    # The spec says: every removed function's extracted file should be deleted.
-    # The bug claim says: only the first removed function per source file gets deleted.
-    #
-    # If both files are gone -> NOT CONFIRMED (the code is correct, bug doesn't exist)
-    # If only func1 is gone but func2 still exists -> CONFIRMED (bug reproduced)
-    # If neither is gone -> NOT CONFIRMED (unexpected behavior but not the claimed bug)
-    # If both are gone but dir still exists -> NOT CONFIRMED (files deleted, dir cleanup
-    #   is a separate concern not relevant to this bug report)
+    # Also create a "deleted" source path that does NOT exist on disk.
+    # The probe does not create pkg/a.py or pkg/b.py, so they are absent.
 
-    both_deleted = not func1_exists and not func2_exists
-    only_first_deleted = not func1_exists and func2_exists
-    neither_deleted = func1_exists and func2_exists
+# ── modified_functions: both source files are "removed" ─────────────────────
+modified_functions = {
+    os.path.abspath(os.path.join(proj_dir, "pkg", "a.py")): {"removed": ["stale_func"]},
+    os.path.abspath(os.path.join(proj_dir, "pkg", "b.py")): {"removed": ["stale_func"]},
+}
 
-    if only_first_deleted:
-        print(
-            f"CONFIRMED — func1.py deleted ({func1_path} exists={func1_exists}), "
-            f"but func2.py NOT deleted ({func2_path} exists={func2_exists}). "
-            f"Only the first removed function per source file was handled."
-        )
-    elif both_deleted:
-        if func_dir_exists:
-            print(
-                f"NOT CONFIRMED — both func1.py ({func1_path} exists={func1_exists}) "
-                f"and func2.py ({func2_path} exists={func2_exists}) were deleted. "
-                f"Directory {func_dir} still exists (not empty due to retained files, "
-                f"or not yet pruned), but the core bug claim (only first function deleted) "
-                f"is false — the code correctly removes all removed functions."
-            )
-        else:
-            print(
-                f"NOT CONFIRMED — both func1.py and func2.py were deleted, "
-                f"AND the empty directory was pruned. "
-                f"The code correctly handles multiple removed functions per source file."
-            )
-    elif neither_deleted:
-        print(
-            f"NOT CONFIRMED — neither func1.py (exists={func1_exists}) "
-            f"nor func2.py (exists={func2_exists}) was deleted. "
-            f"Unexpected: the function didn't delete any files, but this doesn't match "
-            f"the claimed bug pattern (only-first-function-deleted)."
-        )
-    else:
-        # func2 was deleted but func1 wasn't — weird but not the claimed bug
-        print(
-            f"NOT CONFIRMED — unexpected: func1.py exists={func1_exists}, "
-            f"func2.py exists={func2_exists}. "
-            f"This doesn't match the claimed bug pattern."
-        )
+# ── Call the function under test ────────────────────────────────────────────
+_remove_stale_extracted(proj_dir, modified_functions)
 
-except Exception as exc:
-    error_occurred = True
-    error_msg = str(exc)
-    print(f"ERROR: {exc}")
+# ── Verify: the spec requires that empty parent directories be pruned ───────
+#
+# The spec (spec_claim) says:
+#   "...any empty parent directories are pruned."
+#
+# _reconcile_extracted_dir removes stale FILES from func_dir and prunes
+# subdirectories within func_dir, but never removes func_dir itself
+# (see the `root != func_dir` guard on line 526). After both a-py/ and
+# b-py/ had all their files removed:
+#   - a-py/ and b-py/ remain as EMPTY directories (should be removed)
+#   - their shared parent pkg/ thus still has children (should be empty & pruned)
+# Both conditions violate the spec.
 
-finally:
-    shutil.rmtree(tmpdir, ignore_errors=True)
+a_py_dir = os.path.join(extracted_base, "pkg", "a-py")
+b_py_dir = os.path.join(extracted_base, "pkg", "b-py")
+pkg_dir = os.path.join(extracted_base, "pkg")
+
+a_stale = os.path.isdir(a_py_dir) and len(os.listdir(a_py_dir)) == 0
+b_stale = os.path.isdir(b_py_dir) and len(os.listdir(b_py_dir)) == 0
+
+bug_confirmed = a_stale and b_stale
+
+if bug_confirmed:
+    print(f"CONFIRMED — empty func directories a-py and b-py left behind; parent pkg/ not pruned. Spec requires pruning all empty parent directories.")
+else:
+    details = []
+    if not os.path.isdir(a_py_dir):
+        details.append("a-py was removed")
+    elif not a_stale:
+        details.append(f"a-py not empty: {os.listdir(a_py_dir)}")
+    if not os.path.isdir(b_py_dir):
+        details.append("b-py was removed")
+    elif not b_stale:
+        details.append(f"b-py not empty: {os.listdir(b_py_dir)}")
+    print(f"NOT CONFIRMED — {', '.join(details)}")
+
+# ── Cleanup ─────────────────────────────────────────────────────────────────
+shutil.rmtree(tmp, ignore_errors=True)
 ```
 
 ### Probe Output
 
 ```
-NOT CONFIRMED — both func1.py and func2.py were deleted, AND the empty directory was pruned. The code correctly handles multiple removed functions per source file.
+CONFIRMED — empty func directories a-py and b-py left behind; parent pkg/ not pruned. Spec requires pruning all empty parent directories.
 ```

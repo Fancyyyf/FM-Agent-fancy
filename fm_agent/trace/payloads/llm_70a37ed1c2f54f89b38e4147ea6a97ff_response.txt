@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input: phases_dir points to a directory containing phases.json with content:\n{\"phases\": [\n    {\"phase\": 1, \"modules\": [{\"name\": \"M1\", \"source_files\": [\"a.py\"]}]},\n    {\"phase\": 2, \"modules\": [{\"name\": \"M2\", \"source_files\": [\"a.py\", \"a.py\"]}]}\n]}.\nAfter calling _deduplicate_phases(phases_dir), the returned dict contains 'modified_modules' with one entry for M2 where 'removed_files' is [\"a.py\", \"a.py\"] (duplicate entries). This violates the specification's requirement that removed_files must be \"deduplicated file paths\" (distinct).",
+  "offending_statements": "Line 32: removed_files = [sf for sf in original if sf not in deduped]",
+  "reason": "removed_files may contain duplicate file paths if the original source_files list in a module contained duplicate entries of a file that is entirely removed from that module. The specification requires the list of removed files to be deduplicated, i.e., each distinct file path should appear at most once."
+}

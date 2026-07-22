@@ -1,11 +1,1 @@
-{
-  "id": "src--domain_knowledge-py--resolve_domain_knowledge_paths",
-  "source_file": "src/domain_knowledge-py/resolve_domain_knowledge_paths.py",
-  "function_name": "resolve_domain_knowledge_paths",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
-  "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--resolve_domain_knowledge_paths.py",
-  "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--resolve_domain_knowledge_paths.md",
-  "probe_stdout": "CONFIRMED — ValueError raised instead of excluding invalid entry: domain knowledge file does not exist: nonexistent_markdown_file.md\n",
-  "trigger_summary": "Passing a non-existent file path causes a ValueError instead of silently excluding it from the returned list."
-}
+{"id": "src--domain_knowledge-py--resolve_domain_knowledge_paths", "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/domain_knowledge-py/resolve_domain_knowledge_paths.py", "function_name": "resolve_domain_knowledge_paths", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--resolve_domain_knowledge_paths.py", "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--resolve_domain_knowledge_paths.md", "probe_stdout": "CONFIRMED — ValueError raised for existing file: domain knowledge file does not exist: link/../doc.md\n  actual file path: /tmp/fm_probe_0_sv1xj0/doc.md\n  actual file exists: True\n  abspath'd path: /tmp/fm_probe_0_sv1xj0/base/doc.md", "trigger_summary": "A relative path containing '..' that traverses a symlink: os.path.abspath lexically normalizes it to a non-existent path, causing a spurious ValueError even though the original candidate path exists on the filesystem."}

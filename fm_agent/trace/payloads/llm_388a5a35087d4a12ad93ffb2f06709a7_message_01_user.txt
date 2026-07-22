@@ -1,0 +1,38 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one Go file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("go", filepath) if cg else None
+```
+
+Condition A (what the code actually does):
+Natural: If CodeGraphExtractor.from_proj_dir(proj_dir) returns a falsy value (e.g., None because the codegraph could not be loaded), the function immediately returns None. Otherwise, it calls the obtained instance's get_function_spans("go", filepath) and returns its result. That result is None when the codegraph does not index the given file or the file contains no function definitions, or when the pre‑conditions of get_function_spans are violated (e.g., filepath is not an absolute path, or the language key is not recognised). If the internal pre‑conditions hold, the return value is a non‑None list of 3‑tuples (name, start_idx, end_idx) where name is a class‑qualified function/method identifier, start_idx and end_idx are 0‑indexed inclusive line numbers converted from the backend, and the list is sorted by ascending start_idx. No exceptions are intentionally raised; all error conditions are signalled through the None return value. Formal: Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If not cg: return None. Else: result = cg.get_function_spans("go", filepath). The final return value satisfies: (result = None) ∨ ( (lang_key "go" is supported ∧ filepath is an absolute path inside the project root) ⇒ (result is a list L ∧ ∀i : L[i] = (n_i, s_i, e_i) ∧ n_i ∈ String ∧ s_i, e_i ∈ ℤ ∧ 0 ≤ s_i ≤ e_i ∧ (∀j < i : s_j ≤ s_i) ∧ each n_i is a class‑qualified function/method name in the file indexed by filepath) ). If those additional conditions are not met, result may be None or have an unspecified structure reflecting the internal implementation.
+
+Condition B (what the specification requires):
+- Returns a list of (function_name, start_line, end_line) tuples for every
+    top-level function definition found in the file at filepath.
+  - start_line and end_line are 0-indexed and inclusive.
+  - The returned list is ordered by function occurrence within the file.
+  - Returns None when the codegraph backend is unavailable or does not index
+    the file at filepath.
+
+Additional context:
+CodeGraphExtractor.get_function_spans(self, lang_key: str, abs_filepath: str) -> list[tuple[str, int, int]] | None
+Pre-condition:
+  - self is a CodeGraphExtractor instance initialized with a valid codegraph database
+  - lang_key is a non-empty language identifier string
+  - abs_filepath is an absolute path to a source file within the project root
+Post-condition:
+  - Returns None if lang_key unrecognized or file not indexed / contains no definitions
+  - Otherwise returns list of (name, start_idx, end_idx) tuples for every function/method definition in the file
+  - name is class-qualified, suitable for both function FQN tail and path component
+  - start_idx, end_idx are 0-indexed inclusive line numbers, converted from backend 1-indexed representation
+  - List ordered by ascending start_idx
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

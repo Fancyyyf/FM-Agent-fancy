@@ -56,7 +56,7 @@ def _score_class(cls: dict, signals: dict[str, set[str]]) -> float:
     # Docstring word overlap with all_words
     if cls['docstring']:
         doc_words = {w for w in re.findall(r'\b([a-zA-Z]{4,})\b',
-                                            cls['docstring'].lower())
+                                           cls['docstring'].lower())
                      if w not in _STOP}
         score += len(doc_words & signals['all_words']) * W_CLASS_DOC_MATCH
 

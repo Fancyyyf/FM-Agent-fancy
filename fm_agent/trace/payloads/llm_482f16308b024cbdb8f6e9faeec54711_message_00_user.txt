@@ -1,0 +1,117 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `resolve_domain_knowledge_paths`'s behavioral specification was just updated. The caller `src::domain_knowledge-py::stage_domain_knowledge_files` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/domain_knowledge.py
+#
+# resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir=None) -> list[str]
+#
+# Pre-condition:
+#   - paths is an iterable of path-like strings, potentially nested (may contain inner iterables of path strings)
+#   - base_dir is a string referencing an existing directory
+#   - fallback_base_dir is None or a string referencing an existing directory
+#
+# Post-condition:
+#   - Returns a list of absolute file path strings, one per distinct valid domain-knowledge markdown file
+#   - Each input entry is expanded for user home directories and flattened from any nesting
+#   - If an expanded entry is absolute, it is used directly; otherwise it is resolved against base_dir
+#   - When fallback_base_dir is not None and the base_dir-resolved path does not exist on the filesystem, the entry is resolved against fallback_base_dir as a secondary base; if the fallback candidate also does not exist, the base_dir candidate is used (and will be checked later)
+#   - For each resolved path (the first existing candidate, or the base_dir candidate if none exist):
+#     * If the path does not exist on the filesystem, a ValueError is raised with a message indicating the raw input path
+#     * If the path exists but is not a regular file, a ValueError is raised with a message indicating the raw input path
+#     * If the path exists but its file extension is not in VALID_DOMAIN_KNOWLEDGE_EXTENSIONS, a ValueError is raised with a message listing allowed extensions and the raw input path
+#   - The returned list contains no duplicate entries; deduplication is performed on the real (canonical) path
+#   - The returned list preserves the relative order of first occurrence among the input entries
+#   - If no paths are provided (or all entries are filtered out by deduplication after processing, but note that invalid entries raise errors, so this only applies when input is empty or contains only duplicates of already-seen valid files), returns an empty list
+# [SPEC]
+
+## Caller's current source
+
+```python
+def stage_domain_knowledge_files(proj_dir, work_dir, markdown_paths=None):
+    """Copy user markdown files into fm_agent/spec_prompts/domain_context/.
+
+    When markdown_paths is provided, the staged directory is replaced with exactly
+    those files. When omitted or empty, existing staged files are preserved and
+    listed; this supports resume runs.
+    """
+    if not markdown_paths:
+        return list_staged_domain_knowledge_relpaths(work_dir)
+
+    resolved = resolve_domain_knowledge_paths(
+        markdown_paths,
+        base_dir=proj_dir,
+        fallback_base_dir=os.getcwd(),
+    )
+    target_dir = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR)
+    parent_dir = os.path.dirname(target_dir)
+    tmp_dir = target_dir + ".tmp"
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+    os.makedirs(tmp_dir, exist_ok=True)
+
+    used_names = set()
+    entries = []
+    for source_path in resolved:
+        target_name = _safe_staged_name(source_path, used_names)
+        target_path = os.path.join(tmp_dir, target_name)
+        shutil.copy2(source_path, target_path)
+        rel_to_work = os.path.join(USER_KNOWLEDGE_REL_DIR, target_name).replace(
+            os.sep, "/"
+        )
+        entries.append({
+            "source_path": source_path,
+            "staged_path": f"fm_agent/{rel_to_work}",
+        })
+
+    manifest_path = os.path.join(tmp_dir, USER_KNOWLEDGE_MANIFEST)
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump({"files": entries}, f, indent=2, ensure_ascii=False)
+
+    os.makedirs(parent_dir, exist_ok=True)
+    shutil.rmtree(target_dir, ignore_errors=True)
+    os.replace(tmp_dir, target_dir)
+    return list_staged_domain_knowledge_relpaths(work_dir)
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# resolve_domain_knowledge_paths(markdown_paths, base_dir, fallback_base_dir) -> list[str]
+#   Pre-condition: markdown_paths is a non-empty iterable of path strings;
+#     base_dir and fallback_base_dir are directory paths.
+#   Post-condition: returns a list of resolved absolute file paths. Each path
+#     is derived by resolving a markdown_paths entry against base_dir; if the
+#     resolved path does not exist, the entry is resolved against
+#     fallback_base_dir instead. Only paths that point to existing files are
+#     included in the returned list.
+# [SPLIT]
+# _safe_staged_name(source_path, used_names) -> str
+#   Pre-condition: source_path is an absolute file path; used_names is a
+#     mutable set of filename strings already reserved for the current batch.
+#   Post-condition: returns a filename derived from the basename of source_path
+#     that is unique within used_names. The returned name is added to
+#     used_names; no two calls with the same used_names set return the same
+#     name.
+# [SPLIT]
+# list_staged_domain_knowledge_relpaths(work_dir, prefix="fm_agent") -> list[str]
+#   Pre-condition: work_dir is a directory path where the staging subdirectory
+#     resides.
+#   Post-condition: returns a sorted list of path strings relative to the
+#     project root. Each returned path begins with the given prefix and
+#     corresponds to a domain knowledge file currently present in the staging
+#     directory under work_dir.
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `resolve_domain_knowledge_paths` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `resolve_domain_knowledge_paths` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

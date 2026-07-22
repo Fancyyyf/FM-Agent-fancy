@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all Python files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("python", proj_dir) if cg else {}
+```
+
+Condition A (what the code actually does):
+After execution, the function returns a dictionary. If the call to CodeGraphExtractor.from_proj_dir(proj_dir) returns a truthy value (e.g., a valid extractor instance), the returned dictionary maps each absolute file path of a Python source file under proj_dir that could be opened for reading to a list of (function_name, function_body) tuples representing its top-level functions; files that cannot be opened are omitted. Otherwise, if the extractor could not be initialized (the call returns a falsy value), the function returns an empty dictionary {}. Formally: ∀ proj_dir, cg, result. (cg = CodeGraphExtractor.from_proj_dir(proj_dir) ∧ result = batch_extract(proj_dir)) ⇒ ( (cg is truthy ⇒ result = cg.get_functions_by_file("python", proj_dir) ∧ ∀ p, l. (p,l) ∈ result.items() ⇒ p is an absolute path to a Python file under proj_dir that was successfully read, and l is a list of (func_name, body) pairs for that file) ) ∧ (cg is falsy ⇒ result = {}) ).
+
+Condition B (what the specification requires):
+- Returns a dict where each key is an absolute file path (str) and each value is a list of (function_name: str, function_body: str) tuples.
+  - The returned keys correspond to Python source files (.py) discovered under the project directory.
+  - When the CodeGraph backend cannot index the project directory, returns an empty dict (no entries).
+  - Each tuple's function_name identifies a top-level function or method definition in the corresponding source file.
+  - Each tuple's function_body contains the full source text of the function, including its signature and body.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> object | None
+Pre-condition: proj_dir is a filesystem path to a project root.
+  Post-condition: Returns a CodeGraphExtractor instance configured for the given project, or a falsy value when the backend is unavailable or the project cannot be indexed.
+
+cg.get_functions_by_file(language: str, proj_dir: str) -> dict
+Pre-condition: language is a valid language key string (e.g., "python").
+  Post-condition: Returns a dict mapping absolute file paths to lists of (function_name, function_body) tuples for source files of the given language under proj_dir; files that cannot be opened for reading are omitted.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

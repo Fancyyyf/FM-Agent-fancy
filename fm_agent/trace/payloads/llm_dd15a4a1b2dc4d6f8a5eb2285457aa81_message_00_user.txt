@@ -1,0 +1,85 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::pipeline_setup-py::_collect_project_source_files` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _is_test_file, _iter_project_source_files.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _collect_project_source_files(proj_dir, submodules=None):
+    """Return non-test source files currently present in proj_dir, relative to proj_dir."""
+    files = set()
+    for rel in _iter_project_source_files(proj_dir, submodules):
+        if not _is_test_file(rel):
+            files.add(rel)
+    return files
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/pipeline_setup-py/_collect_project_source_files.py
+#
+# _collect_project_source_files(proj_dir, submodules=None) -> set
+#
+# Pre-condition:
+#   - proj_dir is an existing directory
+#   - submodules is None or an iterable of subdirectory name strings
+#
+# Post-condition:
+#   - Returns a set of relative file paths using "/" as the separator
+#   - Every returned path corresponds to a source file discoverable under one of
+#     the directories scoped by submodules, or under all of proj_dir when
+#     submodules is None
+#   - No returned path identifies a test file
+#   - All returned paths are relative to proj_dir
+#   - The returned set is empty when no discoverable non-test source files exist
+#     under the scoped directories
+#   - The function does not create, modify, delete, or rename any file or directory
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _iter_project_source_files(proj_dir, submodules) -> iterable of str
+#   Pre-condition: proj_dir is an existing directory; submodules is None or an
+#     iterable of subdirectory name strings
+#   Post-condition: Yields relative file paths using "/" as the separator for
+#     all discoverable source files under the directories scoped by submodules,
+#     or under all of proj_dir when submodules is None
+# [SPLIT]
+# _is_test_file(rel) -> bool
+#   Pre-condition: rel is a string representing a relative file path
+#   Post-condition: Returns True when rel identifies a test file; returns False
+#     otherwise
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_is_test_file, _iter_project_source_files) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_is_test_file, _iter_project_source_files). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

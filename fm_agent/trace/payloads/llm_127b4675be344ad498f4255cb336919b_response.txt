@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None\n#   Pre-condition: proj_dir is a valid path to the project root.\n#   Post-condition: Returns a configured codegraph extractor instance, or None if the\n#     codegraph backend is not available or cannot index the project.\n# [SPLIT]\n# cg.get_function_spans(language_key: str, filepath: str) -> list[tuple] | None\n#   Pre-condition: cg is a successfully constructed CodeGraphExtractor; language_key is a\n#     recognized language identifier; filepath is an absolute filesystem path to a source\n#     file residing within the project root.\n#   Post-condition: Returns a list of (name, start_line, end_line) tuples for each function\n#     in the file with 0-indexed inclusive line numbers, or None when the file is not\n#     indexed by the backend.\n# [INFO]"
+}

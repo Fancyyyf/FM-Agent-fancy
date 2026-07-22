@@ -13,8 +13,8 @@
 
 # [INFO]
 # _phase_plan_complete(work_dir) -> bool
-#   Pre-condition: work_dir is a valid directory path.
-#   Post-condition: Returns True if phases.json exists as a regular file under work_dir; returns False otherwise.
+#   Pre-condition: work_dir is a string path to an existing directory.
+#   Post-condition: Returns True if phases.json exists as a regular file under work_dir, its content parses as valid JSON, and it conforms to the required schema; returns False otherwise.
 # [SPLIT]
 # _domain_context_complete(work_dir) -> bool
 #   Pre-condition: work_dir is a valid directory path.

@@ -19,6 +19,9 @@
 # [SPEC]
 
 # [INFO]
+# _nonempty_string(value) -> bool
+#   Pre-condition: (no requirements)
+#   Post-condition: Returns True when value is a string and, after removing all leading and trailing whitespace characters, the resulting string is non-empty; returns False otherwise, including when value is not a string or when it is a string that consists solely of whitespace characters or is empty
 # _load_spec_check_json(response)
 #   Pre-condition: response is a string
 #   Post-condition: Returns the Python value produced by deserializing response as JSON text; raises json.JSONDecodeError if response is not valid JSON

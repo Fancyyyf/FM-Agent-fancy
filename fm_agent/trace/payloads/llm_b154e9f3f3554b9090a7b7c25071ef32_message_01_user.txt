@@ -1,0 +1,47 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _extract_marked_section(lines, marker):
+Line 2:     start_idx = None
+Line 3:     end_idx = None
+Line 4:     collected_lines = []
+Line 5:     for index, line in enumerate(lines):
+Line 6:         marker_match = _SECTION_MARKER_RE.match(line)
+Line 7:         if marker_match and marker_match.group(1) == marker:
+Line 8:             if start_idx is None:
+Line 9:                 start_idx = index
+Line 10:             else:
+Line 11:                 end_idx = index
+Line 12:                 break
+Line 13:             continue
+Line 14:         if start_idx is not None and end_idx is None:
+Line 15:             collected_lines.append(_strip_section_comment_prefix(line))
+Line 16:     section_text = '\n'.join(collected_lines).strip() if end_idx is not None else ""
+Line 17:     return section_text, start_idx, end_idx
+```
+
+Condition A (what the code actually does):
+The function returns a tuple (section_text, start_idx, end_idx). Let M = {i | 0 <= i < len(lines) and _SECTION_MARKER_RE.match(lines[i]) and _.group(1) == marker}. If M is empty, then start_idx = None, end_idx = None, section_text = "". If |M| == 1, let a be the unique element; then start_idx = a, end_idx = None, section_text = "". If |M| >= 2, let a = min(M), b = min{x in M | x > a}; then start_idx = a, end_idx = b, and section_text = ('\n'.join(_strip_section_comment_prefix(lines[i]) for i from a+1 to b-1)).strip() (empty string if no such i). The loop stops after finding the second marker, ignoring any subsequent markers.
+
+Condition B (what the specification requires):
+- Returns a tuple (section_text, start_idx, end_idx)
+  - start_idx is the 0-based index of the first line in lines that matches
+    the section-marker format with the given marker value, or None if no such
+    line exists
+  - When start_idx is not None: end_idx is the 0-based index of the second
+    line in lines that matches the section-marker format with the given marker
+    value, or None if fewer than two matching lines exist
+  - When end_idx is None: section_text is the empty string
+  - When end_idx is not None: section_text is the concatenation of all lines
+    between start_idx and end_idx (exclusive of both), where each line has its
+    comment prefix removed, lines are joined by a newline character, and the
+    result has leading and trailing whitespace stripped
+
+Additional context:
+_strip_section_comment_prefix(line: str) -> str
+Pre: line is a string
+  Post: Returns line with leading comment prefix stripped (preserving leading whitespace)
+  Comment prefixes: //, --, #, % (with optional trailing space)
+  If no prefix, returns line unchanged.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

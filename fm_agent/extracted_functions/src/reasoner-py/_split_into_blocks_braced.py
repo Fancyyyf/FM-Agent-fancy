@@ -20,7 +20,7 @@
 #   Post-condition: Returns a list of strings, each being a contiguous, non-overlapping segment of the function body split at indentation-level boundaries. The ordered concatenation of all returned strings joined with newline characters reconstructs the original function body text after stripping leading and trailing whitespace
 # [SPLIT]
 # _compute_brace_depth_per_line(stripped_lines) -> list[int]
-#   Pre-condition: stripped_lines is a non-empty list of strings, each containing one line of function body text without "Line N:" prefixes
+#   Pre-condition: stripped_lines is a non-empty list of strings, each containing one line of function body text without "Line N:" prefixes, and the input represents a function body with balanced braces (every '}' has a matching '{' earlier, so the cumulative depth never becomes negative)
 #   Post-condition: Returns a list of non-negative integers with length equal to stripped_lines. Each element at position i is the net brace count (opening braces '{' minus closing braces '}') accumulated from line 0 through line i inclusive, where braces appearing inside string literals and comments do not contribute to the count
 # [INFO]
 

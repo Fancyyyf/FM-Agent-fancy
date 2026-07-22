@@ -1,0 +1,119 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::languages::codegraph-py::try_codegraph_init` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _codegraph_cmd, _warn_on_codegraph_version_mismatch, run.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def try_codegraph_init(proj_dir: str, force: bool = True) -> None:
+    """Build the codegraph index for proj_dir with `codegraph init`.
+
+    By default (``force=True``) any existing index is discarded and rebuilt, so
+    the index always reflects the current working tree rather than whatever code
+    was present when it was last built. This is the safe default: callers read
+    function bodies and spans from the index, and a stale one (e.g. after an
+    incremental run's tree changed, or after `_trim_project_in_place` edited the
+    sources) would yield boundaries for the wrong code. `codegraph init` on its
+    own no-ops when `.codegraph/` already exists, so a rebuild requires clearing
+    it first.
+
+    Pass ``force=False`` to keep an existing index and only build when it is
+    absent — an opt-in optimization for callers that know the tree is unchanged
+    since the index was built.
+
+    Silently skips when codegraph is not installed so the pipeline falls back
+    to the regex-based extractor without any error.
+    """
+    codegraph_dir = os.path.join(proj_dir, ".codegraph")
+    db_path = os.path.join(codegraph_dir, "codegraph.db")
+    if os.path.exists(db_path):
+        if not force:
+            return
+        # Existing index may reflect stale sources; remove it so `codegraph init`
+        # rebuilds against the current tree instead of skipping.
+        shutil.rmtree(codegraph_dir, ignore_errors=True)
+        print("[Pipeline] Rebuilding codegraph index for current working tree...")
+    else:
+        print("[Pipeline] Building codegraph index...")
+    cmd = _codegraph_cmd()
+    _warn_on_codegraph_version_mismatch(cmd)
+    try:
+        result = subprocess.run(
+            [cmd, "init"], cwd=proj_dir, capture_output=True, text=True
+        )
+    except FileNotFoundError:
+        return  # codegraph not installed
+    if result.returncode == 0:
+        print("[Pipeline] codegraph index built.")
+    else:
+        logging.warning(
+            "codegraph init failed (non-fatal, falling back to regex): %s",
+            result.stderr[:300],
+        )
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/languages/codegraph-py/try_codegraph_init.py
+#
+# try_codegraph_init(proj_dir: str, force: bool = True) -> None
+#
+# Pre-condition:
+#   - proj_dir is a non-empty string representing a directory path on the filesystem.
+#   - force is True or False.
+#
+# Post-condition:
+#   - Returns None; never raises an exception.
+#   - When the `codegraph` executable is not found on the system PATH: returns
+#     immediately without creating, modifying, or removing any files under proj_dir.
+#   - When proj_dir/.codegraph/codegraph.db exists AND force is False: returns
+#     immediately; the existing index file and its parent directory are preserved.
+#   - Otherwise (force is True, or proj_dir/.codegraph/codegraph.db does not exist):
+#     - If a proj_dir/.codegraph/ directory exists, it is removed prior to
+#       rebuilding (recursively, with errors ignored).
+#     - `codegraph init` is executed with proj_dir as its working directory.
+#     - If `codegraph init` exits with code 0: proj_dir/.codegraph/codegraph.db
+#       exists after return and reflects the file tree of proj_dir at the time
+#       `codegraph init` was invoked.
+#     - If `codegraph init` exits with a non-zero code: a warning is logged
+#       whose message includes the first 300 characters of stderr; the function
+#       returns and the contents of proj_dir/.codegraph/ are unspecified.
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# (no callees)
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_codegraph_cmd, _warn_on_codegraph_version_mismatch, run) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_codegraph_cmd, _warn_on_codegraph_version_mismatch, run). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

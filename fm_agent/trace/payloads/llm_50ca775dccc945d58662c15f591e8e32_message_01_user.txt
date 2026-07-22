@@ -1,0 +1,68 @@
+Programming language: Python
+
+Pre-condition:
+- func is a non-empty string containing the body of a function, each line optionally prefixed with "Line N: " followed by the source text
+  - language is a string identifying the source programming language
+
+Code block:
+```python
+Line 1: def _split_into_blocks_braced(func, language):
+Line 2:     """
+Line 3:     Split function body into blocks respecting syntactic boundaries.
+Line 4:     """
+Line 5:     python_like = {"python"}
+Line 6:     if language.lower() in python_like:
+Line 7:         return _split_into_blocks(func)
+Line 8:     raw_lines = func.strip().split("\n")
+Line 9:     total = len(raw_lines)
+Line 10:     if total <= GRANULARITY:
+Line 11:         return [func.strip()]
+Line 12:     # normalize prefix
+Line 13:     stripped_lines = []
+Line 14:     for line in raw_lines:
+Line 15:         if line.startswith("Line "):
+Line 16:             colon = line.find(":", 5)
+Line 17:             if colon != -1:
+Line 18:                 line = line[colon + 1:].lstrip()
+Line 19:         stripped_lines.append(line)
+Line 20:     # compute brace depth
+Line 21:     depths = _compute_brace_depth_per_line(stripped_lines)
+Line 22:     # define entry depth 
+Line 23:     entry_depth = depths[0] if total > 0 else 0
+Line 24:     if entry_depth == 0:
+Line 25:         entry_depth = next((d for d in depths if d > 0), 0)
+Line 26:     if entry_depth == 0:
+Line 27:         # fallback to safe splitter
+Line 28:         return _split_into_blocks(func)
+Line 29:     # greedy safe splitting
+Line 30:     blocks = []
+Line 31:     i = 0
+Line 32:     while i < total:
+Line 33:         remaining = total - i
+Line 34:         if remaining <= GRANULARITY * 2:
+Line 35:             blocks.append("\n".join(raw_lines[i:]))
+Line 36:             break
+Line 37:         target = i + GRANULARITY
+Line 38:         split_point = -1
+Line 39:         # ONLY split when we return to entry depth
+Line 40:         for j in range(target, total):
+Line 41:             if depths[j] == entry_depth:
+Line 42:                 split_point = j
+Line 43:                 break
+Line 44:         if split_point == -1:
+Line 45:             blocks.append("\n".join(raw_lines[i:]))
+Line 46:             break
+Line 47:         blocks.append("\n".join(raw_lines[i:split_point + 1]))
+Line 48:         i = split_point + 1
+Line 49:     return blocks
+```
+
+Additional context:
+_split_into_blocks(func) -> list[str]
+Pre-condition: func is a non-empty string containing the body of a function
+  Post-condition: Returns a list of strings, each being a contiguous, non-overlapping segment of the function body split at indentation-level boundaries. The ordered concatenation of all returned strings joined with newline characters reconstructs the original function body text after stripping leading and trailing whitespace
+
+_compute_brace_depth_per_line(stripped_lines) -> list[int]
+Pre-condition: stripped_lines is a non-empty list of strings, each containing one line of function body text without "Line N:" prefixes, and the input represents a function body with balanced braces (every '}' has a matching '{' earlier, so the cumulative depth never becomes negative)
+  Post-condition: Returns a list of non-negative integers with length equal to stripped_lines. Each element at position i is the net brace count (opening braces '{' minus closing braces '}') accumulated from line 0 through line i inclusive, where braces appearing inside string literals and comments do not contribute to the count
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

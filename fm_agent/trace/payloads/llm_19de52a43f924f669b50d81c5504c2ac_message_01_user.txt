@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+- field is a pydantic model field descriptor with field_name as its
+    string key.
+  - self represents a configuration source that may resolve field values
+    from one or more underlying layers.
+
+Code block:
+```python
+Line 1:     def get_field_value(self, field, field_name):
+Line 2:         # Abstract on the base class but unused: __call__ returns the whole merged
+Line 3:         # mapping, so pydantic never falls back to per-field extraction.
+Line 4:         raise NotImplementedError
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

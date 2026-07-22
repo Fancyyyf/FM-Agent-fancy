@@ -23,11 +23,13 @@
 #     project, or None when the backend cannot be initialized for the given directory.
 # [SPLIT]
 # CodeGraphExtractor.get_function_spans(language, filepath) -> list of (str, int, int) or None
-#   Pre-condition: language is a valid language key string; filepath is a file path string
-#     pointing to a source file.
+#   Pre-condition: language is a non-empty language key string; filepath is an absolute
+#     filesystem path to a source file residing under the project root.
 #   Post-condition: Returns a list of (name, start_idx, end_idx) tuples for each function
-#     definition found in the file, where indices are 0-indexed inclusive positions, or None
-#     if the file is not indexed by the codegraph backend.
+#     definition found in the file, ordered by ascending start_idx (0-indexed inclusive).
+#     Returns None when the language is not recognized, the file is not indexed, the file
+#     contains no function definitions, or the file path cannot be resolved, signalling the
+#     caller to fall back to regex-based extraction.
 # [INFO]
 
 def function_spans(proj_dir: str, filepath: str):

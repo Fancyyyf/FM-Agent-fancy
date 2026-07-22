@@ -1,0 +1,35 @@
+Programming language: Python
+
+Pre-condition:
+- self._proc is not None and self._proc.stdin is not None and open for
+    writing
+  - message is a dict representing a JSON-serializable JSON-RPC message
+
+Code block:
+```python
+Line 1:     def _send(self, message: dict):
+Line 2:         if self._proc is None or self._proc.stdin is None:
+Line 3:             raise RuntimeError("ELP client is not running")
+Line 4:         payload = json.dumps(message, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+Line 5:         frame = f"Content-Length: {len(payload)}\r\n\r\n".encode("ascii") + payload
+Line 6:         with self._write_lock:
+Line 7:             self._proc.stdin.write(frame)
+Line 8:             self._proc.stdin.flush()
+```
+
+Additional context:
+self._proc.stdin.write(data: bytes)
+Pre-condition: The subprocess stdin pipe associated with self._proc is
+    open and writable; data is a bytes object
+  Post-condition: data is buffered for delivery to the subprocess's standard
+    input
+
+self._proc.stdin.flush()
+Pre-condition: self._proc.stdin is a _StdoutTee whose _console is an open,
+    writable stream that supports flush, and whose _log_stream is a writable
+    stream (may be closed) that supports flush
+  Post-condition: All buffered data written via this tee's write operations
+    is pushed to the console; data is pushed to the log stream if and only if
+    the log stream is open; no exception is raised if the log stream is
+    closed, and the console flush succeeds regardless
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

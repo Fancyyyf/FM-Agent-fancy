@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::get_functions_by_file.py",
+  "function_name": "get_functions_by_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file.md",
+  "probe_stdout": "CONFIRMED — spec requires absolute paths as dict keys, but passing a relative proj_dir='../../probe_cg_bq8naau0' produced relative key: ['../../probe_cg_bq8naau0/test_module.py'] instead of expected absolute key '/tmp/probe_cg_bq8naau0/test_module.py'\n",
+  "trigger_summary": "Passing a relative proj_dir to get_functions_by_file produces relative filesystem path keys in the returned dict instead of absolute paths as the specification requires."
+}

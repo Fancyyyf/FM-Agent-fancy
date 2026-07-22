@@ -26,13 +26,13 @@
 
 # [INFO]
 # resolve_domain_knowledge_paths(markdown_paths, base_dir, fallback_base_dir) -> list[str]
-#   Pre-condition: markdown_paths is a non-empty iterable of path strings;
-#     base_dir and fallback_base_dir are directory paths.
-#   Post-condition: returns a list of resolved absolute file paths. Each path
-#     is derived by resolving a markdown_paths entry against base_dir; if the
-#     resolved path does not exist, the entry is resolved against
-#     fallback_base_dir instead. Only paths that point to existing files are
-#     included in the returned list.
+#   Pre-condition: markdown_paths is an iterable of path strings, potentially nested;
+#     base_dir and fallback_base_dir are directory paths (fallback_base_dir may be None).
+#   Post-condition: raises ValueError if any resolved path does not exist, is not a
+#     regular file, or has an invalid extension. Otherwise returns a list of
+#     absolute canonical file paths, one per distinct valid input, preserving
+#     first-occurrence order. Paths are flattened, home-expanded, and resolved
+#     against base_dir (or fallback_base_dir as a secondary base).
 # [SPLIT]
 # _safe_staged_name(source_path, used_names) -> str
 #   Pre-condition: source_path is an absolute file path; used_names is a

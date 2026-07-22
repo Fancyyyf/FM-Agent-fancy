@@ -29,13 +29,13 @@
 # [SPLIT]
 # resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir) -> list[str]
 #   Pre-condition: paths is a list of path strings; base_dir and fallback_base_dir are directory paths
-#   Post-condition: returns a list of absolute file paths, with each relative path resolved first against base_dir then fallback_base_dir; only paths that resolve to existing files are included; duplicates are removed
+#   Post-condition: resolves each path to an absolute file path, expanding user home directories and using base_dir/fallback_base_dir for relative paths; if a resolved path does not exist, is not a file, or its extension is not a valid domain-knowledge markdown extension, a ValueError is raised; returns a list of absolute canonical file paths with no duplicates, preserving order of first occurrence; returns an empty list if no paths are given
 # [INFO]
 
 def collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None):
     """Collect markdown paths from CLI values plus FM_AGENT_DOMAIN_KNOWLEDGE."""
     paths = []
-    paths.extend(_split_env_paths(os.environ.get("FM_AGENT_DOMAIN_KNOWLEDGE")))
+    paths.extend(_split_env_paths(settings.runtime.domain_knowledge_paths))
     paths.extend(_flatten_paths(cli_paths))
     return resolve_domain_knowledge_paths(
         paths,

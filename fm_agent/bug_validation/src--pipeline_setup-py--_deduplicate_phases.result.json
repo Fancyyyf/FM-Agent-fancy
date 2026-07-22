@@ -1,11 +1,1 @@
-{
-  "id": "src--pipeline_setup-py--_deduplicate_phases",
-  "source_file": "src/pipeline_setup.py",
-  "function_name": "_deduplicate_phases",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
-  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_deduplicate_phases.py",
-  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_deduplicate_phases.md",
-  "probe_stdout": "CONFIRMED — actual: ['a.py', 'b.py'] | expected: ['a.py', 'b.py', 'a.py']\nmodified_modules: []\n",
-  "trigger_summary": "When a source file appears twice within the same module's source_files list, the function incorrectly removes the second occurrence because the global seen set does not distinguish intra-module duplicates from cross-module duplicates."
-}
+{"id": "src--pipeline_setup-py--_deduplicate_phases", "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/src/pipeline_setup.py", "function_name": "_deduplicate_phases", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_deduplicate_phases.py", "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_deduplicate_phases.md", "probe_stdout": "CONFIRMED — duplicate removed_files for module_b: actual=['a.py', 'a.py'] | expected (unique)=['a.py']\n", "trigger_summary": "When a module's source_files contains duplicate entries of a file that is entirely removed, removed_files preserves those duplicates instead of deduplicating them."}

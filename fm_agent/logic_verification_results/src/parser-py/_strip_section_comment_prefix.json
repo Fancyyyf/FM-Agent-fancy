@@ -1,10 +1,5 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/parser-py/_strip_section_comment_prefix.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "- Returns a string where any leading comment prefix at the start of the line\n    (after optional leading whitespace) has been removed\n  - A recognized comment prefix consists of one or more consecutive characters\n    from the set {`/`, `#`, `-`, `%`}, all of the same character, optionally\n    followed by a single whitespace character\n  - Leading whitespace characters that precede the comment prefix are preserved\n    unchanged in the returned string\n  - When the line does not begin with (optional leading whitespace followed by)\n    a recognized comment prefix, the line is returned unchanged",
-    "actual_behavior": "Returns a string equal to `re.sub(r'^(\\s*)(?://+|#+|--+|%+)\\s?', r'\\1', line)`. Specifically, if `line` starts with any amount of whitespace followed by one or more comment characters from the set `//`, `#`, `--`, `%` and optionally a single whitespace character, then the matched comment prefix and optional whitespace are removed, leaving only the leading whitespace; otherwise the original `line` is returned unchanged.",
-    "code_evidence": "Line 2:     return re.sub(r'^(\\s*)(?://+|#+|--+|%+)\\s?', r'\\1', line)",
-    "trigger_condition": "The code requires at least two '/' or '-' characters to recognize a comment prefix, but the specification allows a single '/' or '-'. Input ' / comment' contains a single '/' after leading whitespace, which should be removed per spec but is not removed by the code."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/parser-py/_strip_section_comment_prefix.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

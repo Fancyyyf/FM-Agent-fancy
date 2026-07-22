@@ -1,162 +1,190 @@
-Phase 6 — Alternative Pipeline Entry Points
-==================================================
+# Phase 6: Alternative Pipeline Entry Points — Types and Invariants
 
-This phase provides two alternative pipeline entry modes: (1) entry-point-scoped
-reasoning that traces the call graph from a specific entry function, and (2)
-incremental change analysis that re-checks only modified code against a previous
-run baseline.
+## Overview
 
-Key Types and Structs
----------------------
+Phase 6 provides two alternative pipeline modes: entry-point-scoped reasoning
+that traces the call graph from a user-specified entry function, and incremental
+analysis that diffs against a previous run to re-analyze only changed/affected
+functions.
 
-Entry Pipeline (src/entry_reasoning_pipeline.py):
-  Reuses: CallEdge, AgentCommand, TracedOpenCodeProcess, phases.json, FQN system
+## Key Types — Entry Pipeline (entry_reasoning_pipeline.py)
 
-  Pipeline flow:
-    1. _select_functions_by_source() → (all_by_source, keep_by_source)
-       Makes a throwaway copy of proj_dir, extracts all functions, builds call graph,
-       BFS from entry_func to find reachable functions, optionally restricts to chains
-       ending at end_funcs. Returns two source-file-keyed dicts of function names.
-       Discards the selection copy before returning.
+### Call Graph Restriction
 
-    2. _trim_project_in_place() on a separate run copy:
-       Deletes unselected function bodies from source files in place. Files with zero
-       selected functions are deleted outright. Non-function context lines preserved.
+**`_restrict_to_chains(call_graph, entry_func, end_funcs) → dict[str, list[str]]`:**
+Returns only functions on call chains from `entry_func` to any `end_func`.
+- Builds reverse adjacency (callers), reverse-BFS from end_funcs.
+- Prunes to on-chain functions; end_funcs become terminal.
+- If no chain exists: raises `ValueError`.
 
-    3. Runs standard run_pipeline() on the trimmed copy.
+### Source-to-Function Mapping
 
-    4. Copies generated fm_agent/ back to original proj_dir; discards run copy.
+**`_extracted_file_to_source_rel(extracted_rel) → str`:**
+Inverse of extraction layout. Finds `<base>-<ext>` directory, converts to
+`<base>.<ext>`. Example: `src/engine/loader-cpp/loadData.cpp` → `src/engine/loader.cpp`
 
-  all_by_source: dict[str, set[str]]
-    source_rel_path → set of ALL function names in that file.
-  keep_by_source: dict[str, set[str]]
-    source_rel_path → set of ONLY the selected (on-chain) function names.
+**`_fqn_to_ident(fqn) → str`:**
+Extracts class-qualified identifier from FQN tail after `<base>-<ext>` component.
+`src::storage-cpp::LocalStorage::Flush` → `LocalStorage::Flush`
 
-  Source trimming:
-    _trim_source_file(filepath, keep_names, proj_dir=None) → (kept, removed)
-    _trim_project_in_place(proj_dir, all_by_source, keep_by_source) → None
+**`_entry_func_source_rel(entry_func) → str`:**
+Maps entry FQN to source file: `src::engine::loader-cpp::loadData` → `src/engine/loader.cpp`
 
-  Function-to-source inverse:
-    _entry_func_source_rel(fqn) → source_rel_path
-      "src::engine::loader-cpp::loadData" → "src/engine/loader.cpp"
-    _extracted_file_to_source_rel(extracted_rel) → source_rel_path
-      "src/engine/loader-cpp/loadData.cpp" → "src/engine/loader.cpp"
+### Source Trimming
 
-  Run directory convention:
-    Selection copy: proj_dir + ".fm-entry-select" (discarded after selection)
-    Run copy:        proj_dir + ".fm-entry-run" (discarded after pipeline)
-    Both are siblings of the real proj_dir.
+**`_trim_source_file(filepath, keep_names, proj_dir=None) → (int, int)`:**
+Deletes function bodies NOT in `keep_names`. Uses `_function_spans` (codegraph
+when proj_dir given, regex fallback). Preserves non-function lines. Returns
+`(kept, removed)`.
 
-  Invariants:
-  - proj_dir is NEVER modified. All mutations happen on copies.
-  - fm_agent/ is copied back from the run directory even on pipeline failure.
-  - The entry function's source file is exempted from test-file heuristics.
-  - BUG_VALIDATION_MAX_RETRIES is set to 0 in entry mode (no re-validation retries).
-  - The pipeline force-includes the entry function's source file in phases.json.
+**`_trim_project_in_place(proj_dir, all_by_source, keep_by_source)`:**
+For each source: delete if no functions selected; otherwise trim in place.
 
-Incremental Pipeline (src/incremental_reasoner.py):
-  Reuses: scope.py ranking, generate_topdown_layers, extract, verification, etc.
+### Entry Pipeline Core
 
-  Pipeline stages (10 total):
-    1. Check for previous full run (phases.json + complete extracted_functions/).
-       Falls back to full run_pipeline() if no baseline exists.
-    2. Load developer intent from intent file.
-       Wipes previous verification artifacts (logic_verification_results/,
-       bug_validation/).
-    3. Re-generate phases.json for current working tree (incremental mode).
-    4. Capture existing [SPEC]/[INFO] blocks, re-extract functions, reapply specs.
-    5. Collect changed functions via git diff (old_commit_id vs working tree).
-       Remove stale extracted files for removed functions.
-    6. Collect file list.
-    7. Generate top-down layers.
-    8. Collect relevant function scope via 3-pass selection.
-    9. Update specs for (a) changed functions and (b) intent-relevant functions.
-    10. Verify changed and affected functions; run bug validation.
+**`run_entry_pipeline(proj_dir, entry_func, end_funcs, resume, domain_knowledge_files, one_phase, extra_call_edges_path, only_spec)`:**
+1. **Selection**: Extract all functions to temp workspace, build call graph, BFS
+   from entry, restrict to chains. Discard temp workspace.
+2. **Copy**: Copy proj_dir to `<proj_dir>.fm-entry-run` (excluding .git).
+3. **Trim**: Delete unrelated functions and source files from copy.
+4. **Run**: Invoke standard `run_pipeline()` on trimmed copy.
+5. **Copy-back**: Copy `fm_agent/` back to original proj_dir, discard run dir.
 
-  Changed functions (from _collect_changed_functions):
-    {abs_source_path: {"added": [func_names], "removed": [func_names],
-                       "modified": [func_names]}}
-    Detection: git diff --name-only + git ls-files --others, then extract and
-    compare function bodies between old commit and current working tree.
+**Invariants:**
+- `proj_dir` never modified; all mutations on run copy.
+- Run directory removed after copy-back (even on failure, via finally).
+- Bug validation retries set to 0 in entry mode.
+- Entry function's source file exempted from test-file filtering.
 
-  Scope selection (collect_relevent_function_scope):
-    Three passes:
-    Pass 1 — Module selection: direct LLM call rates module descriptions by
-      relevance to intent. Returns [{phase, name}].
-    Pass 2 — File selection: per relevant module, OpenCode reads source files
-      and writes relevant files to JSON. Fallback: full module file list.
-    Pass 3 — Function selection: rank_functions_in_file from scope.py ranks
-      functions within each chosen file. Returns top-ranked per file.
+### Selection Functions
 
-    Returns list of extracted-function relative paths ordered by descending
-    relevance score.
+**`_select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edges) → (defaultdict, defaultdict)`:**
+Returns `(all_by_source, keep_by_source)` mapping source rel → function idents.
 
-  Spec update (_update_specs_for_intent):
-    For functions that are changed OR intent-relevant:
-    - Direct LLM call decides whether [SPEC] and/or [INFO] need updating.
-    - Returns spec-update JSON: {spec_updated: bool, new_spec: str,
-      info_updated: bool, new_info: str, updated_callees: [str]}
-    - When a callee's spec changes, its callers' [INFO] blocks are also
-      checked via cascading caller-info updates.
+**`_enumerate_source_files(proj_dir) → list[str]`:**
+Lists all supported, non-test source files (skips fm_agent/ and .git/).
 
-  Updated specs record:
-    fm_agent/incremental_updated_specs.json:
-    {"updated_specs": [extracted_relative_paths]}
+## Key Types — Incremental Reasoner (incremental_reasoner.py)
 
-  Verification targets (_verify_incremental_functions):
-    Verifies functions that:
-    1. Are changed (added/modified), OR
-    2. Have updated specs, OR
-    3. Have a callee whose spec was updated (cascading impact)
-    Uses streaming_reasoner but only on the affected subset.
+### Changed Function Detection
 
-  StdoutTee class:
-    Wraps sys.stdout to mirror bare print() output to the pipeline log file
-    (fm_agent/incremental_<YYYYmmdd_HHMMSS>.log), so shared helpers' progress
-    output is captured alongside logging.* records.
+**`_collect_changed_functions(proj_dir, old_commit_id, submodules=None) → dict[str, dict]`:**
+Returns per-absolute-path change info:
+```python
+{
+    "/abs/path/to/file.py": {
+        "added": ["new_func_1"],
+        "removed": ["old_func"],
+        "modified": ["changed_func"]
+    }
+}
+```
 
-Function Signatures (Entry Points)
-----------------------------------
+Algorithm: git diff + ls-files, filter by extension/test/workspace, extract
+functions from old commit and working tree, compare by source text.
 
-src/entry_reasoning_pipeline.py:
-  run_entry_pipeline(proj_dir, entry_func=None, end_funcs=None, resume=False,
-                     domain_knowledge_files=None, one_phase=False,
-                     extra_call_edges_path=None, only_spec=False) → None
-    Main entry-point-scoped pipeline orchestrator.
+**Invariants:**
+- Functions compared by source text, not just name.
+- New file: all functions marked "added". Deleted file: all marked "removed".
 
-  _select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edges=None)
-    → (all_by_source: dict[str,set[str]], keep_by_source: dict[str,set[str]])
+### Function Target Resolution
 
-  _restrict_to_chains(call_graph, entry_func, end_funcs) → dict[str, list[str]]
-    Prunes call graph to only functions on a path from entry_func to some end_func.
+**`_modified_function_targets(proj_dir, modified_functions) → dict[str, str]`:**
+Maps FQN → extracted file path. Handles bare names from regex detector by
+walking function directory and matching by bare method tail.
 
-src/incremental_reasoner.py:
-  run_incremental_pipeline(proj_dir, intent_file_path, old_commit_id,
-                           domain_knowledge_files=None, submodules=None,
-                           one_phase=False, extra_call_edges_path=None)
-    → list[string] (confirmed buggy file paths)
-    Main incremental pipeline orchestrator.
+### Spec Management
 
-  check_last_run_existence(proj_dir, submodules=None) → bool
-  extract_existing_specs(proj_dir) → dict[str, {"spec": str, "info": str?}]
-  _collect_changed_functions(proj_dir, old_commit_id, submodules=None)
-    → dict[str, {"added": [str], "removed": [str], "modified": [str]}]
-  collect_relevent_function_scope(proj_dir, developer_intent, changed_functions,
-                                  range=None) → list[str]
+**`extract_existing_specs(proj_dir) → dict[str, dict]`:**
+Captures [SPEC]/[INFO] blocks from all specced files before re-extraction:
+```python
+{"rel/path": {"spec": "<full [SPEC] block>", "info": "<full [INFO] block> or None"}}
+```
 
-Config Parameters:
-  BUG_VALIDATION_MAX_RETRIES = 0 in entry pipeline (no re-validation)
-  OPENCODE_SETUP_MODEL used for all selection/update OpenCode calls
-  MAX_WORKERS (10) for concurrent reasoning
+**`_reapply_existing_specs(proj_dir, specs) → int`:**
+Prepends captured headers onto re-extracted files. Skips already-specced files.
+Returns number of files updated.
 
-Invariants
-----------
-- Entry pipeline: proj_dir is read-only; all mutations occur in temporary copies.
-- Incremental pipeline: requires a completed full run baseline (complete
-  extracted_functions/ with all files specced).
-- Incremental mode falls back to a full run when no baseline exists.
-- Changed-function detection is language-aware: only functions in EXT_TO_LANG
-  source files are compared.
-- Stale extracted files for removed functions are cleaned up before
-  verification.
-- Incremental verification only processes the affected subset, not all functions.
+**`_update_specs_for_intent(proj_dir, work_dir, developer_intent, changed_functions, spec_files, extra_call_edges) → list[str]`:**
+Re-generates specs for changed functions and intent-relevant functions. Uses
+LLM calls to decide if [SPEC]/[INFO] needs updating, generate new text,
+propagate callee changes to callers' [INFO] blocks.
+
+### Validation Types
+
+**`_validate_spec_update(data)`:**
+```python
+{"spec_updated": bool, "new_spec": str, "info_updated": bool,
+ "new_info": str, "updated_callees": list[str]}
+```
+`new_spec` non-empty when `spec_updated`; `new_info` non-empty when `info_updated`.
+
+**`_validate_caller_info_update(data)`:**
+```python
+{"info_updated": bool, "new_info": str}
+```
+`new_info` non-empty when `info_updated`.
+
+**`_validate_module_selection(data)`:**
+```python
+[{"phase": int, "name": str}, ...]
+```
+
+### Scope Selection
+
+**`collect_relevent_function_scope(proj_dir, developer_intent, changed_functions, range=None) → list[str]`:**
+
+Three-pass narrowing:
+1. **Module selection** — LLM picks relevant modules from descriptions.
+2. **File selection** — OpenCode picks relevant files per module.
+3. **Function selection** — `rank_functions_in_file` ranks by heuristic scoring.
+
+Returns extracted function file paths (relative to `extracted_functions/`),
+ordered by descending relevance.
+
+### Incremental Pipeline Stages
+
+```
+[1/10]  Check previous full run existence
+[2/10]  Load developer intent
+[3/10]  Regenerate phases.json (incremental mode)
+[4/10]  Re-extract functions and restore previous specs
+[5/10]  Collect changed functions vs. base commit
+[5b]    Delete stale extracted files for removed functions
+[6/10]  Collect file list
+[7/10]  Generate topdown layers
+[8/10]  Collect functions relevant to developer intent (scope)
+[9/10]  Update specs for changed and relevant functions
+[10/10] Verify changed and affected functions
+```
+
+### `_verify_incremental_functions()`
+
+Verifies functions where: (1) function changed, (2) spec updated, or (3) callee
+spec changed. Then re-checks callers whose callee specs changed (propagation).
+
+### `_StdoutTee`
+
+Wraps `sys.stdout` to mirror `print()` output to both console and log file stream.
+
+### `_setup_incremental_logging(work_dir) → str`
+
+Configures per-run logging: FileHandler at `fm_agent/incremental_<timestamp>.log`,
+StreamHandler to stdout, stdout tee for shared helpers' output.
+
+## Entry Points
+
+### `run_entry_pipeline(proj_dir, entry_func=None, end_funcs=None, ...)`
+Entry-point-scoped reasoning. Traces call graph, trims project, runs pipeline on
+trimmed copy, copies results back.
+
+### `run_incremental_pipeline(proj_dir, intent_file_path, old_commit_id, ...) → list[str]`
+Incremental analysis. Diffs against previous run, scopes to developer intent,
+updates specs, re-verifies affected functions. Returns buggy file paths.
+
+### `check_last_run_existence(proj_dir, submodules=None) → bool`
+Checks whether a completed full pipeline run exists. Requires phases.json and
+all extracted functions to have [SPEC]/[INFO] blocks.
+
+### `collect_relevent_function_scope(proj_dir, developer_intent, changed_functions, range=None) → list[str]`
+Three-pass scope selection: modules → files → functions.

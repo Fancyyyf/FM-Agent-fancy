@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "func_dir = '/nonexistent' (a path that is not a directory). After calling _extracted_files_by_method(func_dir), the returned object r is a defaultdict(list). Accessing a key not present, e.g., r['some_key'], returns an empty list. Mutating this list, e.g., r['some_key'].append('/some/path'), affects the mapping: subsequent lookups r['some_key'] return ['/some/path'] instead of []. The specification requires that mutating the returned list does not affect the mapping.",
+  "offending_statements": "Line 11: index = defaultdict(list)\nLine 27: return index",
+  "reason": "The function returns a collections.defaultdict(list), which automatically stores a new list for any missing key when __getitem__ is called. This means that if a caller accesses a missing key and mutates the returned list (e.g., appends an element), the mapping is permanently modified with that new key and element, contradicting the requirement 'mutating the returned list does not affect the mapping'. To satisfy the specification, the mapping would need to return a copy or a read‑only view for missing keys, or avoid using a side‑effecting default factory."
+}

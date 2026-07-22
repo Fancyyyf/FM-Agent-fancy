@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def position_to_offset(self, position: dict) -> int:
+Line 2:         line_number = max(0, int(position.get("line", 0)))
+Line 3:         utf16_target = max(0, int(position.get("character", 0)))
+Line 4:         if line_number >= len(self.lines):
+Line 5:             return len(self.source)
+Line 6:         base = self.line_offsets[line_number]
+Line 7:         line = self.lines[line_number]
+Line 8:         units = 0
+Line 9:         index = 0
+Line 10:         while index < len(line) and units < utf16_target:
+Line 11:             char_units = 2 if ord(line[index]) > 0xFFFF else 1
+Line 12:             if units + char_units > utf16_target:
+Line 13:                 break
+Line 14:             units += char_units
+Line 15:             index += 1
+Line 16:         return base + index
+```
+
+Condition A (what the code actually does):
+The function returns an integer byte offset r into self.source. Let ln = max(0, int(position.get('line', 0))) and col = max(0, int(position.get('character', 0))). If ln >= len(self.lines), then r = len(self.source). Otherwise, let L = self.lines[ln] and B = self.line_offsets[ln]. For a character c, define units(c) = 2 if ord(c) > 0xFFFF else 1. Then r = B + i, where i is the unique integer satisfying: (1) 0 <= i <= len(L), (2) sum_{k=0}^{i-1} units(L[k]) <= col, and (3) if i < len(L) then sum_{k=0}^{i} units(L[k]) > col. Equivalently, i = max{ k in 0..len(L) | sum_{j=0}^{k-1} units(L[j]) <= col }. This offset marks the start of the character that contains the col-th UTF-16 code unit (if any), or the end of the line, without splitting a surrogate pair.
+
+Condition B (what the specification requires):
+- When the line number is not less than the number of indexed lines (len(self.lines)), returns len(self.source)
+  - Otherwise, returns the 0-based byte offset within self.source that corresponds to the given position, where the character offset counts UTF-16 code units:
+    * Each Unicode code point above U+FFFF (supplementary-plane character) contributes 2 UTF-16 code units
+    * All other code points contribute 1 UTF-16 code unit
+    * When the character offset exceeds the total UTF-16 code unit length of the line, the returned offset corresponds to the byte position at the end of that line
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

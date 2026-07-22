@@ -23,7 +23,11 @@
 # [SPEC]
 
 # [INFO]
-# (no callees)
+# _strip_section_comment_prefix(line: str) -> str
+#   Pre: line is a string
+#   Post: Returns line with leading comment prefix stripped (preserving leading whitespace)
+#   Comment prefixes: //, --, #, % (with optional trailing space)
+#   If no prefix, returns line unchanged.
 # [INFO]
 
 def _extract_marked_section(lines, marker):

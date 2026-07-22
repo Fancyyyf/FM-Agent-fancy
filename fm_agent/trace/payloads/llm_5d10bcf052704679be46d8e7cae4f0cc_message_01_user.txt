@@ -1,0 +1,27 @@
+Programming language: Python
+
+Pre-condition:
+- self is a _SourceIndex instance whose .source, .lines, and .line_offsets are initialized and mutually consistent: for each i, self.line_offsets[i] is the 0-based byte offset of the start of self.lines[i] within self.source
+  - position is a dict with keys 'line' (int, 0-based) and 'character' (int, 0-based UTF-16 code unit offset)
+
+Code block:
+```python
+Line 1:     def position_to_offset(self, position: dict) -> int:
+Line 2:         line_number = max(0, int(position.get("line", 0)))
+Line 3:         utf16_target = max(0, int(position.get("character", 0)))
+Line 4:         if line_number >= len(self.lines):
+Line 5:             return len(self.source)
+Line 6:         base = self.line_offsets[line_number]
+Line 7:         line = self.lines[line_number]
+Line 8:         units = 0
+Line 9:         index = 0
+Line 10:         while index < len(line) and units < utf16_target:
+Line 11:             char_units = 2 if ord(line[index]) > 0xFFFF else 1
+Line 12:             if units + char_units > utf16_target:
+Line 13:                 break
+Line 14:             units += char_units
+Line 15:             index += 1
+Line 16:         return base + index
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

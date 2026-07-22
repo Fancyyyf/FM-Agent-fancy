@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "phases_json=\"/tmp/phases.json\" containing {\"phases\": [{\"modules\": [{\"source_files\": [\"/absolute/outside/file.py\"]}]}]}, proj_dir=\"/home/user/proj\", submodules=None. Suppose /absolute/outside/file.py is an existing file and proj_dir contains no source files. The function returns True, but the specification requires False because the listed path does not resolve to an existing file under proj_dir.",
+  "offending_statements": "Line 17: if any(not os.path.exists(os.path.join(proj_dir, sf)) for sf in listed):",
+  "reason": "The existence check does not ensure the file is under proj_dir; absolute paths (or relative paths with '..') can refer to files outside proj_dir, causing the function to return True when the specification requires False."
+}

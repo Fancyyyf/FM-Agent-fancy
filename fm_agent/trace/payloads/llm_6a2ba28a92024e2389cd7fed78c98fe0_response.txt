@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "func = \"int main()\\n{\\n    return 0;\\n}\", language = \"c\", with global GRANULARITY = 1",
+  "offending_statements": "Line 23: entry_depth = depths[0] if total > 0 else 0; Line 24-25: entry_depth = next((d for d in depths if d > 0), 0); Line 40-43: for j in range(target, total): if depths[j] == entry_depth: split_point = j; break",
+  "reason": "The specification requires that each segment begins and ends at the brace-nesting depth equal to the function's entry depth. The code computes entry_depth as depths[0] if positive, otherwise the first positive depth. When depths[0] is 0 and a positive depth exists later, entry_depth becomes that positive depth. The splitting algorithm then searches for a line with depth equal to entry_depth starting from i+GRANULARITY. For the first block, line 0 has depth 0, but the block ends at a line with depth == entry_depth. Thus the first block starts at depth 0 and ends at depth entry_depth, violating the requirement that it begins at entry depth. For the given counterexample (C function body with opening brace on the second line, GRANULARITY=1), the code splits after line 1, producing a first block [\"int main()\", \"{\"] that starts at depth 0 and ends at depth 1, not syntactically self-contained w.r.t. entry depth."
+}

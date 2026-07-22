@@ -18,10 +18,13 @@
 #       of each dict in the list with newline separators. A dict in the list
 #       without a "text" key contributes an empty string at that position.
 #     - system_text is the empty string when no input message has role
-#       "system". When one or more system-role messages are present,
-#       system_text is the concatenation of their (possibly flattened) content
-#       strings, joined by "\n\n", with leading and trailing whitespace
-#       removed.
+#       "system". When exactly one system-role message is present,
+#       system_text is its (possibly flattened) content string verbatim
+#       (with no whitespace stripping). When more than one system-role
+#       message is present, system_text is the result of concatenating
+#       their (possibly flattened) content strings in order, joining them
+#       with "\n\n", and then stripping leading and trailing whitespace
+#       from the entire concatenated result.
 #     - Messages whose role is neither "system", "user", nor "assistant" are
 #       excluded from both outputs.
 # [SPEC]

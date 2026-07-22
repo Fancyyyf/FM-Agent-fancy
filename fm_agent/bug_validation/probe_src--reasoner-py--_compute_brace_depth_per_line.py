@@ -1,29 +1,32 @@
 import sys
 import os
 
-# Ensure the project root is on the Python path
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, project_root)
+# Ensure repo root is on sys.path so 'src' is importable
+repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
 
 try:
     from src.reasoner import _compute_brace_depth_per_line
+except Exception as e:
+    print(f'ERROR: Failed to import: {e}')
+    sys.exit(1)
 
-    # Block comment spans multiple lines:
-    #   line 0: "/* {"   — opens a block comment with a '{' inside
-    #   line 1: "} */"   — contains a '}' then closes the block comment
-    # The spec says braces inside /* ... */ must not be counted, on any line.
-    # Expected: [0, 0]  (both braces are inside the block comment, depth stays 0)
-    # Buggy:    [0, -1] (the '}' on line 1 is counted, depth goes negative)
+# Trigger condition: ["", "{", "}"] — an unterminated double quote on line 0
+# causes braces on lines 1 and 2 to be incorrectly counted.
+# Spec requires: [0, 0, 0] (braces inside multi-line string excluded)
+# Buggy code produces: [0, 1, 0] (string state not carried across lines)
+lines = ['"', '{', '}']
+expected = [0, 0, 0]
 
-    lines = ["/* {", "} */"]
+try:
     actual = _compute_brace_depth_per_line(lines)
-    expected = [0, 0]
     passed = actual != expected
 except Exception as e:
     print(f'ERROR: {e}')
     sys.exit(1)
 
 if passed:
-    print(f'CONFIRMED — actual: {actual!r} | expected: {expected!r}')
+    print(f'CONFIRMED — actual: {actual} | expected: {expected}')
 else:
-    print(f'NOT CONFIRMED — actual matched expected: {actual!r}')
+    print(f'NOT CONFIRMED — actual matched expected: {actual}')

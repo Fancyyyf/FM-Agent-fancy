@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None\n#   Pre-condition: proj_dir is an existing directory\n#   Post-condition: Returns an initialized CodeGraphExtractor for the project\n#     whose build artifacts and source tree are indexed; returns None when\n#     initialization cannot complete\n# [SPLIT]\n# CodeGraphExtractor.get_functions_by_file(language_key, proj_dir) -> dict\n#   Pre-condition: language_key is a valid language identifier; proj_dir is the\n#     project root directory\n#   Post-condition: Returns a dict mapping absolute file paths to lists of\n#     (func_name, func_body) tuples for functions in files of the given\n#     language that can be successfully read; unreadable files are omitted\n#     from the result.\n# [INFO]"
+}

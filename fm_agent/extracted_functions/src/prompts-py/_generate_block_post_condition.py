@@ -6,7 +6,7 @@
 # Pre-condition:
 #   - block is a non-empty string containing code statements, possibly with "Line N:" prefixes
 #   - pre_condition is a non-empty string describing the logical state assumed to hold before block begins execution
-#   - knowledge is a mapping from callee function names to their behavioral specifications; may be empty or falsy
+#   - knowledge is an optional string providing additional contextual information that may be included in the prompt; may be empty, None, or otherwise falsy
 #   - language is a non-empty string identifying the source programming language of the code in block
 #   - trace_dir, when not None, is a directory path used for persisting trace records
 #   - trace_meta, when not None, is a dict of metadata for trace annotation
@@ -18,7 +18,9 @@
 # [SPEC]
 
 # [INFO]
-# (no callees)
+#
+# _llm_json_call(client, model, messages, parse_fn, default, trace_dir=None, trace_meta=None) -> str | None
+#   Sends messages to the LLM JSON API using the given client and model, parses the LLM response with parse_fn, and returns the extracted post-condition string or None on failure.
 # [INFO]
 
 def _generate_block_post_condition(block, pre_condition, knowledge, language,

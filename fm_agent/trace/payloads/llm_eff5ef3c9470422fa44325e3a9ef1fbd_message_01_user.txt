@@ -1,0 +1,77 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def request(self, method: str, params: dict | list | None = None):
+Line 2:         actual_params = {} if params is None else params
+Line 3:         deadline = time.monotonic() + self.timeout
+Line 4:         for attempt in range(_MAX_CONTENT_MODIFIED_RETRIES):
+Line 5:             request_id = self._next_id
+Line 6:             self._next_id += 1
+Line 7:             self._send(
+Line 8:                 {
+Line 9:                     "jsonrpc": "2.0",
+Line 10:                     "id": request_id,
+Line 11:                     "method": method,
+Line 12:                     "params": actual_params,
+Line 13:                 }
+Line 14:             )
+Line 15:             try:
+Line 16:                 return self._wait_for_response(request_id, deadline)
+Line 17:             except _ContentModifiedError as exc:
+Line 18:                 if attempt + 1 == _MAX_CONTENT_MODIFIED_RETRIES:
+Line 19:                     raise RuntimeError(
+Line 20:                         f"ELP request {method} repeatedly failed: {exc.error}"
+Line 21:                     ) from exc
+Line 22:                 remaining = deadline - time.monotonic()
+Line 23:                 if remaining <= 0:
+Line 24:                     raise TimeoutError(f"timed out retrying ELP request {method}") from exc
+Line 25:                 time.sleep(min(0.5 * (2**attempt), 5.0, remaining))
+Line 26:         raise AssertionError("unreachable")
+```
+
+Condition A (what the code actually does):
+After execution, if _MAX_CONTENT_MODIFIED_RETRIES > 0, exactly one of the following outcomes occurs: (i) The method returns a value V such that V equals the 'result' field of the JSON-RPC response with matching request id, and no transient content-modified error was raised on the final attempt. (ii) A TimeoutError is raised, because either a _wait_for_response call timed out (deadline exceeded or channel closed) on any attempt, or the deadline expired during retry handling after catching a _ContentModifiedError. (iii) A RuntimeError is raised, either because a non-transient server error was received on any attempt (from _wait_for_response), or because all _MAX_CONTENT_MODIFIED_RETRIES attempts resulted in transient content-modified errors and the retry limit was reached. (iv) Any other exception raised by _send or _wait_for_response (e.g., connection errors) propagates without being caught. If _MAX_CONTENT_MODIFIED_RETRIES ≤ 0, an AssertionError with message 'unreachable' is raised. Formally: (∃ v. return v ∧ response_of_final_attempt.result = v ∧ no _ContentModifiedError on final attempt) ∨ (raise TimeoutError ∧ (∃ attempt. _wait_for_response raised TimeoutError on attempt ∨ (caught _ContentModifiedError ∧ deadline − time.monotonic() ≤ 0))) ∨ (raise RuntimeError ∧ ((∃ attempt. _wait_for_response raised RuntimeError not subclass of _ContentModifiedError) ∨ (∀ attempts. _ContentModifiedError raised))) ∨ (raise AssertionError ∧ _MAX_CONTENT_MODIFIED_RETRIES ≤ 0). The communication channel state remains open under normal returns; on exception its state is undefined.
+
+Condition B (what the specification requires):
+- Transmits a JSON-RPC 2.0 request to the server with the given method
+    and params (where None params is treated as an empty object), tagged
+    with a unique integer identifier that is strictly increasing across
+    successive calls on the same client instance
+  - Blocks the caller until the server returns a response matching that
+    identifier or until the total elapsed time since entry reaches
+    self.timeout seconds, whichever occurs first
+  - On success: returns the value of the "result" field from the matching
+    response
+  - When the server indicates a transient ContentModified error: re-issues
+    the request up to a fixed maximum number of total attempts, bounded in
+    total duration by self.timeout seconds from entry; when all attempts
+    are exhausted without success, raises RuntimeError identifying the
+    failing method
+  - When no matching response arrives before self.timeout seconds elapse
+    from entry: raises TimeoutError
+  - When the server responds with an error whose semantics are not covered
+    by the retry policy: raises RuntimeError
+
+Additional context:
+_send(self, request: dict)
+Pre-condition: The underlying JSON-RPC output channel is open and
+    writable; request is a dict representing a complete JSON-RPC 2.0
+    request message
+  Post-condition: The request is serialized to JSON and transmitted to the
+    ELP subprocess's standard input using LSP transport protocol framing;
+    on return, the complete frame has been flushed to the input stream
+
+_wait_for_response(self, request_id: int, deadline: float) -> Any
+Pre-condition: self is an ElpClient with an open and operational
+    communication channel; a request with the given integer request_id was
+    previously transmitted over the same channel; deadline is a monotonic
+    time value representing an absolute time point
+  Post-condition: Blocks until a JSON-RPC response message carrying a
+    matching id field and no "method" field arrives from the server;
+    returns the value of the "result" field from that response; when the
+    channel closes or no such message arrives before deadline, raises
+    TimeoutError; when the matching response contains an "error" field,
+    raises _ContentModifiedError for transient content-modified errors or
+    RuntimeError otherwise, with error details attached
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

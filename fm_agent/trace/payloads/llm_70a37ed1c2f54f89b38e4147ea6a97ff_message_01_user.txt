@@ -1,0 +1,101 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _deduplicate_phases(phases_dir):
+Line 2:     """Ensure each source file appears in at most one phase; keep the earliest.
+Line 3:     Duplicate source files are stripped from every phase/module after the first
+Line 4:     one that claims them. No phase or module is dropped — not even when it loses
+Line 5:     all of its files; only the ``source_files`` lists shrink, so phase numbering
+Line 6:     and the ``phase_NN_types.txt`` files stay aligned. Returns a change summary
+Line 7:     listing the modules whose file list changed so the caller can refresh their
+Line 8:     descriptions (see ``_update_module_description``).
+Line 9:     """
+Line 10:     phases_path = os.path.join(phases_dir, "phases.json")
+Line 11:     with open(phases_path, "r") as f:
+Line 12:         data = json.load(f)
+Line 13:     seen = set()
+Line 14:     # Modules (phase, module, removed_files) that lost some or all of their source
+Line 15:     # files to deduplication. Their descriptions may still describe files they no
+Line 16:     # longer own, so the caller has the agent rewrite them.
+Line 17:     changed_modules = []
+Line 18:     for phase in sorted(data["phases"], key=lambda p: p["phase"]):
+Line 19:         for module in phase["modules"]:
+Line 20:             original = module["source_files"]
+Line 21:             deduped = []
+Line 22:             for sf in original:
+Line 23:                 if sf not in seen:
+Line 24:                     seen.add(sf)
+Line 25:                     deduped.append(sf)
+Line 26:                 else:
+Line 27:                     logging.info(
+Line 28:                         "Removed duplicate file '%s' from phase %d module '%s'",
+Line 29:                         sf, phase["phase"], module["name"],
+Line 30:                     )
+Line 31:             module["source_files"] = deduped
+Line 32:             removed_files = [sf for sf in original if sf not in deduped]
+Line 33:             if removed_files:
+Line 34:                 # File list changed; record it so its description can be refreshed.
+Line 35:                 # The module (and its phase) is kept even if it is now empty.
+Line 36:                 changed_modules.append((phase, module, removed_files))
+Line 37:     with open(phases_path, "w") as f:
+Line 38:         json.dump(data, f, indent=2)
+Line 39:     # Report the modules whose file list changed. Phase numbers are unchanged
+Line 40:     # (nothing was dropped or renumbered), so these are the numbers the agent will
+Line 41:     # find in the freshly written phases.json.
+Line 42:     modified_modules = [
+Line 43:         {
+Line 44:             "phase": phase["phase"],
+Line 45:             "module": module.get("name", ""),
+Line 46:             "removed_files": removed_files,
+Line 47:             "source_files": list(module["source_files"]),
+Line 48:         }
+Line 49:         for phase, module, removed_files in changed_modules
+Line 50:     ]
+Line 51:     return {
+Line 52:         "modified_modules": modified_modules,
+Line 53:     }
+```
+
+Condition A (what the code actually does):
+If the function returns a value R without raising an exception, the following properties hold: (1) The file at os.path.join(phases_dir, 'phases.json') has been overwritten with a JSON object data′ such that data′['phases'] is a list of the same length and order as in the original data; for each phase p in data′['phases'], p['phase'] equals the original integer, and p['modules'] is the original list of modules in the same order; for each module m in p['modules'], m['name'] is unchanged, and m['source_files'] is the subsequence of the original m['source_files'] containing exactly those files that were not in the set Seen constructed by iterating phases sorted by phase ascending and modules in their original order, with Seen growing as files are encountered for the first time; thus every source file path that ever appears in the original data appears in exactly one module's source_files list in data′, specifically the first module (by phase, then module order) that originally claimed it, and the relative order of kept files in each module is preserved. (2) No phases or modules are added, removed, or reordered. (3) R is a dict with key 'modified_modules'; R['modified_modules'] is a list of objects, one per module whose source_files list changed (i.e., some file was removed), ordered by the same traversal; each object has 'phase': integer phase number, 'module': module name string (or '' if missing), 'removed_files': list of removed file paths, and 'source_files': the final deduplicated list for that module. All changed modules are included, and unchanged modules are omitted. (4) Side effect: for each duplicate file found, logging.info() was called with a message indicating the file path, phase, and module. (5) If an exception is raised before the 'with open(..., "w")' block, the original file remains unchanged and the function does not return. If an exception is raised during the final write, the file state is unspecified (may be partially written or truncated) and the function does not return.
+
+Condition B (what the specification requires):
+- phases.json is overwritten with every source file path appearing in at
+    most one module across all phases.
+  - For any source file path appearing in multiple modules (across the same
+    or different phases), only the first occurrence — in ascending phase
+    number order, then module order within each phase — is preserved; all
+    subsequent occurrences are removed from their respective module's
+    source_files list.
+  - The set of phases and modules is unchanged: no phase or module is
+    removed, even when a module's source_files becomes empty.
+  - Phase numbers, module names, and the ordering of phases/modules within
+    phases.json are preserved.
+  - Returns a dict with the key "modified_modules" mapping to a list of
+    dicts, one per module from which at least one source file was removed.
+    Each module dict contains: "phase" (int — the phase number), "module"
+    (str — the module name), "removed_files" (list of strings — the
+    deduplicated file paths that were removed), and "source_files" (list of
+    strings — the module's remaining source files after deduplication).
+  - Returns {"modified_modules": []} when no duplicate source files exist
+    across modules.
+
+Additional context:
+json.load(f) -> dict
+Pre-condition: f is a readable file object positioned at the start of a
+    valid JSON document.
+  Post-condition: Returns the parsed JSON as a Python dict whose structure
+    matches the phases.json schema.
+
+json.dump(data, f, indent=2) -> None
+Pre-condition: data is a JSON-serializable dict, f is a writable file
+    object.
+  Post-condition: Writes data as indented JSON to f, overwriting any
+    previous content starting at the current file position.
+
+os.path.join(phases_dir, "phases.json") -> str
+Pre-condition: phases_dir is a string.
+  Post-condition: Returns a single path string formed by joining phases_dir
+    and "phases.json" with the OS-specific path separator.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,173 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::env_check-py::run` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _check_codegraph_version, _check_llm_api_key, _load_ignored, _save_ignored, is_interactive.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def run(proj_dir, config):
+    """Run all env checks.  Return True to proceed, False to abort."""
+    work_dir = os.path.join(proj_dir, "fm_agent")
+    os.makedirs(work_dir, exist_ok=True)
+    ignored = _load_ignored(work_dir)
+
+    checks = [
+        ("llm_key", "LLM API Key configured",
+         lambda: _check_llm_api_key(config)),
+        ("oh-my-openagent", "oh-my-openagent installed",
+         _check_oh_my_openagent),
+        ("comment-checker-disabled", "comment-checker hook disabled",
+         _check_comment_checker),
+        ("codegraph-version", "codegraph pinned build installed",
+         lambda: _check_codegraph_version(config)),
+    ]
+
+    warnings = []
+    for check_id, label, fn in checks:
+        if check_id in ignored:
+            continue
+        ok, msg = fn()
+        if not ok:
+            warnings.append((check_id, label, msg))
+
+    if not warnings:
+        return True
+
+    lines = [
+        "",
+        "=" * 62,
+        "  FM-Agent environment check — potential issues found:",
+        "=" * 62,
+    ]
+    for _, label, msg in warnings:
+        lines.append(f"  [!] {label}: {msg}")
+    lines.append("=" * 62)
+    lines.append("")
+    for line in lines:
+        logging.warning(line)
+
+    if not is_interactive():
+        logging.warning(
+            "Non-interactive session — proceeding with warnings. "
+            "Fix the issues above for best results."
+        )
+        return True
+
+    print("\n".join(lines))
+    print("These issues may cause FM-Agent to fail or produce wrong results.\n")
+    print("  [p] proceed anyway (warn again next run)")
+    print("  [i] ignore — don't warn again (saved to fm_agent/.env_check_memory)")
+    print("  [q] quit — fix the issues first\n")
+
+    while True:
+        choice = input("Your choice [p/i/q]: ").strip().lower()
+        if choice == "p":
+            return True
+        elif choice == "i":
+            _save_ignored(work_dir, ignored | {cid for cid, _, _ in warnings})
+            return True
+        elif choice == "q":
+            print("\n[FM-Agent] Aborted. Fix the issues listed above and run again.\n")
+            return False
+        else:
+            print("Invalid choice — enter p, i, or q.")
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/env_check-py/run.py
+#
+# run(proj_dir: str, config) -> bool
+#
+# Pre-condition:
+#   - proj_dir is a directory path that exists on the filesystem.
+#   - config provides access to an LLM API key (the specific accessor used is LLM_API_KEY).
+#
+# Post-condition:
+#   - Returns True when any of the following holds: (a) all environment checks pass with no
+#     warnings, (b) one or more checks fail but the session is non-interactive, (c) one or
+#     more checks fail in an interactive session and the user chooses to proceed ('p'), or
+#     (d) one or more checks fail in an interactive session and the user chooses to permanently
+#     ignore the failing checks ('i').
+#   - Returns False only when one or more checks fail in an interactive session and the user
+#     chooses to quit ('q'). No persistent state is modified in this case.
+#   - When the user chooses 'i', the union of all previously ignored check IDs and the IDs of
+#     all currently failing checks is persisted to proj_dir/fm_agent/.env_check_memory, causing
+#     all such checks to be skipped on subsequent calls.
+#   - Checks whose ID appears in the persisted ignore set (loaded at the start of the call)
+#     are skipped entirely: their check function is not invoked.
+#   - Each failing check produces a warning logged via logging.warning in the format
+#     "[!] <label>: <message>" where label identifies the check and message is the
+#     reason for failure.
+#   - The directory proj_dir/fm_agent/ is created if it does not already exist.
+#   - In interactive mode, the function blocks on user input and does not return until a
+#     valid choice (p, i, or q) is entered.
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _load_ignored(work_dir: str) -> set[str]
+#   Pre-condition: work_dir is a directory path that exists.
+#   Post-condition: Returns the set of check IDs previously persisted as ignored.
+#     Returns an empty set when no ignores have been persisted.
+# [SPLIT]
+# _check_llm_api_key(config) -> (bool, str | None)
+#   Pre-condition: config provides access to LLM_API_KEY.
+#   Post-condition: Returns (True, None) when the LLM API key is present and non-empty.
+#     Returns (False, str) with an error message when the key is missing or empty.
+# [SPLIT]
+# _check_oh_my_openagent() -> (bool, str | None)
+#   Pre-condition: None.
+#   Post-condition: Returns (True, None) when oh-my-openagent is available and executable
+#     via bunx. Returns (False, str) with a fixed error message when it is not available
+#     or the check times out. Does not raise exceptions.
+# [SPLIT]
+# _check_comment_checker() -> (bool, str | None)
+#   Pre-condition: None.
+#   Post-condition: Returns (True, None) when the oh-my-openagent comment-checker hook is
+#     disabled. Returns (False, str) with an error message when it is still enabled.
+# [SPLIT]
+# is_interactive() -> bool
+#   Pre-condition: None.
+#   Post-condition: Returns True when the current process is attached to an interactive
+#     terminal (allowing user input via stdin); returns False otherwise.
+# [SPLIT]
+# _save_ignored(work_dir: str, ignored: set[str]) -> None
+#   Pre-condition: work_dir is a directory path that exists; ignored is a set of check ID
+#     strings to persist.
+#   Post-condition: Persists the set of ignored check IDs such that a subsequent call to
+#     _load_ignored(work_dir) returns the same set.
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_check_codegraph_version, _check_llm_api_key, _load_ignored, _save_ignored, is_interactive) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_check_codegraph_version, _check_llm_api_key, _load_ignored, _save_ignored, is_interactive). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,25 @@
+```json
+[
+  {"phase": 1, "name": "pipeline_setup"},
+  {"phase": 1, "name": "env_check"},
+  {"phase": 1, "name": "cli_backend"},
+  {"phase": 1, "name": "git"},
+  {"phase": 1, "name": "file_utils"},
+  {"phase": 1, "name": "llm_client"},
+  {"phase": 1, "name": "opencode_trace"},
+  {"phase": 1, "name": "trace_writer"},
+  {"phase": 1, "name": "config"},
+  {"phase": 1, "name": "pipeline"},
+  {"phase": 2, "name": "extract"},
+  {"phase": 2, "name": "parser"},
+  {"phase": 2, "name": "call_graph_edges"},
+  {"phase": 2, "name": "languages"},
+  {"phase": 3, "name": "scope"},
+  {"phase": 3, "name": "generate_topdown_layers"},
+  {"phase": 3, "name": "generate_batch_prompts"},
+  {"phase": 4, "name": "prompts"},
+  {"phase": 4, "name": "reasoner"},
+  {"phase": 5, "name": "verification"},
+  {"phase": 6, "name": "incremental_reasoner"}
+]
+```

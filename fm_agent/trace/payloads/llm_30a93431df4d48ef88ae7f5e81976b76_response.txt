@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "cg_langs = ['Python']; nodes rows: (1, 'func', 'func', '/a.py', 1) and (2, 'func', 'func', '/a.py', 2) with _extraction_ident returning 'func'. The code gives node 2 the deduplicated name 'func_1', but the specification requires 'func_2' for the second occurrence.",
+  "offending_statements": "Line 26: deduped = ident if c == 0 else f\"{ident}_{c}\"",
+  "reason": "The specification requires the k-th occurrence (1‑indexed) to be suffixed with _k, whereas the code uses a zero‑based counter that produces _1 for the second occurrence, _2 for the third, etc., violating the defined deduplication rule."
+}

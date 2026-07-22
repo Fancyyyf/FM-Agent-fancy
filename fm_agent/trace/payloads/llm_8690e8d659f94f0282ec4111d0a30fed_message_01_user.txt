@@ -1,0 +1,89 @@
+Programming language: Python
+
+Pre-condition:
+- model is a non-empty string identifying an LLM model
+  - prompt is a non-empty string
+  - cwd is a path to an existing directory
+  - files is either None or a list of file path strings (may be empty)
+  - backend is either None or a string identifying a desired CLI backend
+  - effort is either None or a string
+
+Code block:
+```python
+Line 1: def build_agent_command(model, prompt, cwd, files=None, backend=None, effort=None):
+Line 2:     resolved = _normalize_backend(backend) if backend else resolve_model_backend()
+Line 3:     if resolved == "auto":
+Line 4:         resolved = resolve_model_backend()
+Line 5:     if resolved not in {"codex-cli", "claude-cli"}:
+Line 6:         raise ValueError(f"unsupported CLI backend: {resolved}")
+Line 7:     cwd = os.path.abspath(cwd)
+Line 8:     stdin = _compose_stdin(prompt, files or [])
+Line 9:     model = (model or "").strip()
+Line 10:     effort = (effort if effort is not None else cli_effort()).strip()
+Line 11:     if resolved == "codex-cli":
+Line 12:         argv = [
+Line 13:             "codex",
+Line 14:             "exec",
+Line 15:             "--sandbox",
+Line 16:             "danger-full-access",
+Line 17:             "--dangerously-bypass-approvals-and-sandbox",
+Line 18:             "--skip-git-repo-check",
+Line 19:             "-C",
+Line 20:             cwd,
+Line 21:         ]
+Line 22:         if model:
+Line 23:             argv += ["--model", model]
+Line 24:         if effort:
+Line 25:             argv += ["-c", f'model_reasoning_effort="{effort}"']
+Line 26:         argv.append("-")
+Line 27:         return AgentCommand(argv=argv, stdin=stdin, backend=resolved)
+Line 28:     argv = [
+Line 29:         "claude",
+Line 30:         "-p",
+Line 31:         "--output-format",
+Line 32:         "text",
+Line 33:         "--no-session-persistence",
+Line 34:         "--dangerously-skip-permissions",
+Line 35:         "--permission-mode",
+Line 36:         "bypassPermissions",
+Line 37:         "--add-dir",
+Line 38:         cwd,
+Line 39:     ]
+Line 40:     if model:
+Line 41:         argv += ["--model", model]
+Line 42:     if effort:
+Line 43:         argv += ["--effort", effort]
+Line 44:     return AgentCommand(argv=argv, stdin=stdin, backend=resolved)
+```
+
+Additional context:
+_normalize_backend(backend_str) -> str
+Pre-condition: backend_str is a string (may be empty)
+  Post-condition: Returns the canonical backend name; recognized aliases
+    are normalized to their canonical forms (e.g., "codex" → "codex-cli",
+    "claude" → "claude-cli")
+
+resolve_model_backend() -> str
+Pre-condition: `settings.llm.backend` contains a string value (reads environment or configuration)
+  Post-condition: Returns the canonical backend name of the configured
+    model backend; "auto" resolves to a concrete backend
+
+_compose_stdin(prompt, files) -> Optional[str]
+Pre-condition: prompt is a non-empty string; files is a list of file
+    path strings (may be empty)
+  Post-condition: Returns a string that combines the prompt text with the
+    contents of the listed files, formatted for use as stdin to the
+    backend subprocess; returns None when files is empty
+
+cli_effort() -> str
+Pre-condition: `settings.llm.effort` is a string
+  Post-condition: Returns the value of `settings.llm.effort` with leading
+    and trailing whitespace removed; returns an empty string if the value
+    is empty or whitespace-only
+
+AgentCommand(argv, stdin, backend) -> AgentCommand
+Pre-condition: argv is a list of argument strings; stdin is a string
+    or None; backend is a canonical backend name string
+  Post-condition: Returns an AgentCommand dataclass whose argv field is
+    argv, whose stdin field is stdin, and whose backend field is backend
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

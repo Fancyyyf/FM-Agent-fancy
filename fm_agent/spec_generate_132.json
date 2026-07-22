@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/languages/erlang.py\n#\n# ElpClient._next_message(self, deadline: float)\n#\n# Pre-condition:\n#   - deadline is a point in time expressed as a monotonic clock value\n#   - self is an ElpClient whose message reader thread is active and\n#     writing parsed JSON-RPC messages into an internal queue\n#\n# Post-condition:\n#   - When a message is available before the monotonic clock reaches\n#     deadline, returns the next pending parsed JSON-RPC response or\n#     notification message from the server as a dict whose shape conforms\n#     to the JSON-RPC 2.0 specification\n#   - Raises TimeoutError when no message is available before the\n#     monotonic clock reaches deadline, including when the deadline has\n#     already passed at call entry\n#   - Raises RuntimeError when the message reader thread terminated with\n#     an unrecoverable exception; the original exception from the reader\n#     thread is chained as the cause of the RuntimeError\n# [SPEC]\n",
+  "info_updated": false,
+  "new_info": "",
+  "updated_callees": []
+}

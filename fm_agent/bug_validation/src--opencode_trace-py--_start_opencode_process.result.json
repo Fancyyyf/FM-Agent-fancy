@@ -1,11 +1,1 @@
-{
-  "id": "src--opencode_trace-py--_start_opencode_process",
-  "source_file": "src/opencode_trace.py",
-  "function_name": "_start_opencode_process",
-  "confirmation_status": "confirmed",
-  "attempts": "2",
-  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_start_opencode_process.py",
-  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_start_opencode_process.md",
-  "probe_stdout": "CONFIRMED - bug reproduced: stdin inherited from parent pipe (actual: CONNECTED), expected: DEVNULL\n",
-  "trigger_summary": "When stdin_text is None, passing stdin=None to subprocess.Popen causes the child to inherit the parent's stdin instead of receiving /dev/null (subprocess.DEVNULL), violating the spec that stdin must not be connected."
-}
+{"id": "src--opencode_trace-py--_start_opencode_process", "source_file": "src/opencode_trace.py", "function_name": "_start_opencode_process", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_start_opencode_process.py", "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_start_opencode_process.md", "probe_stdout": "CONFIRMED — subprocess.Popen received stdin=None, so the subprocess inherits the parent's stdin file descriptor instead of having stdin disconnected. Spec requires: 'otherwise stdin is not connected to the subprocess'.", "trigger_summary": "When command has no stdin text (command_stdin returns None), subprocess.Popen receives stdin=None, causing the child to inherit the parent's stdin fd instead of disconnecting it per the spec."}

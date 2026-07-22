@@ -1,0 +1,70 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `notify`'s behavioral specification was just updated. The caller `src::languages::erlang-py::ElpClient::open_document` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/languages/erlang.py
+#
+# ElpClient.notify(self, method: str, params: dict | list | None = None)
+#
+# Pre-condition:
+#   - self._proc is not None and self._proc.stdin is open and writable
+#   - method is a non-empty string identifying a known LSP notification method
+#   - params, when not None, is a JSON-serializable dict or list
+#
+# Post-condition:
+#   - Transmits a JSON-RPC 2.0 notification message to the ELP subprocess's
+#     standard input
+#   - The transmitted message is a JSON object containing "jsonrpc": "2.0",
+#     "method" set to the method argument, and no "id" member
+#   - When params is None, the transmitted "params" is an empty JSON object;
+#     otherwise "params" is set to the params argument value unchanged
+#   - No response from the server is awaited
+#   - Raises RuntimeError when the ELP subprocess is not running or stdin
+#     is unavailable
+# [SPEC]
+
+## Caller's current source
+
+```python
+def open_document(self, path: str, source: str | None = None):
+        document = Path(path).resolve()
+        if source is None:
+            source = document.read_text(encoding="utf-8", errors="replace")
+        self.notify(
+            "textDocument/didOpen",
+            {
+                "textDocument": {
+                    "uri": document.as_uri(),
+                    "languageId": "erlang",
+                    "version": 1,
+                    "text": source,
+                }
+            },
+        )
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# notify(self, method: str, params: dict | list | None = None)
+#   Pre-condition: The underlying JSON-RPC communication channel is open
+#     and writable
+#   Post-condition: A JSON-RPC 2.0 notification message (a message
+#     without an id field) carrying the given method and params is
+#     transmitted to the ELP server; when params is None, the transmitted
+#     params is an empty dict
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `notify` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `notify` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,32 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one C++ file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("cpp", filepath) if cg else None
+```
+
+Condition A (what the code actually does):
+After execution, the function either propagates any exception raised by `CodeGraphExtractor.from_proj_dir(proj_dir)` or returns a value.  If no exception occurs, the return value is determined as follows: let `cg = CodeGraphExtractor.from_proj_dir(proj_dir)`. If `cg` is falsy (e.g., `None`, `False`), the function returns `None`. Otherwise, let `spans = cg.get_function_spans('cpp', filepath)`. If `spans` is `None`, the function returns `None`; otherwise it returns the list `spans`, which is a non‑empty list of 3‑tuples `(name: str, start: int, end: int)`. Each tuple describes a function definition found in the given C++ source file, with `start` and `end` being 0‑indexed inclusive line numbers. The function does not modify any external state.  Formally, let `R` denote the outcome (exception or return value), `E_from` the event that `CodeGraphExtractor.from_proj_dir(proj_dir)` raises an exception.  Then: (E_from ⇒ R = that exception) ∧ (¬E_from ∧ cg is falsy ⇒ R = None) ∧ (¬E_from ∧ cg is truthy ⇒ (spans = cg.get_function_spans('cpp', filepath) ∧ (spans = None ⇒ R = None) ∧ (spans ≠ None ⇒ R = spans ∧ spans is a list of tuples each of the form (string, int, int) with semantics as stated))).
+
+Condition B (what the specification requires):
+- Returns None when a codegraph backend is unavailable or does not index the file, signaling the caller to fall back to regex-based extraction
+  - Otherwise returns a list of (name, start_idx, end_idx) tuples, each identifying one function in the file by its name and the range of source lines it occupies
+  - In every returned tuple, start_idx and end_idx are 0-indexed inclusive line indices
+  - The returned list covers every function that the codegraph backend detects in the file
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str)
+Pre-condition: proj_dir is a valid path to a project directory on the filesystem
+  Post-condition: Returns a CodeGraphExtractor instance for the project if the codegraph backend is available, or a falsy value otherwise
+
+cg.get_function_spans(lang_key: str, filepath: str) where lang_key="cpp"
+Pre-condition: cg is a valid CodeGraphExtractor instance bound to the project
+  Post-condition: Returns a list of (name, start, end) tuples for functions found in the given file, or None if the codegraph backend cannot provide function spans for the file (e.g., language not recognized, file not indexed, file contains no functions, or file path not resolved)
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

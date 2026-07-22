@@ -1,0 +1,86 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _node_fqn_map(cur, cg_langs) -> dict:
+Line 2:     """Return {node_id: fqn} for every function/method node in the given languages.
+Line 3:     The per-file name dedup (``Flush``, ``Flush_1``, ...) uses the SAME rule and
+Line 4:     ordering as get_functions_by_file (``ORDER BY file_path, start_line``, then a
+Line 5:     per-(file, name) counter), so the FQN assigned to a node here matches the FQN
+Line 6:     the extracted file for that node receives. Keeping the two in lockstep is what
+Line 7:     makes the call-edge identities line up with the extracted-function identities.
+Line 8:     """
+Line 9:     placeholders = ",".join("?" * len(cg_langs))
+Line 10:     cur.execute(
+Line 11:         f"""
+Line 12:         SELECT id, name, qualified_name, file_path, start_line
+Line 13:         FROM nodes
+Line 14:         WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+Line 15:         ORDER BY file_path, start_line
+Line 16:         """,
+Line 17:         cg_langs,
+Line 18:     )
+Line 19:     counts: dict = {}
+Line 20:     result: dict = {}
+Line 21:     for node_id, name, qualified_name, file_path, _start in cur.fetchall():
+Line 22:         ident = _extraction_ident(name, qualified_name)
+Line 23:         key = (file_path, ident)
+Line 24:         c = counts.get(key, 0)
+Line 25:         counts[key] = c + 1
+Line 26:         deduped = ident if c == 0 else f"{ident}_{c}"
+Line 27:         result[node_id] = _fqn_for(file_path, deduped)
+Line 28:     return result
+```
+
+Condition A (what the code actually does):
+If no exception occurs: The function returns a dictionary `result` such that: Let `Q` be the ordered list of rows from `cur.execute` of `SELECT id, name, qualified_name, file_path, start_line FROM nodes WHERE kind IN ('function','method') AND language IN (?,...,?)` with parameters `cg_langs`, sorted by `file_path, start_line` ascending. For each row `(id, name, qualified_name, file_path, _)` in `Q` in order, let `ident = _extraction_ident(name, qualified_name)` and `key = (file_path, ident)`. Define a counter function `occ(key, i) = |{ j < i | key_j = key }|` (the 0‑based occurrence index). Then `deduped = ident if occ(key, i) = 0 else f"{ident}_{occ(key,i)}"`. Then `result[id] = _fqn_for(file_path, deduped)`. After iterating all rows, `result` contains exactly `{r.id for r in Q}` as keys and no other entries. The cursor `cur` has been completely fetched (no remaining rows from that query). No other mutable state is modified. If an exception is raised (e.g., SQL error, fetch error, or exceptions from helper functions), the exception propagates; no explicit rollback or cleanup is performed, and the state of `cur` and any partially built `result` is lost to the caller.
+
+Condition B (what the specification requires):
+- Returns a dict mapping each node's id to its fully-qualified function
+    name (FQN)
+  - The mapping includes exactly the rows from the nodes table whose kind
+    is either 'function' or 'method' and whose language is one of the given
+    cg_langs values, ordered by (file_path ASC, start_line ASC)
+  - Each FQN is derived from the node's file_path and a canonicalized,
+    deduplicated function name in the canonical convention where path
+    components are joined by "::" and the source file extension in the
+    parent directory component is replaced by a hyphen
+  - Function name canonicalization strips angle-bracket template parameters
+    and normalizes operator-overload names to safe identifier forms
+  - When N > 1 nodes share the same file_path and canonicalized name, the
+    first such node in the result ordering receives the canonicalized name
+    without a suffix, and each subsequent node (k-th, 1-indexed) receives
+    the canonicalized name suffixed with _k
+  - Returns an empty dict when the query matches no rows
+  - The deduplication rule and ordering correspond to those used by
+    get_functions_by_file, ensuring that the FQN assigned to a node here
+    matches the FQN the extracted function file receives for the same node
+
+Additional context:
+_bare_function_name(name) -> str
+Pre-condition: name is a string containing a function name possibly
+    including angle-bracket template parameters
+  Post-condition: Returns the function name with any angle-bracket-delimited
+    template parameters and their brackets removed
+
+canonicalize(bare) -> str
+Pre-condition: bare is a string containing a function name with template
+    parameters already stripped
+  Post-condition: Returns a canonicalized safe identifier form of the
+    function name; operator-overload names are normalized to deterministic
+    identifier strings
+
+_extraction_ident(name: str, qualified_name: str) -> str
+Pre-condition: name and qualified_name are strings obtained from the
+    codegraph database for a single function or method node
+  Post-condition: Returns a string composed of one or more components
+    joined by "::", derived from the inputs without introducing any
+    filesystem separator characters, signature syntax, or template syntax
+
+_fqn_for(file_path, deduped) -> str
+Pre-condition: file_path is a string path to a source file; deduped is a
+    string containing the deduplicated canonical function name
+  Post-condition: Returns a fully-qualified function name string in the
+    canonical FQN format where directory components and the file-derived
+    component are separated by "::"
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

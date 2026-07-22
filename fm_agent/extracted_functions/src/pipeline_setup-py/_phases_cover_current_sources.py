@@ -12,10 +12,11 @@
 #   - Returns True when all of the following hold: (a) phases_json is a readable file
 #     whose content parses as valid JSON, (b) the JSON contains at least one source file
 #     entry across all phases and modules, (c) every source file path listed in the JSON
-#     resolves to an existing file under proj_dir, (d) when submodules is not None, every
-#     listed source file path falls under at least one of the specified submodule
-#     directories, and (e) every source file under the project directories scoped by
-#     submodules (or under all of proj_dir when submodules is None) appears in the JSON
+#     resolves to an existing file under proj_dir, (d) when submodules is neither None
+#     nor an empty iterable, every listed source file path falls under at least one of
+#     the specified submodule directories (as determined by _is_under_submodules),
+#     and (e) every source file under the project directories scoped by submodules
+#     (or under all of proj_dir when submodules is None) appears in the JSON
 #   - Returns False when any of (a)-(e) fails
 #   - Backslash separators in source file paths within the JSON are treated as forward
 #     slashes for path comparison and file existence resolution

@@ -1,0 +1,62 @@
+Programming language: Python
+
+Pre-condition:
+- work_dir is a path to an existing directory on the filesystem (the fm_agent/
+    workspace directory)
+  - event_id is a non-empty string uniquely identifying a trace event
+
+Code block:
+```python
+Line 1: def _opencode_env(work_dir, event_id):
+Line 2:     env = os.environ.copy()
+Line 3:     trace_dir = os.path.abspath(os.path.join(_trace_dir(work_dir), "opencode"))
+Line 4:     os.makedirs(trace_dir, exist_ok=True)
+Line 5:     env["TRACE_DIR"] = trace_dir
+Line 6:     env["TRACE_FILENAME"] = event_id
+Line 7:     provider_config = _opencode_provider_config()
+Line 8:     if provider_config is not None:
+Line 9:         # Make the resolved key available under LLM_API_KEY so the injected
+Line 10:         # `{env:LLM_API_KEY}` resolves regardless of where config read it from.
+Line 11:         env["LLM_API_KEY"] = settings.llm.api_key
+Line 12:         # Merge our provider block into any OPENCODE_CONFIG_CONTENT the caller
+Line 13:         # already set (rather than overwriting it), so their inline plugins /
+Line 14:         # permissions / MCP / agents survive; our provider still wins on the
+Line 15:         # provider key it defines.
+Line 16:         existing = {}
+Line 17:         raw = env.get("OPENCODE_CONFIG_CONTENT")
+Line 18:         if raw:
+Line 19:             try:
+Line 20:                 loaded = json.loads(raw)
+Line 21:             except (json.JSONDecodeError, TypeError):
+Line 22:                 loaded = None
+Line 23:             if isinstance(loaded, dict):
+Line 24:                 existing = loaded
+Line 25:         env["OPENCODE_CONFIG_CONTENT"] = json.dumps(_deep_merge(existing, provider_config))
+Line 26:     # subprocess.Popen(cwd=...) chdirs the child but doesn't sync PWD; opencode
+Line 27:     # walks PWD upward looking for AGENTS.md, so without this it picks up the
+Line 28:     # fm-agent repo's own AGENTS.md instead of the target's, baking ~10K bytes
+Line 29:     # of repo docs into every system prompt and invalidating the cache prefix
+Line 30:     # on every edit.
+Line 31:     proj_dir = os.path.dirname(os.path.abspath(work_dir))
+Line 32:     env["PWD"] = proj_dir
+Line 33:     return env
+```
+
+Additional context:
+_trace_dir(work_dir) -> str
+Pre-condition: work_dir is a filesystem path
+  Post-condition: Returns a path string representing the trace data directory
+    under work_dir
+_opencode_provider_config() -> Optional[dict]
+  Pre-condition: The settings module is initialized (settings.llm is available)
+  Post-condition: Returns either a dict containing the opencode provider
+    configuration (including the resolved LLM provider settings) or None if no
+    provider configuration is available.
+_deep_merge(base: dict, overlay: dict) -> dict
+  Pre-condition: base and overlay are dictionaries
+  Post-condition: Returns a new dict without modifying base or overlay.
+    Result contains all keys from both dictionaries. For keys only in one
+    dict the corresponding value is taken unchanged. For keys present in
+    both, nested dicts are merged recursively using these same rules;
+    otherwise the value from overlay is used.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

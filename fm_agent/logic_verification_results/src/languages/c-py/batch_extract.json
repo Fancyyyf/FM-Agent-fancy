@@ -1,5 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/c-py/batch_extract.py",
-  "verdict": "MATCH",
-  "gaps": null
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/c-py/batch_extract.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a dictionary mapping absolute file paths to lists of\n    (function_name, function_body) tuples for every C function extracted\n    from the project using codegraph analysis\n  - Returns an empty dictionary {} when codegraph initialization fails",
+    "actual_behavior": "The function returns a dictionary. If CodeGraphExtractor.from_proj_dir(proj_dir) returns a valid extractor object C (i.e., not None), the result equals C.get_functions_by_file('c', proj_dir): a dict mapping absolute file paths (strings) to lists of (func_name, body) tuples for all C files under proj_dir that could be successfully read; unreadable files are omitted. If initialization fails (C is None), the result is an empty dict {}. Formally: let C = CodeGraphExtractor.from_proj_dir(proj_dir). Then result = (C.get_functions_by_file('c', proj_dir) if C is not None else {}).",
+    "code_evidence": "Line 4: return cg.get_functions_by_file(\"c\", proj_dir) if cg else {}",
+    "trigger_condition": "The code uses the truthiness of cg (if cg) to check whether initialization succeeded, but the specification of from_proj_dir only guarantees it returns an initialized CodeGraphExtractor or None; it does not guarantee the returned object is truthy. An initialized extractor could evaluate to False (e.g., if it defines __len__ to return 0), causing the function to erroneously return {} and violate the requirement to return the extracted functions when initialization succeeds."
+  }
 }

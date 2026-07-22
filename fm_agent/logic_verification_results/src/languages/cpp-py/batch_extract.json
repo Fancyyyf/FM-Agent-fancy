@@ -1,10 +1,5 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/cpp-py/batch_extract.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "- Returns a dictionary where each key is an absolute file path (str) and\n    each value is a list of (function_name: str, body: str) tuples.\n  - Every key corresponds to a C++ source file under proj_dir for which\n    codegraph extracted at least one top-level function.\n  - Each function_name is the canonical name of a function defined in the\n    corresponding source file.\n  - Each body is the full source text of that function as returned by\n    codegraph.\n  - If codegraph is not available for proj_dir (CodeGraphExtractor.from_proj_dir\n    returns a falsy value), the returned dictionary is empty.\n  - The returned dictionary does not include entries for non-C++ files or for\n    files from which codegraph extracted zero functions.",
-    "actual_behavior": "If the function terminates normally, it returns a dictionary d: if the CodeGraphExtractor initialization from proj_dir failed (returned a falsy value), then d == {}; otherwise, d == cg.get_functions_by_file('cpp', proj_dir), i.e., a mapping from each absolute file path of a C++ source file (.cpp, .cc, .cxx) under proj_dir to a list of (function_name: str, body: str) tuples for all top-level functions in that file. If an exception is raised (e.g., due to an inaccessible directory, permission error, or internal error), the exception propagates and no return value is produced.",
-    "code_evidence": "Line 3: cg = CodeGraphExtractor.from_proj_dir(proj_dir)\nLine 4: return cg.get_functions_by_file(\"cpp\", proj_dir) if cg else {}",
-    "trigger_condition": "When proj_dir is a path that does not exist, CodeGraphExtractor.from_proj_dir may raise an exception (e.g., FileNotFoundError) instead of returning a falsy value. The code propagates the exception and does not return a dictionary. However, the specification requires the function to return an empty dictionary if codegraph is not available. Since an exception does not satisfy the return-type clause, the code violates the specification."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/cpp-py/batch_extract.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

@@ -1,10 +1,5 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/generate_topdown_layers-py/_find_call_sites.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "- Returns the subset of known_stems that appear as bare-name call sites in\n    text, excluding any identifier that is also in keywords\n  - An identifier in known_stems is included in the result if and only if it\n    appears as a call site in the source text after comment removal AND is not\n    in the keywords set\n  - Identifiers within comment regions (delimited per the lang_key language's\n    comment syntax) are not treated as call sites\n  - Identifiers within string or character literal contexts for the given\n    language are not treated as call sites\n  - The returned set is always a subset of known_stems and is disjoint from\n    keywords\n  - The return value is deterministic for a given (text, lang_key, known_stems,\n    keywords) input",
-    "actual_behavior": "The function `_find_call_sites` returns a set `found` such that `found` is the intersection of (i) all identifiers captured by group 1 of the regex pattern returned by `_get_call_regex(lang_key)` when applied to the comment-stripped text `_strip_comments_from_source(text, lang_key)`, (ii) the set `known_stems`, and then excludes all elements in `keywords`. Formally, let cleaned = _strip_comments_from_source(text, lang_key) and let re = _get_call_regex(lang_key); define M = { m.group(1) for m in re.finditer(cleaned) }. Then found = (M  known_stems) \\ keywords. Moreover, found  known_stems and found  keywords = . The input arguments are not modified.",
-    "code_evidence": "Line 6: for m in regex.finditer(cleaned):",
-    "trigger_condition": "The code only strips comments but not string or character literals. Consequently, a regex that matches function-call patterns can capture identifiers inside string literals, incorrectly including them in the result when they belong to known_stems, violating the specification's requirement that identifiers within string/character literal contexts are not treated as call sites."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/generate_topdown_layers-py/_find_call_sites.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

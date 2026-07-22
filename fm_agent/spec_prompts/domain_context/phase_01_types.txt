@@ -1,160 +1,151 @@
-Phase 1 — Environment & Pipeline Setup
-======================================
+# Phase 1: Environment & Pipeline Setup — Types and Invariants
 
-This phase initializes the runtime, validates prerequisites, generates the phase plan
-(phases.json) and domain context files, and provides shared utilities for LLM
-communication, tracing, git operations, and file discovery.
+## Overview
 
-Key Types and Structs
----------------------
+Phase 1 initializes the runtime environment, validates prerequisites, generates
+the analysis phase plan (`phases.json`), produces domain context files, manages
+git worktrees, and provides shared LLM communication, trace, and CLI backend
+infrastructure.
 
-AgentCommand (src/cli_backend.py)
-  @dataclass(frozen=True)
-  - argv: list[str]           # CLI argument list
-  - stdin: Optional[str]      # stdin text for the process (None = no stdin)
-  - backend: str = "opencode" # backend identifier
+## Key Types
 
-  Supported backends: "opencode", "codex-cli", "claude-cli"
-  Backend aliases: "codex"→"codex-cli", "claude"→"claude-cli", "open-code"→"opencode"
-  "auto" resolves to "codex-cli" by default, checks env markers for Claude/Codex.
+### `Settings` (config.py)
 
-TracedOpenCodeProcess (src/opencode_trace.py)
-  @dataclass
-  - proc: subprocess.Popen
-  - work_dir: str                # fm_agent/ directory
-  - event_id: str                # unique event ID (evt_<uuid>)
-  - stage: str                   # pipeline stage name
-  - started: str                 # ISO 8601 timestamp
-  - command: list[str]           # full CLI command
-  - function_ids: Optional[list] # FQNs of functions being processed
-  - input_files: Optional[list]  # fm_agent/-relative input paths
-  - output_files: Optional[list] # fm_agent/-relative expected output paths
-  - summary: Optional[str]       # human-readable summary
-  - metadata: Optional[dict]     # arbitrary key-value metadata
-  - opencode_log_path: Optional[str]
-  - opencode_trace_path: Optional[str]
-  - log_thread: Optional[threading.Thread]
-  - stdin_thread: Optional[threading.Thread]
-  - error: Optional[str]
+Central configuration object. Layered precedence: env > .env > fm-agent.toml >
+built-in defaults. Contains subsections:
 
-Phases JSON Schema (phases.json):
-  {
-    "project": string,           # project name (from AGENTS.md or directory name)
-    "languages": [string],       # detected programming languages
-    "file_extensions": [string], # source file extensions (e.g. ["cpp", "py", "rs"])
-    "phases": [
-      {
-        "phase": int,            # phase number (1-indexed, no gaps)
-        "name": string,          # human-readable phase name
-        "description": string,   # prose description of this phase's role
-        "modules": [
-          {
-            "name": string,              # module name (unique within phase)
-            "description": string,       # prose description of module's role
-            "source_files": [string]     # relative paths from project root
-          }
-        ],
-        "depends_on_phases": [int]  # phase numbers this phase depends on
-      }
-    ]
-  }
+**Sections:**
+- `LLMCfg`: `api_key: str`, `base_url: str`, `backend: str`, `name: str`,
+  `effort: str`, `provider: str`, `api_style: Literal["openai", "anthropic"]`
+- `RuntimeCfg`: `max_spec_iter: int` (≥1), `granularity: int` (≥1),
+  `max_workers: int` (≥1), `opencode_max_retries: int` (≥1),
+  `bug_validation_max_retries: int` (≥0), `opencode_timeout_s: int` (≥1),
+  `domain_knowledge_paths: str`
+- `ScopeCfg`: `top_k: int` (≥1), `llm_trigger_funcs: int` (≥1),
+  `llm_top_k: int` (≥1), `llm_confidence_threshold: float` (≥0)
+- `ErlangCfg`: `command: str`, `timeout_s: int` (≥1)
+- `InjectCfg`: `id: str`, `hosts: str`
+- `CodegraphCfg`: `repo: str`, `version: str`, `bin_dir: str`
 
-Trace Event (src/trace_writer.py):
-  Written as JSONL to fm_agent/trace/events.jsonl
-  - event_id: string       # unique ID (evt_<uuid> or opencode_<uuid>)
-  - type: string           # "opencode_call" or "llm_call"
-  - stage: string          # pipeline stage name (e.g. "generate_phases_json")
-  - status: string         # "success" | "error" | "mismatch" | "format_error"
-  - start_time: string     # ISO 8601 UTC timestamp
-  - end_time: string       # ISO 8601 UTC timestamp
-  - summary: string        # human-readable summary
-  - function_ids: [string] # related FQNs
-  - children: [            # payload references
-      {type: "tool_output"|"system_prompt"|"user_prompt"|"assistant_output",
-       label: string, path?: string, content_ref: string, role?: string}
-    ]
-  - metadata: {            # command details, exit_code, input/output files, usage, etc.
-      command: [string], exit_code: int?, input_files: [string],
-      output_files: [string], error: string?, usage: dict?, model: string?,
-      attempt: int?, ...
+**Invariants:**
+- All integer fields with `gt=N` / `ge=0` are enforced by Pydantic validation
+  at module load time; an invalid value raises `SystemExit`.
+- Backward-compatible module-level constants (`GRANULARITY`, `MAX_WORKERS`,
+  etc.) are derived from `settings` and exported via `__all__`.
+- All stage-specific model selections (`OPENCODE_SETUP_MODEL`,
+  `OPENCODE_SPEC_MODEL`, `OPENCODE_BUG_VALIDATION_MODEL`,
+  `REASONER_POST_CONDITION_MODEL`, `REASONER_SPEC_CHECK_MODEL`) default to
+  `LLM_MODEL` from the toml.
 
-Function Signatures (Entry Points)
-----------------------------------
+### `phases.json` Schema (pipeline_setup.py)
 
-src/pipeline_setup.py:
-  _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False, resume=False, submodules=None) → None
-    Runs OpenCode agent to produce phases.json. Raises sys.exit(1) on failure.
+**Top-level object:**
+- `project: str` — project name
+- `languages: list[str]` — detected languages
+- `file_extensions: list[str]` — detected extensions
+- `phases: list[Phase]` — ordered list of phases
 
-  _post_process_phases(proj_dir, work_dir, required_source_files=None, submodules=None, one_phase=False) → bool
-    Post-processes phases.json: ensures required files, filters submodules, deduplicates,
-    updates descriptions, cleans empty phases. Returns True if phases.json was modified.
+**Phase object:**
+- `phase: int` — phase number (1-indexed, contiguous after cleanup)
+- `name: str` — human-readable name
+- `description: str` — prose description
+- `modules: list[Module]`
+- `depends_on_phases: list[int]` — phase numbers this phase depends on
 
-  _run_generate_domain_context(proj_dir, work_dir, script_dir, resume=False) → None
-    Runs OpenCode agent to produce engine_overview.txt and phase_NN_types.txt files.
-    Raises sys.exit(1) on failure.
+**Module object:**
+- `name: str`
+- `description: str`
+- `source_files: list[str]` — paths relative to project root
 
-  _run_setup_extract(proj_dir, work_dir, script_dir, ...) → None
-    Orchestrates: generate phases → post-process → generate domain context.
+**Invariants:**
+- After deduplication (`_deduplicate_phases`), each source file appears in
+  at most one phase (earliest phase wins).
+- After cleanup (`_clean_empty_phase_module`), empty modules/phases are removed
+  and phases are renumbered 1..N contiguously.
+- `_phase_plan_schema_errors` validates structural integrity (phases is a list,
+  modules is a list, source_files is a list of strings).
+- When `--submodule` filtering is active, out-of-scope files are stripped
+  without renumbering.
 
-src/env_check.py:
-  run(proj_dir, config) → bool
-    Validates LLM_API_KEY, oh-my-openagent installation, comment-checker hook.
-    Returns True to proceed, False to abort.
+### `CallEdge` / `CallerSelector` / `CalleeTarget` (call_graph_edges.py)
 
-src/domain_knowledge.py:
-  stage_domain_knowledge_files(proj_dir, work_dir, markdown_paths=None) → [string]
-    Copies user markdown files to spec_prompts/domain_context/user_knowledge/.
-    Returns project-relative staged paths.
+**`CallerSelector`:**
+- `fqn: str` — exact caller FQN; empty if selecting by callsite
+- `callsite_names: tuple[str, ...]` — source callsite tokens; any function
+  containing one of these gets a supplemental edge
 
-  list_staged_domain_knowledge_relpaths(work_dir, prefix="fm_agent") → [string]
-    Returns sorted project-relative paths of staged knowledge files.
+**`CalleeTarget`:**
+- `fqn: str` — exact callee FQN (required, non-empty)
+- `info_names: tuple[str, ...]` — metadata names for [INFO] matching
 
-  format_domain_knowledge_bullets(relpaths) → string
-    Formats paths as "- `path`" bullets for injection into agent prompts.
+**`CallEdge`:**
+- `caller: CallerSelector`
+- `callee: CalleeTarget`
+- `source: str` — provenance (edge file path)
 
-src/git.py:
-  _is_git_repo(proj_dir) → bool
-  _get_head_commit(proj_dir) → Optional[str]
-  _record_version(commit_id, work_dir) → None
-  frozen_worktree(proj_dir, exclude=("fm_agent",), copy_excluded=True) → context manager yielding run_dir
+**Invariants:**
+- At least one of `caller.fqn` or `caller.callsite_names` must be non-empty.
+- `callee.fqn` is a required non-empty string.
+- Edges are deduplicated by `(caller.fqn, callee.fqn)` key; duplicate
+  callsite_names and info_names are merged.
 
-src/opencode_trace.py:
-  run_opencode_traced(proj_dir, work_dir, command, stage, ...) → CompletedProcess
-    Runs a subprocess with tracing, handles timeout, writes event record.
-  start_opencode_traced(...) → TracedOpenCodeProcess
-  wait_opencode_traced(record) → int (exit_code)
-  finish_opencode_trace(record) → None
-  function_id_from_extracted_path(path) → string   # relative path → FQN
-  function_id_from_result_path(path) → string      # result path → FQN
+### Domain Context Files
 
-src/llm_client.py:
-  build_llm_cli_command(model, prompt, cwd, files=None) → list[str]
-    Returns opencode command-line or AgentCommand for configured backend.
+**Output files:**
+- `engine_overview.txt` — overall system architecture description
+- `phase_NN_types.txt` — per-phase types, invariants, and entry points
 
-main.py:
-  run_pipeline(proj_dir, resume, required_source_files, domain_knowledge_files,
-               submodules, one_phase, extra_call_edges_path, only_spec) → None
+**Invariants:**
+- `_domain_context_complete` returns True only when `engine_overview.txt` and
+  one `phase_NN_types.txt` per phase in `phases.json` all exist.
+- `_setup_outputs_complete` requires both phase plan and domain context complete.
 
-dashboard.py:
-  State class – aggregates trace data, drives terminal UI rendering.
+### Trace Event (trace_writer.py)
 
-Config (config.py):
-  LLM_API_KEY, LLM_API_BASE_URL, LLM_MODEL (from .env)
-  OPENCODE_SETUP_MODEL, OPENCODE_SPEC_MODEL, OPENCODE_BUG_VALIDATION_MODEL (default=LLM_MODEL)
-  REASONER_POST_CONDITION_MODEL, REASONER_SPEC_CHECK_MODEL
-  GRANULARITY = 40                # min lines per code block
-  MAX_WORKERS = 10                # max concurrent reasoning threads
-  MAX_SPC_ITER = 5                # max retries for LLM verification calls
-  OPENCODE_MAX_RETRIES = 5        # max retries for failed OpenCode stages
-  OPENCODE_TIMEOUT_SECONDS = 1800 # per-subprocess timeout
-  SCOPE_TOP_K = 5, SCOPE_LLM_TRIGGER_FUNCS = 5, SCOPE_LLM_TOP_K = 5,
-  SCOPE_LLM_CONFIDENCE_THRESHOLD = 8.0
+**Event shape (written to `events.jsonl`):**
+- `event_id: str` — e.g. `"evt_deadbeef..."`
+- `type: str` — `"opencode_call"` or `"llm_call"`
+- `stage: str` — pipeline stage
+- `status: str` — `"success"`, `"error"`, `"mismatch"`, `"format_error"`
+- `start_time: str` — ISO 8601 UTC
+- `end_time: str` — ISO 8601 UTC
+- `summary: str`
+- `metadata: dict`
+- `children: list[dict]` — sub-event references with `type`, `role`,
+  `content_ref` (relative path to payload file)
 
-Invariants
-----------
-- phases.json source_files must cover all project source files (completeness check).
-- Deduplication: each source file appears in at most one phase.
-- Phase numbers are compacted (1..N, no gaps) after cleaning empty phases.
-- Domain context completeness: engine_overview.txt + one phase_NN_types.txt per phase.
-- All trace events have unique event_ids and reference payloads via relative paths.
-- The fm_agent/ directory is always excluded from project source enumeration.
+**Invariants:**
+- Payload files are written via atomic tmp+os.replace (`write_payload`).
+- `events.jsonl` writes are thread-safe (protected by `_LOCK`).
+- LLM exchange events record all messages plus the raw response (when provided).
+
+### `_StdoutTee` (incremental_reasoner.py)
+
+Wraps sys.stdout to mirror bare `print()` output to both the console and
+a file handler stream.
+
+### CLI Backend Detection (cli_backend.py)
+
+Detects available CLI backend (OpenCode, Codex CLI, or Claude CLI) and builds
+appropriate command-line invocation strings.
+
+## Entry Points
+
+### `_run_setup_extract(proj_dir, work_dir, script_dir, ...)`
+Main orchestrator for Phase 1+2: runs phase plan generation, post-processes
+phases.json, and runs domain context generation.
+
+### `_run_generate_phases(proj_dir, work_dir, script_dir, ...)`
+Stage 1: reads `md/workflow_generate_phases.md`, invokes OpenCode agent to
+produce `phases.json`. Supports resume, incremental mode, schema repair, retry.
+
+### `_post_process_phases(proj_dir, work_dir, ...)`
+Post-processes phases.json: ensures required files, filters to submodules,
+deduplicates, cleans empty phases. Returns True if modified.
+
+### `_run_generate_domain_context(proj_dir, work_dir, script_dir, ...)`
+Stage 2: reads `md/workflow_generate_domain_context.md` and `phases.json`,
+invokes OpenCode agent to produce domain context files.
+
+### `build_llm_cli_command(model, prompt, cwd, files=None)`
+Builds CLI command string for a file-oriented LLM task.

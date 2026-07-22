@@ -23,4 +23,4 @@
 # [INFO]
 
 def _inject_targets():
-    return [s.strip() for s in (os.environ.get("INJECT_HOST") or "").split(",") if s.strip()]
+    return [s.strip() for s in (settings.inject.hosts or "").split(",") if s.strip()]

@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--go-py--batch_extract",
+  "source_file": "src/languages/go-py/batch_extract.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--go-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--go-py--batch_extract.md",
+  "probe_stdout": "CONFIRMED — spec requires only files within proj_dir, but returned keys include paths outside proj_dir: ['/tmp/probe_batch_go_p07ik0lo/project/../outside/evil.go']. Inside keys: ['/tmp/probe_batch_go_p07ik0lo/project/pkg/handler.go']",
+  "trigger_summary": "When the codegraph database contains file_path entries with parent-directory traversal (../), get_functions_by_file resolves them via os.path.join without validating the path stays within proj_dir, causing files outside proj_dir to appear in the returned dict."
+}

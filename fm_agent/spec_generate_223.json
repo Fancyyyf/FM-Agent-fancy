@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/prompts.py\n#\n# _nonempty_string(value) -> bool\n#\n# Pre-condition:\n#   - (no requirements)\n#\n# Post-condition:\n#   - Returns True when value is a string and, after removing all leading and trailing whitespace characters, the resulting string is non-empty\n#   - Returns False otherwise, including when value is not a string or when it is a string that consists solely of whitespace characters or is empty\n# [SPEC]\n",
+  "info_updated": false,
+  "new_info": "",
+  "updated_callees": []
+}

@@ -1,6 +1,6 @@
 # Bug Report: run_incremental_pipeline
 
-**Source file:** `src/incremental_reasoner.py` (function `run_incremental_pipeline`)
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/run_incremental_pipeline.py`
 **Verdict:** MISMATCH
 **Confirmation status:** not_confirmed
 
@@ -13,125 +13,124 @@ The following actual behavior cannot satisfy the specification.
 ### Specification Claim
 
 - If proj_dir has no previous full-run baseline (fm_agent/phases.json absent
-   or fm_agent/extracted_functions/ incomplete given submodules), delegates
-   the entire pipeline to a full run via run_pipeline() with the same
-   arguments and returns None.
- - If intent_file_path does not refer to an existing regular file, or the
-   file content is empty after whitespace stripping, logs an error and
-   returns None without modifying any project or fm_agent/ file.
- - Before producing any new output, removes all files under
-   fm_agent/logic_verification_results/ and fm_agent/bug_validation/, and
-   removes incremental scope-selection and spec-update artifacts prefixed
-   with "select_relevant_", "relevant_", and "spec_update_" from fm_agent/.
- - Regenerates fm_agent/phases.json from the current working tree.
- - Re-extracts every function from the current code, then restores the
-   captured [SPEC] and [INFO] blocks from the prior run onto each function
-   whose body is identical between old_commit_id and the current working
-   tree.
- - Produces a mapping from each changed source-file path to the sets of
-   function names added, modified, or removed since old_commit_id; deletes
-   extracted-function files for removed functions.
- - Produces a ranked list of extracted-function relative paths whose
-   implementations are judged relevant to the developer intent.
- - For every function that is either changed (added or modified) or appears
-   in the relevance-ranked list, re-evaluates whether its [SPEC] and/or
-   [INFO] blocks need updating to reflect the current code and intent;
-   when a callee's [SPEC] changes, propagates the update to every caller's
-   [INFO] block. Writes the set of files whose specs were modified to
-   fm_agent/incremental_updated_specs.json.
- - Runs verification on the affected subset: every changed function, every
-   function with an updated spec, and every function that calls a callee whose spec was updated.
+    or fm_agent/extracted_functions/ incomplete given submodules), delegates
+    the entire pipeline to a full run via run_pipeline() with the same
+    arguments and returns None.
+  - If intent_file_path does not refer to an existing regular file, or the
+    file content is empty after whitespace stripping, logs an error and
+    returns None without modifying any project or fm_agent/ file.
+  - Before producing any new output, removes all files under
+    fm_agent/logic_verification_results/ and fm_agent/bug_validation/, and
+    removes incremental scope-selection and spec-update artifacts prefixed
+    with "select_relevant_", "relevant_", and "spec_update_" from fm_agent/.
+  - Regenerates fm_agent/phases.json from the current working tree.
+  - Re-extracts every function from the current code, then restores the
+    captured [SPEC] and [INFO] blocks from the prior run onto each function
+    whose body is identical between old_commit_id and the current working
+    tree.
+  - Produces a mapping from each changed source-file path to the sets of
+    function names added, modified, or removed since old_commit_id; deletes
+    extracted-function files for removed functions.
+  - Produces a ranked list of extracted-function relative paths whose
+    implementations are judged relevant to the developer intent.
+  - For every function that is either changed (added or modified) or appears
+    in the relevance-ranked list, re-evaluates whether its [SPEC] and/or
+    [INFO] blocks need updating to reflect the current code and intent;
+    when a callee's [SPEC] changes, propagates the update to every caller's
+    [INFO] block. Writes the set of files whose specs were modified to
+    fm_agent/incremental_updated_specs.json.
+  - Runs verification on the affected subset: every changed function, every
+    function with an updated spec, and every function that calls a callee
+    whose spec was updated. Returns a sorted list of extracted-function
+    relative paths for which the reasoner reported a spec-to-code mismatch
+    (MISMATCH verdict) and bug validation subsequently confirmed the
+    violation. Returns an empty list when no such violations are confirmed.
+  - Does not modify any file under proj_dir outside of fm_agent/.
 
 ---
 
 ### Actual Behavior
 
-Natural language: After execution of this code block (assuming no exceptions), one of the following holds: (1) If check_last_run_existence(proj_dir, submodules) returns False, the full pipeline run_pipeline is executed with the given arguments, and the enclosing function returns None; no further incremental processing occurs. (2) If a prior full run exists but intent_file_path does not point to a regular file, an error is logged and the function returns None; no directory cleanup is performed. (3) If a prior run exists and intent_file_path is a file but its trimmed content is empty, an error is logged and the function returns None; no directory cleanup is performed. (4) If a prior run exists and intent_file_path contains nonwhitespace text, developer_intent is set to that text, the directories output_dir (logic_verification_results) and bug_validation under fm_agent/ are removed if they existed, and execution continues to subsequent incremental stages. If any exception is raised during the block (e.g., from shutil.rmtree or I/O), these postconditions may not hold and the system state may be partially modified.
+**Normal termination paths:**
+- If `check_last_run_existence(proj_dir, submodules)` returns `False`: the function emits a warning log message ("No previous full run detected..."), invokes `run_pipeline(proj_dir, domain_knowledge_files=..., submodules=..., ...)` (which performs the full pipeline and produces artifacts under `fm_agent/`), and then returns `None` immediately.
+- If `check_last_run_existence` returns `True` but the intent file at `intent_file_path` does not exist or is empty after stripping: the function logs an error ("Intent file ... does not exist" or "is empty") and returns `None` immediately.
+- Otherwise (last run exists and intent file is valid): the function logs that a previous run was found, logs "[Stage 2/10] Loading developer intent...", reads and binds the nonempty developer intent to `developer_intent`, logs "intent loaded (%d chars)", then removes the stale directories `output_dir` and `<work_dir>/bug_validation` if they exist (logging one line per removed directory). Execution continues normally beyond line 80 with `developer_intent` set and the stale artifacts removed; no value is returned yet.
 
-Formal logic:
-Let has_last_run = check_last_run_existence(proj_dir, submodules).
-Let intent_is_file = os.path.isfile(intent_file_path).
-Let intent_content = (open(intent_file_path).read().strip() if intent_is_file else "").
-Let work_dir = join(proj_dir, 'fm_agent') (assumed already defined).
-Let output_dir = join(work_dir, 'logic_verification_results') (assumed already defined).
-Let returned denote whether the enclosing function has executed a return statement.
-Let result denote the function's return value.
+Additional logging side effects that are **always** performed by the code block (unless an exception prevented reaching them):
+- A separator line of 70 `'='` characters is emitted (line 41).
+- The message "[Stage 1/10] Checking for a previous full run to compare against..." is emitted.
+- In the `True` branch of `check_last_run_existence`: "  -> previous full run found; proceeding with incremental analysis." is emitted.
 
-On normal execution (no exceptions):
-(¬has_last_run) ⇒ (run_pipeline(proj_dir, domain_knowledge_files, submodules, one_phase, extra_call_edges_path) was called) ∧ returned ∧ (result = None)
-(has_last_run ∧ ¬intent_is_file) ⇒ returned ∧ (result = None) ∧ (logging.error called) ∧ ¬(∃ d ∈ {output_dir, join(work_dir, 'bug_validation')} : os.path.isdir(d) ∧ d was removed)
-(has_last_run ∧ intent_is_file ∧ intent_content = "") ⇒ returned ∧ (result = None) ∧ (logging.error called) ∧ ¬(∃ d ∈ {output_dir, join(work_dir, 'bug_validation')} : os.path.isdir(d) ∧ d was removed)
-(has_last_run ∧ intent_is_file ∧ intent_content ≠ "") ⇒ (∀ d ∈ {output_dir, join(work_dir, 'bug_validation')} : os.path.isdir(d) ⇒ d was removed) ∧ (developer_intent = intent_content)
+**Exception paths:**
+- If `check_last_run_existence` raises an exception, it propagates to the caller immediately; any log messages emitted up to that point (the separator and the "[Stage 1/10] ..." message) persist.
+- If the fileopen or read on the intent file raises an exception, it propagates; the "[Stage 2/10] ..." log and the preceding stage1 logs remain.
+- If `run_pipeline` raises an exception, it propagates to the caller.
 
 ---
 
 ## Code Evidence
 
-Line 77: for stale_dir in (output_dir, os.path.join(work_dir, "bug_validation")):
+Line 77:     for stale_dir in (output_dir, os.path.join(work_dir, "bug_validation")):
+Line 78:         if os.path.isdir(stale_dir):
+Line 79:             shutil.rmtree(stale_dir, ignore_errors=True)
+Line 80:             logging.info("  -> removed stale results dir %s.", stale_dir)
 
 ---
 
 ## Trigger Condition
 
-The cleanup loop on lines 77-79 removes only the logic_verification_results and bug_validation directories. The specification additionally mandates removal of incremental scope-selection and spec-update artifacts with prefixes "select_relevant_", "relevant_", and "spec_update_" inside fm_agent/. The code never deletes those files, leaving stale incremental artifacts that violate the requirement to clear all such data before producing new output. A concrete input with a non-empty intent file and existing prefixed artifacts demonstrates this violation.
+The specification demands removal of incremental scope-selection and spec-update artifacts (files prefixed with 'select_relevant_', 'relevant_', and 'spec_update_') before producing new output. The code only removes the two directories, omitting the required prefixbased file deletion, so a valid run where those files exist leaves the system in a state that violates the precondition for the subsequent incremental steps.
 
 ---
 
 ## How to trigger the bug
 
-The claimed bug is a **false positive**: the source code at `src/incremental_reasoner.py` lines 662–680 contains a second cleanup block immediately after the directory removal loop that explicitly deletes all stale scope-selection and spec-update artifacts with the required prefixes.
-
-The `stale_artifact_globs` tuple (lines 666–670) defines patterns covering all three mandated prefixes:
-
-```
-stale_artifact_globs = (
-    "select_relevant_modules.md", "relevant_modules.json",
-    "select_relevant_files_*.md", "relevant_files_*.json",
-    "spec_update_*.md", "spec_update_*.json",
-)
-```
-
-The subsequent loop (lines 672–678) iterates these glob patterns against `fm_agent/` and removes matching files via `os.remove()`. A successful-removal counter and log message confirm the operation.
-
-The verification model appears to have stopped reading at the directory-removal loop (lines 657–660) and did not observe the artifact-cleanup block that follows immediately (lines 666–678).
+The verification incorrectly claims the code omits prefixed-file deletion. In reality, the code immediately following the directory removal (lines 227-245 in the extracted-function file, corresponding to lines 756-774 in `src/incremental_reasoner.py`) contains the required artifact removal using glob patterns that cover all three required prefixes.
 
 ### Inputs
 
-N/A — the bug is a false positive. The cleanup code already satisfies the specification.
+| Parameter | Value |
+|-----------|-------|
+| N/A (static code inspection) | N/A |
 
 ### Expected (spec-correct) Output
 
-Prefixed artifacts (`select_relevant_*`, `relevant_*`, `spec_update_*`) under `fm_agent/` are deleted before new output is produced.
+The function should remove files prefixed with `select_relevant_`, `relevant_`, and `spec_update_` from `fm_agent/`.
 
 ### Actual (buggy) Output
 
-The code already deletes all prefixed artifacts matching those patterns. No bug exists.
+N/A — the code does include the required removal. The glob patterns `select_relevant_modules.md`, `select_relevant_files_*.md`, `relevant_modules.json`, `relevant_files_*.json`, `spec_update_*.md`, and `spec_update_*.json` are present at lines 231-234 of the extracted-function file, and the deletion loop at lines 237-243 removes matching files.
 
 ### How to Reproduce
 
+Step-by-step instructions to trigger the bug manually:
+
 1. Navigate to the repo root.
-2. Inspect the source code at `src/incremental_reasoner.py`, lines 662–680.
-3. Observe that the second cleanup block (`stale_artifact_globs` + deletion loop) covers all three required prefixes.
+2. Run the following snippet (uses the package entry point):
 
 ```python
-# The relevant code block at src/incremental_reasoner.py lines 665–680:
-stale_artifact_globs = (
-    "select_relevant_modules.md", "relevant_modules.json",
-    "select_relevant_files_*.md", "relevant_files_*.json",
-    "spec_update_*.md", "spec_update_*.json",
-)
-removed_artifacts = 0
-for pattern in stale_artifact_globs:
-    for stale_file in glob.glob(os.path.join(work_dir, pattern)):
-        try:
-            os.remove(stale_file)
-            removed_artifacts += 1
-        except OSError:
-            pass
-if removed_artifacts:
-    logging.info("  -> removed %d stale scope-selection artifact(s) from %s.", removed_artifacts, work_dir)
-# actual output: all three prefixes (select_relevant_, relevant_, spec_update_) are covered
-# expected output: all three prefixes are covered — spec satisfied
+import sys
+import os
+
+probe_dir = os.path.dirname(os.path.abspath(__file__))
+repo_root = os.path.dirname(os.path.dirname(probe_dir))
+source_file = os.path.join(repo_root, 'src', 'incremental_reasoner.py')
+
+with open(source_file, 'r') as f:
+    source = f.read()
+
+required_globs = [
+    'select_relevant_modules.md',
+    'select_relevant_files_*.md',
+    'relevant_modules.json',
+    'relevant_files_*.json',
+    'spec_update_*.md',
+    'spec_update_*.json',
+]
+
+found = [p for p in required_globs if p in source]
+# actual (buggy) output: all 6 found — bug NOT confirmed
+# expected (correct) output: all 6 found — spec satisfied
 ```
 
 ---
@@ -139,112 +138,45 @@ if removed_artifacts:
 ## Probe Script
 
 ```python
-"""Probe for bug: src--incremental_reasoner-py--run_incremental_pipeline
-
-Verifies whether run_incremental_pipeline's cleanup code removes prefixed artifacts
-(select_relevant_*, relevant_*, spec_update_*) as required by the specification.
-
-Uses static analysis of the source code, per the FM-Agent self-validation guard
-(no pipeline invocation allowed).
-"""
-import ast
 import sys
 import os
 
+try:
+    # Locate the actual source file (probe script is at fm_agent/bug_validation/, source is at src/)
+    probe_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(os.path.dirname(probe_dir))
+    source_file = os.path.join(repo_root, 'src', 'incremental_reasoner.py')
 
-def find_stale_artifact_globs(source_path):
-    """Parse the source and extract the stale_artifact_globs tuple definition."""
-    with open(source_path, "r", encoding="utf-8") as f:
+    with open(source_file, 'r') as f:
         source = f.read()
-    tree = ast.parse(source)
 
-    class GlobsVisitor(ast.NodeVisitor):
-        def __init__(self):
-            self.found = None
-
-        def visit_Assign(self, node):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "stale_artifact_globs":
-                    if isinstance(node.value, ast.Tuple):
-                        self.found = [
-                            elt.value if isinstance(elt, ast.Constant) else None
-                            for elt in node.value.elts
-                        ]
-                    return
-
-    visitor = GlobsVisitor()
-    visitor.visit(tree)
-    return visitor.found
-
-
-def check_prefix_coverage(globs, required_prefixes):
-    """Check that each required prefix has at least one glob pattern covering it."""
-    missing = []
-    for prefix in required_prefixes:
-        covered = any(g.startswith(prefix) for g in globs if g)
-        if not covered:
-            missing.append(prefix)
-    return missing
-
-
-def main():
-    # The actual source file (not the extracted function copy)
-    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    source_file = os.path.join(repo_root, "src", "incremental_reasoner.py")
-
-    try:
-        globs = find_stale_artifact_globs(source_file)
-    except Exception as e:
-        print(f"ERROR: {e}")
-        sys.exit(1)
-
-    expected_globs = [
-        "select_relevant_modules.md",
-        "relevant_modules.json",
-        "select_relevant_files_*.md",
-        "relevant_files_*.json",
-        "spec_update_*.md",
-        "spec_update_*.json",
+    # The spec requires removal of files prefixed with 'select_relevant_',
+    # 'relevant_', and 'spec_update_'. These glob patterns should exist in the
+    # source code indicating the function removes the required artifacts.
+    required_globs = [
+        'select_relevant_modules.md',
+        'select_relevant_files_*.md',
+        'relevant_modules.json',
+        'relevant_files_*.json',
+        'spec_update_*.md',
+        'spec_update_*.json',
     ]
 
-    required_prefixes = ["select_relevant_", "relevant_", "spec_update_"]
+    found = [p for p in required_globs if p in source]
+    missing = [p for p in required_globs if p not in source]
 
-    if globs is None:
-        print(
-            "CONFIRMED — stale_artifact_globs not found in source; "
-            "prefixed artifacts are not cleaned."
-        )
-        return
-
-    missing = check_prefix_coverage(globs, required_prefixes)
-
-    if missing:
-        print(
-            f"CONFIRMED — stale_artifact_globs found ({globs}) "
-            f"but missing prefix(es): {missing}. "
-            f"Spec requires cleanup of prefixes: {required_prefixes}"
-        )
-    elif globs != expected_globs:
-        # Coverage is good but globs don't match exactly
-        print(
-            f"NOT CONFIRMED — stale_artifact_globs ({globs}) "
-            f"covers all required prefixes {required_prefixes}. "
-            f"Spec-compliant (exact patterns may differ)."
-        )
+    if len(found) == len(required_globs):
+        print('NOT CONFIRMED — code includes required prefixed-file removal: all %d glob patterns present in source' % len(found))
     else:
-        print(
-            f"NOT CONFIRMED — stale_artifact_globs ({globs}) "
-            f"covers all required prefixes {required_prefixes}. "
-            f"Spec-compliant and patterns match expected."
-        )
+        print('CONFIRMED — missing removal patterns: %s' % missing)
 
-
-if __name__ == "__main__":
-    main()
+except Exception as e:
+    print('ERROR: %s' % e)
+    sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-NOT CONFIRMED — stale_artifact_globs (['select_relevant_modules.md', 'relevant_modules.json', 'select_relevant_files_*.md', 'relevant_files_*.json', 'spec_update_*.md', 'spec_update_*.json']) covers all required prefixes ['select_relevant_', 'relevant_', 'spec_update_']. Spec-compliant and patterns match expected.
+NOT CONFIRMED — code includes required prefixed-file removal: all 6 glob patterns present in source
 ```

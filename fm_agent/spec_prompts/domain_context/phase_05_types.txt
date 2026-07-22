@@ -1,128 +1,145 @@
-Phase 5 — Bug Diagnosis & Verification
-==============================================
+# Phase 5: Bug Diagnosis & Verification — Types and Invariants
 
-This phase orchestrates streaming reasoning across extracted functions, validates
+## Overview
+
+Phase 5 orchestrates streaming reasoning across extracted functions, validates
 specification mismatches, generates and executes probe scripts to reproduce bugs,
-and produces structured bug reports with root cause analysis.
+and produces structured bug reports with summary aggregation.
 
-Key Types and Structs
----------------------
+## Key Types
 
-Bug Validation Result (bug_validation/<bug_id>.result.json):
-  {
-    "id": string,              # bug identifier
-    "bug_id": string,          # same as file stem (--delimited path)
-    "confirmation_status": "confirmed" | "not_confirmed" | "error",
-    ...                        # additional fields from the bug validator agent
+### Extended `EXT_TO_LANG` (verification.py)
+
+Broader than extract.py's version:
+```
+.rs→Rust  .c/.h→C  .cpp/.cc/.cxx/.hpp→C++  .py→Python
+.cu/.cuh→CUDA  .erl→Erlang  .java→Java  .go→Go
+.cs→C#  .kt/.kts→Kotlin  .swift→Swift  .php→PHP
+.rb→Ruby  .scala/.sc→Scala  .dart→Dart
+.js/.mjs/.cjs/.jsx→JavaScript  .ts/.mts/.cts/.tsx→TypeScript
+.ets→ArkTS
+```
+
+### Streaming Reasoner State
+
+**`streaming_reasoner(input_dir, output_dir, file_list, proj_dir, work_dir,
+poll_interval=2, spec_procs=None, already_processed=None, resume=False)`:**
+
+Uses `ThreadPoolExecutor(max_workers=MAX_WORKERS)`. Maintains:
+- `processed: set[str]` — completed file paths
+- `expected_files: set[str]|None` — target files from file_list
+- `submitted: set[str]` — in-flight files
+- `reasoning_futures: dict[Future, str]` — in-flight reasoning
+- `validation_futures: dict[Future, tuple]` — in-flight validation
+
+**Algorithm:**
+1. Scan input_dir for files with recognized extensions.
+2. Skip: not in expected_files, already processed, already submitted,
+   not `is_file_ready()`.
+3. Submit ready files via `executor.submit(_verify_single_file, ...)`.
+4. Non-blocking collection of completed reasoning futures:
+   - MATCH/SKIPPED: mark processed.
+   - MISMATCH: submit bug validation.
+5. Detect spec process exit: if all spec processes exited before all
+   files ready, log and break.
+6. After all work: generate `summary.json`.
+
+**Invariants:**
+- Files only processed when `is_file_ready()` returns True.
+- Resume skips files with existing parseable result JSON.
+- Bug validation only when `proj_dir` is not None.
+
+### Verification Result
+
+**`_verify_single_file(file_path, input_dir, output_dir, language, work_dir, resume) → (str, str)`:**
+Returns `(file_path, verdict)` where verdict ∈ `{"MATCH", "MISMATCH", "SKIPPED", "ERROR"}`.
+
+**Output JSON** at `output_dir/<relative>.json`:
+```json
+{
+  "function": "<path>",
+  "verdict": "MATCH"|"MISMATCH"|"ERROR",
+  "gaps": {
+    "spec_claim": "<spec post-condition>",
+    "actual_behavior": "<code's actual post-condition>",
+    "code_evidence": "<offending statements>",
+    "trigger_condition": "<reason>"
   }
+}
+```
 
-Bug Report (bug_validation/<bug_id>.md):
-  Structured Markdown containing:
-  - Specification Claim: the post-condition the spec requires
-  - Actual Behavior: the post-condition the code actually implements
-  - Code Evidence: specific code statements (with line numbers) causing the violation
-  - Trigger Condition: description of the condition that triggers the bug
-  - How to Trigger: concrete input parameters, expected vs. actual output
-  - Probe Script: the full test script used to confirm the bug
-  - Probe Output: raw stdout from executing the probe script
+MISMATCH gaps populated from reasoner output via regex:
+- `actual_behavior`: `Post-condition:\n(.*?)\n\nReason for violation:`
+- `code_evidence`: `Statements triggering the violation:\n(.*?)\n\nPost-condition:`
+- `trigger_condition`: `Reason for violation:\n(.*)`
 
-Summary (bug_validation/summary.json):
-  {
-    "total_reported": int,
-    "total_confirmed": int,
-    "total_not_confirmed": int,
-    "total_error": int,
-    "bugs": [
-      {
-        "id": string,              # bug identifier
-        "bug_id": string,
-        "confirmation_status": "confirmed" | "not_confirmed" | "error",
-        ...                        # per-bug fields from result.json
-      }
-    ]
-  }
-  Bugs are sorted: confirmed first, then not_confirmed, then error; alphabetical by id.
+All string values sanitized via `_sanitize_strings`.
 
-Bug ID Derivation:
-  From logic_verification_results/<rel_path>.json:
-    1. Strip "fm_agent/logic_verification_results/" prefix
-    2. Remove ".json" extension
-    3. Replace "/" and os.sep with "--"
-  Example: logic_verification_results/src/engine/loader-cpp/loadData.cpp.json
-           → src--engine--loader-cpp--loadData.cpp
+### Bug Validation
 
-Bug Validator Prompt Format:
-  "# Bug Validator\n\n"
-  "**Target result file:** `{result_json_rel}`\n"
-  "**Bug ID:** `{bug_id}`\n\n"
-  "---\n\n"
-  (optional user domain knowledge section)
-  (base bug_validator.md content)
+**`_validate_single_bug(result_json_rel, proj_dir, work_dir, resume)`:**
+1. Derive `bug_id`: path components joined with `"--"`.
+2. Read `md/bug_validator.md`, prepend target file + bug ID header.
+3. Write per-bug prompt: `fm_agent/bug_validation/bug_validator_<bug_id>.md`.
+4. Build CLI command, run via `run_opencode_traced`.
+5. Resume: skip if `<bug_id>.result.json` exists and is valid JSON.
+6. Retry up to `BUG_VALIDATION_MAX_RETRIES` (default 1).
 
-Streaming Reasoner Flow:
-  1. Watch input_dir (extracted_functions/) for ready files (is_file_ready=True).
-  2. Submit each ready file to _verify_single_file (ThreadPoolExecutor, MAX_WORKERS=10).
-  3. On MISMATCH verdict: submit _validate_single_bug for bug validation.
-  4. Track completion: print "[n/N] <path>: ✔" for MATCH/SKIPPED,
-     "[n/N] <path>: ✘" for confirmed bugs.
-  5. When all expected files are processed and no in-flight validations remain: done.
-  6. On KeyboardInterrupt: wait for in-flight tasks, then finish.
+**Expected output:** `<bug_id>.md` (structured bug report) and
+`<bug_id>.result.json`.
 
-Verification File Types:
-  EXT_TO_LANG (verification module, independent copy):
-  ".rs"→"Rust", ".c"→"C", ".h"→"C", ".cpp"/".cc"/".cxx"/".hpp"→"C++",
-  ".py"→"Python", ".cu"/".cuh"→"CUDA", ".erl"→"Erlang",
-  ".java"→"Java", ".go"→"Go", ".cs"→"C#", ".kt"/".kts"→"Kotlin",
-  ".swift"→"Swift", ".php"→"PHP", ".rb"→"Ruby", ".scala"/".sc"→"Scala",
-  ".dart"→"Dart", ".js"/".mjs"/".cjs"/".jsx"→"JavaScript",
-  ".ts"/".mts"/".cts"/".tsx"→"TypeScript", ".ets"→"ArkTS"
+### Bug Result Format
 
-_spec_task_done / _spec_task_exit_code:
-  Normalize status reporting across Popen handles and Future-backed spec tasks.
-  Supports both subprocess.Popen (.poll, .returncode) and concurrent.futures.Future
-  (.done, .result) interfaces.
+**`<bug_id>.result.json`:**
+```json
+{
+  "id": "<bug_id>",
+  "confirmation_status": "confirmed" | "not_confirmed" | "error",
+  ...
+}
+```
 
-Function Signatures (Entry Points)
-----------------------------------
+**`<bug_id>.md`** (structured bug report sections):
+- Specification Claim
+- Actual Behavior
+- Code Evidence (with line numbers)
+- Trigger Condition
+- How to Trigger (input params, expected vs actual output)
+- Probe Script (full test script)
+- Probe Output (raw stdout)
 
-src/verification.py:
-  streaming_reasoner(input_dir, output_dir, file_list=None, proj_dir=None,
-                     work_dir=None, poll_interval=2, spec_procs=None,
-                     already_processed=None, resume=False) → set[processed_paths]
-    Main watcher loop: scans for ready files, submits verification + validation,
-    prints progress. Returns set of processed file paths.
+### Summary Aggregation
 
-  _verify_single_file(file_path, input_dir, output_dir, language, work_dir=None,
-                      resume=False) → (file_path, verdict)
-    Verifies ONE function file: parses spec, runs reasoner, writes result JSON.
-    On resume: skips if valid result.json already exists.
-    Returns (file_path, "MATCH"|"MISMATCH"|"ERROR"|"SKIPPED").
+**`_generate_validation_summary(proj_dir)`:**
+Scans `bug_validation/*.result.json`, writes atomically to `summary.json`:
+```json
+{
+  "total_reported": N,
+  "total_confirmed": N,
+  "total_not_confirmed": N,
+  "total_error": N,
+  "bugs": [
+    {"id": "...", "confirmation_status": "...", ...}
+  ]
+}
+```
+Sorts by: status order (confirmed→not_confirmed→error), then alphabetical by ID.
 
-  _validate_single_bug(result_json_rel, proj_dir, work_dir=None, resume=False) → None
-    Validates one MISMATCH result: writes bug_validator prompt, runs OpenCode agent,
-    checks for result.json artifact. Retries up to BUG_VALIDATION_MAX_RETRIES.
+### `_spec_task_done(handle)` / `_spec_task_exit_code(handle)`
 
-  _generate_validation_summary(proj_dir) → None
-    Scans bug_validation/*.result.json files, counts confirmations, writes summary.json.
+Abstraction over `subprocess.Popen` and `concurrent.futures.Future` for
+normalizing spec generation subprocess exit status.
 
-Config Parameters (config.py):
-  BUG_VALIDATION_MAX_RETRIES: int (default 1 from env, 0 for entry pipeline)
-    Number of RETRY attempts (in addition to initial attempt).
-    Maximum bug-validation attempts per function = this value + 1.
+## Entry Points
 
-  OPENCODE_BUG_VALIDATION_MODEL: string (default = LLM_MODEL)
-    Model used for bug validation OpenCode agents.
+### `streaming_reasoner(input_dir, output_dir, ...) → set[str]`
+Main streaming reasoner. Returns set of processed file paths.
 
-Invariants
-----------
-- A MISMATCH verdict triggers bug validation: the reasoner MUST produce result.json
-  before bug validation starts.
-- Bug validation is idempotent on resume: checks for existing result.json before running.
-- Every bug_validation/*.result.json contributes to summary.json.
-- Confirmed bugs: confirmation_status == "confirmed"
-- Unconfirmed bugs: any other non-error status (defaults to not_confirmed for unknown).
-- Streaming reasoner stops when: (1) all expected files are processed, (2) no in-flight
-  reasoning or validation tasks remain, OR (3) spec generation processes all exited
-  and no files got specs (error case).
-- Trace events are recorded for every LLM call (post-condition generation, spec-check)
-  and every bug validation OpenCode invocation.
+### `_verify_single_file(file_path, ...) → (str, str)`
+Verifies one function file. Returns `(file_path, verdict)`.
+
+### `_validate_single_bug(result_json_rel, proj_dir, ...)`
+Validates a MISMATCH result via OpenCode bug validation agent.
+
+### `_generate_validation_summary(proj_dir)`
+Generates `bug_validation/summary.json`.

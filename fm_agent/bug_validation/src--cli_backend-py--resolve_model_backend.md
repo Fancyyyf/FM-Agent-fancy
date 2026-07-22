@@ -14,11 +14,12 @@ The following actual behavior cannot satisfy the specification.
 
 - Returns a canonical backend identifier string: one of "opencode",
     "codex-cli", or "claude-cli"
-  - When FM_AGENT_MODEL_BACKEND is set and its alias-normalized value
-    is not the sentinel "auto", returns the normalized value directly
-  - When FM_AGENT_MODEL_BACKEND is absent from the environment or its
-    normalized value is "auto", the backend is determined by inspecting
-    environment markers in a fixed priority order:
+  - The returned backend is first determined by normalizing
+    settings.llm.backend via _normalize_backend; if the result is not
+    "auto", that result is returned immediately
+  - When the normalized value of settings.llm.backend is "auto", the
+    backend is determined by inspecting environment markers in a fixed
+    priority order:
       1. FM_AGENT_HOST or FM_AGENT_CLIENT (whichever is set) is checked
          case-insensitively for "claude" or "codex" substrings
       2. The presence of any Claude-specific environment variable
@@ -29,49 +30,49 @@ The following actual behavior cannot satisfy the specification.
     returned backend: "claude-cli" for Claude markers, "codex-cli" for
     Codex markers
   - When no marker matches, returns "codex-cli" (the default fallback)
-  - The same input environment always produces the same output (pure
-    function with respect to environment state at call time)
+  - The same input (settings.llm.backend value and environment state)
+    always produces the same output (pure function with respect to its
+    inputs at call time)
 
 ---
 
 ### Actual Behavior
 
-The function returns a string or None according to these rules. Let env(k) denote the value of environment variable k, or None if k is absent. Let norm(v) be the canonical backend name when v is a recognized alias, otherwise v unchanged; norm(None)=None. The return value R is: if norm(env('FM_AGENT_MODEL_BACKEND')) != 'auto' then R = norm(env('FM_AGENT_MODEL_BACKEND')). Otherwise (that is, norm(env('FM_AGENT_MODEL_BACKEND')) == 'auto'), let hint = (env('FM_AGENT_HOST') or env('FM_AGENT_CLIENT') or '').lower(). Then if 'claude' in hint, R = 'claude-cli'; else if 'codex' in hint, R = 'codex-cli'; else if any env(v) is truthy for v in {'CLAUDE_PLUGIN_ROOT', 'CLAUDE_CODE_ENTRYPOINT'}, R = 'claude-cli'; else if any env(v) is truthy for v in {'CODEX_HOME', 'CODEX_SANDBOX', 'CODEX_EXECUTION_MODE'}, R = 'codex-cli'; else R = 'codex-cli'. The possible returned values are None (when FM_AGENT_MODEL_BACKEND is not set and norm(None) returns None) or a string, typically a canonical backend identifier ('opencode', 'codex-cli', 'claude-cli') but could be any string if FM_AGENT_MODEL_BACKEND was set to a non-canonical, non-alias value that was not 'auto'.
+The function returns a string that is the canonical backend identifier resolved from the configuration and environment. Let normalized = _normalize_backend(settings.llm.backend). If normalized != 'auto', the result is normalized. Otherwise, when normalized == 'auto', let H = (os.environ.get('FM_AGENT_HOST') or os.environ.get('FM_AGENT_CLIENT') or '').lower(). If 'claude'  H or any of the environment variables CLAUDE_PLUGIN_ROOT or CLAUDE_CODE_ENTRYPOINT is set to a non-empty value, the result is 'claude-cli'. In all other cases (including when H contains 'codex' but not 'claude', when any of CODEX_HOME, CODEX_SANDBOX, or CODEX_EXECUTION_MODE is set, or when no environment hints are present), the result is 'codex-cli'.
 
 ---
 
 ## Code Evidence
 
-Line 2: backend = _normalize_backend(os.environ.get("FM_AGENT_MODEL_BACKEND"))
-Line 3: if backend != "auto":
-Line 4:     return backend
+Line 2:     backend = _normalize_backend(settings.llm.backend)
+Line 3:     if backend != "auto":
+Line 4:         return backend
 
 ---
 
 ## Trigger Condition
 
-When FM_AGENT_MODEL_BACKEND is not set, the code returns None because _normalize_backend(None) produces None, and the condition backend != 'auto' is true (None != 'auto'). The specification requires that when the variable is absent, it should fall through to auto-detection and return one of the three canonical backends, never None.
+The specification requires the function to return one of the canonical backend identifiers 'opencode', 'codex-cli', or 'claude-cli'. The code returns the result of _normalize_backend unchanged when it is not 'auto'. According to the provided behaviour of _normalize_backend, if the input is not a recognised alias, it returns the input as-is. Therefore, for an input like 'foobar', the function returns 'foobar', which is not one of the allowed identifiers, violating the specification.
 
 ---
 
 ## How to trigger the bug
 
-When `FM_AGENT_MODEL_BACKEND` is absent from the environment, `_normalize_backend(None)` returns `"opencode"` (because `(None or "")` → `""`, and `not ""` is `True` → `"opencode"`). The condition `backend != "auto"` is `True`, so the function returns `"opencode"` immediately without inspecting any environment markers. This violates the specification, which requires that when the variable is absent, the function should fall through to auto-detection and check Claude/Codex environment markers.
+The bug occurs when `settings.llm.backend` is set to a value that is not a recognized alias in `_BACKEND_ALIASES` and is not `"auto"`. The `_normalize_backend` function passes such values through unchanged, and `resolve_model_backend` returns the unrecognized value directly — violating the spec's post-condition that only canonical identifiers are returned.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `FM_AGENT_MODEL_BACKEND` | (not set — absent from environment) |
-| `CLAUDE_PLUGIN_ROOT` | `/tmp/test-claude-plugin-root` |
+| `settings.llm.backend` | `"foobar"` |
 
 ### Expected (spec-correct) Output
 
-`"claude-cli"`
+`one of "opencode", "codex-cli", or "claude-cli"`
 
 ### Actual (buggy) Output
 
-`"opencode"`
+`"foobar"`
 
 ### How to Reproduce
 
@@ -81,25 +82,14 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import os
-import sys
-sys.path.insert(0, '.')
+from unittest.mock import patch
+import config
+from src.cli_backend import resolve_model_backend
 
-from src.cli_backend import resolve_model_backend, _normalize_backend
-
-# Ensure FM_AGENT_MODEL_BACKEND is not set
-os.environ.pop("FM_AGENT_MODEL_BACKEND", None)
-
-# Set a Claude marker — auto-detection should find this if reached
-os.environ["CLAUDE_PLUGIN_ROOT"] = "/tmp/test"
-
-result = resolve_model_backend()
-# actual (buggy) output: "opencode"
-# expected (correct) output: "claude-cli"
-
-# Root cause: _normalize_backend(None) returns "opencode",
-# short-circuiting before auto-detection
-print(_normalize_backend(None))  # "opencode"
+with patch.object(config.settings.llm, "backend", "foobar"):
+    result = resolve_model_backend()
+    print(result)  # actual (buggy) output: 'foobar'
+                   # expected (correct) output: one of 'opencode', 'codex-cli', 'claude-cli'
 ```
 
 ---
@@ -107,61 +97,44 @@ print(_normalize_backend(None))  # "opencode"
 ## Probe Script
 
 ```python
-"""Probe script for resolve_model_backend bug: when FM_AGENT_MODEL_BACKEND
-is not set, the function returns "opencode" via _normalize_backend's
-fallback instead of running auto-detection against environment markers.
-
-Spec requirement: when FM_AGENT_MODEL_BACKEND is absent, the function
-should inspect environment markers (CLAUDE_PLUGIN_ROOT, CODEX_HOME, etc.)
-and return the corresponding backend. Setting a Claude marker like
-CLAUDE_PLUGIN_ROOT should yield "claude-cli".
-
-Actual (buggy) behavior: _normalize_backend(None) returns "opencode" because
-(None or "") -> "", and not "" is True -> returns "opencode". Then the
-condition backend != "auto" is True, so it returns "opencode" immediately
-without checking any environment markers.
-"""
-
-import os
 import sys
+import os
+from unittest.mock import patch
 
-# Add repo root to path so 'src' package is importable.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# The probe is run from the repo root, so cwd is the import base.
+sys.path.insert(0, os.getcwd())
 
-# Import the module. Note: load_dotenv() runs at import time; since no .env
-# file exists in this snapshot, no env vars are modified.
-from src.cli_backend import resolve_model_backend
 
-# Ensure FM_AGENT_MODEL_BACKEND is NOT set (load_dotenv may have added it
-# if a .env file existed, but here it does not).
-os.environ.pop("FM_AGENT_MODEL_BACKEND", None)
+def main():
+    try:
+        import config
+        from src.cli_backend import resolve_model_backend
 
-# Set a Claude-specific marker so auto-detection would find it if reached.
-os.environ["CLAUDE_PLUGIN_ROOT"] = "/tmp/test-claude-plugin-root"
+        canonical = {"opencode", "codex-cli", "claude-cli"}
+        # Monkey-patch settings.llm.backend to a non-canonical value
+        with patch.object(config.settings.llm, "backend", "foobar"):
+            actual = resolve_model_backend()
+            # The spec requires a canonical identifier. The buggy code
+            # passes the unrecognized value straight through.
+            passed = actual not in canonical  # True = bug reproduced
 
-try:
-    actual = resolve_model_backend()
+        if passed:
+            expected_fmt = f"one of {sorted(canonical)}"
+            print(f"CONFIRMED — actual: {actual!r} | expected: {expected_fmt}")
+        else:
+            print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
 
-    # Per spec: when FM_AGENT_MODEL_BACKEND is absent, auto-detection should
-    # see CLAUDE_PLUGIN_ROOT and return "claude-cli".
-    expected = "claude-cli"
+    except Exception as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
 
-    # Bug confirmed when actual does NOT match expected.
-    # The buggy code returns "opencode" (via _normalize_backend fallback)
-    # instead of "claude-cli" (via auto-detection).
-    passed = actual != expected
-except Exception as e:
-    print(f"ERROR: {e}")
-    sys.exit(1)
 
-if passed:
-    print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
-else:
-    print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+if __name__ == "__main__":
+    main()
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: 'opencode' | expected: 'claude-cli'
+CONFIRMED — actual: 'foobar' | expected: one of ['claude-cli', 'codex-cli', 'opencode']
 ```

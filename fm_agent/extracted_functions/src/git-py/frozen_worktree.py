@@ -58,6 +58,19 @@
 #     If the command exits with a non-zero status, raises CalledProcessError with the
 #     return code, stdout, and stderr.
 # [SPLIT]
+# _git(*args, **kwargs) -> str
+#   Pre-condition: proj_dir is a directory path in enclosing scope; git is installed
+#     and accessible; *args are zero or more strings forming the git subcommand and
+#     its operands; **kwargs are zero or more keyword arguments forwarded to the
+#     subprocess invocation, merged with defaults (check=True, capture_output=True,
+#     text=True).
+#   Post-condition: executes "git -C proj_dir *args" as a child process; stdout
+#     and stderr are captured and do not appear on the parent's streams. If the
+#     process exits with a non-zero code, raises subprocess.CalledProcessError
+#     with the returncode, stdout, stderr, and cmd. On exit code zero, returns the
+#     captured stdout with all leading and trailing whitespace removed. The child
+#     inherits the parent's environment, modifiable via an env keyword argument.
+# [SPLIT]
 # shutil.copytree(src, dst, ignore=callable, symlinks=True) -> str
 #   Pre-condition: src exists and is a directory; dst does not exist
 #   Post-condition: recursively copies src to dst preserving symlinks (not following

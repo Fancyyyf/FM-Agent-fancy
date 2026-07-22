@@ -1,11 +1,1 @@
-{
-  "id": "src--languages--rust-py--function_spans",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/rust-py/function_spans.py",
-  "function_name": "function_spans",
-  "confirmation_status": "not_confirmed",
-  "attempts": 3,
-  "probe_script": "fm_agent/bug_validation/probe_src--languages--rust-py--function_spans.py",
-  "detail_file": "fm_agent/bug_validation/src--languages--rust-py--function_spans.md",
-  "probe_stdout": "cg from proj_dir: True\\ncg from subdir:  True\\nDB root = /tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot\\nOK: \"subdir proj, internal file\" -> None\\nOK: \"subdir proj, root file\" -> None\\nDB indexed files (first 5): ['config.py', 'config.py', 'config.py', 'config.py', 'config.py']\\nNOT CONFIRMED — function_spans correctly returns None for unindexed files",
-  "trigger_summary": "Codegraph available but filepath not indexed: function_spans delegates to get_function_spans which correctly returns None when no matching rows found in the codegraph DB for the given filepath and language."
-}
+{"id": "src--languages--rust-py--function_spans", "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/rust-py/function_spans.py", "function_name": "function_spans", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--languages--rust-py--function_spans.py", "detail_file": "fm_agent/bug_validation/src--languages--rust-py--function_spans.md", "probe_stdout": "CONFIRMED — function_spans returned method 'Foo::bar' (inside an impl block) in addition to top-level function 'top_level'. Spec requires only top-level functions. Full result: [('top_level', 0, 2), ('Foo::bar', 4, 6)]", "trigger_summary": "function_spans delegates to get_function_spans which returns both 'function' and 'method' kinds, but the spec requires only top-level function declarations; methods inside impl blocks leak through unfiltered."}

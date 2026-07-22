@@ -1,5 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/llm_client-py/_inject_targets.py",
-  "verdict": "MATCH",
-  "gaps": null
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/llm_client-py/_inject_targets.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns a list of non-empty strings representing the configured targets for\n    user-id metadata injection into request bodies\n  - The returned values are determined by the INJECT_HOST environment variable:\n    when set, the value is parsed as a comma-separated list, each segment is\n    stripped of leading and trailing whitespace, and any resulting empty segments\n    are discarded\n  - When INJECT_HOST is unset or empty, returns an empty list\n  - The relative order of elements in the returned list matches the order of\n    their corresponding segments in INJECT_HOST",
+    "actual_behavior": "Natural language: The function _inject_targets() accesses the global or module-level object `settings.inject.hosts`. If that attribute chain exists, it returns a list of non-empty strings. The value of `settings.inject.hosts` is first passed through the expression `(settings.inject.hosts or '')`, so if it is None, an empty string, or any other falsy value, an empty string is used instead. That resulting string is split on commas, each part is stripped of leading and trailing whitespace, and any part that becomes empty after stripping is discarded. The returned list contains the stripped non-empty parts. If the attribute chain does not exist (i.e., `settings`, `settings.inject`, or `settings.inject.hosts` is not defined), an AttributeError is raised. Formal logic: Let S = settings.inject.hosts if settings, settings.inject, and settings.inject.hosts exist; otherwise S is undefined. If S is defined, then result = COMPREHENSION{ s.strip() | for each s in (S or '').split(',') if s.strip() != '' }. If S is undefined, the function raises AttributeError. In the success case,  e  result, e is a string and len(e) > 0.",
+    "code_evidence": "Line 2: return [s.strip() for s in (settings.inject.hosts or \"\").split(\",\") if s.strip()]",
+    "trigger_condition": "The function reads the host list from settings.inject.hosts, but the specification requires reading from the INJECT_HOST environment variable. When INJECT_HOST is set but settings.inject.hosts is absent or contains different data, the function either raises an error or returns an incorrect list, violating the specification."
+  }
 }

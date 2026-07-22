@@ -1,0 +1,113 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::domain_knowledge-py::resolve_domain_knowledge_paths` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _flatten_paths.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir=None):
+    """Validate and return absolute paths to markdown knowledge files."""
+    resolved = []
+    seen = set()
+    base_dir = os.path.abspath(base_dir)
+    fallback_base_dir = (
+        os.path.abspath(fallback_base_dir) if fallback_base_dir else None
+    )
+
+    for raw_path in _flatten_paths(paths):
+        expanded = os.path.expanduser(raw_path)
+        candidates = []
+        if os.path.isabs(expanded):
+            candidates.append(expanded)
+        else:
+            candidates.append(os.path.join(base_dir, expanded))
+            if fallback_base_dir:
+                candidates.append(os.path.join(fallback_base_dir, expanded))
+
+        path = next(
+            (candidate for candidate in candidates if os.path.exists(candidate)),
+            candidates[0],
+        )
+        path = os.path.abspath(path)
+        if not os.path.exists(path):
+            raise ValueError(f"domain knowledge file does not exist: {raw_path}")
+        if not os.path.isfile(path):
+            raise ValueError(f"domain knowledge path is not a file: {raw_path}")
+        ext = os.path.splitext(path)[1].lower()
+        if ext not in VALID_DOMAIN_KNOWLEDGE_EXTENSIONS:
+            allowed = ", ".join(sorted(VALID_DOMAIN_KNOWLEDGE_EXTENSIONS))
+            raise ValueError(
+                f"domain knowledge file must be Markdown ({allowed}): {raw_path}"
+            )
+
+        real_path = os.path.realpath(path)
+        if real_path in seen:
+            continue
+        seen.add(real_path)
+        resolved.append(path)
+    return resolved
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/domain_knowledge.py
+#
+# resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir=None) -> list[str]
+#
+# Pre-condition:
+#   - paths is an iterable of path-like strings, potentially nested (may contain inner iterables of path strings)
+#   - base_dir is a string referencing an existing directory
+#   - fallback_base_dir is None or a string referencing an existing directory
+#
+# Post-condition:
+#   - Returns a list of absolute file path strings, one per distinct valid domain-knowledge markdown file
+#   - Each input entry is expanded for user home directories and flattened from any nesting
+#   - If an expanded entry is absolute, it is used directly; otherwise it is resolved against base_dir
+#   - When fallback_base_dir is not None and the base_dir-resolved path does not exist on the filesystem, the entry is resolved against fallback_base_dir as a secondary base
+#   - An entry whose resolved path does not exist on the filesystem is excluded from the returned list
+#   - An entry whose resolved path is not a regular file is excluded from the returned list
+#   - An entry whose resolved path has a file extension not in the set of recognized markdown extensions is excluded from the returned list
+#   - The returned list contains no duplicate entries; deduplication is performed on the real (canonical) path
+#   - The returned list preserves the relative order of first occurrence among the input entries
+#   - Returns an empty list when no entry resolves to a valid domain-knowledge file
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _flatten_paths(paths) -> iterable[str]
+#   Pre-condition: paths is an iterable that may contain path-like strings and/or nested iterables of path-like strings
+#   Post-condition: returns a flat iterable of path-like strings with all nesting removed
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_flatten_paths) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_flatten_paths). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

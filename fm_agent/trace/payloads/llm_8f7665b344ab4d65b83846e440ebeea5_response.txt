@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='project', work_dir='out', force=False. 'project/src/app.py' contains function 'hello', listed in phases.json, not a test file. Before extraction, 'out/extracted_functions/hello.py' already exists but has no [SPEC] or [INFO] marker lines (e.g., it was created by a user).",
+  "offending_statements": "Line 30-... (after visible block): The loop skips writing when the output file already exists without checking for [SPEC]/[INFO] markers.",
+  "reason": "Condition A skips any function whose output file already exists when force=False, but the specification requires skipping only if the existing file contains both [SPEC] and [INFO] marker lines. The example output file lacks those markers, so the specification demands it be overwritten, while the code skips it."
+}

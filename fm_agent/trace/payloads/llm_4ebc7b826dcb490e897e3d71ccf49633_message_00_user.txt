@@ -1,0 +1,109 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::cli_backend-py::resolve_model_backend` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _normalize_backend.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def resolve_model_backend():
+    backend = _normalize_backend(settings.llm.backend)
+    if backend != "auto":
+        return backend
+
+    host_hint = (os.environ.get("FM_AGENT_HOST") or os.environ.get("FM_AGENT_CLIENT") or "").lower()
+    if "claude" in host_hint:
+        return "claude-cli"
+    if "codex" in host_hint:
+        return "codex-cli"
+
+    claude_markers = ("CLAUDE_PLUGIN_ROOT", "CLAUDE_CODE_ENTRYPOINT")
+    if any(os.environ.get(name) for name in claude_markers):
+        return "claude-cli"
+
+    codex_markers = ("CODEX_HOME", "CODEX_SANDBOX", "CODEX_EXECUTION_MODE")
+    if any(os.environ.get(name) for name in codex_markers):
+        return "codex-cli"
+
+    return "codex-cli"
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/cli_backend.py
+#
+# resolve_model_backend() -> str
+#
+# Pre-condition:
+#   - The process environment may or may not contain a variable named
+#     FM_AGENT_MODEL_BACKEND, whose value is any string
+#   - The process environment may or may not contain variables named
+#     FM_AGENT_HOST or FM_AGENT_CLIENT, whose values are any strings
+#   - The process environment may or may not contain any of the markers
+#     CLAUDE_PLUGIN_ROOT, CLAUDE_CODE_ENTRYPOINT, CODEX_HOME,
+#     CODEX_SANDBOX, or CODEX_EXECUTION_MODE
+#
+# Post-condition:
+#   - Returns a canonical backend identifier string: one of "opencode",
+#     "codex-cli", or "claude-cli"
+#   - When FM_AGENT_MODEL_BACKEND is set and its alias-normalized value
+#     is not the sentinel "auto", returns the normalized value directly
+#   - When FM_AGENT_MODEL_BACKEND is absent from the environment or its
+#     normalized value is "auto", the backend is determined by inspecting
+#     environment markers in a fixed priority order:
+#       1. FM_AGENT_HOST or FM_AGENT_CLIENT (whichever is set) is checked
+#          case-insensitively for "claude" or "codex" substrings
+#       2. The presence of any Claude-specific environment variable
+#          (CLAUDE_PLUGIN_ROOT, CLAUDE_CODE_ENTRYPOINT)
+#       3. The presence of any Codex-specific environment variable
+#          (CODEX_HOME, CODEX_SANDBOX, CODEX_EXECUTION_MODE)
+#   - The first matching marker in this priority order determines the
+#     returned backend: "claude-cli" for Claude markers, "codex-cli" for
+#     Codex markers
+#   - When no marker matches, returns "codex-cli" (the default fallback)
+#   - The same input environment always produces the same output (pure
+#     function with respect to environment state at call time)
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _normalize_backend(name) -> str
+#   Pre-condition: name is a string identifier that may be a canonical
+#     backend name ("opencode", "codex-cli", "claude-cli") or an alias
+#     ("codex", "claude", "open-code") or any other string
+#   Post-condition: returns the canonical backend name corresponding to
+#     name when name is a recognized alias, or name itself unchanged when
+#     name is not a recognized alias
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_normalize_backend) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_normalize_backend). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

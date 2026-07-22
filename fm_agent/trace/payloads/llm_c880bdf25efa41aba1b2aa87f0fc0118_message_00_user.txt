@@ -1,0 +1,87 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `_codegraph_cmd`'s behavioral specification was just updated. The caller `src::languages::codegraph-py::try_codegraph_init` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/languages/codegraph.py
+#
+# _codegraph_cmd() -> str
+#
+# Pre-condition:
+#   - settings.codegraph.bin_dir is a string specifying a directory path, potentially beginning with a tilde (~) representing the current user's home directory.
+#
+# Post-condition:
+#   - Returns a string suitable for use as an executable command name.
+#   - When a file named "codegraph" exists within the directory obtained by expanding any leading tilde in the configured bin_dir to the user's home directory and that file has the execute permission bit set for the effective user of the current process, returns the absolute filesystem path to that file.
+#   - When that file does not exist or lacks the execute permission bit, returns the bare string "codegraph", deferring resolution to the directories named by the PATH environment variable of the calling process.
+#   - Never raises an exception.
+# [SPEC]
+
+## Caller's current source
+
+```python
+def try_codegraph_init(proj_dir: str, force: bool = True) -> None:
+    """Build the codegraph index for proj_dir with `codegraph init`.
+
+    By default (``force=True``) any existing index is discarded and rebuilt, so
+    the index always reflects the current working tree rather than whatever code
+    was present when it was last built. This is the safe default: callers read
+    function bodies and spans from the index, and a stale one (e.g. after an
+    incremental run's tree changed, or after `_trim_project_in_place` edited the
+    sources) would yield boundaries for the wrong code. `codegraph init` on its
+    own no-ops when `.codegraph/` already exists, so a rebuild requires clearing
+    it first.
+
+    Pass ``force=False`` to keep an existing index and only build when it is
+    absent — an opt-in optimization for callers that know the tree is unchanged
+    since the index was built.
+
+    Silently skips when codegraph is not installed so the pipeline falls back
+    to the regex-based extractor without any error.
+    """
+    codegraph_dir = os.path.join(proj_dir, ".codegraph")
+    db_path = os.path.join(codegraph_dir, "codegraph.db")
+    if os.path.exists(db_path):
+        if not force:
+            return
+        # Existing index may reflect stale sources; remove it so `codegraph init`
+        # rebuilds against the current tree instead of skipping.
+        shutil.rmtree(codegraph_dir, ignore_errors=True)
+        print("[Pipeline] Rebuilding codegraph index for current working tree...")
+    else:
+        print("[Pipeline] Building codegraph index...")
+    cmd = _codegraph_cmd()
+    _warn_on_codegraph_version_mismatch(cmd)
+    try:
+        result = subprocess.run(
+            [cmd, "init"], cwd=proj_dir, capture_output=True, text=True
+        )
+    except FileNotFoundError:
+        return  # codegraph not installed
+    if result.returncode == 0:
+        print("[Pipeline] codegraph index built.")
+    else:
+        logging.warning(
+            "codegraph init failed (non-fatal, falling back to regex): %s",
+            result.stderr[:300],
+        )
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# (no callees)
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `_codegraph_cmd` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `_codegraph_cmd` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

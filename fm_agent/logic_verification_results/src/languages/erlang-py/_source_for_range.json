@@ -1,5 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_source_for_range.py",
-  "verdict": "MATCH",
-  "gaps": null
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_source_for_range.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns the substring of source that spans from the start position (inclusive) to the end position (exclusive)",
+    "actual_behavior": "If `lsp_range['start']` does not follow `lsp_range['end']` in source order, the function returns the substring of `source` that begins at the byte offset corresponding to the inclusive start position (line `lsp_range['start']['line']`, character `lsp_range['start']['character']`) and ends at the byte offset corresponding to the exclusive end position (line `lsp_range['end']['line']`, character `lsp_range['end']['character']`). If the start position does follow the end position, the behavior is undefined: the function may raise an exception (e.g., an `AssertionError` or `ValueError`) or return an arbitrary result.",
+    "code_evidence": "Line 3: return _SourceIndex.build(source).source_for_range(lsp_range)",
+    "trigger_condition": "The specification requires returning the substring from start to end for any input, but the code's behavior is undefined when start follows end. For the counterexample, start character 2 > end character 1. The code may raise an exception or return an arbitrary result, while the specification implies returning an empty substring (the span from start to end exclusive when start > end is empty). Thus the code violates the specification."
+  }
 }

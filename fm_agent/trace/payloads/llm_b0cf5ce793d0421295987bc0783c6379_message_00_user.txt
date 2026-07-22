@@ -1,0 +1,135 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::reasoner-py::_split_into_blocks_braced` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _compute_brace_depth_per_line, _split_into_blocks.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _split_into_blocks_braced(func, language):
+    """
+    Split function body into blocks respecting syntactic boundaries.
+    """
+
+    python_like = {"python"}
+
+    if language.lower() in python_like:
+        return _split_into_blocks(func)
+
+    raw_lines = func.strip().split("\n")
+    total = len(raw_lines)
+
+    if total <= GRANULARITY:
+        return [func.strip()]
+
+    # normalize prefix
+    stripped_lines = []
+    for line in raw_lines:
+        if line.startswith("Line "):
+            colon = line.find(":", 5)
+            if colon != -1:
+                line = line[colon + 1:].lstrip()
+        stripped_lines.append(line)
+
+    # compute brace depth
+    depths = _compute_brace_depth_per_line(stripped_lines)
+
+    # define entry depth 
+    entry_depth = depths[0] if total > 0 else 0
+
+    if entry_depth == 0:
+        entry_depth = next((d for d in depths if d > 0), 0)
+
+    if entry_depth == 0:
+        # fallback to safe splitter
+        return _split_into_blocks(func)
+
+    # greedy safe splitting
+    blocks = []
+    i = 0
+
+    while i < total:
+        remaining = total - i
+
+        if remaining <= GRANULARITY * 2:
+            blocks.append("\n".join(raw_lines[i:]))
+            break
+
+        target = i + GRANULARITY
+        split_point = -1
+
+        # ONLY split when we return to entry depth
+        for j in range(target, total):
+            if depths[j] == entry_depth:
+                split_point = j
+                break
+
+        if split_point == -1:
+            blocks.append("\n".join(raw_lines[i:]))
+            break
+
+        blocks.append("\n".join(raw_lines[i:split_point + 1]))
+        i = split_point + 1
+
+    return blocks
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/reasoner-py/reasoner.py
+#
+# _split_into_blocks_braced(func, language) -> list[str]
+#
+# Pre-condition:
+#   - func is a non-empty string containing the body of a function, each line optionally prefixed with "Line N: " followed by the source text
+#   - language is a string identifying the source programming language
+#
+# Post-condition:
+#   - Returns a non-empty list of strings, each being a contiguous, non-overlapping segment of the function body, appearing in the same order as in the original body
+#   - For brace-delimited languages: every boundary between consecutive returned segments occurs at a line whose brace-nesting depth equals the brace-nesting depth at the first meaningful brace level of the function body. Each segment is therefore syntactically self-contained with respect to brace structure — it begins and ends at the same nesting depth as the function's entry depth
+#   - For languages that use indentation for syntactic structure (classified as Python-like by the function): segments are split at boundaries that respect indentation-level changes, with each segment being a syntactically contiguous block
+#   - The ordered concatenation of all returned strings, joined with newline characters, reconstructs the original function body text after stripping leading and trailing whitespace
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _split_into_blocks(func) -> list[str]
+#   Pre-condition: func is a non-empty string containing the body of a function
+#   Post-condition: Returns a list of strings, each being a contiguous, non-overlapping segment of the function body split at indentation-level boundaries. The ordered concatenation of all returned strings joined with newline characters reconstructs the original function body text after stripping leading and trailing whitespace
+# [SPLIT]
+# _compute_brace_depth_per_line(stripped_lines) -> list[int]
+#   Pre-condition: stripped_lines is a non-empty list of strings, each containing one line of function body text without "Line N:" prefixes
+#   Post-condition: Returns a list of non-negative integers with length equal to stripped_lines. Each element at position i is the net brace count (opening braces '{' minus closing braces '}') accumulated from line 0 through line i inclusive, where braces appearing inside string literals and comments do not contribute to the count
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_compute_brace_depth_per_line, _split_into_blocks) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_compute_brace_depth_per_line, _split_into_blocks). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

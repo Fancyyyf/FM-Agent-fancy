@@ -1,1 +1,11 @@
-{"id": "src--languages--go-py--function_spans", "source_file": "src/languages/go-py/function_spans.py", "function_name": "function_spans", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--languages--go-py--function_spans.py", "detail_file": "fm_agent/bug_validation/src--languages--go-py--function_spans.md", "probe_stdout": "CONFIRMED — actual: '<TypeError raised>' | expected: 'None (spec-correct)'\n", "trigger_summary": "Passing None as proj_dir causes CodeGraphExtractor.from_proj_dir to raise TypeError via os.path.abspath(None), which propagates instead of returning None as the spec requires."}
+{
+  "id": "src--languages--go-py--function_spans",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/go-py/function_spans.py",
+  "function_name": "function_spans",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--go-py--function_spans.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--go-py--function_spans.md",
+  "probe_stdout": "CONFIRMED — actual: None | expected: [('my_func', 0, 5)]\nThe hardcoded 'go' language key caused get_function_spans to miss the python-language node, returning None instead of the indexed function spans.",
+  "trigger_summary": "function_spans hardcodes the language key 'go' in the call to get_function_spans, causing it to return None for non-Go files that are indexed by the codegraph and contain function definitions."
+}

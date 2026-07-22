@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--codegraph-py--_warn_on_codegraph_version_mismatch",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_warn_on_codegraph_version_mismatch.py",
+  "function_name": "_warn_on_codegraph_version_mismatch",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_warn_on_codegraph_version_mismatch.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_warn_on_codegraph_version_mismatch.md",
+  "probe_stdout": "CONFIRMED — WARNING emitted despite versions matching after normalization: \"codegraph 'v1.0' does not match the pinned '1.0' (fm-agent.toml [codegraph].version); re-run install.sh to update.\"\n",
+  "trigger_summary": "The code removes leading 'v' only from the configured version but not from the command output, causing a false WARNING when both versions are semantically identical (e.g., configured 'v1.0' and output 'v1.0')."
+}

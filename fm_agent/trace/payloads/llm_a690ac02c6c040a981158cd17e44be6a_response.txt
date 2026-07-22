@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/reasoner-py/_compute_brace_depth_per_line.py\n#\n# _compute_brace_depth_per_line(lines) -> list[int]\n#\n# Pre-condition:\n#   - lines is a non-empty list of strings, each containing one line of function body text without \"Line N:\" prefixes\n#   - The input represents a function body with balanced braces, i.e., every '}' has a matching '{' earlier in the sequence, so the cumulative depth never becomes negative.\n#\n# Post-condition:\n#   - Returns a list of integers whose length equals len(lines)\n#   - For each index i, the integer is the cumulative net count of '{' minus '}' characters encountered across lines[0] through lines[i], inclusive, after applying the following exclusion rules:\n#       * Characters inside a double-quoted string literal (delimited by unescaped '\"', where backslash escapes the next character) are excluded.\n#       * Characters inside a single-quoted character literal (delimited by unescaped \"'\", with backslash escape) are excluded.\n#       * From the point where the sequence \"//\" occurs outside any literal, all remaining characters on that line are excluded.\n#       * From the point where the sequence \"/*\" occurs outside any literal, all remaining characters on that line are excluded (the simplified implementation does not propagate the block comment into subsequent lines).\n#   - Because of the balanced-brace precondition, each returned integer is non-negative.\n# [SPEC]",
+  "info_updated": false,
+  "new_info": "",
+  "updated_callees": []
+}

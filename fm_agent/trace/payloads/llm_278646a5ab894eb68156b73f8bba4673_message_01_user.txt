@@ -1,0 +1,23 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _inject_targets():
+Line 2:     return [s.strip() for s in (settings.inject.hosts or "").split(",") if s.strip()]
+```
+
+Condition A (what the code actually does):
+Natural language: The function _inject_targets() accesses the global or module-level object `settings.inject.hosts`. If that attribute chain exists, it returns a list of non-empty strings. The value of `settings.inject.hosts` is first passed through the expression `(settings.inject.hosts or '')`, so if it is None, an empty string, or any other falsy value, an empty string is used instead. That resulting string is split on commas, each part is stripped of leading and trailing whitespace, and any part that becomes empty after stripping is discarded. The returned list contains the stripped non-empty parts. If the attribute chain does not exist (i.e., `settings`, `settings.inject`, or `settings.inject.hosts` is not defined), an AttributeError is raised. Formal logic: Let S = settings.inject.hosts if settings, settings.inject, and settings.inject.hosts exist; otherwise S is undefined. If S is defined, then result = COMPREHENSION{ s.strip() | for each s in (S or '').split(',') if s.strip() != '' }. If S is undefined, the function raises AttributeError. In the success case, ∀ e ∈ result, e is a string and len(e) > 0.
+
+Condition B (what the specification requires):
+- Returns a list of non-empty strings representing the configured targets for
+    user-id metadata injection into request bodies
+  - The returned values are determined by the INJECT_HOST environment variable:
+    when set, the value is parsed as a comma-separated list, each segment is
+    stripped of leading and trailing whitespace, and any resulting empty segments
+    are discarded
+  - When INJECT_HOST is unset or empty, returns an empty list
+  - The relative order of elements in the returned list matches the order of
+    their corresponding segments in INJECT_HOST
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

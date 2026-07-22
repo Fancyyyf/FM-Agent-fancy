@@ -1,0 +1,103 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::pipeline_setup-py::_phases_cover_current_sources` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _collect_project_source_files, _is_under_submodules.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _phases_cover_current_sources(phases_json, proj_dir, submodules=None):
+    """Return whether phases.json is valid for the current source-file set."""
+    try:
+        with open(phases_json, "r") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return False
+
+    listed = set()
+    for phase in data.get("phases", []):
+        for module in phase.get("modules", []):
+            for source_file in module.get("source_files", []):
+                listed.add(source_file.replace("\\", "/"))
+
+    if not listed:
+        return False
+    if submodules and any(not _is_under_submodules(sf, submodules) for sf in listed):
+        return False
+    if any(not os.path.exists(os.path.join(proj_dir, sf)) for sf in listed):
+        return False
+    return _collect_project_source_files(proj_dir, submodules).issubset(listed)
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/pipeline_setup-py/_phases_cover_current_sources.py
+#
+# _phases_cover_current_sources(phases_json, proj_dir, submodules=None) -> bool
+#
+# Pre-condition:
+#   - phases_json is a string path
+#   - proj_dir is an existing directory
+#   - submodules is None or an iterable of subdirectory name strings
+#
+# Post-condition:
+#   - Returns True when all of the following hold: (a) phases_json is a readable file
+#     whose content parses as valid JSON, (b) the JSON contains at least one source file
+#     entry across all phases and modules, (c) every source file path listed in the JSON
+#     resolves to an existing file under proj_dir, (d) when submodules is not None, every
+#     listed source file path falls under at least one of the specified submodule
+#     directories, and (e) every source file under the project directories scoped by
+#     submodules (or under all of proj_dir when submodules is None) appears in the JSON
+#   - Returns False when any of (a)-(e) fails
+#   - Backslash separators in source file paths within the JSON are treated as forward
+#     slashes for path comparison and file existence resolution
+#   - The function does not create, modify, delete, or rename any file or directory
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _is_under_submodules(sf, submodules) -> bool
+#   Pre-condition: sf is a string path; submodules is a non-empty iterable of
+#     subdirectory name strings
+#   Post-condition: Returns True when sf contains any string from submodules as a
+#     path component; returns False when none of the submodule strings appear in sf
+# [SPLIT]
+# _collect_project_source_files(proj_dir, submodules) -> set
+#   Pre-condition: proj_dir is an existing directory; submodules is None or an
+#     iterable of subdirectory name strings
+#   Post-condition: Returns a set of relative file paths using "/" separators for
+#     all discoverable source files under the directories identified by submodules,
+#     or under all of proj_dir when submodules is None
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_collect_project_source_files, _is_under_submodules) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_collect_project_source_files, _is_under_submodules). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

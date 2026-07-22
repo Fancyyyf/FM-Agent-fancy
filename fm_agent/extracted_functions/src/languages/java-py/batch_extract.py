@@ -23,7 +23,8 @@
 #   Pre-condition: cg is a valid CodeGraphExtractor instance; proj_dir is a valid
 #     project directory path
 #   Post-condition: Returns a dict mapping each absolute file path (str) to a list of
-#     (function_name: str, function_body: str) tuples for all Java functions in the project
+#     (function_name: str, function_body: str) tuples for Java functions. Each function body
+#     ends with a newline; source files that cannot be read are silently omitted.
 # [INFO]
 
 def batch_extract(proj_dir: str) -> dict:

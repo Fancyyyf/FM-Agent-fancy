@@ -5,15 +5,16 @@
 #
 # Pre-condition:
 #   - lines is a non-empty list of strings, each containing one line of function body text without "Line N:" prefixes
+#   - The input represents a function body with balanced braces, i.e., every '}' has a matching '{' earlier in the sequence, so the cumulative depth never becomes negative.
 #
 # Post-condition:
-#   - Returns a list of non-negative integers whose length equals the number of elements in lines
-#   - For each position i (0-indexed), the integer at that position is the cumulative net count of opening brace characters '{' minus closing brace characters '}' encountered across lines[0] through lines[i], inclusive
-#   - Brace characters that occur inside a double-quoted string literal do not contribute to the count: upon encountering an unescaped '"' character, counting of braces is suspended until the next unescaped '"', where a backslash preceding the quote is considered an escape
-#   - Brace characters that occur inside a single-quoted character literal do not contribute to the count: upon encountering an unescaped "'" character, counting of braces is suspended until the next unescaped "'", where a backslash preceding the quote is considered an escape
-#   - When the character sequence "//" is encountered outside of a string or character literal, all remaining characters on that line do not contribute to the count
-#   - When the character sequence "/*" is encountered outside of a string or character literal, brace counting is suspended until the corresponding "*/" sequence is encountered; braces appearing between these delimiters, on any line, do not contribute to the count
-#   - Every closing brace '}' in the input has a matching opening brace '{' at or before its position, so the accumulated net count is never negative for any prefix of lines
+#   - Returns a list of integers whose length equals len(lines)
+#   - For each index i, the integer is the cumulative net count of '{' minus '}' characters encountered across lines[0] through lines[i], inclusive, after applying the following exclusion rules:
+#       * Characters inside a double-quoted string literal (delimited by unescaped '"', where backslash escapes the next character) are excluded.
+#       * Characters inside a single-quoted character literal (delimited by unescaped "'", with backslash escape) are excluded.
+#       * From the point where the sequence "//" occurs outside any literal, all remaining characters on that line are excluded.
+#       * From the point where the sequence "/*" occurs outside any literal, all remaining characters on that line are excluded (the simplified implementation does not propagate the block comment into subsequent lines).
+#   - Because of the balanced-brace precondition, each returned integer is non-negative.
 # [SPEC]
 
 # [INFO]

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input: base_dir='/home/user', paths=[['link/../file.md']], fallback_base_dir=None. Filesystem state: /home/user/link is a symbolic link pointing to /tmp/other; /tmp/file.md exists and is a valid regular markdown file; /home/user/file.md does not exist. The code expands and joins to form the candidate '/home/user/link/../file.md', which exists (resolves via symlink to '/tmp/file.md'). After selecting this candidate, line 22 normalizes it with os.path.abspath to '/home/user/file.md', which does not exist, triggering a ValueError on line 23. The specification treats the candidate itself as the resolved path and would see it exists, then proceed to check isfile and extension, eventually including it in the result. This violates the specification.",
+  "offending_statements": "Line 22: path = os.path.abspath(path)",
+  "reason": "The code calls os.path.abspath on the candidate path before existence validation, performing lexical normalization (e.g., collapsing '..') without considering symlinks. If the original candidate exists but the normalized string does not, the code incorrectly raises a ValueError for a non-existent file, whereas the specification requires using the candidate path directly for all checks."
+}

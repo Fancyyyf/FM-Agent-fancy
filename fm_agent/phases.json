@@ -16,6 +16,7 @@
           "name": "pipeline_setup",
           "description": "Orchestrates the Phase Plan generation and Domain Context workflows for a target codebase by invoking OpenCode agents that analyze the project structure and produce phases.json and per-phase domain context files. Also handles post-processing such as deduplication of source files across phases, syncing domain context when phases change, and compliance validation.",
           "source_files": [
+            "src/__init__.py",
             "src/pipeline_setup.py"
           ]
         },

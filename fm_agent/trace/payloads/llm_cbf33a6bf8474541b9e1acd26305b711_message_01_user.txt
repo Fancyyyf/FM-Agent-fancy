@@ -1,0 +1,111 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def collect_relevent_function_scope(proj_dir, developer_intent, changed_functions, range=None):
+Line 2:     """
+Line 3:     Select the functions relevant to developer_intent and return the most relevant ones.
+Line 4:     The module/phase plan in proj_dir/fm_agent/phases.json describes the project as a set
+Line 5:     of modules, each with a natural-language description and a list of source_files. This
+Line 6:     narrows the scope to the developer's intent in three passes:
+Line 7:       1. Module selection — a direct LLM call is given the module descriptions (already
+Line 8:          parsed from phases.json) and picks the modules relevant to the intent.
+Line 9:       2. File selection — for each relevant module, opencode reads that module's source
+Line 10:          files and picks the files relevant to the intent.
+Line 11:       3. Function selection — the function-localization algorithm from scope.py ranks the
+Line 12:          functions in each chosen file by relevance to the intent (heuristic signal scoring
+Line 13:          with call-graph and class-scope enrichments) and keeps the top-ranked functions
+Line 14:          per file.
+Line 15:     range, when given, caps the result to the first (most relevant) `range` functions; pass
+Line 16:     None to return all of them.
+Line 17:     Returns the selected extracted-function file paths (relative to the extracted_functions
+Line 18:     dir, matching the convention used elsewhere in this module), ordered by descending
+Line 19:     relevance score and truncated to the first `range` entries. Returns an empty list when
+Line 20:     phases.json has no modules or opencode selects none / fails to produce a result.
+Line 21:     """
+Line 22:     work_dir = os.path.join(proj_dir, "fm_agent")
+Line 23:     extracted_dir = os.path.join(work_dir, "extracted_functions")
+Line 24:     phases_data = _load_phases(work_dir)
+Line 25:     # Flatten every module across all phases so we can match opencode's selection back to
+Line 26:     # concrete modules (module names can repeat across phases, so keep the phase number too).
+Line 27:     modules = []  # list of (phase_num, module_dict)
+Line 28:     for phase_info in phases_data.get("phases", []):
+Line 29:         phase_num = phase_info.get("phase")
+Line 30:         for module in phase_info.get("modules", []):
+Line 31:             modules.append((phase_num, module))
+Line 32:     if not modules:
+Line 33:         logging.info("    [scope] no modules in phases.json; nothing to select.")
+Line 34:         return []
+Line 35:     changed_source_rels = {
+Line 36:         os.path.relpath(abs_src, proj_dir).replace(os.sep, "/")
+Line 37:         for abs_src in changed_functions
+Line 38:     }
+Line 39:     logging.info("    [scope] pass 1/3: selecting relevant modules from %d module(s)...", len(modules))
+Line 40:     # Pass 1: module selection. The module descriptions are already parsed from phases.json
+```
+
+Condition A (what the code actually does):
+Let L be the list returned by collect_relevent_function_scope. The function does not modify any of its arguments or the filesystem (it only reads files and writes logs). Under the given pre‑conditions (proj_dir contains fm_agent/phases.json and fm_agent/extracted_functions, developer_intent is non‑empty, changed_functions has the required structure, range is None or a non‑negative integer) the following holds:
+
+If the flattened module list derived from phases.json is empty (no modules in any phase), L = [].
+
+Otherwise, the function performs three passes:
+1. Module selection: an LLM chooses a subset of modules relevant to developer_intent.
+2. File selection: for each chosen module, opencode selects a subset of its source files.
+3. Function selection: for each selected file, rank_functions_in_file ranks the functions and returns a list of dicts ordered by descending score. Through _extracted_files_by_method each relevant function is mapped to one or more extracted‑function file paths relative to proj_dir/fm_agent/extracted_functions. The union of these paths, ordered by the original descending scores (preserving per‑file order and combining files by descending module‑then‑file relevance), forms a sequence S.
+
+If S is empty (no modules, files or functions were selected), L = [].
+If range is None, L = S.
+If range is a non‑negative integer, L = S[:range] (the first at most range paths).
+
+Thus: L is a list of strings, each string is a relative path into the extracted_functions directory, and L is sorted by decreasing relevance to developer_intent. The list is empty exactly when the selection process produces no results.
+
+Condition B (what the specification requires):
+- Returns a list of paths, each relative to the extracted_functions/ directory, ordered by
+    descending relevance to developer_intent; paths with equal relevance are ordered lexicographically
+  - Every returned path refers to an existing regular file under extracted_functions/
+  - When range is not None, the returned list has length ≤ range
+  - Returns an empty list when phases.json defines no modules, or when no module is selected
+    by the relevance assessment
+  - A module is selected when EITHER its natural-language description (as recorded in phases.json)
+    is assessed as relevant to the developer intent, OR the module contains at least one source file
+    whose path, relativized against proj_dir, matches a key in changed_functions
+  - Within each selected module, a source file is included only when its content is assessed as
+    relevant to the developer intent, EXCEPT that every source file present in changed_functions
+    is included unconditionally
+  - When the per-module file-relevance assessment cannot be obtained, every source file in that
+    module is included
+  - Within each included source file, the set of extracted functions whose relevance scores
+    (computed from heuristic signals derived from developer_intent) rank within the top of that file
+    are included
+  - When per-file function ranking is unavailable for an included source file, every extracted
+    function from that file is included
+  - Multiple extracted-function files mapping to the same source-level function are deduplicated,
+    keeping only the occurrence with the highest relevance score
+
+Additional context:
+rank_functions_in_file(filepath, src_path, issue, signals, top_k, llm_client=None,
+llm_model='', llm_trigger=LLM_TRIGGER_FUNCS, llm_top_k=LLM_TOP_K,
+                       llm_confidence_threshold=LLM_CONFIDENCE_THRESHOLD, proj_dir=None)
+                       -> list[dict]
+  Pre-condition: src_path is a Path to an existing source file; filepath is a relative-path
+    label; issue is a non-empty string; signals is a dict structured as the output of
+    _parse_issue_signals with keys 'traceback_funcs', 'backtick_idents', 'dotted_refs',
+    'dotted_classes', 'plain_idents', 'exception_types', 'all_words'; top_k, llm_trigger,
+    and llm_top_k are positive integers; llm_confidence_threshold is a positive float
+  Post-condition: Returns a list of dicts sorted in descending order by 'score' (float, rounded
+    to 3 decimal places), each containing keys 'file', 'name', 'lineno', 'end_lineno', 'score',
+    and 'reason'. Length ≤ top_k. Returns an empty list when the source file has no parseable
+    functions. Every 'name' is unique within the result and names a function defined in src_path.
+_extracted_files_by_method(func_dir) -> dict-like
+  Pre-condition: func_dir is a filesystem path (may or may not be an existing directory)
+  Post-condition: Returns a mutable dict-like mapping from string keys (function names) to
+    lists of absolute filesystem paths, each list containing one or more entries. When
+    func_dir is not an existing directory, returns an empty mapping. When func_dir is an
+    existing directory, every regular file reachable by recursive descent is indexed under
+    one or two keys using the file's basename stem (name without final extension): always
+    the full stem, and if the stem contains "::", also the substring after the last "::"
+    (the bare method name). The order of paths within each list reflects the order they
+    were encountered during traversal. Accessing a missing key returns an empty list
+    without modifying the mapping.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

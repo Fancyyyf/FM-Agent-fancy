@@ -1,0 +1,92 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::call_graph_edges-py::_parse_caller` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _optional_string, _string_list, normalize_fqn_label.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _parse_caller(value, source: str) -> CallerSelector:
+    if not isinstance(value, dict):
+        raise ValueError(f"{source}: missing object 'caller'")
+
+    fqn = _optional_string(value.get("fqn", ""), "caller.fqn", source)
+    if fqn:
+        fqn = normalize_fqn_label(fqn)
+    callsite_names = _string_list(
+        value.get("callsite_names", []), "caller.callsite_names", source
+    )
+
+    if not fqn and not callsite_names:
+        raise ValueError(
+            f"{source}: at least one of 'caller.fqn' or "
+            "'caller.callsite_names' must be non-empty"
+        )
+
+    return CallerSelector(fqn=fqn, callsite_names=callsite_names)
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/call_graph_edges.py
+#
+# _parse_caller(value, source: str) -> CallerSelector
+#
+# Pre-condition:
+#   - value is the value of a "caller" key from caller input data (a dict or None)
+#   - source is a string identifying the origin of the input (used in error messages)
+#
+# Post-condition:
+#   - When value is not a dict, raises ValueError whose message contains source
+#   - When value is a dict but neither a non-empty fqn string nor a non-empty callsite_names list can be extracted from it, raises ValueError whose message contains source
+#   - Otherwise, returns a CallerSelector where at least one of fqn or callsite_names is non-empty
+#   - The returned CallerSelector's fqn is the canonical normalized form of the string from value["fqn"] when that key holds a non-empty string; otherwise fqn is the empty string
+#   - The returned CallerSelector's callsite_names is a tuple containing every non-empty string element from value["callsite_names"] when that key holds a list value; otherwise callsite_names is an empty tuple
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _optional_string(value: dict, field: str, source: str) -> str
+#   Pre-condition: value is a dict; field is a dotted key path; source is a context string
+#   Post-condition: Returns the trimmed string of value[field] when it is a non-empty string; returns the empty string when the key is absent or its value is an empty string; raises ValueError when the value exists but is not a string
+# [SPLIT]
+# _string_list(value: list, field: str, source: str) -> tuple[str, ...]
+#   Pre-condition: value is a list; field is a dotted key path; source is a context string
+#   Post-condition: Returns a tuple of the trimmed string representations of every element in value, omitting empty values; raises ValueError when any element is not a string
+# [SPLIT]
+# normalize_fqn_label(fqn: str) -> str
+#   Pre-condition: fqn is a non-empty string representing a function name with optional path components
+#   Post-condition: Returns the canonical normalized FQN suitable for storage, lookup, and comparison
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_optional_string, _string_list, normalize_fqn_label) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_optional_string, _string_list, normalize_fqn_label). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

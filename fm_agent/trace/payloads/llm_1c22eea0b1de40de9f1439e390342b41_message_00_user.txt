@@ -1,0 +1,69 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `resolve_model_backend`'s behavioral specification was just updated. The caller `src::cli_backend-py::is_cli_backend_enabled` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/cli_backend.py
+#
+# resolve_model_backend() -> str
+#
+# Pre-condition:
+#   - settings.llm.backend contains a string value (the configured model backend)
+#   - The process environment may or may not contain variables named
+#     FM_AGENT_HOST or FM_AGENT_CLIENT, whose values are any strings
+#   - The process environment may or may not contain any of the markers
+#     CLAUDE_PLUGIN_ROOT, CLAUDE_CODE_ENTRYPOINT, CODEX_HOME,
+#     CODEX_SANDBOX, or CODEX_EXECUTION_MODE
+#
+# Post-condition:
+#   - Returns a canonical backend identifier string: one of "opencode",
+#     "codex-cli", or "claude-cli"
+#   - The returned backend is first determined by normalizing
+#     settings.llm.backend via _normalize_backend; if the result is not
+#     "auto", that result is returned immediately
+#   - When the normalized value of settings.llm.backend is "auto", the
+#     backend is determined by inspecting environment markers in a fixed
+#     priority order:
+#       1. FM_AGENT_HOST or FM_AGENT_CLIENT (whichever is set) is checked
+#          case-insensitively for "claude" or "codex" substrings
+#       2. The presence of any Claude-specific environment variable
+#          (CLAUDE_PLUGIN_ROOT, CLAUDE_CODE_ENTRYPOINT)
+#       3. The presence of any Codex-specific environment variable
+#          (CODEX_HOME, CODEX_SANDBOX, CODEX_EXECUTION_MODE)
+#   - The first matching marker in this priority order determines the
+#     returned backend: "claude-cli" for Claude markers, "codex-cli" for
+#     Codex markers
+#   - When no marker matches, returns "codex-cli" (the default fallback)
+#   - The same input (settings.llm.backend value and environment state)
+#     always produces the same output (pure function with respect to its
+#     inputs at call time)
+# [SPEC]
+
+## Caller's current source
+
+```python
+def is_cli_backend_enabled():
+    return resolve_model_backend() in {"codex-cli", "claude-cli"}
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# resolve_model_backend() -> str
+#   Pre-condition: the backend configuration has been loaded and module-level state is initialized
+#   Post-condition: returns the canonical backend identifier ("opencode", "codex-cli", or "claude-cli"),
+#     with any configured alias resolved to its canonical form
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `resolve_model_backend` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `resolve_model_backend` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

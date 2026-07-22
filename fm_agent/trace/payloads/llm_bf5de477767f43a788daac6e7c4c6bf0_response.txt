@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "On Windows, with proj_dir='C:\\project', work_dir='C:\\work', and markdown_paths=['notes.md'] where notes.md exists, the function returns a list like ['fm_agent\\spec_prompts\\domain_context\\user_knowledge\\notes.md'], containing backslashes instead of the required forward slashes.",
+  "offending_statements": "Line 8: return list_staged_domain_knowledge_relpaths(work_dir); Line 38: return list_staged_domain_knowledge_relpaths(work_dir)",
+  "reason": "The specification requires returned paths to use '/' as the path separator regardless of platform, but the code returns the raw output of list_staged_domain_knowledge_relpaths, which may use OS-specific separators (e.g., backslashes on Windows). No conversion is performed."
+}

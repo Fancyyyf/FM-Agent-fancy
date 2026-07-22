@@ -1,0 +1,33 @@
+Programming language: Python
+
+Pre-condition:
+- entry_func is a non-empty FQN string whose components are delimited by "::"
+  - The last component of entry_func is the function name
+  - The second-to-last component of entry_func is the extraction directory name,
+    which follows the convention of replacing the last "." in the source-filename
+    basename with "-" and appending "-<extension>" (e.g. "loader.cpp" → "loader-cpp")
+
+Code block:
+```python
+Line 1: def _entry_func_source_rel(entry_func):
+Line 2:     """Map an entry_func FQN back to its source file (project-relative path).
+Line 3:     ``src::engine::loader-cpp::loadData`` -> ``src/engine/loader.cpp``;
+Line 4:     ``src::storage-cpp::LocalStorage::Flush`` -> ``src/storage.cpp``. Reuse the
+Line 5:     extracted-file inverse mapping by treating the ``::``-joined FQN as an
+Line 6:     extracted-file path; _extracted_file_to_source_rel finds the ``<base>-<ext>``
+Line 7:     directory regardless of any class components after it.
+Line 8:     """
+Line 9:     extracted_rel = os.path.join(*entry_func.split("::"))
+Line 10:     return _extracted_file_to_source_rel(extracted_rel).replace(os.sep, "/")
+```
+
+Additional context:
+_extracted_file_to_source_rel(extracted_rel) -> str
+Pre-condition: extracted_rel is a relative path referring to an extracted
+    function file under the extracted_functions/ directory layout
+  Post-condition: Returns the corresponding source-file relative path by
+    reversing the extraction directory naming convention: the extraction
+    directory name <basename>-<ext> is mapped back to <basename>.<ext>, and
+    the function-name file component is removed
+  Post-condition: The returned path uses the OS-native path separator
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

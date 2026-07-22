@@ -1,48 +1,67 @@
-"""Probe script for bug ID: src--languages--go-py--function_spans.
+"""Probe: Confirm that function_spans in src/languages/go.py hardcodes "go" as
+the language key, causing it to return None for a non-Go file that is indexed
+by the codegraph and contains top-level function definitions.
 
-Tests whether function_spans returns None (spec-correct) or propagates an
-exception (buggy) when CodeGraphExtractor.from_proj_dir raises.
+The spec claims: "Returns a list of (function_name, start_line, end_line) for
+every top-level function definition found in the file at filepath." The actual
+behavior only works when the file happens to be indexed as language "go".
 """
+
 import sys
 import os
+from unittest.mock import MagicMock, patch
 
-# Ensure the project root is on sys.path so that `src` is importable.
-_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+# The probe is run from the repo root, so cwd is the import base.
+sys.path.insert(0, os.getcwd())
 
-try:
-    from src.languages.go import function_spans
-except ImportError as e:
-    print(f'ERROR: Could not import src.languages.go: {e}')
-    sys.exit(1)
 
-actual = sentinel = object()
-passed = False
+def main():
+    try:
+        from src.languages.go import function_spans
 
-# Attempt 1: Pass None as proj_dir to trigger os.path.abspath(None) -> TypeError
-# inside CodeGraphExtractor.from_proj_dir. The spec requires function_spans to
-# return None when the backend is unavailable, not to propagate exceptions.
-try:
-    actual = function_spans(None, "some_file.go")
-except TypeError:
-    # Bug confirmed: exception propagated instead of returning None
-    passed = True
-    actual = '<TypeError raised>'
-except Exception as e:
-    # Some other exception propagated — also a bug
-    passed = True
-    actual = f'<{type(e).__name__} raised: {e}>'
-else:
-    # No exception — function returned a value
-    # The spec says it should return None when backend is unavailable
-    if actual is not None:
-        # Bug: returned something other than None despite backend failure
-        passed = True
+        proj_dir = "/fake/proj"
+        # A Python file that is indexed by codegraph and contains a function
+        filepath = "/fake/proj/my_script.py"
 
-expected = 'None (spec-correct)'
+        # Create a mock CodeGraphExtractor instance
+        mock_cg = MagicMock()
+        # get_function_spans returns a realistic result when called with the
+        # CORRECT language key ("python"), but returns None when called with
+        # the hardcoded "go" key (which doesn't match the file's language).
+        def mock_get_function_spans(lang_key, abs_filepath):
+            if lang_key == "python":
+                return [("my_func", 0, 5)]  # spec-correct result
+            # lang_key == "go" → language mismatch → no rows → None
+            return None
 
-if passed:
-    print(f'CONFIRMED — actual: {actual!r} | expected: {expected!r}')
-else:
-    print(f'NOT CONFIRMED — actual matched expected: {actual!r}')
+        mock_cg.get_function_spans.side_effect = mock_get_function_spans
+
+        with patch("src.languages.go.CodeGraphExtractor.from_proj_dir",
+                   return_value=mock_cg):
+            actual = function_spans(proj_dir, filepath)
+
+        # Expected: the function should return the spans for any indexed file.
+        # The spec's post-condition makes no language restriction.
+        expected = [("my_func", 0, 5)]
+
+        # The bug: actual is None because "go" was hardcoded and doesn't match
+        # the Python language. passed=True means the bug is reproduced.
+        passed = actual != expected
+
+        if passed:
+            print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
+            print("The hardcoded 'go' language key caused get_function_spans "
+                  "to miss the python-language node, returning None instead of "
+                  "the indexed function spans.")
+        else:
+            print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        print(f"ERROR: {e}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

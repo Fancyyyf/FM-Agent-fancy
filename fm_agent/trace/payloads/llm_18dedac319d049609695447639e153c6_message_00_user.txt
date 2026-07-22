@@ -1,0 +1,63 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `_send`'s behavioral specification was just updated. The caller `src::languages::erlang-py::ElpClient::notify` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/languages/erlang.py
+#
+# ElpClient._send(self, message: dict)
+#
+# Pre-condition:
+#   - self._proc is not None and self._proc.stdin is not None and open for
+#     writing
+#   - message is a dict representing a JSON-serializable JSON-RPC message
+#
+# Post-condition:
+#   - The JSON-serialized form of message is transmitted to the ELP
+#     subprocess's standard input using LSP transport protocol framing
+#   - The transmitted frame consists of a Content-Length header whose value
+#     is the length in bytes of the UTF-8 encoded JSON payload, followed by
+#     a CRLF blank line, then the UTF-8 encoded JSON payload itself
+#   - The header portion is ASCII-encoded; the payload is compact JSON with
+#     no whitespace between keys, values, colons, or commas, and all non-ASCII
+#     characters are preserved in their original form
+#   - Transmission is atomic with respect to other concurrent _send calls on
+#     the same client instance
+#   - On return, the complete frame has been delivered to the subprocess's
+#     input stream (the write has been flushed to the OS pipe)
+#   - Raises RuntimeError when the ELP subprocess is not running or its
+#     standard input is unavailable
+# [SPEC]
+
+## Caller's current source
+
+```python
+def notify(self, method: str, params: dict | list | None = None):
+        actual_params = {} if params is None else params
+        self._send({"jsonrpc": "2.0", "method": method, "params": actual_params})
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# _send(self, message: dict)
+#   Pre-condition: self._proc is not None and self._proc.stdin is open and
+#     writable; message is a JSON-serializable dict
+#   Post-condition: The message is serialized to UTF-8 JSON, framed with a
+#     Content-Length header, and written to the ELP subprocess's standard input
+#     stream; raises RuntimeError when the subprocess is not running or stdin
+#     is unavailable
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `_send` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `_send` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

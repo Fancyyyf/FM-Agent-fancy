@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/languages/erlang-py/_SourceIndex.py\n#\n# _SourceIndex.build(cls, source: str) -> _SourceIndex\n#\n# Pre-condition:\n#   - source is a string\n#\n# Post-condition:\n#   - Returns a _SourceIndex instance whose content is derived solely from source\n#   - The returned index represents source as an ordered sequence of lines,\n#     where line boundaries correspond to newline character positions in source\n#   - For each line, the byte offset of its first character within source is\n#     computable from the returned index\n#   - The total number of bytes across all lines in the returned index equals\n#     the length of source\n# [SPEC]",
+  "info_updated": false,
+  "new_info": "",
+  "updated_callees": []
+}

@@ -9,9 +9,12 @@
 # Post-condition:
 #   - Returns a string where any leading comment prefix at the start of the line
 #     (after optional leading whitespace) has been removed
-#   - A recognized comment prefix consists of one or more consecutive characters
-#     from the set {`/`, `#`, `-`, `%`}, all of the same character, optionally
-#     followed by a single whitespace character
+#   - A recognized comment prefix is one of:
+#       * two or more consecutive `/` characters,
+#       * two or more consecutive `-` characters,
+#       * one or more consecutive `#` characters, or
+#       * one or more consecutive `%` characters
+#     optionally followed by a single whitespace character.
 #   - Leading whitespace characters that precede the comment prefix are preserved
 #     unchanged in the returned string
 #   - When the line does not begin with (optional leading whitespace followed by)

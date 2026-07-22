@@ -1,0 +1,119 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `_opencode_env`'s behavioral specification was just updated. The caller `src::opencode_trace-py::_start_opencode_process` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/opencode_trace.py
+#
+# _opencode_env(work_dir, event_id) -> dict
+#
+# Pre-condition:
+#   - work_dir is a path to an existing directory on the filesystem (the fm_agent/
+#     workspace directory)
+#   - event_id is a non-empty string uniquely identifying a trace event
+#
+# Post-condition:
+#   - Returns a copy of the current process environment (os.environ) with several
+#     additional entries applied:
+#     - TRACE_DIR: absolute path of the "opencode" subdirectory under the trace
+#       directory derived from work_dir; the directory at TRACE_DIR is created if it
+#       does not already exist.
+#     - TRACE_FILENAME: set to the value of event_id.
+#     - PWD: absolute path of the parent directory of work_dir (the project root
+#       directory).
+#     - If `_opencode_provider_config()` returns a non‑None value (expected to be a
+#       dict), then:
+#         - LLM_API_KEY is set to the value of `settings.llm.api_key` at call time.
+#         - OPENCODE_CONFIG_CONTENT is set to the JSON serialization of a dict
+#           produced by deep‑merging any pre‑existing OPENCODE_CONFIG_CONTENT from the
+#           original environment with the provider config dict returned by
+#           `_opencode_provider_config()`.  The merge gives precedence to the provider
+#           config for overlapping keys, while preserving other keys from the
+#           original environment.  If the original OPENCODE_CONFIG_CONTENT is not a
+#           valid JSON object, it is treated as an empty dict for the merge.
+#     - If `_opencode_provider_config()` returns None, no LLM_API_KEY or
+#       OPENCODE_CONFIG_CONTENT entries are added (the environment copy may still
+#       inherit those keys from the original os.environ unchanged).
+#   - All other entries present in the calling process's environment at the time of
+#     the call are preserved, except where explicitly overwritten by the rules above.
+# [SPEC]
+
+## Caller's current source
+
+```python
+def _start_opencode_process(proj_dir, work_dir, event_id, command, trace_log_path):
+    stdin_text = command_stdin(command)
+    proc = subprocess.Popen(
+        command_argv(command),
+        cwd=proj_dir,
+        env=_opencode_env(work_dir, event_id),
+        stdin=subprocess.PIPE if stdin_text is not None else None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    stdin_thread = None
+    if stdin_text is not None:
+        stdin_thread = threading.Thread(
+            target=_write_command_stdin,
+            args=(proc.stdin, stdin_text),
+            daemon=True,
+        )
+        stdin_thread.start()
+    log_thread = threading.Thread(
+        target=_copy_opencode_output,
+        args=(proc.stdout, trace_log_path),
+        daemon=True,
+    )
+    log_thread.start()
+    return proc, log_thread, stdin_thread
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# command_stdin(command) -> Optional[str]
+#   Pre-condition: command is an AgentCommand or list of strings
+#   Post-condition: returns the stdin text payload of the command, or None
+#     if the command has no stdin text
+# [SPLIT]
+# command_argv(command) -> list[str]
+#   Pre-condition: command is an AgentCommand or list of strings
+#   Post-condition: returns the argument list suitable for passing to
+#     subprocess.Popen as the command to execute
+# [SPLIT]
+# _opencode_env(work_dir, event_id) -> dict
+#   Pre-condition: work_dir is an existing directory path; event_id is a
+#     non-empty string
+#   Post-condition: returns a dictionary of environment variables for the
+#     subprocess, derived from work_dir and event_id, that is a superset of
+#     the current process environment
+# [SPLIT]
+# _write_command_stdin(pipe, text) -> None
+#   Pre-condition: pipe is a writable file-like object connected to a
+#     subprocess stdin; text is a string
+#   Post-condition: writes text to pipe, flushes, and closes the pipe,
+#     after which no further writes to the subprocess stdin are possible
+# [SPLIT]
+# _copy_opencode_output(stream, path) -> None
+#   Pre-condition: stream is a readable text stream producing lines; path
+#     is a writable filesystem path
+#   Post-condition: reads from stream line by line until the stream is
+#     exhausted (EOF), writing each line to the file at path, then flushes
+#     and closes the output file
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `_opencode_env` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `_opencode_env` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

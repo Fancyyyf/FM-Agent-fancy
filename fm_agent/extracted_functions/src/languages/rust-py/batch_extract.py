@@ -23,8 +23,9 @@
 # [SPLIT]
 # CodeGraphExtractor.get_functions_by_file(lang, proj_dir) -> dict
 #   Pre-condition: lang is a recognized language key string and proj_dir is the project root path
-#   Post-condition: Returns a dictionary mapping each absolute source-file path (str) to a list of
-#     (function_name, function_body) tuples for all source files of the given language
+#   Post-condition: Returns a dictionary mapping absolute source-file paths (str) to lists of
+#     (function_name, function_body) tuples for source files of the given language. Files that
+#     cannot be read are omitted.
 # [INFO]
 
 def batch_extract(proj_dir: str) -> dict:

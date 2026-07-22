@@ -1,0 +1,96 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `_extraction_ident`'s behavioral specification was just updated. The caller `src::languages::codegraph-py::CodeGraphExtractor::get_function_spans` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/languages/codegraph.py
+#
+# _extraction_ident(name: str, qualified_name: str) -> str
+#
+# Pre-condition:
+#   - name and qualified_name are strings obtained from the codegraph database for a single function or method node
+#
+# Post-condition:
+#   - Returns a string composed of one or more components joined by the literal "::"
+#   - When qualified_name is non-empty and its suffix equals name, the leading components of the returned string (all except the last) correspond, in order, to the scope qualifiers extracted from the prefix of qualified_name that precedes name
+#   - When qualified_name is empty or its suffix does not equal name, the returned string consists of exactly one component
+#   - The final component of the returned string is derived from name
+#   - No component of the returned string contains any character that would be a directory separator in any filesystem
+#   - No component of the returned string contains signature syntax, pointer syntax, or template syntax that may have been present in the raw database column values
+#   - The same (name, qualified_name) pair always produces the same returned string
+#   - The separator character ("." vs "::") used in qualified_name does not affect the set or order of scope components in the returned string
+# [SPEC]
+
+## Caller's current source
+
+```python
+def get_function_spans(self, lang_key: str, abs_filepath: str):
+        """Return ``[(name, start_idx, end_idx), ...]`` for a single file, or None.
+
+        Line indices are 0-indexed and inclusive, matching the convention the
+        regex extractor (_extract_functions_brace / _extract_functions_indent)
+        uses, so callers can rewrite the file by line index. Functions are
+        ordered by their starting line.
+
+        Returns None when codegraph does not support ``lang_key`` or when the
+        file is not present in the index (e.g. it was never indexed) — the
+        caller then falls back to the regex extractor. An indexed file that
+        genuinely contains no functions also yields None, which is harmless:
+        the regex fallback finds none either.
+        """
+        cg_langs = _CG_LANG.get(lang_key)
+        if not cg_langs:
+            return None
+
+        # codegraph stores file paths relative to the project root, which is the
+        # parent of the .codegraph/ directory holding the database.
+        root = os.path.dirname(os.path.dirname(os.path.abspath(self._db)))
+        rel = os.path.relpath(os.path.abspath(abs_filepath), root)
+
+        conn = sqlite3.connect(self._db)
+        cur = conn.cursor()
+        placeholders = ",".join("?" * len(cg_langs))
+        cur.execute(
+            f"""
+            SELECT name, qualified_name, start_line, end_line
+            FROM nodes
+            WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+              AND file_path = ?
+            ORDER BY start_line
+            """,
+            (*cg_langs, rel),
+        )
+        rows = cur.fetchall()
+        conn.close()
+
+        if not rows:
+            return None
+        # codegraph uses 1-indexed lines with an inclusive end_line. Return the
+        # class-qualified identifier so the caller's dedup + name matching (trim)
+        # stays consistent with the extracted files and the call graph.
+        return [
+            (_extraction_ident(name, qualified_name), int(start) - 1, int(end) - 1)
+            for name, qualified_name, start, end in rows
+        ]
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# _extraction_ident(name: str, qualified_name: str) -> str
+#   Pre-condition: name and qualified_name are non-empty strings from a codegraph node representing a function or method definition
+#   Post-condition: Returns a class-qualified filesystem-safe identifier string. When qualified_name contains a non-empty scope prefix and ends with name, the returned string includes scope components joined with "::" before the bare function name. When qualified_name is empty or its tail does not match name, the returned string is the bare function name with any tree-sitter signature decorations stripped. Every component in the returned string is canonicalized so the identifier can serve as both a function FQN tail and a filesystem path component.
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `_extraction_ident` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `_extraction_ident` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

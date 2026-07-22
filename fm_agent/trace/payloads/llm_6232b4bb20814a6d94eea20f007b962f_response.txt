@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "settings.llm.backend = 'foobar' (no relevant environment variables)",
+  "offending_statements": "Line 2:     backend = _normalize_backend(settings.llm.backend)\nLine 3:     if backend != \"auto\":\nLine 4:         return backend",
+  "reason": "The specification requires the function to return one of the canonical backend identifiers 'opencode', 'codex-cli', or 'claude-cli'. The code returns the result of _normalize_backend unchanged when it is not 'auto'. According to the provided behaviour of _normalize_backend, if the input is not a recognised alias, it returns the input as-is. Therefore, for an input like 'foobar', the function returns 'foobar', which is not one of the allowed identifiers, violating the specification."
+}

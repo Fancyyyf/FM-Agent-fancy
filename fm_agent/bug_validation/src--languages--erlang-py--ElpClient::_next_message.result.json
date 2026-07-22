@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--ElpClient::_next_message",
+  "source_file": "src/languages/erlang.py",
+  "function_name": "ElpClient::_next_message",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::_next_message.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::_next_message.md",
+  "probe_stdout": "CONFIRMED — actual: [1, 2, 3] (type: list) | expected: dict conforming to JSON-RPC 2.0",
+  "trigger_summary": "_next_message returns any non-BaseException queue item without checking it is a dict, so a non-dict JSON value (like a list) is returned in violation of the spec."
+}

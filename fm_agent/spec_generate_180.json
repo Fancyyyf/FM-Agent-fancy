@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/languages/erlang.py\n#\n# ElpClient.notify(self, method: str, params: dict | list | None = None)\n#\n# Pre-condition:\n#   - self._proc is not None and self._proc.stdin is open and writable\n#   - method is a non-empty string identifying a known LSP notification method\n#   - params, when not None, is a JSON-serializable dict or list\n#\n# Post-condition:\n#   - Transmits a JSON-RPC 2.0 notification message to the ELP subprocess's\n#     standard input\n#   - The transmitted message is a JSON object containing \"jsonrpc\": \"2.0\",\n#     \"method\" set to the method argument, and no \"id\" member\n#   - When params is None, the transmitted \"params\" is an empty JSON object;\n#     otherwise \"params\" is set to the params argument value unchanged\n#   - No response from the server is awaited\n#   - Raises RuntimeError when the ELP subprocess is not running or stdin\n#     is unavailable\n# [SPEC]",
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _send(self, message: dict)\n#   Pre-condition: self._proc is not None and self._proc.stdin is open and\n#     writable; message is a JSON-serializable dict\n#   Post-condition: The message is serialized to UTF-8 JSON, framed with a\n#     Content-Length header, and written to the ELP subprocess's standard input\n#     stream; raises RuntimeError when the subprocess is not running or stdin\n#     is unavailable\n# [INFO]",
+  "updated_callees": ["_send"]
+}

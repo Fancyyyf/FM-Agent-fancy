@@ -1,11 +1,11 @@
 {
   "id": "src--incremental_reasoner-py--_remove_stale_extracted",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_remove_stale_extracted.py",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_remove_stale_extracted.py",
   "function_name": "_remove_stale_extracted",
-  "confirmation_status": "not_confirmed",
+  "confirmation_status": "confirmed",
   "attempts": "1",
   "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_remove_stale_extracted.py",
   "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_remove_stale_extracted.md",
-  "probe_stdout": "NOT CONFIRMED — both func1.py and func2.py were deleted, AND the empty directory was pruned. The code correctly handles multiple removed functions per source file.",
-  "trigger_summary": "The code only removes the extracted file for the first removed function per source file (because _modified_function_targets returns a single path per source file) — but empirical test shows ALL removed functions' files are deleted, and the [INFO] block was an incorrect LLM-generated description."
+  "probe_stdout": "CONFIRMED — empty func directories a-py and b-py left behind; parent pkg/ not pruned. Spec requires pruning all empty parent directories.",
+  "trigger_summary": "_remove_stale_extracted calls _reconcile_extracted_dir per source file, which removes stale files but never removes the func_dir itself or prunes empty parent directories above it; when multiple deleted source files share a common parent, empty directories are left behind."
 }

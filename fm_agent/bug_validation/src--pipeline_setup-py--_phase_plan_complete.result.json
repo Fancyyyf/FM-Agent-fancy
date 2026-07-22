@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_phase_plan_complete",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_phase_plan_complete.py",
+  "function_name": "_phase_plan_complete",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_phase_plan_complete.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_phase_plan_complete.md",
+  "probe_stdout": "CONFIRMED — actual: True | expected: False\n",
+  "trigger_summary": "When phases.json is a FIFO (non-regular file) containing valid schema-conforming JSON, _phase_plan_complete returns True instead of the spec-required False."
+}

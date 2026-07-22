@@ -1,6 +1,6 @@
 # Bug Report: _analyze_project_uncached
 
-**Source file:** `fm_agent/extracted_functions/src/languages/erlang-py/_analyze_project_uncached.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_analyze_project_uncached.py`
 **Verdict:** MISMATCH
 **Confirmation status:** not_confirmed
 
@@ -28,53 +28,63 @@ The following actual behavior cannot satisfy the specification.
     dict attributes empty
   - Raises an exception when the ELP backend process cannot be started, the LSP
     communication channel fails, or the project at proj_dir cannot be analyzed
-    (including cases where no valid function symbols are returned for any file)
 
 ---
 
 ### Actual Behavior
 
-After execution of the function _analyze_project_uncached, the program state is one of the following: (1) If _erlang_files(proj_dir) returns an empty list, the function returns early with an ErlangAnalysis built from empty functions and empty edges. (2) If _erlang_files(proj_dir) returns a nonempty list but any operation (reading a source file with Path.read_text, initializing the ElpClient, or making a client request) raises an exception, that exception propagates to the caller; no ErlangAnalysis is returned. (3) Otherwise, all files are processed via ElpClient and the function returns an ErlangAnalysis containing the functions and edges dictionaries built from the document symbols of the .erl files. During processing, malformed function symbols (those that cause _function_id to raise ValueError) are logged as warnings and ignored. Formal logic: Let FILES = _erlang_files(os.path.abspath(proj_dir)). post(proj_dir)  [ FILES = []    return ErlangAnalysis(functions={}, edges={}) ]  [ FILES  []  ( path  FILES . read_text(path) fails  ElpClient(proj_dir) init/request fails)  raise I/O or communication error ]  [ FILES  []  no read/client error  return ErlangAnalysis(functions=F, edges=E) where F and E are populated from successfully resolved function symbols across all FILES, with malformed symbols skipped and logged ].
+The function returns an ErlangAnalysis object when it terminates normally; otherwise a TimeoutError or RuntimeError is raised and no value is returned.
+
+**Normal termination (no exception)**
+1. If `proj_dir` contains no `.erl` files (recursively), the function returns `ErlangAnalysis(functions={}, edges={})`. No ElpClient is started, no files are read.
+2. If there is at least one `.erl` file,
+   - All `.erl` files under `os.path.abspath(proj_dir)` are collected into `files`; their contents are read into the `sources` dict (UTF-8, errors replaced).
+   - An ElpClient is created and entered, starting the language-server subprocess; after the `with` block the subprocess is stopped and the client closed.
+   - The server is initialised with the first file and its source; all other files are opened via `open_document`.
+   - For each file:
+     * A source index is built.
+     * The caller module name is determined.
+     * Document symbols are requested from the server.
+     * Function symbols (kind == FUNCTION_KIND) with a valid range are processed. Malformed or duplicate symbols (by canonical function ID within the same file) are silently skipped. A warning is logged for malformed ones.
+     * The canonical function ID is obtained from the symbol's URI and name. Valid symbols produce tuples added to the `functions` dictionary: `functions[function_id]` becomes a nonempty list of `(caller_module, source_text_of_function)` where the source text is extracted from the original file using the range of the function definition.
+     * `edges` and `spans` are populated similarly  `spans` maps a file path to `[(function_name, start_line, end_line)]` for every recognised function, and `edges` captures callercallee relationships.
+   - After all files have been processed, the function returns `ErlangAnalysis(functions=functions, edges=edges, spans=spans)`.
+   - All file reads and server communications succeeded; no unhandled ValueError occurs bec...
 
 ---
 
 ## Code Evidence
 
-Line 4: if not files:
-Line 5:     return ErlangAnalysis(functions={}, edges={})
-Line 8: spans: dict[str, list[tuple[str, int, int]]] = {}
-Line 14: server_info = client.initialize(files[0], sources[files[0]])
+Line 5: return ErlangAnalysis(functions={}, edges={})
 
 ---
 
 ## Trigger Condition
 
-The specification requires the returned ErlangAnalysis to contain .spans and .server_info attributes, populated respectively with per-file span data and server initialization info. The code neither populates the spans dict nor stores or returns server_info; the early return (Line 5) also omits both attributes. Therefore, for any input (including an empty directory and one containing .erl files), the returned object violates the required attributes.
+When no .erl files exist the specification requires the returned ErlangAnalysis to have all three dict attributes (functions, edges, spans) empty; the code returns an object without a spans attribute, violating the specification.
 
 ---
 
 ## How to trigger the bug
 
-The bug report claims that the early return at line 491 (`return ErlangAnalysis(functions={}, edges={})`) omits the `.spans` and `.server_info` attributes from the returned object. However, the `ErlangAnalysis` dataclass defines defaults for both fields:
+The bug could not be reproduced. The `ErlangAnalysis` class is a Python `@dataclass` with `spans` defined as `field(default_factory=dict)`. When the code constructs `ErlangAnalysis(functions={}, edges={})`, Python dataclass mechanics automatically populate `spans` with a new empty dict via the `default_factory`. The actual runtime behavior matches the specification: all three dict attributes (`functions`, `edges`, `spans`) are empty dicts.
 
-- `spans: dict[str, list[tuple[str, int, int]]] = field(default_factory=dict)`
-- `server_info: dict | None = None`
-
-Therefore, constructing `ErlangAnalysis(functions={}, edges={})` produces an object with `.spans = {}` and `.server_info = None`. Both attributes exist and have reasonable types. The bug could not be reproduced in 3 probe attempts.
+The logic verifier appears to have analyzed the extracted function in isolation, where the `ErlangAnalysis` class definition (including field defaults) resides in a different file, and concluded that the `spans` attribute is missing. This is a false positive.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| proj_dir | A temporary empty directory (no `.erl` files) |
+| `proj_dir` | A directory with no `.erl` files (empty temp directory) |
 
 ### Expected (spec-correct) Output
 
-`ErlangAnalysis` with `.spans` (an empty dict) and `.server_info` (None, since no ELP server was started)
+`ErlangAnalysis(functions={}, edges={}, spans={})` — all three dict attributes empty
 
 ### Actual (buggy) Output
 
-`ErlangAnalysis` with `.spans = {}` and `.server_info = None` — identical to expected; the dataclass defaults handle the early return correctly.
+`ErlangAnalysis(functions={}, edges={}, spans={})` — all three dict attributes empty (dataclass default provides `spans={}`)
+
 
 ### How to Reproduce
 
@@ -85,14 +95,21 @@ Step-by-step instructions to trigger the bug manually:
 
 ```python
 import tempfile
-from src.languages.erlang import _analyze_project_uncached
+from dataclasses import asdict
+from src.languages.erlang import ErlangAnalysis, batch_extract
 
+# Direct construction test
+obj = ErlangAnalysis(functions={}, edges={})
+print(asdict(obj))
+# actual output: {'functions': {}, 'edges': {}, 'spans': {}, 'server_info': None}
+# spans IS present and empty — bug NOT reproduced
+
+# Public API test via batch_extract
 with tempfile.TemporaryDirectory() as tmpdir:
-    result = _analyze_project_uncached(tmpdir)
-    print('spans:', result.spans)          # actual (buggy) output: {}
-    print('server_info:', result.server_info)  # actual (buggy) output: None
-    # expected (correct) output: .spans is dict ({}), .server_info is None
-    # dataclass defaults provide both — bug not reproducible
+    result = batch_extract(tmpdir)
+    print(result)
+    # actual output: {}
+    # expected: {} — returns empty dicts for all three attributes
 ```
 
 ---
@@ -100,41 +117,66 @@ with tempfile.TemporaryDirectory() as tmpdir:
 ## Probe Script
 
 ```python
+"""Probe attempt 3: Verify ErlangAnalysis spans via dataclasses.asdict and _analysis_or_empty."""
 import sys
+import os
 import tempfile
+from dataclasses import asdict
+from unittest.mock import patch
+
+sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")))
 
 try:
-    from src.languages.erlang import _analyze_project_uncached
+    from src.languages.erlang import ErlangAnalysis
+
+    # Test 1: Direct construction — verify via asdict that all 3 dict attrs are present and empty
+    obj = ErlangAnalysis(functions={}, edges={})
+    obj_dict = asdict(obj)
+
+    has_functions = 'functions' in obj_dict and obj_dict['functions'] == {}
+    has_edges = 'edges' in obj_dict and obj_dict['edges'] == {}
+    has_spans = 'spans' in obj_dict and obj_dict['spans'] == {}
+    all_three_empty = has_functions and has_edges and has_spans
+
+    # Test 2: Verify _analysis_or_empty fallback path (exception case)
+    from src.languages import erlang as erlang_mod
+    with patch.object(erlang_mod, '_analyze_project', side_effect=RuntimeError("simulated failure")):
+        result = erlang_mod._analysis_or_empty(tempfile.mkdtemp())
+        fallback_dict = asdict(result)
+        fallback_has_spans = 'spans' in fallback_dict and fallback_dict['spans'] == {}
+        fallback_has_functions = 'functions' in fallback_dict and fallback_dict['functions'] == {}
+        fallback_has_edges = 'edges' in fallback_dict and fallback_dict['edges'] == {}
+        fallback_ok = fallback_has_spans and fallback_has_functions and fallback_has_edges
+
+    # Bug confirmed only if EITHER direct construction OR fallback path lacks spans
+    bug_confirmed = not all_three_empty or not fallback_ok
+
+    if bug_confirmed:
+        print(
+            f'CONFIRMED — direct: functions={has_functions}, edges={has_edges}, '
+            f'spans={has_spans} | fallback: functions={fallback_has_functions}, '
+            f'edges={fallback_has_edges}, spans={fallback_has_spans}'
+        )
+    else:
+        print(
+            f'NOT CONFIRMED — ErlangAnalysis(functions={{}}, edges={{}}) '
+            f'asdict shows all three: functions={has_functions}, edges={has_edges}, '
+            f'spans={has_spans}. Fallback path also correct: '
+            f'functions={fallback_has_functions}, edges={fallback_has_edges}, '
+            f'spans={fallback_has_spans}. DataClass field(default_factory=dict) '
+            f'always provides spans={{}}.'
+        )
+
 except Exception as e:
+    import traceback
+    traceback.print_exc()
     print(f'ERROR: {e}')
     sys.exit(1)
-
-# Attempt 3: Test empty directory — verify span/server_info existence
-with tempfile.TemporaryDirectory() as tmpdir:
-    try:
-        result = _analyze_project_uncached(tmpdir)
-    except Exception as e:
-        print(f'ERROR: {e}')
-        sys.exit(1)
-
-    # Bug claim: early return ErlangAnalysis(functions={}, edges={}) omits spans/server_info
-    # Dataclass defaults: spans=field(default_factory=dict), server_info=None
-    missing = []
-    if not hasattr(result, 'spans'):
-        missing.append('spans')
-    if not hasattr(result, 'server_info'):
-        missing.append('server_info')
-    if hasattr(result, 'spans') and not isinstance(result.spans, dict):
-        missing.append('spans(wrong_type)')
-
-    if missing:
-        print(f'CONFIRMED — missing/malformed attributes: {missing}')
-    else:
-        print(f'NOT CONFIRMED — all required attributes present (spans={result.spans!r}, server_info={result.server_info!r})')
 ```
 
 ### Probe Output
 
 ```
-NOT CONFIRMED — all required attributes present (spans={}, server_info=None)
+WARNING:root:ELP Erlang analysis unavailable for /tmp/tmp8yhhcvxf: simulated failure
+NOT CONFIRMED — ErlangAnalysis(functions={}, edges={}) asdict shows all three: functions=True, edges=True, spans=True. Fallback path also correct: functions=True, edges=True, spans=True. DataClass field(default_factory=dict) always provides spans={}.
 ```

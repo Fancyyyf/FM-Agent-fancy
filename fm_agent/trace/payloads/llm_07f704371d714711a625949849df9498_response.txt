@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _stable_user_id() -> str\n#   Pre-condition: None (takes no arguments)\n#   Post-condition: Returns a non-empty string: the value of `settings.inject.id` when truthy, otherwise a predefined static default.\n# [INFO]"
+}

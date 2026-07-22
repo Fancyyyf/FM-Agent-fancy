@@ -65,6 +65,12 @@
 #   Post-condition: Returns the fully-qualified function name derived from the extracted
 #     function file path fp
 # [SPLIT]
+# _fqn_to_ident(fqn) -> str
+#   Pre-condition: fqn is a non-empty string of "::"-delimited components
+#   Post-condition: Returns the class-qualified function identifier extracted from fqn
+#     (the substring after the rightmost component that looks like a source-file name,
+#     or the last component otherwise); the result is non-empty
+# [SPLIT]
 # _entry_func_source_rel(fqn) -> str
 #   Post-condition: Returns the source-file relative path corresponding to the given FQN
 # [SPLIT]
@@ -157,7 +163,7 @@ def _select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edge
         # Every extractable function, grouped by source file.
         all_by_source = defaultdict(set)
         for fqn in all_fqns:
-            all_by_source[_entry_func_source_rel(fqn)].add(fqn.split("::")[-1])
+            all_by_source[_entry_func_source_rel(fqn)].add(_fqn_to_ident(fqn))
     finally:
         shutil.rmtree(sel_dir, ignore_errors=True)
 
@@ -180,9 +186,9 @@ def _select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edge
         f"from entry {entry_func}."
     )
 
-    # Map the selected FQNs back to their (source file, function name).
+    # Map the selected FQNs back to their (source file, function identifier).
     keep_by_source = defaultdict(set)
     for fqn in call_graph:
-        keep_by_source[_entry_func_source_rel(fqn)].add(fqn.split("::")[-1])
+        keep_by_source[_entry_func_source_rel(fqn)].add(_fqn_to_ident(fqn))
 
     return all_by_source, keep_by_source

@@ -1,1 +1,11 @@
-{"id": "src--languages--codegraph-py--_bare_function_name", "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_bare_function_name.py", "function_name": "_bare_function_name", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_bare_function_name.py", "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_bare_function_name.md", "probe_stdout": "CONFIRMED — actual: 'T' | expected: 'Method'\n", "trigger_summary": "For input '(*T).Method()', the function-pointer regex matches '(*T)' and returns 'T' before the suffix regex can extract 'Method' after the dot."}
+{
+  "id": "src--languages--codegraph-py--_bare_function_name",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_bare_function_name.py",
+  "function_name": "_bare_function_name",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_bare_function_name.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_bare_function_name.md",
+  "probe_stdout": "CONFIRMED — actual: 'operatorFoo' | expected: 'operator'\n",
+  "trigger_summary": "When tail starts with 'operator' but rest contains no consecutive operator symbols (e.g. 'operatorFoo'), the code falls through to regex matching and returns 'operatorFoo' instead of the spec-required 'operator'."
+}

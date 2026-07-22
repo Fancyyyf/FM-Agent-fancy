@@ -1,8 +1,8 @@
 # Bug Report: _node_fqn_map
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_node_fqn_map.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_node_fqn_map.py`
 **Verdict:** MISMATCH
-**Confirmation status:** not_confirmed
+**Confirmation status:** confirmed
 
 ---
 
@@ -36,60 +36,75 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-After successful execution, the function returns a dictionary `result` mapping each node id (integer) of all rows in the `nodes` table where `kind` is either 'function' or 'method' and `language` is one of the languages in the nonempty sequence `cg_langs`, to a fully qualified name string. The FQN is constructed by processing the rows in the order given by `ORDER BY file_path, start_line`. For each row, a bare function name is extracted by stripping any anglebracket template parameters from `name`, then canonicalized into a safe identifier (`cname`). For each distinct `(file_path, cname)` pair, the first occurrence (by the ordering) receives `cname` as the deduplicated name; subsequent occurrences receive `cname_1`, `cname_2`, etc., where the appended number is the count of prior occurrences of that pair. The FQN is then formed by calling `_fqn_for(file_path, deduped_name)`, which combines the file path and the deduplicated name using `::` as separator and normalizes directory separators. The returned dictionary contains exactly one entry per matched node; its size equals the number of rows selected by the query. The cursor's result set is exhausted, but the database is not modified. Formal logic: Let Q be the sequence of tuples (id, name, file_path, start_line) obtained from `SELECT id, name, file_path, start_line FROM nodes WHERE kind IN ('function','method') AND language IN (placeholders) ORDER BY file_path, start_line`, with placeholders bound to `cg_langs`. Let `counts` be an initially empty map from `(file_path, cname)` to integer counts. After processing Q in order, the returned dictionary M satisfies: M = { id_j : [ let bare_j = _bare_function_name(name_j); cname_j = canonicalize(bare_j); key_j = (file_path_j, cname_j); c_j = counts.get(key_j, 0); deduped_j = cname_j if c_j == 0 else f"{cname_j}_{c_j}"; fqn_j = _fqn_for(file_path_j, deduped_j); counts[key_j] := c_j + 1; yield (id_j, fqn_j) ] for each j in 1..|Q| }.
+If no exception occurs: The function returns a dictionary `result` such that: Let `Q` be the ordered list of rows from `cur.execute` of `SELECT id, name, qualified_name, file_path, start_line FROM nodes WHERE kind IN ('function','method') AND language IN (?,...,?)` with parameters `cg_langs`, sorted by `file_path, start_line` ascending. For each row `(id, name, qualified_name, file_path, _)` in `Q` in order, let `ident = _extraction_ident(name, qualified_name)` and `key = (file_path, ident)`. Define a counter function `occ(key, i) = |{ j < i | key_j = key }|` (the 0based occurrence index). Then `deduped = ident if occ(key, i) = 0 else f"{ident}_{occ(key,i)}"`. Then `result[id] = _fqn_for(file_path, deduped)`. After iterating all rows, `result` contains exactly `{r.id for r in Q}` as keys and no other entries. The cursor `cur` has been completely fetched (no remaining rows from that query). No other mutable state is modified. If an exception is raised (e.g., SQL error, fetch error, or exceptions from helper functions), the exception propagates; no explicit rollback or cleanup is performed, and the state of `cur` and any partially built `result` is lost to the caller.
 
 ---
 
 ## Code Evidence
 
-Line 9: placeholders = ",".join("?" * len(cg_langs))
-Line 10: cur.execute(
+Line 26: deduped = ident if c == 0 else f"{ident}_{c}"
 
 ---
 
 ## Trigger Condition
 
-The specification explicitly requires returning an empty dict when the query matches no rows. With an empty cg_langs, the query matches no rows and the specification thus demands an empty dict. The code, however, generates an SQL clause `language IN ()` which is syntactically invalid, causing a database error and preventing the function from returning any value.
+The specification requires the k-th occurrence (1indexed) to be suffixed with _k, whereas the code uses a zerobased counter that produces _1 for the second occurrence, _2 for the third, etc., violating the defined deduplication rule.
 
 ---
 
 ## How to trigger the bug
 
-The trigger condition claims that passing an empty `cg_langs` list to `_node_fqn_map` generates invalid SQL (`language IN ()`) and raises a database error. However, **SQLite treats `IN ()` as matching zero rows**, not as a syntax error. Therefore the function executes successfully: no rows match, `cur.fetchall()` returns an empty list, the loop body never executes, and the function returns `{}` — which is exactly what the specification requires.
+The bug is an off-by-one error in the deduplication suffix assignment. When N > 1 nodes share the same `(file_path, ident)` key, the code uses a 0-based counter `c` directly as the suffix, producing `_1` for the second occurrence instead of `_2` (per the 1-indexed spec requirement), `_2` for the third instead of `_3`, and so on.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `cur` | SQLite cursor connected to an in-memory database with a `nodes` table |
-| `cg_langs` | `[]` (empty list) |
+| `cur` | SQLite cursor on an in-memory DB with a `nodes` table containing three rows all with `file_path='src/util.c'`, `name='helper'`, `kind='function'`, `language='c'`, ordered by `start_line` ascending |
+| `cg_langs` | `["c"]` |
 
 ### Expected (spec-correct) Output
 
-`{}` (empty dict — the query matches no rows)
+`{1: 'src::util-c::helper', 2: 'src::util-c::helper_2', 3: 'src::util-c::helper_3'}`
 
 ### Actual (buggy) Output
 
-`{}` (empty dict — SQLite's `IN ()` returns 0 rows, the function returns the unmodified result dict)
+`{1: 'src::util-c::helper', 2: 'src::util-c::helper_1', 3: 'src::util-c::helper_2'}`
 
 ### How to Reproduce
+
+Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
 ```python
 import sqlite3
-from src.languages.codegraph import _node_fqn_map
+import sys
+sys.path.insert(0, "src")
+
+from languages.codegraph import _node_fqn_map
 
 conn = sqlite3.connect(":memory:")
 cur = conn.cursor()
-cur.execute("CREATE TABLE nodes (id, name, file_path, start_line, kind, language)")
-cur.execute("INSERT INTO nodes VALUES (1, 'foo', '/a/b.py', 10, 'function', 'python')")
+cur.execute("""
+    CREATE TABLE nodes (
+        id INTEGER PRIMARY KEY, name TEXT, qualified_name TEXT,
+        file_path TEXT, start_line INTEGER, kind TEXT, language TEXT
+    )
+""")
+cur.executemany(
+    "INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [(1, "helper", "helper", "src/util.c", 10, "function", "c"),
+     (2, "helper", "helper", "src/util.c", 50, "function", "c"),
+     (3, "helper", "helper", "src/util.c", 90, "function", "c")],
+)
 conn.commit()
 
-result = _node_fqn_map(cur, [])
-# actual (buggy) output: {}
-# expected (correct) output: {}
+result = _node_fqn_map(cur, ["c"])
+print(result)
+# actual (buggy) output: {1: 'src::util-c::helper', 2: 'src::util-c::helper_1', 3: 'src::util-c::helper_2'}
+# expected (correct) output: {1: 'src::util-c::helper', 2: 'src::util-c::helper_2', 3: 'src::util-c::helper_3'}
 ```
 
 ---
@@ -97,61 +112,125 @@ result = _node_fqn_map(cur, [])
 ## Probe Script
 
 ```python
-"""
-Probe script for bug: src--languages--codegraph-py--_node_fqn_map
+"""Probe script for bug: _node_fqn_map off-by-one deduplication suffix.
 
-Tests whether _node_fqn_map crashes or returns an empty dict when called
-with an empty cg_langs list.
+Bug: The deduplication counter c is 0-based but used directly as suffix,
+     producing _1 for the 2nd occurrence instead of _2 per spec.
 
-Spec claim: "Returns an empty dict when the query matches no rows"
-Trigger: empty cg_langs -> SQL ``language IN ()`` allegedly generates
-         invalid SQL causing a crash per the bug claim.
+Spec says: k-th occurrence (1-indexed) gets suffix _k.
+Code does: uses 0-based counter c directly → 2nd occurrence gets _1, 3rd gets _2.
 """
-import sys
-import os
+
 import sqlite3
+import sys
+import tempfile
+import os
 
-_PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _PROJ_ROOT not in sys.path:
-    sys.path.insert(0, _PROJ_ROOT)
+# Add repo root AND src/ to sys.path so we can import the project module.
+# codegraph.py imports `config` (at repo root) so both need to be on path.
+_proj_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_src_dir = os.path.join(_proj_root, "src")
+for p in (_proj_root, _src_dir):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 try:
-    from src.languages.codegraph import _node_fqn_map
+    from languages.codegraph import _node_fqn_map, _fqn_for
+except ImportError as e:
+    print(f"ERROR: Failed to import _node_fqn_map: {e}")
+    sys.exit(1)
 
+# Build a minimal in-memory SQLite database with the nodes table.
+# We insert 3 function nodes sharing the same file_path and name to trigger
+# the deduplication logic.
+def run_test():
     conn = sqlite3.connect(":memory:")
     cur = conn.cursor()
-    cur.execute(
-        "CREATE TABLE nodes ("
-        " id INTEGER, name TEXT, file_path TEXT, start_line INTEGER,"
-        " kind TEXT, language TEXT"
-        ")"
-    )
-    cur.execute(
-        "INSERT INTO nodes VALUES (1, 'foo', '/a/b.py', 10, 'function', 'python')"
+    cur.execute("""
+        CREATE TABLE nodes (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            qualified_name TEXT,
+            file_path TEXT,
+            start_line INTEGER,
+            kind TEXT,
+            language TEXT
+        )
+    """)
+
+    # Three C functions: all named "helper", same file "src/util.c", same kind.
+    # Inserted with different start_line to respect ORDER BY file_path, start_line.
+    nodes = [
+        (1, "helper", "helper", "src/util.c", 10, "function", "c"),
+        (2, "helper", "helper", "src/util.c", 50, "function", "c"),
+        (3, "helper", "helper", "src/util.c", 90, "function", "c"),
+    ]
+    cur.executemany(
+        "INSERT INTO nodes(id, name, qualified_name, file_path, start_line, kind, language) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        nodes,
     )
     conn.commit()
 
-    actual = _node_fqn_map(cur, [])
-    expected = {}
+    # Call the function under test.
+    result = _node_fqn_map(cur, ["c"])
 
-    if actual == expected:
-        print("NOT CONFIRMED — _node_fqn_map returned empty dict as spec requires")
-        print(f"  actual: {actual!r}  expected: {expected!r}")
-        print(f"  SQLite treats IN () as matching 0 rows (not a syntax error)")
+    # Build expected (spec-correct) FQNs manually.
+    # Replicate _fqn_for logic: path components joined by "::", extension→hyphen.
+    # file_path = "src/util.c" → "src::util-c" prefix
+    suffix_free = _fqn_for("src/util.c", "helper")
+    with_suffix_2 = _fqn_for("src/util.c", "helper_2")
+    with_suffix_3 = _fqn_for("src/util.c", "helper_3")
+
+    expected = {
+        1: suffix_free,
+        2: with_suffix_2,
+        3: with_suffix_3,
+    }
+
+    # Check if the actual output matches the buggy (0-based) pattern.
+    buggy_suffix_1 = _fqn_for("src/util.c", "helper_1")
+    buggy_suffix_2 = _fqn_for("src/util.c", "helper_2")
+
+    buggy_expected = {
+        1: suffix_free,
+        2: buggy_suffix_1,
+        3: buggy_suffix_2,
+    }
+
+    # Classification: bug confirmed if actual != spec-correct AND actual == buggy.
+    match_spec = result == expected
+    match_buggy = result == buggy_expected
+
+    if not match_spec and match_buggy:
+        print("CONFIRMED — off-by-one deduplication suffix reproduced.")
+        print(f"  Expected (spec-correct): {expected}")
+        print(f"  Actual (buggy):          {result}")
+        print(f"  Buggy pattern matches:   {match_buggy}")
+    elif not match_spec:
+        print("CONFIRMED — actual does not match spec (though buggy pattern also mismatched)")
+        print(f"  Expected (spec):  {expected}")
+        print(f"  Actual:           {result}")
+        print(f"  Buggy expected:   {buggy_expected}")
     else:
-        print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
+        print("NOT CONFIRMED — actual output matched spec-correct output")
+        print(f"  Result: {result}")
 
-except Exception as e:
-    print(f"ERROR: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    conn.close()
+
+if __name__ == "__main__":
+    try:
+        run_test()
+    except Exception as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-NOT CONFIRMED — _node_fqn_map returned empty dict as spec requires
-  actual: {}  expected: {}
-  SQLite treats IN () as matching 0 rows (not a syntax error)
+CONFIRMED — off-by-one deduplication suffix reproduced.
+  Expected (spec-correct): {1: 'src::util-c::helper', 2: 'src::util-c::helper_2', 3: 'src::util-c::helper_3'}
+  Actual (buggy):          {1: 'src::util-c::helper', 2: 'src::util-c::helper_1', 3: 'src::util-c::helper_2'}
+  Buggy pattern matches:   True
 ```

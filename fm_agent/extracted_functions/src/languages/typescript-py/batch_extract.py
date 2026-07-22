@@ -25,11 +25,12 @@
 #     project at proj_dir, or None when the codegraph backend cannot be initialized
 # [SPLIT]
 # CodeGraphExtractor.get_functions_by_file(language: str, proj_dir: str) -> dict[str, list[tuple[str, str]]]
-#   Pre-condition: language is a supported language key; proj_dir is the indexed
-#     project root
+#   Pre-condition: language is a string; proj_dir is a string path to a directory
 #   Post-condition: Returns a dict mapping absolute file paths to lists of
-#     (function_name, function_body) tuples for all source files of the given
-#     language found under proj_dir
+#     (function_name, function_body) tuples for source files of the given
+#     language found under proj_dir. Source files that cannot be opened are
+#     omitted without error. When language is not recognized, returns an empty
+#     dict.
 # [INFO]
 
 def batch_extract(proj_dir: str) -> dict:

@@ -24,10 +24,16 @@
 #     indexable by codegraph; returns None otherwise.
 # [SPLIT]
 # CodeGraphExtractor.get_function_spans(language: str, filepath: str) -> list[tuple[str, int, int]] | None
-#   Pre-condition: language is a recognized language key (e.g., "python")
-#   Post-condition: Returns a list of (name, start_idx, end_idx) tuples for
-#     each function defined in the source file, with 0-indexed inclusive line
-#     indices; returns None if the file is not indexed by this extractor.
+#   Pre-condition: language is a non-empty string identifying a programming
+#     language; filepath is an absolute filesystem path to a source file
+#     residing within the project root.
+#   Post-condition: Returns None when language does not map to a recognized
+#     codegraph language, or when the database contains no rows for the file
+#     (i.e., file not indexed, file has no functions/methods, or file path
+#     does not resolve relative to the project root). Otherwise returns a
+#     list of (name, start_idx, end_idx) tuples for every function and method
+#     definition, with class-qualified names, 0-indexed inclusive line
+#     indices, and ordered by ascending start_idx.
 # [INFO]
 
 def function_spans(proj_dir: str, filepath: str):

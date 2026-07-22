@@ -1,6 +1,6 @@
 # Bug Report: build_agent_command
 
-**Source file:** `src/cli_backend.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/cli_backend-py/build_agent_command.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -38,33 +38,56 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-If the resolved backend is not in {'codex-cli', 'claude-cli'}, a ValueError is raised with the message 'unsupported CLI backend: {resolved}'. Otherwise, the function returns an AgentCommand object. The resolved backend is computed as: Let raw = _normalize_backend(backend) if backend is not None and backend != '' else resolve_model_backend(); then resolved = resolve_model_backend() if raw == 'auto' else raw. Let cwd_abs = os.path.abspath(cwd), std = _compose_stdin(prompt, files if files is not None else []), m = (model or '').strip(), e = (effort if effort is not None else cli_effort()).strip(). Then:
-- If resolved == 'codex-cli', the returned AgentCommand has backend='codex-cli', stdin=std, and argv = ['codex', 'exec', '--sandbox', 'danger-full-access', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', '-C', cwd_abs] + (['--model', m] if m != '' else []) + (['-c', 'model_reasoning_effort="' + e + '"'] if e != '' else []) + ['-'].
-- If resolved == 'claude-cli', the returned AgentCommand has backend='claude-cli', stdin=std, and argv = ['claude', '-p', '--output-format', 'text', '--no-session-persistence', '--dangerously-skip-permissions', '--permission-mode', 'bypassPermissions', '--add-dir', cwd_abs] + (['--model', m] if m != '' else []) + (['--effort', e] if e != '' else []).
+Let B, M, P, D, F, E denote the formal parameters backend, model, prompt, cwd, files, effort respectively. Define:
 
-Formally:
- model, prompt, cwd, files, backend, effort. Pre-condition holds 
-  let r = (backend  None  backend  "") ? _normalize_backend(backend) : resolve_model_backend() in
-  let r' = (r = "auto" ? resolve_model_backend() : r) in
-  (r'  {"codex-cli", "claude-cli"}  result = ValueError("unsupported CLI backend: " + r'))
+1. N = if B is not None then _normalize_backend(B) else resolve_model_backend()
+2. R = if N == "auto" then resolve_model_backend() else N
+
+If R  {"codex-cli", "claude-cli"}, a ValueError is raised.
+
+Otherwise, let:
+  C = os.path.abspath(D)
+  S = _compose_stdin(P, F if F is not None else [])
+      (by spec, S is None when F is None or empty, else a string.)
+  M' = M.strip()                        (may be empty even if M was nonempty)
+  E' = (E if E is not None else cli_effort()).strip()
+
+if R = "codex-cli":
+    argv = ["codex","exec","--sandbox","danger-full-access",
+            "--dangerously-bypass-approvals-and-sandbox",
+            "--skip-git-repo-check","-C", C]
+         + (["--model", M'] if M' != "" else [])
+         + (["-c", f'model_reasoning_effort="{E'}"'] if E' != "" else [])
+         + ["-"]
+    return a value r with r.argv = argv, r.stdin = S, r.backend = "codex-cli"
+
+if R = "claude-cli":
+    argv = ["claude","-p","--output-format","text",
+            "--no-session-persistence","--dangerously-skip-permissions",
+            "--permission-mode","bypassPermissions","--add-dir", C]
+         + (["--model", M'] if M' != "" else [])
+         + (["--effort", E'] if E' != "" else [])
+    return a value r with r.argv = argv, r.stdin = S, r.backend = "claude-cli"
+
+No other side effects occur.
 
 ---
 
 ## Code Evidence
 
-Line 8: files are only used to compute stdin via _compose_stdin; no further statements add file path arguments to argv. Line 12-21 (codex-cli argv building) and Line 28-39 (claude-cli argv building) do not include file path arguments.
+Line 12: construction of argv for codex-cli does not attach files as context; Line 28: construction of argv for claude-cli does not attach files as context; the requirement to attach each file path as context to the backend invocation is not implemented anywhere in the function.
 
 ---
 
 ## Trigger Condition
 
-The specification requires that when 'files' is a non-empty list, each file path is attached as context to the backend invocation (e.g., passed as arguments). The code only combines prompt and file contents into stdin but does not add any file path arguments to the argv list, so the backend receives no direct context of the file paths.
+The specification requires that when files is a non-empty list, each file path is attached as context to the backend invocation (i.e., appears in argv as arguments). The code only combines file contents into stdin but never adds the file paths to argv. With the given input (files=['a.txt','b.txt']), the returned AgentCommand.argv lacks any file-related flags like '--file a.txt', violating the specification.
 
 ---
 
 ## How to trigger the bug
 
-Call `build_agent_command` with a non-empty `files` list. The returned `AgentCommand.argv` will not contain any file path arguments — only the `stdin` field includes file content hints. The specification requires file paths to be attached as context arguments to the backend CLI invocation.
+Call `build_agent_command` with a non-empty `files` list. The returned `AgentCommand.argv` will contain no reference to any of the file paths — neither as separate arguments nor as part of a flag like `--file`. The spec requires that each file path be attached as context to the backend invocation (i.e., appear in `argv`).
 
 ### Inputs
 
@@ -72,18 +95,26 @@ Call `build_agent_command` with a non-empty `files` list. The returned `AgentCom
 |-----------|-------|
 | model | `"test-model"` |
 | prompt | `"test prompt"` |
-| cwd | `<repo root>` |
-| files | `["test_file.txt"]` |
-| backend | `"codex-cli"` |
-| effort | (not set) |
+| cwd | `"/tmp"` |
+| files | `["a.txt", "b.txt"]` |
+| backend | `"codex-cli"` (also tested: `"claude-cli"`) |
+| effort | (omitted, defaults to configured via `cli_effort()`) |
 
 ### Expected (spec-correct) Output
 
-`AgentCommand.argv` should contain `"test_file.txt"` (or an equivalent flag + path) so the backend receives the file path as invocation context.
+`AgentCommand.argv` contains arguments referencing each file path in `files` (e.g., `"--file a.txt --file b.txt"` or equivalent context-attaching flags for the respective backend).
 
 ### Actual (buggy) Output
 
-`AgentCommand.argv` does NOT contain `"test_file.txt"` — only stdin carries file information.
+`AgentCommand.argv` contains zero references to the file paths `a.txt` or `b.txt`. For `codex-cli`, the argv is:
+```
+["codex", "exec", "--sandbox", "danger-full-access", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "/tmp", "--model", "test-model", "-"]
+```
+
+For `claude-cli`, the argv is:
+```
+["claude", "-p", "--output-format", "text", "--no-session-persistence", "--dangerously-skip-permissions", "--permission-mode", "bypassPermissions", "--add-dir", "/tmp", "--model", "test-model"]
+```
 
 ### How to Reproduce
 
@@ -93,18 +124,26 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
+import sys
+sys.path.insert(0, '.')
+
 from src.cli_backend import build_agent_command
 
+# Test with codex-cli
 cmd = build_agent_command(
     model="test-model",
     prompt="test prompt",
-    cwd=".",
-    files=["test_file.txt"],
+    cwd="/tmp",
+    files=["a.txt", "b.txt"],
     backend="codex-cli",
 )
-print(cmd.argv)
-# actual (buggy) output: ['codex', 'exec', '--sandbox', 'danger-full-access', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', '-C', '<cwd>', '--model', 'test-model', '-']
-# expected (correct) output: argv should contain 'test_file.txt'
+print("argv:", cmd.argv)
+# actual (buggy) output: argv has no 'a.txt' or 'b.txt'
+# expected (correct) output: argv includes file paths as context arguments
+
+print("Does argv contain file paths?", any(f in str(cmd.argv) for f in ["a.txt", "b.txt"]))
+# actual (buggy) output: False
+# expected (correct) output: True
 ```
 
 ---
@@ -115,50 +154,53 @@ print(cmd.argv)
 import sys
 import os
 
-# Add repo root to path so the "src" package is discoverable
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+# Ensure repo root is on sys.path so 'config' and 'src' packages are importable.
+repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, repo_root)
 
 try:
     from src.cli_backend import build_agent_command
 except Exception as e:
-    print(f"ERROR: {e}")
+    print(f'ERROR: {e}')
     sys.exit(1)
 
-actual = None
-expected = None
-passed = None
+test_files = ["a.txt", "b.txt"]
+backends_to_test = ["codex-cli", "claude-cli"]
 
-try:
-    cwd = os.path.abspath(os.getcwd())
-    files = ["test_file.txt"]
+all_confirmed = True
+details = []
 
-    actual = build_agent_command(
-        model="test-model",
-        prompt="test prompt",
-        cwd=cwd,
-        files=files,
-        backend="codex-cli",
-    )
+for backend in backends_to_test:
+    try:
+        cmd = build_agent_command(
+            model="test-model",
+            prompt="test prompt",
+            cwd="/tmp",
+            files=test_files,
+            backend=backend,
+        )
+    except Exception as e:
+        print(f'ERROR building command for {backend}: {e}')
+        sys.exit(1)
 
-    # Spec says: "each file path in files is attached as context to the
-    # backend invocation." That means file paths SHOULD appear in argv.
-    # Bug claim: the code only composes stdin, never adds file paths to argv.
-    file_path_in_argv = any("test_file.txt" in arg for arg in actual.argv)
-    expected_contains_files = True
-    passed = not file_path_in_argv  # bug confirmed when files NOT in argv
+    argv_flat = " ".join(cmd.argv)
+    file_in_argv = any(f in argv_flat for f in test_files)
 
-except Exception as e:
-    print(f"ERROR: {e}")
-    sys.exit(1)
+    if file_in_argv:
+        details.append(f'{backend}: file paths FOUND in argv → spec satisfied → NOT CONFIRMED')
+        all_confirmed = False
+    else:
+        details.append(f'{backend}: file paths MISSING from argv → spec violated → CONFIRMED')
 
-if passed:
-    print(f"CONFIRMED — file path 'test_file.txt' NOT found in argv: {actual.argv}")
+# Print verdict
+if all_confirmed:
+    print('CONFIRMED — file paths missing from argv for all backends:', ' | '.join(details))
 else:
-    print(f"NOT CONFIRMED — file path found in argv: {actual.argv}")
+    print('NOT CONFIRMED — file paths found in argv for at least one backend:', ' | '.join(details))
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — file path 'test_file.txt' NOT found in argv: ['codex', 'exec', '--sandbox', 'danger-full-access', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', '-C', '/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot', '--model', 'test-model', '-']
+CONFIRMED — file paths missing from argv for all backends: codex-cli: file paths MISSING from argv → spec violated → CONFIRMED | claude-cli: file paths MISSING from argv → spec violated → CONFIRMED
 ```

@@ -1,0 +1,42 @@
+Programming language: Python
+
+Pre-condition:
+- proj_dir is an absolute path to the project root directory, under which the child directory fm_agent/ exists with sub-directory extracted_functions/ and a phases.json file.
+  - modified_functions is a dict whose keys are absolute source-file paths (the values are not used by this function).
+
+Code block:
+```python
+Line 1: def _remove_stale_extracted(proj_dir, modified_functions):
+Line 2:     """
+Line 3:     Reconcile the extracted-function tree against what codegraph now produces,
+Line 4:     deleting any file that no longer corresponds to a current source function and
+Line 5:     pruning emptied directories.
+Line 6:     We reconcile every source file in the current phases.json plus any file
+Line 7:     reported changed or deleted — not only files whose regex-visible function names
+Line 8:     changed. A qualifier-only edit (e.g. renaming a C++ namespace around an
+Line 9:     otherwise identical ``void foo(){...}``) moves the extracted file to a new
+Line 10:     qualified directory without changing the regex name or body, so the old
+Line 11:     qualified file would otherwise linger as a stale, orphaned spec. Reconciling by
+Line 12:     path rather than by (class-less) name handles it.
+Line 13:     """
+Line 14:     srcs = set(modified_functions)  
+Line 15:     try:
+Line 16:         phases_data = _load_phases(os.path.join(proj_dir, "fm_agent"))
+Line 17:         for phase in phases_data.get("phases", []):
+Line 18:             for module in phase.get("modules", []):
+Line 19:                 for rel in module.get("source_files", []):
+Line 20:                     srcs.add(os.path.abspath(os.path.join(proj_dir, rel)))
+Line 21:     except (OSError, ValueError, KeyError):
+Line 22:         pass
+Line 23:     for abs_src in srcs:
+Line 24:         _reconcile_extracted_dir(proj_dir, abs_src)
+```
+
+Additional context:
+_load_phases(fm_agent_dir: str) -> dict
+Pre-condition: fm_agent_dir is a directory path containing a phases.json file.
+  Post-condition: Reads and returns the parsed contents of phases.json as a dict. The dict has a key "phases" whose value is a list of phase objects; each phase object contains a key "modules" (list of module objects), and each module object contains a key "source_files" (list of relative source-file paths). May raise OSError, ValueError, or KeyError on failure.
+_reconcile_extracted_dir(proj_dir: str, abs_src: str) -> None
+  Pre-condition: proj_dir is the absolute project root; abs_src is an absolute source-file path within proj_dir (the file may or may not exist).
+  Post-condition: Determines the extracted-functions directory for abs_src using the same naming convention as run_extraction. If that directory does not exist, no changes are made. Otherwise, expected extracted files are derived from the current function spans of abs_src, using the same backend (codegraph or regex) as run_extraction. If abs_src does not exist or its extension is not recognized, the expected set is empty. Any file in the directory not matching an expected path is deleted, and empty subdirectories are pruned. Expected files are preserved unchanged.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None\n#   Pre-condition: proj_dir is a valid project directory path\n#   Post-condition: Returns a CodeGraphExtractor instance initialized for the project,\n#     or None when the Java code graph backend cannot be initialized\n# [SPLIT]\n# cg.get_functions_by_file(\"java\", proj_dir) -> dict\n#   Pre-condition: cg is a valid CodeGraphExtractor instance; proj_dir is a valid\n#     project directory path\n#   Post-condition: Returns a dict mapping each absolute file path (str) to a list of\n#     (function_name: str, function_body: str) tuples for Java functions. Each function body\n#     ends with a newline; source files that cannot be read are silently omitted.\n# [INFO]"
+}

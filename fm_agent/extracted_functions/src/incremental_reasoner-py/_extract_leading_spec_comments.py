@@ -6,24 +6,7 @@
 # Pre-condition:
 #   - content is a non-empty string representing file content with one or more lines
 #   - comment_prefix is a non-empty string (e.g., "#" for Python)
-#   - spec_marker is a non-empty string (e.g., "# [SPEC]")
-#
-# Post-condition:
-#   - Returns None when the first non-blank line of content, after stripping leading and
-#     trailing whitespace, does not equal the spec_marker value.
-#   - Returns None when the spec_marker line is the only comment line in the leading block
-#     (no subsequent line whose stripped text begins with comment_prefix appears before the
-#     first non-blank, non-comment line).
-#   - Otherwise, returns the prefix of content from the first line through (but not
-#     including) the first line that is neither blank nor a comment line. The returned
-#     string includes: all leading blank lines, the spec-marker line, all subsequent lines
-#     whose stripped text begins with comment_prefix, and any blank lines interspersed among
-#     comment lines.
-#   - The returned string, when prepended to the suffix of content starting at the first
-#     non-blank, non-comment line, reconstructs the original content exactly.
-#   - The returned string never modifies, reorders, or omits any line of content; it is
-#     always a contiguous leading slice of the input.
-# [SPEC]
+#   - spec_marker is a non-empty string (e.g., "# [SPEC]
 
 # [INFO]
 # (no callees)

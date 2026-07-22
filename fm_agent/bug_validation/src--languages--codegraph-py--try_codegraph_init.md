@@ -1,6 +1,6 @@
 # Bug Report: try_codegraph_init
 
-**Source file:** `src/languages/codegraph.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/try_codegraph_init.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -32,78 +32,84 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-After execution, no unhandled exceptions propagate. Let init_db_pre be the file `<proj_dir>/.codegraph/codegraph.db`. 
+After the function returns, the following post-conditions hold regarding the project directory `proj_dir`:
 
-If init_db_pre exists and force is False, the function returns immediately with no side effects (filesystem unchanged, no output). 
+1. The existence of the codegraph index database file `db = os.path.join(proj_dir, '.codegraph', 'codegraph.db')` satisfies:
 
-Otherwise (init_db_pre does not exist, or force is True): 
-- If init_db_pre exists (and force True), a removal of `<proj_dir>/.codegraph` is attempted via `shutil.rmtree` with `ignore_errors=True`, and the message "[Pipeline] Rebuilding codegraph index for current working tree..." is printed. The directory and its contents may or may not be fully removed; removal errors are silently ignored. 
-- If init_db_pre does not exist, the message "[Pipeline] Building codegraph index..." is printed and no removal is attempted. 
-- Then a subprocess `['codegraph', 'init']` is executed in `proj_dir` with `capture_output=True`. 
-   - If the `codegraph` executable is not found (`FileNotFoundError`), the function returns silently; no further output; the filesystem state is whatever resulted from the earlier steps. 
-   - If `codegraph` runs: 
-        - On exit code 0, the message "[Pipeline] codegraph index built." is printed. The `<proj_dir>/.codegraph` directory and the file `codegraph.db` are expected to exist and reflect the current working tree (as per `codegraph init` semantics). 
-        - On any non-zero exit, a warning is logged with the first 300 characters of `stderr`; the index state is unspecified (typically not built or left in an error state). 
+   db_post_exists  ( (db_pre_exists  force = False)  (cmd_available  (force   db_pre_exists)  exit_code = 0) )
 
-The function never raises exceptions; `FileNotFoundError` is caught and non-zero returns are not re-raised.
+   where
+     db_pre_exists = os.path.exists(db) before the call,
+     db_post_exists = os.path.exists(db) after the call,
+     cmd_available = the `codegraph` command identified by `_codegraph_cmd()` is present on PATH and does not raise `FileNotFoundError`,
+     exit_code = return code of `subprocess.run([cmd, 'init'], ...)` if it runs (0 on success).
+
+2. If `force` was True and `db_pre_exists` was True, the entire `.codegraph` directory was removed via `shutil.rmtree` before the command attempt.
+3. The function never raises an exception; it handles missing executables and non-zero exit codes gracefully.
+4. Informational messages are printed or logged as per lines 25,27,37,39-42.
 
 ---
 
 ## Code Evidence
 
 Line 19: if os.path.exists(db_path):
+Line 20:         if not force:
+Line 21:             return
+Line 24:         shutil.rmtree(codegraph_dir, ignore_errors=True)
 
 ---
 
 ## Trigger Condition
 
-Spec requires removal of the .codegraph directory whenever it exists and the function is not returning early (i.e., when force is False but codegraph.db does not exist, the specification's 'Otherwise' case applies and mandates removal before rebuilding). The code's check at Line 19 only removes the directory if the codegraph.db file exists, failing to remove it when the .codegraph directory exists without the db file, which violates the specification.
+The code removes the existing .codegraph directory (line 24) before checking whether the 'codegraph' executable exists (line 31). When the executable is missing, a FileNotFoundError is caught (line 34-35) and the function returns, but the removal has already occurred. This violates the specification requirement that when the executable is not found, the function must return immediately without creating, modifying, or removing any files under proj_dir.
 
 ---
 
 ## How to trigger the bug
 
-Describe the concrete inputs used in the probe, what the buggy code returns, and what the specification requires.
+The bug occurs when `try_codegraph_init` is called with `force=True` on a project directory that has a pre-existing `.codegraph/codegraph.db`, and the `codegraph` executable is not available on the system. The function removes the `.codegraph` directory at line 526 (source line 24 in extracted function) before discovering at line 532-537 (lines 30-35) that the command cannot be found, leaving the directory destroyed despite the spec requiring no file modifications when the executable is missing.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| proj_dir | A temp directory containing `.codegraph/` with a marker file but NO `codegraph.db` |
-| force | `False` |
+| `proj_dir` | Path to a temporary directory containing `.codegraph/codegraph.db` |
+| `force` | `True` |
 
 ### Expected (spec-correct) Output
 
-The `.codegraph/` directory should be removed before `codegraph init` runs. The marker file should be gone.
+`.codegraph/` directory preserved (function returns without modifying any files under `proj_dir`)
 
 ### Actual (buggy) Output
 
-The `.codegraph/` directory is NOT removed. The marker file persists. `codegraph init` runs but does not clear the old directory contents.
+`.codegraph/` directory is removed by `shutil.rmtree()` before the `FileNotFoundError` is caught
 
 ### How to Reproduce
 
-Step-by-step instructions to trigger the bug manually:
-
 1. Navigate to the repo root.
-2. Run the following snippet (uses the package entry point):
+2. Ensure the `codegraph` executable is not found (monkey-patch `_codegraph_cmd` to return a nonexistent path).
+3. Run the following snippet (uses the package entry point):
 
 ```python
-import os, tempfile, sys
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot')
 from src.languages.codegraph import try_codegraph_init
 
+# Monkey-patch _codegraph_cmd so codegraph is "not found"
+import src.languages.codegraph as cg
+cg._codegraph_cmd = lambda: "/nonexistent/codegraph"
+
+# Create a temp project dir with .codegraph/codegraph.db
+import tempfile, os
 tmp = tempfile.mkdtemp()
-codegraph_dir = os.path.join(tmp, ".codegraph")
-os.makedirs(codegraph_dir)
-marker = os.path.join(codegraph_dir, "marker.txt")
-with open(marker, "w") as f:
-    f.write("exists")
+os.makedirs(os.path.join(tmp, ".codegraph"))
+with open(os.path.join(tmp, ".codegraph", "codegraph.db"), "w") as f:
+    f.write("mock")
 
-try_codegraph_init(tmp, force=False)  # BUG: .codegraph/ not removed
+# Call with force=True — this will remove .codegraph/ then fail to find codegraph
+try_codegraph_init(proj_dir=tmp, force=True)
 
-print("marker still exists:", os.path.exists(marker))
-# actual (buggy) output: marker still exists: True
-# expected (correct) output: marker still exists: False
+# .codegraph/ is gone — violates spec (should be preserved)
+print(os.path.exists(os.path.join(tmp, ".codegraph")))  # actual (buggy) output: False
+# expected (correct) output: True
 ```
 
 ---
@@ -111,60 +117,98 @@ print("marker still exists:", os.path.exists(marker))
 ## Probe Script
 
 ```python
-import sys
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot')
+"""Probe script for bug: try_codegraph_init removes .codegraph before checking executable.
+
+Bug ID: src--languages--codegraph-py--try_codegraph_init
+
+The function try_codegraph_init(proj_dir, force=True) calls shutil.rmtree()
+at line 526 to remove the .codegraph directory BEFORE checking whether the
+codegraph executable exists (line 530-537). When codegraph is missing, a
+FileNotFoundError is caught and the function returns — but the directory
+has already been removed, violating the spec that requires no file
+modifications when the executable is not found.
+"""
 
 import os
+import sys
 import tempfile
 import shutil
 
+# Ensure we can import from the repo root
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+import src.languages.codegraph as codegraph_module
+from src.languages.codegraph import try_codegraph_init
+
+# Monkey-patch _codegraph_cmd to simulate "codegraph not installed".
+# This ensures subprocess.run([cmd, "init"], ...) raises FileNotFoundError
+# regardless of whether codegraph is actually present on the system.
+_original_codegraph_cmd = codegraph_module._codegraph_cmd
+codegraph_module._codegraph_cmd = lambda: "/nonexistent/codegraph_binary_not_found"
+
+exit_code = 0
+temp_dir = None
+result_msg = ""
+
 try:
-    from src.languages.codegraph import try_codegraph_init
+    # Create a temporary project directory with a pre-existing .codegraph/codegraph.db
+    temp_dir = tempfile.mkdtemp(prefix="fmagent_probe_")
+    codegraph_dir = os.path.join(temp_dir, ".codegraph")
+    os.makedirs(codegraph_dir, exist_ok=True)
+    db_path = os.path.join(codegraph_dir, "codegraph.db")
+    with open(db_path, "w") as f:
+        f.write("mock codegraph database\n")
 
-    # Bug trigger: .codegraph/ directory exists but codegraph.db does NOT exist.
-    # Spec's "Otherwise" case applies (codegraph.db missing) → requires directory removal.
-    # Code at line 400 only checks os.path.exists(db_path), so it skips to the else
-    # branch without removing the existing .codegraph/ directory.
+    # Verify pre-condition: .codegraph directory and codegraph.db exist before the call
+    assert os.path.isdir(codegraph_dir), (
+        "Pre-condition failed: .codegraph dir does not exist"
+    )
+    assert os.path.exists(db_path), (
+        "Pre-condition failed: codegraph.db does not exist"
+    )
 
-    tmp = tempfile.mkdtemp()
-    codegraph_dir = os.path.join(tmp, ".codegraph")
-    os.makedirs(codegraph_dir)
-    marker_file = os.path.join(codegraph_dir, "marker.txt")
-    with open(marker_file, "w") as f:
-        f.write("this marker proves the directory was not removed")
+    # Call the function with force=True — the buggy path (line 526 removes dir
+    # BEFORE line 530 checks for the codegraph executable)
+    try_codegraph_init(proj_dir=temp_dir, force=True)
 
-    # spec_claim: when codegraph.db doesn't exist (Otherwise case), if .codegraph/
-    #   exists, it must be removed before rebuilding.
-    # actual_behavior (bug): directory is NOT removed because the code only checks
-    #   for db_path existence.
-    try_codegraph_init(tmp, force=False)
+    # After the call, check whether .codegraph was preserved (spec-correct)
+    # or removed (buggy behavior)
+    dir_exists_after = os.path.isdir(codegraph_dir)
 
-    # If the spec was followed: marker_file should be gone (rmtree deleted .codegraph/)
-    # If the bug exists: marker_file still there (dir was never removed)
-    marker_exists = os.path.exists(marker_file)
-    expected = False  # spec requires removal
-    passed = marker_exists != expected  # True → bug reproduced
+    if dir_exists_after:
+        result_msg = (
+            "NOT CONFIRMED — .codegraph directory was preserved (spec-compliant). "
+            "The function left the directory intact when codegraph was unavailable."
+        )
+    else:
+        result_msg = (
+            "CONFIRMED — .codegraph directory was removed before checking for "
+            "codegraph executable. Spec violation: the spec requires that when "
+            "the codegraph executable is not found, the function returns "
+            "immediately without creating, modifying, or removing any files "
+            "under proj_dir."
+        )
 
-except Exception as e:
-    print(f'ERROR: {e}')
-    sys.exit(1)
+except Exception as exc:
+    result_msg = f"ERROR: {type(exc).__name__}: {exc}"
+    exit_code = 1
+
 finally:
+    # Restore original _codegraph_cmd
+    codegraph_module._codegraph_cmd = _original_codegraph_cmd
     # Cleanup temp directory
-    try:
-        shutil.rmtree(tmp, ignore_errors=True)
-    except Exception:
-        pass
+    if temp_dir is not None and os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
-if passed:
-    print(f'CONFIRMED — marker file {"still exists (.codegraph/ not removed by function)" if marker_exists else "unexpectedly missing"} | spec requires removal of .codegraph/ when codegraph.db is absent')
-else:
-    print(f'NOT CONFIRMED — marker file was {"removed (spec correct)" if not marker_exists else "still exists but expected was confused"}')
+print(result_msg)
+sys.exit(exit_code)
 ```
 
 ### Probe Output
 
 ```
-[Pipeline] Building codegraph index...
-[Pipeline] codegraph index built.
-CONFIRMED — marker file still exists (.codegraph/ not removed by function) | spec requires removal of .codegraph/ when codegraph.db is absent
+[Pipeline] Rebuilding codegraph index for current working tree...
+CONFIRMED — .codegraph directory was removed before checking for codegraph executable. Spec violation: the spec requires that when the codegraph executable is not found, the function returns immediately without creating, modifying, or removing any files under proj_dir.
 ```

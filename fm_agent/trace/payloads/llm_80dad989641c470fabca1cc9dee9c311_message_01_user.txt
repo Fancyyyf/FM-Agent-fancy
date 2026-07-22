@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _source_for_range(source: str, lsp_range: dict) -> str:
+Line 2:     """Compatibility wrapper for callers that do not reuse a source index."""
+Line 3:     return _SourceIndex.build(source).source_for_range(lsp_range)
+```
+
+Condition A (what the code actually does):
+If `lsp_range['start']` does not follow `lsp_range['end']` in source order, the function returns the substring of `source` that begins at the byte offset corresponding to the inclusive start position (line `lsp_range['start']['line']`, character `lsp_range['start']['character']`) and ends at the byte offset corresponding to the exclusive end position (line `lsp_range['end']['line']`, character `lsp_range['end']['character']`). If the start position does follow the end position, the behavior is undefined: the function may raise an exception (e.g., an `AssertionError` or `ValueError`) or return an arbitrary result.
+
+Condition B (what the specification requires):
+- Returns the substring of source that spans from the start position (inclusive) to the end position (exclusive)
+
+Additional context:
+_SourceIndex.build(source) -> _SourceIndex
+Pre-condition: source is a string
+  Post-condition: Returns a _SourceIndex instance whose operations are scoped to the given source string
+
+_SourceIndex.source_for_range(lsp_range) -> str
+Pre-condition: lsp_range is a dict with keys 'start' and 'end', each having 'line' (int, 0-based) and 'character' (int, 0-based UTF-16 code unit offset) keys, and the start position does not follow the end position in source order
+  Post-condition: Returns the substring of the indexed source that spans from the byte offset corresponding to the start position (inclusive) to the byte offset corresponding to the end position (exclusive)
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

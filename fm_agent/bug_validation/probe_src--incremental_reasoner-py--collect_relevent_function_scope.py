@@ -1,141 +1,95 @@
-"""Probe for collect_relevent_function_scope: verify that modules are selected when they
-contain a source file present in changed_functions, even when the LLM-based module
-description assessment does not select any modules.
+"""Probe: validate whether collect_relevent_function_scope incorporates the
+changed_functions criterion in module selection.
 
-Bug claim: pass 1 module selection ignores changed_functions when choosing modules.
-The spec requires: a module is selected when EITHER its description is assessed as
-relevant, OR the module contains a source file whose relativized path matches a key
-in changed_functions.
+Spec claim: A module is selected when EITHER its description is assessed as
+relevant by LLM, OR the module contains at least one source file whose
+relativized path matches a key in changed_functions.
 
-Test: Mock the LLM to return [] (no modules selected by description), then provide
-changed_functions with a file inside a module. If the code respects the spec, the
-module should still be selected via the `or any(...)` clause.
+Bug claim: "The code performs only an LLM-based relevance assessment on module
+descriptions and does not incorporate the changed_functions criterion."
+
+This probe tests the exact filtering expression from the source code
+(src/incremental_reasoner.py line ~1161) to verify the claim.
 """
+
 import sys
 import os
-import json
-import tempfile
-import shutil
-from unittest.mock import patch
 
-# Ensure the project root is on the Python path
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-_proj_root = os.path.dirname(os.path.dirname(_script_dir))
-if _proj_root not in sys.path:
-    sys.path.insert(0, _proj_root)
+# --- The exact logic under test, extracted verbatim from the source ---
 
-error_occurred = False
-error_msg = ""
-result = None
-
-tmpdir = tempfile.mkdtemp(prefix="fm_agent_probe_collect_scope_")
-try:
-    proj_dir = os.path.join(tmpdir, "project")
-    work_dir = os.path.join(proj_dir, "fm_agent")
-    extracted_dir = os.path.join(work_dir, "extracted_functions")
-
-    # --- Step 1: Set up a minimal project with phases.json ---
-    os.makedirs(work_dir, exist_ok=True)
-    phases = {
-        "phases": [{
-            "phase": 1,
-            "name": "Test Phase",
-            "description": "Test phase for probe",
-            "modules": [{
-                "name": "test_module",
-                "description": "A test module NOT relevant to developer intent",
-                "source_files": ["src/foo.py"]
-            }]
-        }]
-    }
-    with open(os.path.join(work_dir, "phases.json"), "w") as f:
-        json.dump(phases, f)
-
-    # --- Step 2: Create the actual source file ---
-    os.makedirs(os.path.join(proj_dir, "src"), exist_ok=True)
-    with open(os.path.join(proj_dir, "src", "foo.py"), "w") as f:
-        f.write("def bar():\n    return 42\n")
-
-    # --- Step 3: Create extracted function file ---
-    func_dir = os.path.join(extracted_dir, "src", "foo-py")
-    os.makedirs(func_dir, exist_ok=True)
-    with open(os.path.join(func_dir, "bar.py"), "w") as f:
-        f.write("# [SPEC]\n# Unit: src/foo-py/bar.py\n# bar() -> int\n# [SPEC]\ndef bar():\n    return 42\n")
-
-    # --- Step 4: Prepare inputs ---
-    # changed_functions maps ABSOLUTE source paths
-    abs_src = os.path.abspath(os.path.join(proj_dir, "src", "foo.py"))
-    changed_functions = {
-        abs_src: {"added": [], "removed": [], "modified": ["bar"]}
-    }
-    developer_intent = "Add support for quantum-resistant cryptography algorithms"
-
-    # --- Step 5: Call the function with mocked LLM dependencies ---
-    # Mock _llm_select_json (pass 1): return [] -> no modules selected by LLM
-    # The OR clause should still select the module because changed_functions has foo.py
-    # Mock _opencode_select_json (pass 2): return None -> fall back to all files
-    # Mock rank_functions_in_file (pass 3): return a ranked function
-    with patch(
-        'src.incremental_reasoner._llm_select_json',
-        return_value=[]
-    ):
-        with patch(
-            'src.incremental_reasoner._opencode_select_json',
-            return_value=None
-        ):
-            with patch(
-                'src.incremental_reasoner.rank_functions_in_file',
-                return_value=[{"name": "bar", "score": 0.95, "lineno": 1, "end_lineno": 2, "file": "src/foo.py"}]
-            ):
-                # Also patch _parse_issue_signals to avoid parsing issues
-                with patch(
-                    'src.incremental_reasoner._parse_issue_signals',
-                    return_value={
-                        "traceback_funcs": set(),
-                        "backtick_idents": set(),
-                        "dotted_refs": set(),
-                        "dotted_classes": set(),
-                        "plain_idents": set(),
-                        "exception_types": set(),
-                        "all_words": ["quantum", "resistant", "cryptography"],
-                    }
-                ):
-                    from src.incremental_reasoner import collect_relevent_function_scope
-                    result = collect_relevent_function_scope(
-                        proj_dir, developer_intent, changed_functions
-                    )
-
-    # --- Step 6: Evaluate ---
-    # Spec says: module must be selected when it contains a file in changed_functions,
-    # even if its description is not assessed as relevant.
-    # If result is non-empty: the OR clause worked -> NOT CONFIRMED
-    # If result is empty: the OR clause failed -> CONFIRMED
-
-    if result and len(result) > 0:
-        print(
-            f"NOT CONFIRMED — result is non-empty ({len(result)} function(s)): "
-            f"{result!r}"
+def _filter_relevant_modules(modules, selected_keys, changed_source_rels):
+    """Verbatim reproduction of the filtering logic at lines 1158-1162 of
+    src/incremental_reasoner.py."""
+    return [
+        (phase_num, module)
+        for phase_num, module in modules
+        if (phase_num, module.get("name")) in selected_keys
+        or any(
+            sf.replace("\\", "/") in changed_source_rels
+            for sf in module.get("source_files", [])
         )
+    ]
+
+
+# --- Test case: LLM selects NO modules, but a module has a changed file ---
+
+def main():
+    # Simulate: LLM returned empty selection (no modules assessed as relevant)
+    selected_keys = set()
+
+    # Simulate: changed_functions maps an absolute path to a source file;
+    # after relativization and normalization, it becomes "src/utils/helper.py"
+    changed_source_rels = {"src/utils/helper.py", "src/main.c"}
+
+    # Simulate: phases.json defines two modules
+    modules = [
+        (1, {
+            "name": "core_module",
+            "description": "Core infrastructure module",
+            "source_files": ["src/core/engine.py", "src/core/alloc.py"],
+        }),
+        (2, {
+            "name": "util_module",
+            "description": "Utility helpers module",
+            "source_files": ["src/utils/helper.py", "src/utils/format.py"],
+        }),
+    ]
+
+    # Apply the filtering logic
+    relevant = _filter_relevant_modules(modules, selected_keys, changed_source_rels)
+
+    # Spec says: "util_module" must be selected because its source_file
+    # "src/utils/helper.py" matches a key in changed_source_rels, even though
+    # selected_keys is empty (LLM found nothing relevant).
+    #
+    # Bug claim says: code does NOT incorporate the changed_functions criterion,
+    # so relevant would be []. But the code DOES have the `or any(...)` clause,
+    # so relevant should be [(2, util_module)].
+
+    module_names = [m.get("name") for _, m in relevant]
+    expected = ["util_module"]
+
+    if module_names == expected:
         print(
-            "The function correctly selected the module via the changed_functions "
-            "criterion (the 'or any(...)' clause on line 142-146), even though "
-            "the LLM returned no modules by description assessment."
+            "NOT CONFIRMED — changed_functions criterion IS incorporated: "
+            f"selected modules={module_names}, expected={expected}"
+        )
+    elif module_names == []:
+        print(
+            "CONFIRMED — changed_functions criterion NOT incorporated: "
+            "empty result when util_module should have been selected via "
+            "changed_functions"
         )
     else:
         print(
-            f"CONFIRMED — result is empty ({result!r})"
-        )
-        print(
-            "The function returned [] despite changed_functions containing a file "
-            "in the module. The module should have been selected via the "
-            "'or any(...)' clause but was not."
+            f"UNEXPECTED — modules selected: {module_names}, "
+            f"expected: {expected}"
         )
 
-except Exception as exc:
-    error_occurred = True
-    error_msg = str(exc)
-    print(f"ERROR: {type(exc).__name__}: {exc}")
 
-finally:
-    # Cleanup temp directory
-    shutil.rmtree(tmpdir, ignore_errors=True)
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)

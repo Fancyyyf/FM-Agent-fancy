@@ -26,7 +26,27 @@
 # [SPEC]
 
 # [INFO]
-# (no callees)
+# Unit: src/languages/codegraph.py
+# _codegraph_cmd() -> str
+# Pre-condition:
+#   - settings.codegraph.bin_dir is a string specifying a directory path, potentially beginning with a tilde (~) representing the current user's home directory.
+# Post-condition:
+#   - Returns a string suitable for use as an executable command name.
+#   - When a file named "codegraph" exists within the directory obtained by expanding any leading tilde in the configured bin_dir to the user's home directory and that file has the execute permission bit set for the effective user of the current process, returns the absolute filesystem path to that file.
+#   - When that file does not exist or lacks the execute permission bit, returns the bare string "codegraph", deferring resolution to the directories named by the PATH environment variable of the calling process.
+#   - Never raises an exception.
+# Unit: src/languages/codegraph-py/_warn_on_codegraph_version_mismatch.py
+# _warn_on_codegraph_version_mismatch(cmd: str) -> None
+# Pre-condition:
+#   - cmd is a non-empty string identifying an executable command on the system PATH.
+#   - settings.codegraph.version is a string (may be empty or whitespace-only).
+# Post-condition:
+#   - Returns None; never raises an exception.
+#   - The function has no externally observable side effect unless all of the following conditions are met:
+#     (a) the configured codegraph version, after stripping leading and trailing whitespace and removing any leading "v" prefix, is non-empty;
+#     (b) executing the command referred to by cmd with the argument "--version" succeeds as a subprocess and produces non-empty output after stripping leading and trailing whitespace from its captured stdout;
+#     (c) that output does not equal the configured version after each has been stripped of whitespace and any leading "v" prefix.
+#   - When all conditions (a), (b), and (c) are met: a log record at WARNING severity is emitted whose message identifies both the version string obtained from the command output and the configured version string from fm-agent.toml.
 # [INFO]
 
 def try_codegraph_init(proj_dir: str, force: bool = True) -> None:
@@ -59,9 +79,11 @@ def try_codegraph_init(proj_dir: str, force: bool = True) -> None:
         print("[Pipeline] Rebuilding codegraph index for current working tree...")
     else:
         print("[Pipeline] Building codegraph index...")
+    cmd = _codegraph_cmd()
+    _warn_on_codegraph_version_mismatch(cmd)
     try:
         result = subprocess.run(
-            ["codegraph", "init"], cwd=proj_dir, capture_output=True, text=True
+            [cmd, "init"], cwd=proj_dir, capture_output=True, text=True
         )
     except FileNotFoundError:
         return  # codegraph not installed

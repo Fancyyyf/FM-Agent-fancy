@@ -1,0 +1,34 @@
+Programming language: Python
+
+Pre-condition:
+- lines is a list of strings, each element is one line of source text
+  - marker is a string identifying the section type to extract
+
+Code block:
+```python
+Line 1: def _extract_marked_section(lines, marker):
+Line 2:     start_idx = None
+Line 3:     end_idx = None
+Line 4:     collected_lines = []
+Line 5:     for index, line in enumerate(lines):
+Line 6:         marker_match = _SECTION_MARKER_RE.match(line)
+Line 7:         if marker_match and marker_match.group(1) == marker:
+Line 8:             if start_idx is None:
+Line 9:                 start_idx = index
+Line 10:             else:
+Line 11:                 end_idx = index
+Line 12:                 break
+Line 13:             continue
+Line 14:         if start_idx is not None and end_idx is None:
+Line 15:             collected_lines.append(_strip_section_comment_prefix(line))
+Line 16:     section_text = '\n'.join(collected_lines).strip() if end_idx is not None else ""
+Line 17:     return section_text, start_idx, end_idx
+```
+
+Additional context:
+_strip_section_comment_prefix(line: str) -> str
+Pre: line is a string
+  Post: Returns line with leading comment prefix stripped (preserving leading whitespace)
+  Comment prefixes: //, --, #, % (with optional trailing space)
+  If no prefix, returns line unchanged.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

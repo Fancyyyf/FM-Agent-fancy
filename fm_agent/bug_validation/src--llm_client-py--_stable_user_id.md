@@ -1,6 +1,6 @@
 # Bug Report: _stable_user_id
 
-**Source file:** `src/llm_client.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,48 +12,47 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns the value of the INJECT_ID environment variable when that variable is set and its value is non-empty
-  - Returns a predefined static default value when INJECT_ID is not set or its value is empty
+- Returns the value of `settings.inject.id` when that value is truthy
+  - Returns the predefined static default `_DEFAULT_INJECT_USER_ID` when `settings.inject.id` is falsy (empty or None)
   - The returned string is non-empty in all cases
 
 ---
 
 ### Actual Behavior
 
-The function returns a string. If the environment variable 'INJECT_ID' is set to a non-empty string, the return value is that string; otherwise, it is the value of `_DEFAULT_INJECT_USER_ID`. Formally: Let `v = os.environ.get('INJECT_ID')`. Then the returned value `r` satisfies `(v is not None and v != '' and r = v) or ((v is None or v == '') and r = _DEFAULT_INJECT_USER_ID)`.
+The function returns the value of settings.inject.id if it is truthy (as per Python bool conversion), otherwise returns _DEFAULT_INJECT_USER_ID. No external state is modified. Formally: let ret be the return value. Then ret = settings.inject.id if bool(settings.inject.id) else _DEFAULT_INJECT_USER_ID, and all module-level objects remain unchanged.
 
 ---
 
 ## Code Evidence
 
-Line 2: return os.environ.get("INJECT_ID") or _DEFAULT_INJECT_USER_ID
+Line 2: return settings.inject.id or _DEFAULT_INJECT_USER_ID
 
 ---
 
 ## Trigger Condition
 
-The function relies on _DEFAULT_INJECT_USER_ID being non-empty to satisfy the requirement that the returned string is non-empty in all cases. If _DEFAULT_INJECT_USER_ID is empty or None, the function returns an empty string or None, violating the specification.
+The specification states that the returned string is non-empty in all cases, implying the function must always return a string. However, when settings.inject.id is a truthy non-string (e.g., an integer 5), the code returns that non-string value, violating the requirement that the return value be a string.
 
 ---
 
 ## How to trigger the bug
 
-The function uses Python's `or` operator as a fallback: when `os.environ.get("INJECT_ID")` returns a falsy value (None when the env var is not set, or an empty string when it is set to empty), the `or` expression evaluates `_DEFAULT_INJECT_USER_ID`. If `_DEFAULT_INJECT_USER_ID` itself is also falsy (empty string or None), the entire expression evaluates to a falsy value, violating the specification requirement that the returned string must be non-empty in all cases.
+The bug occurs because Python's `or` operator returns the first truthy operand as-is without type coercion. When `settings.inject.id` is a truthy value of a non-string type (e.g., integer `5`), `settings.inject.id or _DEFAULT_INJECT_USER_ID` evaluates to `5` (an `int`), not a string. The specification requires the function to always return a non-empty string, but the code does not enforce a string return type.
 
 ### Inputs
 
 | Parameter | Value |
-|-----------|-------|
-| `INJECT_ID` (env) | not set |
-| `_DEFAULT_INJECT_USER_ID` | `""` (empty string, monkey-patched) |
+|---|---|
+| `settings.inject.id` | `5` (integer) |
 
 ### Expected (spec-correct) Output
 
-A non-empty string (should be a hardcoded fallback that is always non-empty, or the function should raise an error).
+The function should return a string. If the intent is to return the stringified value of `settings.inject.id`, the expected output would be `"5"`.
 
 ### Actual (buggy) Output
 
-`""` (empty string)
+`5` (type: `int`, not `str`)
 
 ### How to Reproduce
 
@@ -63,15 +62,19 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import sys, os
-sys.path.insert(0, ".")
-import src.llm_client as llm_client
+import config
+from src.llm_client import _stable_user_id
 
-os.environ.pop("INJECT_ID", None)
-llm_client._DEFAULT_INJECT_USER_ID = ""
-result = llm_client._stable_user_id()
-print(result)  # actual (buggy) output: '' (empty string)
-# expected (correct) output: non-empty string
+# Temporarily set inject.id to a non-string truthy value
+original = config.settings.inject.id
+config.settings.inject.id = 5
+
+result = _stable_user_id()
+# actual (buggy) output: 5 (int)
+# expected (correct) output: a string (e.g., "5")
+
+config.settings.inject.id = original
+print(type(result))  # <class 'int'>
 ```
 
 ---
@@ -79,46 +82,43 @@ print(result)  # actual (buggy) output: '' (empty string)
 ## Probe Script
 
 ```python
-"""Probe script for bug src--llm_client-py--_stable_user_id.
-
-Spec claim: _stable_user_id() always returns a non-empty string.
-Bug: os.environ.get("INJECT_ID") or _DEFAULT_INJECT_USER_ID can return falsy
-     when INJECT_ID is unset AND _DEFAULT_INJECT_USER_ID is falsy.
-"""
-
 import sys
 import os
 
-# Add repo root to sys.path so that 'src' and 'config' are importable
+# Add the repo root to sys.path so we can import the package
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../..")
 
-# Ensure INJECT_ID is NOT set in the environment
-os.environ.pop("INJECT_ID", None)
-
-# Import the module via its public entry point
-import src.llm_client as llm_client
-
 try:
-    # Monkey-patch _DEFAULT_INJECT_USER_ID to an empty string to trigger the bug
-    llm_client._DEFAULT_INJECT_USER_ID = ""
+    import config
+    from src.llm_client import _stable_user_id
 
-    actual = llm_client._stable_user_id()
-    # Spec requires: "The returned string is non-empty in all cases"
-    # Bug is triggered if the return is falsy (empty string or None)
-    bug_triggered = not actual
+    # Store original value and set inject.id to a non-string truthy value (integer)
+    original_id = config.settings.inject.id
+    config.settings.inject.id = 5  # truthy non-string → or returns this instead of the default
+
+    actual = _stable_user_id()
+
+    # Restore original value
+    config.settings.inject.id = original_id
+
+    # Bug is confirmed if _stable_user_id returned a non-string value
+    # The spec requires it to always return a string, but `or` returns the
+    # first truthy operand as-is — so when inject.id is a truthy non-string,
+    # the function returns that non-string value.
+    passed = not isinstance(actual, str)
 
 except Exception as e:
-    print(f"ERROR: {e}")
+    print(f'ERROR: {e}')
     sys.exit(1)
 
-if bug_triggered:
-    print(f"CONFIRMED — actual: {actual!r} | expected: non-empty string per spec")
+if passed:
+    print(f'CONFIRMED — actual type: {type(actual).__name__}, value: {actual!r} | expected type: str')
 else:
-    print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+    print(f'NOT CONFIRMED — actual is string: {actual!r}')
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: '' | expected: non-empty string per spec
+CONFIRMED — actual type: int, value: 5 | expected type: str
 ```

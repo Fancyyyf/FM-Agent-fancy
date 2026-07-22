@@ -11,6 +11,7 @@
 #
 # Post-condition:
 #   - Sends the messages to the Anthropic-compatible API endpoint at LLM_API_BASE_URL/messages using the Anthropic native messages format and returns the text response and usage metadata
+#   - If _should_inject_user_id(LLM_API_BASE_URL) returns True, the request body is augmented with the dictionary from _metadata_body() before being sent
 #   - On success, returns a tuple (text, usage_dict) where text is the concatenated string of all text-type content blocks from the response, and usage_dict is a dictionary of token-usage counts from the response (or an empty dict when no usage data is present in the response)
 #   - System messages extracted from the input messages are sent with ephemeral cache-control markers for prompt caching
 #   - When no system message is extracted from the input messages, an empty system block list is sent
@@ -21,8 +22,8 @@
 
 # [INFO]
 # _messages_to_anthropic(messages) -> (str, list)
-#   Pre-condition: messages is a list of dicts with "role" and "content" keys
-#   Post-condition: returns (system_text, anthropic_messages) where system_text is the concatenated text content of all system-role messages in messages (or an empty string if none), and anthropic_messages is the list of non-system messages converted to Anthropic API format
+#   Pre-condition: messages is a list of dictionaries, each optionally containing "role" and "content" keys.
+#   Post-condition: returns (system_text, anthropic_messages) where system_text is computed from system-role messages (empty if none, verbatim content if exactly one, otherwise concatenated with "\n\n" and stripped) and anthropic_messages is the sequence of user/assistant messages with content possibly flattened from content blocks.
 # [SPLIT]
 # _should_inject_user_id(base_url) -> bool
 #   Pre-condition: base_url is a non-empty string

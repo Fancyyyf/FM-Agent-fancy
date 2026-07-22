@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a dictionary. Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is None, the result is the empty dictionary {}. Otherwise, the result is cg.get_functions_by_file(\"typescript\", proj_dir). Formally: result ∈ dict. (result = {} ∨ (cg ≠ None ∧ result = cg.get_functions_by_file(\"typescript\", proj_dir))). The values of result, if any, satisfy: for every key k (str), result[k] is a list of tuples; each tuple (name: str, body: str) represents a TypeScript function. The result may be empty for any of the following reasons: CodeGraphExtractor initialization failed, the language \"typescript\" is not recognized, or no TypeScript source files with extractable functions were found under proj_dir."
+}

@@ -22,7 +22,7 @@
 # [INFO]
 
 def _elp_argv() -> list[str]:
-    command = os.environ.get("ELP_COMMAND", "elp").strip() or "elp"
+    command = settings.erlang.command.strip() or "elp"
     argv = shlex.split(command, posix=os.name != "nt")
     if not argv:
         argv = ["elp"]

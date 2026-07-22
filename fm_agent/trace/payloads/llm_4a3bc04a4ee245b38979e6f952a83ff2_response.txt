@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a tuple (func_dir, ext) where func_dir is an absolute directory path and ext is a string. Let rel = os.path.relpath(abs_src, proj_dir); rel is a non-empty relative path because abs_src is inside proj_dir. Let src_dir = os.path.dirname(rel) (possibly empty), src_base = os.path.basename(rel). Let i = src_base.rfind('.'). If i > 0: dir_name = src_base[:i] + '-' + src_base[i+1:], ext = src_base[i+1:]. Else: dir_name = src_base, ext = ''. Then extracted_base = os.path.join(proj_dir, 'fm_agent', 'extracted_functions'). If src_dir is non-empty, func_dir = os.path.join(extracted_base, src_dir, dir_name); else func_dir = os.path.join(extracted_base, dir_name). No side effects, no exceptions raised."
+}

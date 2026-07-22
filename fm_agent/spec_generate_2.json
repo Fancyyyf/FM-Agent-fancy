@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: config.py\n#\n# _LayeredSource.get_field_value(self, field, field_name)\n#\n# Pre-condition:\n#   - field is a pydantic model field descriptor with field_name as its\n#     string key.\n#   - self represents a configuration source that may resolve field values\n#     from one or more underlying layers.\n#\n# Post-condition:\n#   - When called on a concrete subclass, returns the resolved value of\n#     field_name from this source's configuration layers.\n#   - The returned value, if not None, is assignable to the type annotation\n#     declared on field.\n#   - Raises NotImplementedError when this method is invoked on the\n#     abstract base class directly; concrete subclasses must override\n#     this method to supply actual values.\n# [SPEC]",
+  "info_updated": false,
+  "new_info": "",
+  "updated_callees": []
+}

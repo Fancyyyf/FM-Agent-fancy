@@ -1,0 +1,10 @@
+{
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_fqn_to_ident.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "- Returns the class-qualified function identifier obtained by removing the\n    path prefix up to and including the source-file component from fqn\n  - A component is recognized as a source-file component when it consists of\n    a non-empty base name, a hyphen, and a suffix that is a recognized\n    source-file language extension\n  - When fqn contains more than one source-file component, the rightmost one\n    determines where the prefix ends\n  - When fqn contains no source-file component, returns the last component\n    of fqn unchanged\n  - The returned string is non-empty",
+    "actual_behavior": "Let parts = fqn.split(\"::\"), n = len(parts). Let i be the largest index in the range [0, n-1] such that there exists an integer pos > 0 where parts[i][pos] == '-' and parts[i][pos+1:] is a key in EXT_TO_LANG. If such an i exists, then result = \"::\".join(parts[i+1:]) (which may be an empty string if i == n-1). Otherwise, result = parts[-1].",
+    "code_evidence": "Line 15: return \"::\".join(parts[i + 1:])",
+    "trigger_condition": "When the rightmost source-file component is the last component of the FQN, parts[i+1:] is empty, so the code returns an empty string, violating the specification requirement that the returned string is non-empty."
+  }
+}

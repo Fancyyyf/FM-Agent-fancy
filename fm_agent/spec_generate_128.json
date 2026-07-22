@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/languages/erlang.py\n#\n# ElpClient.open_document(self, path: str, source: str | None = None)\n#\n# Pre-condition:\n#   - self is an ElpClient whose underlying JSON-RPC communication channel\n#     is open and writable\n#   - path is a non-empty string identifying a filesystem path\n#   - When source is None, path must resolve to an existing, readable\n#     text file\n#\n# Post-condition:\n#   - Transmits a \"textDocument/didOpen\" notification to the ELP server\n#     whose textDocument field is a dict containing:\n#       - uri: the absolute file:// URI representing the path argument\n#       - languageId: \"erlang\"\n#       - version: 1\n#       - text: source when source is provided; otherwise the UTF-8 text\n#         content of the file at path\n#   - When source is None and the file at path cannot be read, the\n#     underlying IOError propagates to the caller\n# [SPEC]",
+  "info_updated": true,
+  "new_info": "# [INFO]\n# notify(self, method: str, params: dict | list | None = None)\n#   Pre-condition: The underlying JSON-RPC communication channel is open\n#     and writable\n#   Post-condition: A JSON-RPC 2.0 notification message (a message\n#     without an id field) carrying the given method and params is\n#     transmitted to the ELP server; when params is None, the transmitted\n#     params is an empty dict\n# [INFO]",
+  "updated_callees": ["notify"]
+}

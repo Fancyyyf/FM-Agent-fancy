@@ -1,0 +1,105 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::file_utils-py::_get_incomplete_verification_files` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _json_file_is_valid.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _get_incomplete_verification_files(layer_files, input_dir, output_dir, work_dir):
+    """Return layer files missing verification or required bug validation output."""
+    incomplete = []
+    for rel in layer_files:
+        result_path = os.path.join(output_dir, os.path.splitext(rel)[0] + ".json")
+        try:
+            with open(result_path, "r") as f:
+                result = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            incomplete.append(rel)
+            continue
+
+        if result.get("verdict") != "MISMATCH":
+            continue
+
+        bug_id = os.path.splitext(rel)[0].replace(os.sep, "--").replace("/", "--")
+        validation_path = os.path.join(work_dir, "bug_validation", f"{bug_id}.result.json")
+        if not _json_file_is_valid(validation_path):
+            incomplete.append(rel)
+    return incomplete
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/file_utils.py
+#
+# _get_incomplete_verification_files(layer_files, input_dir, output_dir, work_dir) -> list
+#
+# Pre-condition:
+#   - layer_files is an iterable of relative file paths (strings), each having a file extension.
+#   - output_dir is a directory path containing (or expected to contain) verification result
+#     JSON files.
+#   - work_dir is a directory path; its "bug_validation" subdirectory contains (or is expected
+#     to contain) bug validation result JSON files.
+#
+# Post-condition:
+#   - Returns a list that is a subsequence of layer_files, preserving the relative order of
+#     paths as they appear in layer_files.
+#   - A path is excluded from the result (considered "complete") when EITHER:
+#       1. A readable, well-formed JSON file exists at the path formed by
+#          <output_dir>/<path_with_last_extension_replaced_by_.json>, and that JSON contains a
+#          "verdict" key whose value is any string other than "MISMATCH".
+#       OR
+#       2. A readable, well-formed JSON file exists at that same output path, its "verdict"
+#          value is "MISMATCH", AND a readable, well-formed JSON file exists at
+#          <work_dir>/bug_validation/<bug_id>.result.json, where bug_id is derived from the
+#          relative path by stripping its file extension and replacing both the final dot and
+#          all path separators with "--".
+#   - A path is INCLUDED in the result (considered "incomplete") when it fails any of the
+#     conditions above — either because no readable verification JSON exists at the expected
+#     path, or because a "MISMATCH" verdict is present without a valid corresponding bug
+#     validation result.
+#   - The function does not create, delete, or modify any filesystem state outside of its
+#     own local variables and return value.
+#   - The function does not raise exceptions for any combination of inputs (all error
+#     conditions are absorbed and reported via the returned list).
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _json_file_is_valid(path) -> bool
+#   Pre-condition: path is a string referencing a filesystem location.
+#   Post-condition: returns True if the file at path exists, is readable, and contains
+#     well-formed JSON; returns False for any OSError or JSON decode failure.
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_json_file_is_valid) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_json_file_is_valid). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

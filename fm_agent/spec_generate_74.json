@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/languages/erlang.py\n#\n# ElpClient.__init__(self, proj_dir: str)\n#\n# Pre-condition:\n#   - proj_dir is a non-empty string naming a filesystem path\n#\n# Post-condition:\n#   - The ELP project directory is set to the absolute path of proj_dir\n#   - A file:// URI for that project directory is available for use in LSP\n#     initialization requests\n#   - A positive integer timeout for ELP request operations is configured\n#   - An empty, thread-safe message queue exists for receiving JSON-RPC\n#     responses from the ELP server\n#   - Request identifiers start at 1 and increment atomically across\n#     subsequent requests\n#   - A thread-safe write lock for the subprocess standard-input stream is\n#     initialized and unlocked\n#   - The ELP server subprocess and its response reader are not running;\n#     the instance is in a pre-connection state\n#   - Calling request() or notify() before the context manager has been\n#     entered raises an error\n#   - Entering the context manager starts the ELP server subprocess in the\n#     project directory and begins reading its JSON-RPC responses\n# [SPEC]",
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _timeout_seconds() -> int\n#   Pre-condition: settings.erlang.timeout_s is a configured integer value\n#   Post-condition: returns a positive integer (>= 1) representing the ELP\n#     communication timeout in seconds\n# [INFO]",
+  "updated_callees": ["_timeout_seconds"]
+}

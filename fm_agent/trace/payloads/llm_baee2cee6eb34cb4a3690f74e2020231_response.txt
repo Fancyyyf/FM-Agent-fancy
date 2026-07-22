@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "operatorFoo",
+  "offending_statements": "Line 41: if symbol:\nLine 42: return \"operator\" + \"\".join(symbol)",
+  "reason": "When tail starts with 'operator' but rest contains no consecutive operator symbols (e.g., 'Foo'), the specification requires returning 'operator' (the result of collecting zero symbols and concatenating). The code only returns if symbol is non-empty; otherwise it falls through to the regex patterns on the original name, which return 'operatorFoo' instead of 'operator'."
+}

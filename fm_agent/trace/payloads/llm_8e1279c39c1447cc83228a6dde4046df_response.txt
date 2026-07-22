@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "name = 'func', qualified_name = '  ::MyClass::func'",
+  "offending_statements": "Line 15: return \"::\".join(\nLine 16:         canonicalize(_bare_function_name(p))\nLine 17:         for p in _qualified_parts(name, qualified_name)\nLine 18:     )",
+  "reason": "The code does not filter out empty strings that can result from `_bare_function_name`. For the input where `qualified_name` has a whitespace-only scope qualifier ('  ::MyClass::func'), `_bare_function_name` returns an empty string for that qualifier, causing the final joined string to be '::MyClass::func'. The specification requires the returned string to be composed of one or more (non‑empty) components joined by '::', but the result starts with '::' due to the empty leading component, violating that requirement."
+}

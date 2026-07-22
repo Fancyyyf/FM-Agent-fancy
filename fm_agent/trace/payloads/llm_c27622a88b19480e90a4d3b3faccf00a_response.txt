@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _strip_section_comment_prefix(line: str) -> str\n#   Pre: line is a string\n#   Post: Returns line with leading comment prefix stripped (preserving leading whitespace)\n#   Comment prefixes: //, --, #, % (with optional trailing space)\n#   If no prefix, returns line unchanged.\n# [INFO]"
+}

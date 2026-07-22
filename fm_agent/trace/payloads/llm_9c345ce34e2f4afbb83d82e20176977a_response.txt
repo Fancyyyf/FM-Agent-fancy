@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "phases_data = {\"phases\": [{\"phase\": 1, \"modules\": [{\"source_files\": [\"dir/file.cpp\"]}]}]}, phase_num = 1, input_dir = \"/tmp/test\". The filesystem has /tmp/test/dir/file-cpp containing a regular file \"z.txt\" and a subdirectory \"sub\" containing a regular file \"a.txt\".",
+  "offending_statements": "Line 20: for root, _dirs, fnames in os.walk(extracted_dir):\nLine 21: for fname in sorted(fnames):\nLine 22: fpath = os.path.join(root, fname)\nLine 23: if os.path.isfile(fpath):\nLine 24: phase_files.append(os.path.relpath(fpath, input_dir))",
+  "reason": "Specification requires that all regular files contained within an extracted-function subdirectory appear sorted by filename. The code uses os.walk and sorts files per-directory, so when subdirectories exist the overall list is not globally sorted. In the counterexample, the code returns ['dir/file-cpp/z.txt', 'dir/file-cpp/sub/a.txt'] but the specification demands ['dir/file-cpp/sub/a.txt', 'dir/file-cpp/z.txt']."
+}

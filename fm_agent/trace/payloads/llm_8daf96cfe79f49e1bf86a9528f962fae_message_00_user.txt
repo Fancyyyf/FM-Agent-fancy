@@ -1,0 +1,221 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `initialize`'s behavioral specification was just updated. The caller `src::languages::erlang-py::_analyze_project_uncached` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/languages/erlang.py
+#
+# ElpClient.initialize(self, bootstrap_path: str, bootstrap_source: str | None = None)
+#
+# Pre-condition:
+#   - self is an ElpClient whose __enter__ has been called (ELP subprocess is
+#     running, stdin/stdout pipes are open, and the JSON-RPC message reader
+#     thread is active)
+#   - bootstrap_path is a non-empty string identifying a filesystem path; if
+#     bootstrap_source is None, bootstrap_path must resolve to an existing,
+#     readable text file
+#   - bootstrap_source, when provided, is a string containing the document
+#     content to use instead of reading from bootstrap_path
+#
+# Post-condition:
+#   - Completes the LSP initialization handshake: sends the "initialize"
+#     request with client capabilities, then sends the "initialized"
+#     notification
+#   - Opens the document at bootstrap_path on the server with the text content
+#     matching bootstrap_source (or the file contents of bootstrap_path when
+#     bootstrap_source is None)
+#   - Blocks until the server's reported status indicates it has reached a
+#     running state, or raises TimeoutError when that does not occur within
+#     self.timeout seconds measured from the call entry
+#   - Returns the "serverInfo" sub-dict from the server's "initialize"
+#     response, or None when the response is missing, is not a dict, or does
+#     not contain a "serverInfo" key
+#   - Raises RuntimeError when the ELP subprocess is not running (stdin
+#     unavailable) or the JSON-RPC channel encounters an unrecoverable error
+#   - Raises TimeoutError when the server fails to reach the running state
+#     within the deadline or the subprocess stops producing messages
+# [SPEC]
+
+## Caller's current source
+
+```python
+def _analyze_project_uncached(proj_dir: str) -> ErlangAnalysis:
+    proj_dir = os.path.abspath(proj_dir)
+    files = _erlang_files(proj_dir)
+    if not files:
+        return ErlangAnalysis(functions={}, edges={})
+
+    functions: dict[str, list[tuple[str, str]]] = {}
+    edges: dict[tuple[str, str], set[str]] = {}
+    spans: dict[str, list[tuple[str, int, int]]] = {}
+    sources = {
+        path: Path(path).read_text(encoding="utf-8", errors="replace")
+        for path in files
+    }
+
+    with ElpClient(proj_dir) as client:
+        server_info = client.initialize(files[0], sources[files[0]])
+        for path in files[1:]:
+            client.open_document(path, sources[path])
+        for path in files:
+            source = sources[path]
+            source_index = _SourceIndex.build(source)
+            caller_module = _caller_module(path)
+            uri = Path(path).as_uri()
+            symbols = client.request(
+                "textDocument/documentSymbol", {"textDocument": {"uri": uri}}
+            ) or []
+            file_functions = []
+            file_spans = []
+            seen = set()
+            for symbol in symbols:
+                if symbol.get("kind") != _FUNCTION_KIND:
+                    continue
+                symbol_range = _symbol_range(symbol)
+                if not symbol_range:
+                    continue
+                symbol_uri = _symbol_uri(symbol, uri)
+                try:
+                    function_id = _function_id(symbol_uri, symbol.get("name", ""))
+                except ValueError:
+                    logging.warning("Ignoring malformed ELP function symbol: %r", symbol)
+                    continue
+                if function_id in seen:
+                    continue
+                seen.add(function_id)
+                file_functions.append((function_id, source_index.source_for_range(symbol_range)))
+                start_line, end_line = _symbol_line_span(symbol_range)
+                file_spans.append((function_id, start_line, end_line))
+
+                caller_key = (function_id, caller_module)
+                edges.setdefault(caller_key, set())
+                selection = symbol.get("selectionRange") or symbol_range
+                prepared = client.request(
+                    "textDocument/prepareCallHierarchy",
+                    {
+                        "textDocument": {"uri": symbol_uri},
+                        "position": selection["start"],
+                    },
+                ) or []
+                if not prepared:
+                    continue
+                item = None
+                for candidate in prepared:
+                    if not isinstance(candidate, dict):
+                        continue
+                    try:
+                        candidate_id = _function_id(
+                            candidate.get("uri", symbol_uri),
+                            candidate.get("name", ""),
+                        )
+                    except (TypeError, ValueError):
+                        continue
+                    if candidate_id == function_id:
+                        item = candidate
+                        break
+                if item is None:
+                    continue
+                outgoing = client.request(
+                    "callHierarchy/outgoingCalls", {"item": item}
+                ) or []
+                for call in outgoing:
+                    target = call.get("to") or {}
+                    try:
+                        target_id = _function_id(
+                            target.get("uri", symbol_uri), target.get("name", "")
+                        )
+                    except ValueError:
+                        continue
+                    edges[caller_key].add(target_id)
+
+            if file_functions:
+                functions[path] = file_functions
+                spans[path] = file_spans
+
+    return ErlangAnalysis(
+        functions=functions,
+        edges=edges,
+        spans=spans,
+        server_info=server_info,
+    )
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# ErlangAnalysis.__init__(functions: dict = {}, edges: dict = {}, spans: dict = {}, server_info: Any = None) -> ErlangAnalysis
+#   Pre-condition: parameters are valid dicts and optional server info
+#   Post-condition: creates an ErlangAnalysis instance with the given attributes
+# [SPLIT]
+# _erlang_files(dir: str) -> list[str]
+#   Pre-condition: dir is a path to an existing directory
+#   Post-condition: Returns a list of absolute paths to all .erl files found
+#     recursively under dir; returns an empty list when no .erl files are found
+# [SPLIT]
+# _caller_module(path: str) -> str
+#   Pre-condition: path is an absolute file path to a source file
+#   Post-condition: Returns the Erlang module name derived from the file path
+#     according to the Erlang module naming convention
+# [SPLIT]
+# _function_id(uri: str, name: str) -> str
+#   Pre-condition: uri is a valid URI string, name is a non-empty string
+#   Post-condition: Returns a canonical function identifier string constructed
+#     from the URI and symbol name; raises ValueError when the inputs cannot be
+#     resolved to a valid function identifier
+# [SPLIT]
+# _SourceIndex.build(source: str) -> _SourceIndex
+#   Pre-condition: source is the full text content of a source file as a string
+#   Post-condition: Returns a source index that can map line ranges (start line,
+#     end line) to the corresponding substring of source
+# [SPLIT]
+# _SourceIndex.source_for_range(self, range: dict) -> str
+#   Pre-condition: range is a dict with 'start' and 'end' line/character positions (LSP range)
+#   Post-condition: Returns the substring of source text covered by that range
+# [SPLIT]
+# _symbol_range(symbol: dict) -> dict | None
+#   Pre-condition: symbol is a dict representing an LSP SymbolInformation or similar
+#   Post-condition: Returns the 'range' dict (with 'start' and 'end') if present, else None
+# [SPLIT]
+# _symbol_uri(symbol: dict, fallback_uri: str) -> str
+#   Pre-condition: symbol may contain a 'location' with a 'uri', fallback_uri is a string
+#   Post-condition: Returns the URI of the symbol's document if available, otherwise fallback_uri
+# [SPLIT]
+# _symbol_line_span(range: dict) -> tuple[int, int]
+#   Pre-condition: range is a dict with 'start' and 'end' objects containing 0-based 'line' keys
+#   Post-condition: Returns a tuple (start_line, end_line) as 1-based inclusive line numbers
+# [SPLIT]
+# ElpClient.__init__(self, proj_dir: str)
+#   Pre-condition: proj_dir is a non-empty string naming a filesystem path
+#   Post-condition: Sets the project directory to its absolute path and provides
+#     a file:// URI for it; configures a positive integer timeout; initializes a
+#     thread-safe message queue and write lock; request identifiers start at 1 and
+#     increment atomically; the server subprocess is not running, and calling
+#     request() before entering the context manager raises an error; entering the
+#     context manager starts the server subprocess and begins reading JSON-RPC
+#     responses.
+# [SPLIT]
+# ElpClient.initialize(uri: str, text: str) -> dict
+#   Pre-condition: uri is a file URI, text is the document content
+#   Post-condition: Returns the server initialization info dict (e.g., capabilities)
+# [SPLIT]
+# ElpClient.open_document(path: str, text: str) -> None
+#   Pre-condition: path is a file path, text is the document source
+#   Post-condition: Notifies the language server that the document is open
+# [SPLIT]
+# ElpClient.request(method: str, params: dict) -> Any | None
+#   Pre-condition: method is an LSP method name, params is a payload dict
+#   Post-condition: Returns the parsed JSON response from the server, or None when no response/error
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `initialize` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `initialize` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

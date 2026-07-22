@@ -1,10 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py",
+  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py",
   "verdict": "MISMATCH",
   "gaps": {
-    "spec_claim": "- Returns the value of the INJECT_ID environment variable when that variable is set and its value is non-empty\n  - Returns a predefined static default value when INJECT_ID is not set or its value is empty\n  - The returned string is non-empty in all cases",
-    "actual_behavior": "The function returns a string. If the environment variable 'INJECT_ID' is set to a non-empty string, the return value is that string; otherwise, it is the value of `_DEFAULT_INJECT_USER_ID`. Formally: Let `v = os.environ.get('INJECT_ID')`. Then the returned value `r` satisfies `(v is not None and v != '' and r = v) or ((v is None or v == '') and r = _DEFAULT_INJECT_USER_ID)`.",
-    "code_evidence": "Line 2: return os.environ.get(\"INJECT_ID\") or _DEFAULT_INJECT_USER_ID",
-    "trigger_condition": "The function relies on _DEFAULT_INJECT_USER_ID being non-empty to satisfy the requirement that the returned string is non-empty in all cases. If _DEFAULT_INJECT_USER_ID is empty or None, the function returns an empty string or None, violating the specification."
+    "spec_claim": "- Returns the value of `settings.inject.id` when that value is truthy\n  - Returns the predefined static default `_DEFAULT_INJECT_USER_ID` when `settings.inject.id` is falsy (empty or None)\n  - The returned string is non-empty in all cases",
+    "actual_behavior": "The function returns the value of settings.inject.id if it is truthy (as per Python bool conversion), otherwise returns _DEFAULT_INJECT_USER_ID. No external state is modified. Formally: let ret be the return value. Then ret = settings.inject.id if bool(settings.inject.id) else _DEFAULT_INJECT_USER_ID, and all module-level objects remain unchanged.",
+    "code_evidence": "Line 2: return settings.inject.id or _DEFAULT_INJECT_USER_ID",
+    "trigger_condition": "The specification states that the returned string is non-empty in all cases, implying the function must always return a string. However, when settings.inject.id is a truthy non-string (e.g., an integer 5), the code returns that non-string value, violating the requirement that the return value be a string."
   }
 }

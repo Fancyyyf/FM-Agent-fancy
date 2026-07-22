@@ -4,13 +4,13 @@
 # cli_effort() -> str
 #
 # Pre-condition:
-#   - The LLM_EFFORT environment variable is either unset or contains a string
+#   - `settings.llm.effort` is a string
 #
 # Post-condition:
-#   - Returns the value of the LLM_EFFORT environment variable with leading
-#     and trailing whitespace removed
-#   - Returns an empty string when LLM_EFFORT is not set or when its value
-#     consists entirely of whitespace
+#   - Returns the value of `settings.llm.effort` with leading and trailing
+#     whitespace removed
+#   - If the value is empty or consists only of whitespace, returns an empty
+#     string
 # [SPEC]
 
 # [INFO]
@@ -18,4 +18,4 @@
 # [INFO]
 
 def cli_effort():
-    return os.environ.get("LLM_EFFORT", "").strip()
+    return settings.llm.effort.strip()

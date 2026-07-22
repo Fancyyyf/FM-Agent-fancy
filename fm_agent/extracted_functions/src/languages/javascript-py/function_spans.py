@@ -25,7 +25,8 @@
 # [SPLIT]
 # cg.get_function_spans(language_key: str, filepath: str) -> list[tuple] | None
 #   Pre-condition: cg is a successfully constructed CodeGraphExtractor; language_key is a
-#     recognized language identifier; filepath is a source file path within the project.
+#     recognized language identifier; filepath is an absolute filesystem path to a source
+#     file residing within the project root.
 #   Post-condition: Returns a list of (name, start_line, end_line) tuples for each function
 #     in the file with 0-indexed inclusive line numbers, or None when the file is not
 #     indexed by the backend.

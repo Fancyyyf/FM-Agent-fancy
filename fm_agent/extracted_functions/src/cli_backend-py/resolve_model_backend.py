@@ -4,8 +4,7 @@
 # resolve_model_backend() -> str
 #
 # Pre-condition:
-#   - The process environment may or may not contain a variable named
-#     FM_AGENT_MODEL_BACKEND, whose value is any string
+#   - settings.llm.backend contains a string value (the configured model backend)
 #   - The process environment may or may not contain variables named
 #     FM_AGENT_HOST or FM_AGENT_CLIENT, whose values are any strings
 #   - The process environment may or may not contain any of the markers
@@ -15,11 +14,12 @@
 # Post-condition:
 #   - Returns a canonical backend identifier string: one of "opencode",
 #     "codex-cli", or "claude-cli"
-#   - When FM_AGENT_MODEL_BACKEND is set and its alias-normalized value
-#     is not the sentinel "auto", returns the normalized value directly
-#   - When FM_AGENT_MODEL_BACKEND is absent from the environment or its
-#     normalized value is "auto", the backend is determined by inspecting
-#     environment markers in a fixed priority order:
+#   - The returned backend is first determined by normalizing
+#     settings.llm.backend via _normalize_backend; if the result is not
+#     "auto", that result is returned immediately
+#   - When the normalized value of settings.llm.backend is "auto", the
+#     backend is determined by inspecting environment markers in a fixed
+#     priority order:
 #       1. FM_AGENT_HOST or FM_AGENT_CLIENT (whichever is set) is checked
 #          case-insensitively for "claude" or "codex" substrings
 #       2. The presence of any Claude-specific environment variable
@@ -30,8 +30,9 @@
 #     returned backend: "claude-cli" for Claude markers, "codex-cli" for
 #     Codex markers
 #   - When no marker matches, returns "codex-cli" (the default fallback)
-#   - The same input environment always produces the same output (pure
-#     function with respect to environment state at call time)
+#   - The same input (settings.llm.backend value and environment state)
+#     always produces the same output (pure function with respect to its
+#     inputs at call time)
 # [SPEC]
 
 # [INFO]
@@ -45,7 +46,7 @@
 # [INFO]
 
 def resolve_model_backend():
-    backend = _normalize_backend(os.environ.get("FM_AGENT_MODEL_BACKEND"))
+    backend = _normalize_backend(settings.llm.backend)
     if backend != "auto":
         return backend
 

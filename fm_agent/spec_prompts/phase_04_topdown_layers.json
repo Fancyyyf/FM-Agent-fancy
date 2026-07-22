@@ -128,11 +128,11 @@
           ],
           "phase4_callees": [
             "src::prompts-py::_load_spec_check_json",
-            "src::prompts-py::_nonempty_string"
+            "src::prompts-py::_parse_spec_check_json::_nonempty_string"
           ],
           "all_callees": [
             "src::prompts-py::_load_spec_check_json",
-            "src::prompts-py::_nonempty_string"
+            "src::prompts-py::_parse_spec_check_json::_nonempty_string"
           ]
         },
         {
@@ -173,8 +173,8 @@
           ]
         },
         {
-          "name": "src::prompts-py::_nonempty_string",
-          "file": "extracted_functions/src/prompts-py/_nonempty_string.py",
+          "name": "src::prompts-py::_parse_spec_check_json::_nonempty_string",
+          "file": "extracted_functions/src/prompts-py/_parse_spec_check_json::_nonempty_string.py",
           "unit": "prompts",
           "phase4_callers": [
             "src::prompts-py::_parse_spec_check_json"

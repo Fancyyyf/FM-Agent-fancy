@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code correctly implements the specified mapping for all valid FQNs that follow the convention (no empty components, second-to-last component contains a '-'), and the output always uses '/' separators regardless of the host OS."
+}

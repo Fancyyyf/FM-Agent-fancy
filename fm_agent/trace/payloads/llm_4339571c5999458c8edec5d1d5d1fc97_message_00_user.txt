@@ -1,0 +1,158 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::cli_backend-py::build_agent_command` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _compose_stdin, _normalize_backend, cli_effort, resolve_model_backend.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def build_agent_command(model, prompt, cwd, files=None, backend=None, effort=None):
+    resolved = _normalize_backend(backend) if backend else resolve_model_backend()
+    if resolved == "auto":
+        resolved = resolve_model_backend()
+    if resolved not in {"codex-cli", "claude-cli"}:
+        raise ValueError(f"unsupported CLI backend: {resolved}")
+
+    cwd = os.path.abspath(cwd)
+    stdin = _compose_stdin(prompt, files or [])
+    model = (model or "").strip()
+    effort = (effort if effort is not None else cli_effort()).strip()
+
+    if resolved == "codex-cli":
+        argv = [
+            "codex",
+            "exec",
+            "--sandbox",
+            "danger-full-access",
+            "--dangerously-bypass-approvals-and-sandbox",
+            "--skip-git-repo-check",
+            "-C",
+            cwd,
+        ]
+        if model:
+            argv += ["--model", model]
+        if effort:
+            argv += ["-c", f'model_reasoning_effort="{effort}"']
+        argv.append("-")
+        return AgentCommand(argv=argv, stdin=stdin, backend=resolved)
+
+    argv = [
+        "claude",
+        "-p",
+        "--output-format",
+        "text",
+        "--no-session-persistence",
+        "--dangerously-skip-permissions",
+        "--permission-mode",
+        "bypassPermissions",
+        "--add-dir",
+        cwd,
+    ]
+    if model:
+        argv += ["--model", model]
+    if effort:
+        argv += ["--effort", effort]
+    return AgentCommand(argv=argv, stdin=stdin, backend=resolved)
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: fm_agent/extracted_functions/src/cli_backend-py/build_agent_command.py
+#
+# build_agent_command(model, prompt, cwd, files=None, backend=None, effort=None) -> AgentCommand
+#
+# Pre-condition:
+#   - model is a non-empty string identifying an LLM model
+#   - prompt is a non-empty string
+#   - cwd is a path to an existing directory
+#   - files is either None or a list of file path strings (may be empty)
+#   - backend is either None or a string identifying a desired CLI backend
+#   - effort is either None or a string
+#
+# Post-condition:
+#   - The effective backend is determined by normalizing the provided backend
+#     argument (resolving alias names) when non-None, or by reading the
+#     configured default model backend when backend is None; the sentinel
+#     value "auto" resolves to a concrete backend
+#   - Raises ValueError with a message identifying the unsupported backend
+#     when the effective backend is not a supported CLI backend
+#   - Returns an AgentCommand whose argv is a non-empty list of argument
+#     strings that, when executed via subprocess with cwd resolved to an
+#     absolute path as the working directory, invokes the effective backend
+#     to process prompt using model
+#   - When files is a non-empty list, the prompt text and the contents of
+#     each listed file are combined into the AgentCommand's stdin field;
+#     each file path in files is attached as context to the backend
+#     invocation
+#   - When files is None or an empty list, the AgentCommand's stdin field is
+#     None
+#   - When effort is provided and non-empty, or when effort is None and a
+#     configured default effort is set and non-empty, the reasoning effort
+#     level is included in the backend invocation arguments
+#   - The AgentCommand's backend field records the canonical name of the
+#     effective backend
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _normalize_backend(backend_str) -> str
+#   Pre-condition: backend_str is a string (may be empty)
+#   Post-condition: Returns the canonical backend name; recognized aliases
+#     are normalized to their canonical forms (e.g., "codex" → "codex-cli",
+#     "claude" → "claude-cli")
+# [SPLIT]
+# resolve_model_backend() -> str
+#   Pre-condition: None (reads environment or configuration)
+#   Post-condition: Returns the canonical backend name of the configured
+#     model backend; "auto" resolves to a concrete backend
+# [SPLIT]
+# _compose_stdin(prompt, files) -> Optional[str]
+#   Pre-condition: prompt is a non-empty string; files is a list of file
+#     path strings (may be empty)
+#   Post-condition: Returns a string that combines the prompt text with the
+#     contents of the listed files, formatted for use as stdin to the
+#     backend subprocess; returns None when files is empty
+# [SPLIT]
+# cli_effort() -> str
+#   Pre-condition: None (reads environment or configuration)
+#   Post-condition: Returns the configured reasoning effort level as a
+#     string, or an empty string when no effort level is configured
+# [SPLIT]
+# AgentCommand(argv, stdin, backend) -> AgentCommand
+#   Pre-condition: argv is a list of argument strings; stdin is a string
+#     or None; backend is a canonical backend name string
+#   Post-condition: Returns an AgentCommand dataclass whose argv field is
+#     argv, whose stdin field is stdin, and whose backend field is backend
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_compose_stdin, _normalize_backend, cli_effort, resolve_model_backend) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_compose_stdin, _normalize_backend, cli_effort, resolve_model_backend). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

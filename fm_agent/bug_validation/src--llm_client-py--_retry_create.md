@@ -25,53 +25,43 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-After the function _retry_create(client, model, messages) is called, it terminates with one of the following outcomes: 
-1. If is_cli_backend_enabled() evaluates to True, the function returns run_agent_for_messages(model, messages), which is a tuple (text: str, usage: dict). 
-2. Otherwise, it enters a retry loop and attempts to call the LLM via client.chat.completions.create (or _anthropic_create for Anthropic models). The loop can terminate in one of the following ways: 
-   a. On successful API call, it returns (text, usage) where text is response.choices[0].message.content (a string) and usage is response.usage.model_dump() if response.usage is not None, else {} (a dict). 
-   b. If a BadRequestError or an HTTPError with status code 400 is raised, the exception is immediately re-raised without retry. 
-   c. On a rate limiting error (HTTPError with status 429 or RateLimitError), the function waits (exponential backoff: base 5s, max 300s, plus jitter 1-10s) and increments a rate-limit retry counter. If the counter reaches _MAX_RATE_LIMIT_RETRIES, a RuntimeError is raised; otherwise the loop continues. 
-   d. On any other transient error (HTTPError with status >=500, or a general Exception), it waits (exponential backoff: base 5s, max 60s, plus jitter 1-3s) and increments a transient retry counter. If the counter reaches _MAX_LLM_RETRIES, a RuntimeError is raised; otherwise the loop continues. 
-No other return values are produced; the function either returns a (text, usage) tuple or raises an exception as described. The inputs client, model, messages are not mutated. Side effects include logging and sleeps during retries.
+If `is_cli_backend_enabled()` is true, the function returns the result of `run_agent_for_messages(model, messages)` and does not raise any exception handled within this function. Otherwise, the function repeatedly attempts to obtain a completion for the given model and messages, retrying on rate-limit (HTTP 429 or RateLimitError) up to _MAX_RATE_LIMIT_RETRIES times with exponential backoff and on transient failures (HTTP 5xx, other exceptions) up to _MAX_LLM_RETRIES times with exponential backoff. If a completion is successful before retries are exhausted, the function returns a tuple (text, usage) where text is a string of the assistant's response content, and usage is a dictionary of token usage details (or an empty dict if no usage is available). If a BadRequestError or an HTTPError with status 400 occurs, the function raises that exception immediately. If rate-limit retries are exhausted, a RuntimeError is raised. If transient retries are exhausted, a RuntimeError is raised. Any other exception that occurs after the last allowed retry is wrapped in a RuntimeError. Formally, for every execution E of `_retry_create(client, model, messages)`: E either terminates with a return value R or raises exception X. (E returns R)  [(is_cli_backend_enabled()  R = run_agent_for_messages(model, messages))  (is_cli_backend_enabled()   t: str, u: dict . R = (t, u)  valid_response(t, u))]. (E raises X)  [X  {BadRequestError, HTTPError(400), RuntimeError}] where RuntimeError indicates either rate-limit or transient retry exhaustion. No other outcomes are possible, and the function respects the described retry limits and sleep intervals.
 
 ---
 
 ## Code Evidence
 
-Line 26: except urllib.error.HTTPError as exc:
-Line 51: except RateLimitError as exc:
 Line 60: except Exception as exc:
 
 ---
 
 ## Trigger Condition
 
-The code only recognises ratelimiting errors as urllib.error.HTTPError with status 429 or the global RateLimitError. For Anthropic models, the native endpoint may raise a libraryspecific ratelimit exception that is not caught by these handlers, causing it to be treated as a generic transient error. This misclassification breaks the contract that ratelimiting builds its own retry budget and uses appropriate backoff parameters, which violates the specification.
+The code catches all Exception instances and treats them as transient errors to retry. A TypeError caused by an invalid messages type is not a recoverable transient error; the specification requires that only recoverable errors (rate limiting, server unavailability, etc.) be retried. Non-recoverable errors like malformed input should be propagated immediately without retry, but the code retries them and eventually raises a RuntimeError.
 
 ---
 
 ## How to trigger the bug
 
-When `_retry_create` is called with an Anthropic-family model, it delegates to `_anthropic_create()`, which uses `urllib.request.urlopen()` for the HTTP call. If a rate-limiting proxy or relay resets the TCP connection instead of returning a proper HTTP 429 response, `urllib` raises `urllib.error.URLError` — which is neither `HTTPError` nor `RateLimitError`. The exception falls through to the generic `except Exception` handler and is treated as a transient error instead of a rate-limit error. This means:
-- **Transient retry budget applies** (`_MAX_LLM_RETRIES = 5`) instead of the rate-limit budget (`_MAX_RATE_LIMIT_RETRIES = 20`)
-- **Backoff caps at 60s** instead of 300s
-- The distinction between rate-limit and transient categories is lost, violating the specification's per-category retry contract
+The `except Exception as exc:` catch-all at line 237 (`src/llm_client.py` line 237) captures all Python exceptions — including non-recoverable client-side errors like `TypeError` — and treats them as transient failures worth retrying. According to the specification, only recoverable errors (rate limiting, server unavailability, HTTP 5xx, and similar transient HTTP/middleware failures) should be retried. Non-recoverable errors such as malformed input (e.g., passing a string instead of a list of dicts for `messages`) should propagate immediately.
+
+Instead, the code retries the TypeError up to `_MAX_LLM_RETRIES` (5) times with exponential backoff, then wraps it in a `RuntimeError` — violating both the immediate-propagation requirement and the RuntimeError semantics (which should mean "retry budget exhausted on a genuinely recoverable error").
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| client | `_llm_provider_client` (OpenAI client instance) |
-| model | `"claude-sonnet-4-6"` (Anthropic-family, routes to `_anthropic_create`) |
-| messages | `[{"role": "user", "content": "Hello"}]` |
+| `client` | Mock OpenAI-compatible client whose `chat.completions.create()` raises `TypeError` |
+| `model` | `"gpt-4o"` (non-Anthropic, triggers the OpenAI-compat path) |
+| `messages` | `[{"role": "user", "content": "hi"}]` (valid format; the error is injected by the mock) |
 
 ### Expected (spec-correct) Output
 
-The `urllib.error.URLError` caused by a rate-limiting connection reset should be classified as a rate-limit error. It should increment `rate_limit_attempts`, use the rate-limit backoff schedule (max 300s), and be bounded by `_MAX_RATE_LIMIT_RETRIES`. After exhausting retries, it should raise `RuntimeError("Rate limited after N retries: ...")`.
+`TypeError` raised immediately — no retries, no RuntimeError wrapping.
 
 ### Actual (buggy) Output
 
-The `URLError` falls through to `except Exception`, increments `transient_attempts`, uses the transient backoff schedule (max 60s), and is bounded by `_MAX_LLM_RETRIES` (5, not 20). After exhausting retries, it raises `RuntimeError("LLM request failed after N retries: ...")`.
+`RuntimeError("LLM request failed after 5 retries: invalid messages type: expected list of dicts, got str")` after 5 retries with exponential backoff.
 
 ### How to Reproduce
 
@@ -81,32 +71,31 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import sys, os
-sys.path.insert(0, os.getcwd())
-os.environ.setdefault("LLM_API_KEY", "sk-test")
-os.environ.setdefault("LLM_API_BASE_URL", "https://test.example.com")
+import sys
+sys.path.insert(0, '.')
+from unittest.mock import patch
 
-import urllib.request, urllib.error, time
-from src.llm_client import _retry_create, _llm_provider_client, _is_anthropic_model
-import src.llm_client as llm_mod
+# Build mock client that raises TypeError on every create() call
+class MockCreate:
+    def __init__(self):
+        self.call_count = 0
+    def create(self, **kwargs):
+        self.call_count += 1
+        raise TypeError("invalid messages type")
 
-# Speed up the test
-llm_mod._MAX_RATE_LIMIT_RETRIES = 2
-llm_mod._MAX_LLM_RETRIES = 2
+mc = MockCreate()
+mock_client = type('C', (), {'chat': type('C', (), {'completions': type('C', (), {'create': mc.create})()})()})()
 
-# Monkey-patch: simulate rate-limiting proxy resetting the connection
-_orig = urllib.request.urlopen
-urllib.request.urlopen = lambda *a, **kw: (_ for _ in ()).throw(
-    urllib.error.URLError("Connection reset by peer"))
-time.sleep = lambda s: None
-
-try:
-    _retry_create(_llm_provider_client, "claude-sonnet-4-6",
-                  [{"role": "user", "content": "Hello"}])
-except RuntimeError as e:
-    print(str(e))
-    # actual (buggy) output: "LLM request failed after 2 retries: ..."
-    # expected (correct) output: "Rate limited after 2 retries: ..."
+with patch('src.llm_client.time.sleep', return_value=None):
+    with patch('src.llm_client.is_cli_backend_enabled', return_value=False):
+        with patch('src.llm_client._is_anthropic_model', return_value=False):
+            from src.llm_client import _retry_create
+            try:
+                _retry_create(mock_client, "gpt-4o", [{"role": "user", "content": "hi"}])
+            except RuntimeError as e:
+                print(f"Bug: RuntimeError after {mc.call_count} calls — {e}")
+# actual (buggy) output: RuntimeError after 5 calls
+# expected (correct) output: TypeError raised immediately (1 call)
 ```
 
 ---
@@ -114,105 +103,102 @@ except RuntimeError as e:
 ## Probe Script
 
 ```python
-"""Probe for bug: src--llm_client-py--_retry_create
-Bug: _anthopic_create uses urllib, which raises URLError for connection-level
-errors. When a rate-limiting proxy resets the connection, URLError falls through
-to except Exception and is treated as a transient error (MAX_LLM_RETRIES=5,
-backoff max=60s), instead of a rate-limit error (MAX_RATE_LIMIT_RETRIES=20,
-backoff max=300s). This violates the spec's per-category retry contract.
+"""Probe for bug: _retry_create retries non-recoverable TypeError instead of propagating immediately.
+
+Spec claim: non-recoverable errors (provider-rejected malformed requests) are
+propagated immediately without retry. The code catches all Exception on line 237
+and retries even non-recoverable errors like TypeError.
 """
 import sys
 import os
-import time
-import urllib.request
-import urllib.error
+from unittest.mock import patch
 
-# Ensure project root is on the path
-_PROJ_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _PROJ_ROOT not in sys.path:
-    sys.path.insert(0, _PROJ_ROOT)
-
-# ------------------------------------------------------------
-# 1. Monkey-patch BEFORE importing any project modules
-# ------------------------------------------------------------
-
-# urllib.request.urlopen → raise URLError (simulates rate-limiting
-# proxy that resets TCP connections instead of returning HTTP 429)
-_original_urlopen = urllib.request.urlopen
-
-def _patched_urlopen(req, *args, **kwargs):
-    raise urllib.error.URLError("Connection reset by peer")
-
-urllib.request.urlopen = _patched_urlopen
-
-# time.sleep → no-op (avoid waiting for backoff during test)
-_original_sleep = time.sleep
-time.sleep = lambda s: None
-
-# ------------------------------------------------------------
-# 2. Set required env vars before config.py loads them
-# ------------------------------------------------------------
-os.environ.setdefault("LLM_API_KEY", "sk-test")
-os.environ.setdefault("LLM_API_BASE_URL", "https://test.example.com")
-
-# ------------------------------------------------------------
-# 3. Import the module under test
-# ------------------------------------------------------------
-try:
-    from src.llm_client import (
-        _retry_create,
-        _llm_provider_client,
-        _is_anthropic_model,
-    )
-    import src.llm_client as llm_mod
-except Exception as e:
-    print(f"ERROR: import failed: {e}")
-    sys.exit(1)
-
-# Override retry limits so the test completes quickly
-llm_mod._MAX_RATE_LIMIT_RETRIES = 2
-llm_mod._MAX_LLM_RETRIES = 2
-
-# ------------------------------------------------------------
-# 4. Execute the test
-# ------------------------------------------------------------
-model = "claude-sonnet-4-6"
-messages = [{"role": "user", "content": "Hello"}]
-
-# Sanity: verify model is recognized as Anthropic
-if not _is_anthropic_model(model):
-    print("NOT CONFIRMED — model not recognized as Anthropic")
-    sys.exit(0)
-
-actual = None
-expected = "Rate limited"  # spec requires rate-limit classification
+sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot')
 
 try:
-    result = _retry_create(_llm_provider_client, model, messages)
-    actual = "success"
-except RuntimeError as e:
-    actual = str(e)
-except Exception as e:
-    print(f"ERROR: unexpected exception: {type(e).__name__}: {e}")
-    sys.exit(1)
+    # -----------------------------------------------------------------------
+    # Build a mock OpenAI-compatible client whose chat.completions.create
+    # raises TypeError on every call. We count calls to detect retries.
+    # -----------------------------------------------------------------------
+    class MockCreate:
+        def __init__(self):
+            self.call_count = 0
 
-# Classification: if the error message indicates transient handling
-# instead of rate-limit handling, the bug is confirmed
-if actual == "success":
-    print("NOT CONFIRMED — call succeeded unexpectedly")
-elif "Rate limited" in actual:
-    print(f"NOT CONFIRMED — correctly treated as rate limit: {actual}")
-elif "LLM request failed" in actual or "request failed" in actual:
-    # BUG: URLError from Anthropic path was treated as transient,
-    # not rate-limit. Spec requires per-category retry budgets.
-    print(f"CONFIRMED — treated as transient instead of rate limit: {actual}")
-else:
-    print(f"CONFIRMED — unexpected error: {actual}")
+        def create(self, **kwargs):
+            self.call_count += 1
+            raise TypeError("invalid messages type: expected list of dicts, got str")
+
+    mock_create = MockCreate()
+    mock_client = type('MockClient', (), {
+        'chat': type('MockChat', (), {
+            'completions': type('MockCompletions', (), {
+                'create': mock_create.create,
+            })(),
+        })(),
+    })()
+
+    # -----------------------------------------------------------------------
+    # Patch time.sleep (avoid multi-second waits), is_cli_backend_enabled
+    # (must be False to exercise the retry branch), and _is_anthropic_model
+    # (must be False to hit the OpenAI-compat path instead of Anthropic).
+    # -----------------------------------------------------------------------
+    patches = [
+        patch('src.llm_client.time.sleep', return_value=None),
+        patch('src.llm_client.is_cli_backend_enabled', return_value=False),
+        patch('src.llm_client._is_anthropic_model', return_value=False),
+    ]
+    for p in patches:
+        p.start()
+
+    try:
+        from src.llm_client import _retry_create, _MAX_LLM_RETRIES
+
+        # Invoke _retry_create — using a non-anthropic model name and valid
+        # messages so the only failure is the TypeError side_effect in our mock.
+        _error_result = None
+        try:
+            _retry_create(mock_client, "gpt-4o", [{"role": "user", "content": "hi"}])
+        except RuntimeError as e:
+            _error_result = f"RuntimeError: {e}"
+        except TypeError as e:
+            _error_result = f"TypeError: {e}"
+        except Exception as e:
+            _error_result = f"{type(e).__name__}: {e}"
+
+        call_count = mock_create.call_count
+
+        # Bug is CONFIRMED if TypeError was retried (call_count > 1) instead
+        # of propagating immediately. With _MAX_LLM_RETRIES=5, the buggy
+        # behavior produces: 1 original call + 5 retries = 6 total.
+        if call_count > 1:
+            print(
+                f"CONFIRMED — TypeError was retried ({call_count}x with "
+                f"{_MAX_LLM_RETRIES} retry budget) instead of propagating "
+                f"immediately; final result was {_error_result}"
+            )
+        else:
+            print(
+                f"NOT CONFIRMED — TypeError propagated immediately "
+                f"({call_count} call, result: {_error_result})"
+            )
+
+    finally:
+        for p in reversed(patches):
+            p.stop()
+
+except Exception as e:
+    import traceback
+    traceback.print_exc(file=sys.stderr)
+    print(f'ERROR: {e}')
+    sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-WARNING:root:LLM error (URLError: <urlopen error Connection reset by peer>), sleeping 7.3s (attempt 1)
-CONFIRMED — treated as transient instead of rate limit: LLM request failed after 2 retries: <urlopen error Connection reset by peer>
+WARNING:root:LLM error (TypeError: invalid messages type: expected list of dicts, got str), sleeping 7.8s (attempt 1)
+WARNING:root:LLM error (TypeError: invalid messages type: expected list of dicts, got str), sleeping 12.9s (attempt 2)
+WARNING:root:LLM error (TypeError: invalid messages type: expected list of dicts, got str), sleeping 22.5s (attempt 3)
+WARNING:root:LLM error (TypeError: invalid messages type: expected list of dicts, got str), sleeping 41.7s (attempt 4)
+CONFIRMED — TypeError was retried (5x with 5 retry budget) instead of propagating immediately; final result was RuntimeError: LLM request failed after 5 retries: invalid messages type: expected list of dicts, got str
 ```

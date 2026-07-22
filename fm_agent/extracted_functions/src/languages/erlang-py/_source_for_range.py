@@ -17,8 +17,8 @@
 #   Post-condition: Returns a _SourceIndex instance whose operations are scoped to the given source string
 # [SPLIT]
 # _SourceIndex.source_for_range(lsp_range) -> str
-#   Pre-condition: lsp_range is a dict with keys 'start' and 'end', each having 'line' (int, 0-based) and 'character' (int, 0-based) keys, and the start position does not follow the end position
-#   Post-condition: Returns the substring of the indexed source that spans from the start position (inclusive) to the end position (exclusive)
+#   Pre-condition: lsp_range is a dict with keys 'start' and 'end', each having 'line' (int, 0-based) and 'character' (int, 0-based UTF-16 code unit offset) keys, and the start position does not follow the end position in source order
+#   Post-condition: Returns the substring of the indexed source that spans from the byte offset corresponding to the start position (inclusive) to the byte offset corresponding to the end position (exclusive)
 # [INFO]
 
 def _source_for_range(source: str, lsp_range: dict) -> str:

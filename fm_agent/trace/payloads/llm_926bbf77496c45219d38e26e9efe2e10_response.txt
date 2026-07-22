@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a set containing exactly those strings that are (1) captured in group 1 by some match of the language-specific call regex on the comment/literal-stripped source text, (2) present in the known_stems set, and (3) not present in the keywords set. Formally: Let cleaned = _strip_comments_from_source(text, lang_key) and regex = _get_call_regex(lang_key). Then the returned set found satisfies: ∀ s ∈ String, s ∈ found ⇔ ( ∃ match m ∈ regex.finditer(cleaned) such that m.group(1) = s ) ∧ s ∈ known_stems ∧ s ∉ keywords."
+}

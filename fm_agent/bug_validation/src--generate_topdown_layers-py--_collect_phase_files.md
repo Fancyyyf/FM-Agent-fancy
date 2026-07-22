@@ -1,6 +1,6 @@
 # Bug Report: _collect_phase_files
 
-**Source file:** `src/generate_topdown_layers-py/_collect_phase_files.py`
+**Source file:** `src/generate_topdown_layers.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -23,53 +23,50 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-The function returns a list `results` with no side effects. For every module dictionary `mod` in `phase_data.get('modules', [])` (in iteration order), let `mn = mod['name']`. For every source file path `sf` in `mod.get('source_files', [])` (in iteration order), compute: `base = os.path.basename(sf)`; `last_dot = base.rfind('.')`; `dir_name = base[:last_dot] + '-' + base[last_dot+1:]` if `last_dot > 0` else `base`; `func_dir = os.path.join(proj_dir, 'extracted_functions', os.path.dirname(sf), dir_name)` if `os.path.dirname(sf)` else `os.path.join(proj_dir, 'extracted_functions', dir_name)`. If `os.path.isdir(func_dir)` evaluates to `True`, then for every filename `fn` in the arbitrary order returned by `os.listdir(func_dir)`, if `os.path.isfile(os.path.join(func_dir, fn))` evaluates to `True`, the tuple `(os.path.join(func_dir, fn), mn)` appears in `results`. No other tuples are present. Formal post-condition:
+The function returns a list `results` such that:
 
-results = [ (os.path.join(func_dir, fn), mod['name'])
-            for mod in phase_data.get('modules', [])
-            for sf in mod.get('source_files', [])
-            let base = os.path.basename(sf)
-            let last_dot = base.rfind('.')
-            let dir_name = (base[:last_dot] + '-' + base[last_dot+1:]) if last_dot > 0 else base
-            let func_dir = os.path.join(proj_dir, 'extracted_functions', os.path.dirname(sf), dir_name) if os.path.dirname(sf) else os.path.join(proj_dir, 'extracted_functions', dir_name)
-            if os.path.isdir(func_dir)
-            for fn in os.listdir(func_dir)
-            if os.path.isfile(os.path.join(func_dir, fn)) ]
+results = [(file_path, module_name) for each module in phase_data.get('modules', []) if 'source_files' in module for each src_file in module['source_files'] where os.path.isdir(func_dir) for each regular file (os.path.isfile) with path file_path found by recursively walking func_dir via os.walk].
 
-with the outer loops preserving the modules and source files order, and the innermost loop following the arbitrary order of `os.listdir`. The input arguments `proj_dir` and `phase_data` remain unchanged.
+Here func_dir = os.path.join(proj_dir, 'extracted_functions', src_dir, dir_name) if src_dir (os.path.dirname(src_file)) is non-empty, else os.path.join(proj_dir, 'extracted_functions', dir_name). dir_name is derived from os.path.basename(src_file): if a last dot position > 0 exists, dir_name = basename[:last_dot] + '-' + basename[last_dot+1:]; otherwise dir_name = basename.
+
+file_path is the absolute path (given proj_dir) of each file inside the extracted directory tree; module_name is the string module['name']. The order in results matches iteration order of modules, then source_files, and for each directory the order of files from os.walk (depth-first, top-down). The function has no side effects and raises no exceptions under the pre-condition.
 
 ---
 
 ## Code Evidence
 
+Line 13: last_dot = src_base.rfind(".")
 Line 14: if last_dot > 0:
+Line 15: dir_name = src_base[:last_dot] + "-" + src_base[last_dot + 1:]
+Line 17: dir_name = src_base
 
 ---
 
 ## Trigger Condition
 
-The specification requires replacing the last '.' with '-' unconditionally, but the code's condition (last_dot > 0) skips replacement when the last dot is at position 0 (leading dot). This causes the code to look for a directory named '.hiddenfile' instead of '-hiddenfile', missing files that should be collected.
+When a source file's basename starts with a dot (e.g., '.hidden'), the last dot is at index 0, and the condition last_dot > 0 fails, causing dir_name to remain '.hidden'. The specification replaces the last '.' with '-', which would produce '-hidden'. This leads the code to look for a directory '.hidden' instead of the expected '-hidden', missing files that should have been included.
 
 ---
 
 ## How to trigger the bug
 
-When a source file basename begins with a dot (e.g., `.hiddenfile`), `rfind('.')` returns 0. The guard `if last_dot > 0` evaluates to `False`, so the code falls through to `dir_name = src_base`, keeping the leading dot. The function then looks for `extracted_functions/.hiddenfile/` instead of the spec-correct `extracted_functions/-hiddenfile/`. Any extracted functions placed in the spec-correct directory are silently missed.
+The bug arises when a source file's basename begins with a dot (e.g., `.hidden`, `.envrc`, `.gitignore`). The `rfind(".")` call returns 0 for these names, and the guard `if last_dot > 0:` is False, so `dir_name` stays as the original basename (e.g., `.hidden`). Per the specification, the last `.` should be replaced with `-`, yielding `-hidden`. The function then looks for a directory named `.hidden` under `extracted_functions/` instead of the correct `-hidden`.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `proj_dir` | A temporary directory containing `extracted_functions/-hiddenfile/some_func.py` |
-| `phase_data` | `{"modules": [{"name": "test_module", "source_files": [".hiddenfile"]}]}` |
+| `proj_dir` | Temporary directory containing `extracted_functions/` |
+| `phase_data` | `{"modules": [{"name": "test_module", "source_files": [".hidden"]}]}` |
+| source file basename | `.hidden` (starts with a dot) |
 
 ### Expected (spec-correct) Output
 
-`[("/tmp/.../extracted_functions/-hiddenfile/some_func.py", "test_module")]` — one file collected
+`[("<tmp>/extracted_functions/-hidden/correct_file.py", "test_module")]`
 
 ### Actual (buggy) Output
 
-`[]` — empty list; the function looks in `extracted_functions/.hiddenfile/` which does not exist, so no files are collected
+`[("<tmp>/extracted_functions/.hidden/buggy_file.py", "test_module")]`
 
 ### How to Reproduce
 
@@ -79,22 +76,26 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import os, tempfile, sys
-sys.path.insert(0, os.getcwd())
+import os, tempfile
 from src.generate_topdown_layers import _collect_phase_files
 
-proj_dir = tempfile.mkdtemp()
-correct_dir = os.path.join(proj_dir, "extracted_functions", "-hiddenfile")
-os.makedirs(correct_dir)
-with open(os.path.join(correct_dir, "some_func.py"), "w") as f:
-    f.write("# content\n")
+tmpdir = tempfile.mkdtemp()
+extracted = os.path.join(tmpdir, "extracted_functions")
 
-result = _collect_phase_files(proj_dir, {
-    "modules": [{"name": "test_module", "source_files": [".hiddenfile"]}]
-})
+# Create both possible lookup directories
+os.makedirs(os.path.join(extracted, "-hidden"))
+with open(os.path.join(extracted, "-hidden", "correct.py"), "w") as f:
+    f.write("# spec correct")
+
+os.makedirs(os.path.join(extracted, ".hidden"))
+with open(os.path.join(extracted, ".hidden", "buggy.py"), "w") as f:
+    f.write("# buggy")
+
+phase_data = {"modules": [{"name": "test_module", "source_files": [".hidden"]}]}
+result = _collect_phase_files(tmpdir, phase_data)
 print(result)
-# actual (buggy) output: []
-# expected (correct) output: [('/tmp/.../extracted_functions/-hiddenfile/some_func.py', 'test_module')]
+# actual (buggy) output: [(<path>/extracted_functions/.hidden/buggy.py, 'test_module')]
+# expected (correct) output: [(<path>/extracted_functions/-hidden/correct.py, 'test_module')]
 ```
 
 ---
@@ -105,60 +106,67 @@ print(result)
 import sys
 import os
 import tempfile
-import shutil
 
-# Ensure the project root is on sys.path so the src package resolves.
-# The script is meant to be run from repo root, so os.getcwd() is the repo root.
-sys.path.insert(0, os.getcwd())
+# Add repo root to path so `src` is importable
+_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, _repo_root)
 
 try:
     from src.generate_topdown_layers import _collect_phase_files
-
-    proj_dir = tempfile.mkdtemp()
-
-    # The spec says: replace last "." with "-" unconditionally.
-    # For ".hiddenfile", rfind('.') returns 0.
-    # The bug (last_dot > 0 guard) skips replacement → dir_name stays ".hiddenfile"
-    # Correct behavior: dir_name should be "-hiddenfile"
-
-    # Create ONLY the spec-correct directory: extracted_functions/-hiddenfile
-    correct_dir = os.path.join(proj_dir, "extracted_functions", "-hiddenfile")
-    os.makedirs(correct_dir)
-    with open(os.path.join(correct_dir, "some_func.py"), "w") as f:
-        f.write("# extracted function content\n")
-
-    phase_data = {
-        "modules": [
-            {
-                "name": "test_module",
-                "source_files": [".hiddenfile"]
-            }
-        ]
-    }
-
-    actual = _collect_phase_files(proj_dir, phase_data)
-
-    # Expected (spec-correct): files from extracted_functions/-hiddenfile/ should be collected
-    # Actual (buggy):     looks in extracted_functions/.hiddenfile/ instead → finds nothing
-    expected_count = 1  # one file in -hiddenfile/
-    actual_count = len(actual)
-
-    passed = actual_count != expected_count  # True → bug reproduced (returned empty)
-
-    if passed:
-        print(f'CONFIRMED — actual count: {actual_count} | expected count: {expected_count}')
-    else:
-        print(f'NOT CONFIRMED — actual matched expected: {actual_count} file(s)')
-
-    shutil.rmtree(proj_dir)
-
 except Exception as e:
     print(f'ERROR: {e}')
     sys.exit(1)
+
+# Create temp workspace — all fixtures isolated from the repo
+tmpdir = tempfile.mkdtemp(prefix="probe_collect_phase_files_")
+extracted_base = os.path.join(tmpdir, "extracted_functions")
+
+# Directory the spec says should be looked up: -hidden
+# (basename ".hidden" → replace last "." with "-" → "-hidden")
+spec_correct_dir = os.path.join(extracted_base, "-hidden")
+os.makedirs(spec_correct_dir, exist_ok=True)
+with open(os.path.join(spec_correct_dir, "correct_file.py"), "w") as f:
+    f.write("# spec correct\n")
+
+# Directory the buggy code actually looks up: .hidden
+# (last_dot == 0, last_dot > 0 is False, dir_name stays ".hidden")
+buggy_dir = os.path.join(extracted_base, ".hidden")
+os.makedirs(buggy_dir, exist_ok=True)
+with open(os.path.join(buggy_dir, "buggy_file.py"), "w") as f:
+    f.write("# buggy\n")
+
+# phase_data with a source file whose basename starts with a "." (dot file)
+phase_data = {
+    "modules": [
+        {
+            "name": "test_module",
+            "source_files": [".hidden"]
+        }
+    ]
+}
+
+results = _collect_phase_files(tmpdir, phase_data)
+actual_files = {os.path.normpath(fp) for fp, _ in results}
+
+spec_expected = {os.path.normpath(os.path.join(spec_correct_dir, "correct_file.py"))}
+buggy_expected = {os.path.normpath(os.path.join(buggy_dir, "buggy_file.py"))}
+
+# Cleanup before reporting
+import shutil
+shutil.rmtree(tmpdir, ignore_errors=True)
+
+if actual_files == spec_expected:
+    print(f'NOT CONFIRMED — actual matched spec-expected: {actual_files}')
+elif actual_files == buggy_expected:
+    print(f'CONFIRMED — actual: {actual_files} | spec-expected (look in -hidden/): {spec_expected} | code looked in .hidden/ instead because last_dot>0 is False when last_dot==0')
+elif not actual_files:
+    print(f'NOT CONFIRMED — no files found (maybe neither directory was checked or dirs were cleaned)')
+else:
+    print(f'ERROR: unexpected result: actual={actual_files}, spec_expected={spec_expected}, buggy_expected={buggy_expected}')
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual count: 0 | expected count: 1
+CONFIRMED — actual: {'/tmp/probe_collect_phase_files_cztzyoif/extracted_functions/.hidden/buggy_file.py'} | spec-expected (look in -hidden/): {'/tmp/probe_collect_phase_files_cztzyoif/extracted_functions/-hidden/correct_file.py'} | code looked in .hidden/ instead because last_dot>0 is False when last_dot==0
 ```

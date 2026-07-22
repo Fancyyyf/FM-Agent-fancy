@@ -12,13 +12,14 @@
 #   - Returns a list of absolute file path strings, one per distinct valid domain-knowledge markdown file
 #   - Each input entry is expanded for user home directories and flattened from any nesting
 #   - If an expanded entry is absolute, it is used directly; otherwise it is resolved against base_dir
-#   - When fallback_base_dir is not None and the base_dir-resolved path does not exist on the filesystem, the entry is resolved against fallback_base_dir as a secondary base
-#   - An entry whose resolved path does not exist on the filesystem is excluded from the returned list
-#   - An entry whose resolved path is not a regular file is excluded from the returned list
-#   - An entry whose resolved path has a file extension not in the set of recognized markdown extensions is excluded from the returned list
+#   - When fallback_base_dir is not None and the base_dir-resolved path does not exist on the filesystem, the entry is resolved against fallback_base_dir as a secondary base; if the fallback candidate also does not exist, the base_dir candidate is used (and will be checked later)
+#   - For each resolved path (the first existing candidate, or the base_dir candidate if none exist):
+#     * If the path does not exist on the filesystem, a ValueError is raised with a message indicating the raw input path
+#     * If the path exists but is not a regular file, a ValueError is raised with a message indicating the raw input path
+#     * If the path exists but its file extension is not in VALID_DOMAIN_KNOWLEDGE_EXTENSIONS, a ValueError is raised with a message listing allowed extensions and the raw input path
 #   - The returned list contains no duplicate entries; deduplication is performed on the real (canonical) path
 #   - The returned list preserves the relative order of first occurrence among the input entries
-#   - Returns an empty list when no entry resolves to a valid domain-knowledge file
+#   - If no paths are provided (or all entries are filtered out by deduplication after processing, but note that invalid entries raise errors, so this only applies when input is empty or contains only duplicates of already-seen valid files), returns an empty list
 # [SPEC]
 
 # [INFO]

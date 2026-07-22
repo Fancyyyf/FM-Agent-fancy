@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "deadline = time.monotonic() + 1.0; self._messages already contains the string 'hello' (not a BaseException). The method returns 'hello', which is not a dict conforming to the JSON-RPC 2.0 specification.",
+  "offending_statements": "Line 11: return message",
+  "reason": "The specification requires the method to return a dict that conforms to the JSON-RPC 2.0 specification. The code, however, returns any non-BaseException object from the queue without checking that it is a dict, thus violating the specification for any input where the queue contains a non-dict non-exception value."
+}

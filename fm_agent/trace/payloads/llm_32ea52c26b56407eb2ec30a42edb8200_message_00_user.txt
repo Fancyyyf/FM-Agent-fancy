@@ -1,0 +1,102 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::prompts-py::_generate_block_post_condition` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _llm_json_call.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _generate_block_post_condition(block, pre_condition, knowledge, language,
+                                   trace_dir=None, trace_meta=None):
+    info_str = f"\nAdditional context:\n{knowledge}" if knowledge else ""
+    messages = [
+        {"role": "system", "content": (
+            f"You are an expert in formal verification of {language} programs. "
+            f"Given a {language} code block and its pre-condition, generate the post-condition "
+            "that describes the program state after the code block finishes execution. "
+            "Cover all execution paths including early returns, exceptions, and normal flow-through. "
+            f"Apply {language}-specific semantics (ownership, lifetimes, error handling, etc.) as appropriate. "
+            "Be precise and unambiguous. Express the post-condition in natural language and formal logic."
+        )},
+        {"role": "user", "content": (
+            f"Programming language: {language}\n\n"
+            f"Pre-condition:\n{pre_condition}\n\n"
+            f"Code block:\n```{language.lower()}\n{block}\n```\n"
+            f"{info_str}\n"
+            "Generate the post-condition. Return only a valid JSON object with this "
+            "required field: {\"post_condition\": \"...\"}. Do not include Markdown, "
+            "tags, or prose outside the JSON object."
+        )}
+    ]
+    meta = {
+        "purpose": "generate_block_post_condition",
+        "summary": "Generated post-condition for code block",
+        **(trace_meta or {}),
+    }
+    return _llm_json_call(
+        _llm_provider_client,
+        REASONER_POST_CONDITION_MODEL,
+        messages,
+        _parse_post_condition_json,
+        '{"post_condition": "non-empty string"}',
+        trace_dir=trace_dir,
+        trace_meta=meta,
+    )
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/prompts-py/_generate_block_post_condition.py
+#
+# _generate_block_post_condition(block, pre_condition, knowledge, language, trace_dir=None, trace_meta=None)
+#
+# Pre-condition:
+#   - block is a non-empty string containing code statements, possibly with "Line N:" prefixes
+#   - pre_condition is a non-empty string describing the logical state assumed to hold before block begins execution
+#   - knowledge is a mapping from callee function names to their behavioral specifications; may be empty or falsy
+#   - language is a non-empty string identifying the source programming language of the code in block
+#   - trace_dir, when not None, is a directory path used for persisting trace records
+#   - trace_meta, when not None, is a dict of metadata for trace annotation
+#
+# Post-condition:
+#   - Returns a string describing the strongest post-condition that must hold after executing block from the given pre-condition, covering all execution paths through the block including normal flow-through, early returns, and exceptional exits
+#   - Returns None when the post-condition could not be determined from the given inputs
+#   - The returned post-condition is expressed in natural language suitable for subsequent logical implication checks against specification post-conditions
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# (no callees)
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_llm_json_call) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_llm_json_call). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

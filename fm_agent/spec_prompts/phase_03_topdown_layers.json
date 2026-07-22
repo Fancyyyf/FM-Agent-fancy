@@ -214,10 +214,10 @@
             "src::scope-py::_parse_issue_signals"
           ],
           "phase3_callees": [
-            "src::scope-py::_add"
+            "src::scope-py::_extract_backtick_idents::_add"
           ],
           "all_callees": [
-            "src::scope-py::_add"
+            "src::scope-py::_extract_backtick_idents::_add"
           ]
         },
         {
@@ -434,16 +434,6 @@
           "all_callees": []
         },
         {
-          "name": "src::scope-py::_add",
-          "file": "extracted_functions/src/scope-py/_add.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::_extract_backtick_idents"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
           "name": "src::scope-py::_base_score",
           "file": "extracted_functions/src/scope-py/_base_score.py",
           "unit": "scope",
@@ -465,6 +455,16 @@
           "unit": "scope",
           "phase3_callers": [
             "src::scope-py::_llm_rerank"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_extract_backtick_idents::_add",
+          "file": "extracted_functions/src/scope-py/_extract_backtick_idents::_add.py",
+          "unit": "scope",
+          "phase3_callers": [
+            "src::scope-py::_extract_backtick_idents"
           ],
           "phase3_callees": [],
           "all_callees": []

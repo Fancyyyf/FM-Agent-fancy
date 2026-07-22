@@ -50,6 +50,15 @@
 #   Post-condition: Returns (True, None) when the oh-my-openagent comment-checker hook is
 #     disabled. Returns (False, str) with an error message when it is still enabled.
 # [SPLIT]
+# _check_codegraph_version(config) -> (bool, str | None)
+#   Pre-condition: config provides access to a codegraph version string via settings.codegraph.version and a binary directory path via settings.codegraph.bin_dir.
+#   Post-condition: Returns (True, None) when the configured version (after stripping whitespace and leading "v") is empty.
+#     Otherwise, tries to obtain the installed version by executing the binary with --version.
+#     Returns (False, message) when the version cannot be obtained (binary missing/not executable/timeout), mentioning the binary directory and instructing to re-run ./install.sh.
+#     Returns (False, message) when the obtained version does not equal the pinned version (after stripping whitespace and leading "v"), stating both versions and instructing to re-run ./install.sh.
+#     Returns (True, None) when versions match.
+#     Never raises an exception.
+# [SPLIT]
 # is_interactive() -> bool
 #   Pre-condition: None.
 #   Post-condition: Returns True when the current process is attached to an interactive
@@ -75,6 +84,8 @@ def run(proj_dir, config):
          _check_oh_my_openagent),
         ("comment-checker-disabled", "comment-checker hook disabled",
          _check_comment_checker),
+        ("codegraph-version", "codegraph pinned build installed",
+         lambda: _check_codegraph_version(config)),
     ]
 
     warnings = []

@@ -1,8 +1,8 @@
 # Bug Report: function_spans
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/src/languages/rust.py` (actual source; extracted path: `fm_agent/extracted_functions/src/languages/rust-py/function_spans.py`)
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/rust-py/function_spans.py`
 **Verdict:** MISMATCH
-**Confirmation status:** not_confirmed
+**Confirmation status:** confirmed
 
 ---
 
@@ -25,40 +25,41 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-The function returns either None (if the CodeGraphExtractor cannot be initialized for the project) or a list of tuples `(name: str, start_idx: int, end_idx: int)` for each top-level Rust function in `filepath`, where `start_idx` and `end_idx` are 0indexed inclusive line numbers. No side effects occur. Formally: let `cg = CodeGraphExtractor.from_proj_dir(proj_dir)`; then `(cg = None  result = None)  (cg  None  result = cg.get_function_spans("rust", filepath)  result is a list of (name, start_idx, end_idx) with 0-indexed inclusive line indices)`. The preconditions of `get_function_spans` are satisfied because `"rust"` is a supported language and `filepath` lies within the project indexed by `cg`.
+If the call `CodeGraphExtractor.from_proj_dir(proj_dir)` raises an exception, `function_spans` raises that exception. Otherwise, let `cg` be the returned value. If `cg` is `None`, the function returns `None`. If `cg` is a `CodeGraphExtractor` instance, then upon evaluating `cg.get_function_spans('rust', filepath)`: if that call raises an exception, `function_spans` raises that exception; else the function returns the result, which is either `None` (when the language key 'rust' is not recognized by the backend or the database contains no entries for `filepath`) or a list of `(name, start_idx, end_idx)` tuples for each function and method definition found in `filepath`, with 0-indexed inclusive line indices, ordered by ascending `start_idx`. The function does not modify any externally observable state beyond any internal state initialized during `from_proj_dir` and the read-only access to the codegraph backend.
 
 ---
 
 ## Code Evidence
 
-Line 24: return cg.get_function_spans("rust", filepath) if cg else None
+Line 8: return cg.get_function_spans("rust", filepath) if cg else None
 
 ---
 
 ## Trigger Condition
 
-When codegraph is available (cg != None) but the given filepath is not indexed (e.g., lies outside the project), the specification requires returning None. The code unconditionally calls cg.get_function_spans for any filepath, which can return a non-None value (such as an empty list) or raise an exception, violating the required None return.
+The code returns the unfiltered list from cg.get_function_spans, which includes all function and method definitions (as documented). The specification requires only top-level function declarations; method definitions inside impl blocks must be excluded. This input contains both a top-level function and a method, causing the code to produce an output that includes the method, violating the requirement.
 
 ---
 
 ## How to trigger the bug
 
-The bug could not be confirmed. The `function_spans` function delegates to `CodeGraphExtractor.get_function_spans`, which internally queries the codegraph SQLite database for the given filepath and language. When no matching rows are found (filepath not indexed or no functions in the file), `get_function_spans` returns `None` — satisfying the spec's requirement. The function does NOT return an empty list or raise exceptions for unindexed files; it correctly returns `None` in all tested scenarios.
+The `function_spans` function delegates directly to `CodeGraphExtractor.get_function_spans("rust", filepath)` without filtering out methods. The underlying `get_function_spans` queries the codegraph database for both `'function'` and `'method'` kinds (see `src/languages/codegraph.py` line 363: `WHERE kind IN ('function', 'method')`). When a Rust file contains `fn top_level()` and `impl Foo { fn bar() {} }`, the method `Foo::bar` leaks into the result alongside the top-level function, violating the spec's requirement of "one per top-level function declared in the file."
 
 ### Inputs
 
 | Parameter | Value |
-|-----------|-------|
-| `proj_dir` | `/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot` (various) |
-| `filepath` | Various: empty string, directory path, external path (`/etc/passwd`), nonexistent path, long path, indexed Python file with Rust language query |
+|---|---|
+| `proj_dir` | `/fake/proj` (mocked — any path) |
+| `filepath` | `/fake/proj/src/lib.rs` (mocked — any path) |
+| Mocked `get_function_spans` result | `[("top_level", 0, 2), ("Foo::bar", 4, 6)]` |
 
 ### Expected (spec-correct) Output
 
-`None` — for unindexed files, the specification requires returning `None` to signal fallback to regex extraction.
+`[("top_level", 0, 2)]` — only the top-level function, method excluded.
 
 ### Actual (buggy) Output
 
-`None` — the function correctly returned `None` for ALL unindexed files across 3 probe attempts and 12+ distinct test cases.
+`[("top_level", 0, 2), ("Foo::bar", 4, 6)]` — both the top-level function and the method are returned.
 
 ### How to Reproduce
 
@@ -68,14 +69,23 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
+from unittest.mock import MagicMock, patch
 from src.languages.rust import function_spans
 
-proj_dir = "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot"
-filepath = "/etc/passwd"  # file outside project, not indexed by codegraph
-result = function_spans(proj_dir, filepath)
-# actual (buggy) output: None
-# expected (correct) output: None
-# The function returns None correctly — bug NOT CONFIRMED
+# Simulate a CodeGraphExtractor that returns a mixed list
+mock_cg = MagicMock()
+mock_cg.get_function_spans.return_value = [
+    ("top_level", 0, 2),       # <-- top-level function
+    ("Foo::bar", 4, 6),        # <-- method inside impl block
+]
+
+with patch("src.languages.rust.CodeGraphExtractor") as mock_cls:
+    mock_cls.from_proj_dir.return_value = mock_cg
+    result = function_spans("/fake/proj", "/fake/proj/src/lib.rs")
+
+# actual (buggy) output: [("top_level", 0, 2), ("Foo::bar", 4, 6)]
+# expected (correct) output: [("top_level", 0, 2)]
+print(result)
 ```
 
 ---
@@ -83,72 +93,92 @@ result = function_spans(proj_dir, filepath)
 ## Probe Script
 
 ```python
+"""Probe: Confirm that function_spans returns methods in addition to top-level functions.
+
+The spec (src/languages/rust.py [SPEC] block) states that function_spans returns
+"one per top-level function declared in the file". However, the implementation
+delegates to CodeGraphExtractor.get_function_spans, which queries for both
+'function' AND 'method' kinds from the codegraph database. Methods inside impl
+blocks should be excluded per the spec but are included in practice.
+
+This probe mocks CodeGraphExtractor to return a mixed list and verifies that
+methods leak through.
+"""
 import sys
 import os
 
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot')
+# Ensure the project root is on sys.path so 'src' imports resolve.
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
-from src.languages.codegraph import CodeGraphExtractor
-from src.languages.rust import function_spans
 
-proj_dir = '/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot'
-expected = None
-any_bug = False
+def _run_probe():
+    from unittest.mock import MagicMock, patch
 
-def test(label, proj, fpath):
-    global any_bug
-    try:
-        actual = function_spans(proj, fpath)
-    except Exception as e:
-        print(f'EXCEPTION in "{label}": {type(e).__name__}: {e}', file=sys.stderr)
-        any_bug = True
-        return
-    if actual != expected:
-        print(f'BUG in "{label}": actual={actual!r} expected={expected!r}', file=sys.stderr)
-        any_bug = True
+    # Simulate a Rust file with:
+    #   fn top_level() {}       -- top-level function at lines 1-3 (0-indexed: 0-2)
+    #   impl Foo { fn bar() {} } -- method inside impl at lines 5-7 (0-indexed: 4-6)
+    mock_spans = [
+        ("top_level", 0, 2),
+        ("Foo::bar", 4, 6),
+    ]
+
+    mock_cg = MagicMock()
+    mock_cg.get_function_spans.return_value = mock_spans
+
+    with patch("src.languages.rust.CodeGraphExtractor") as mock_cls:
+        mock_cls.from_proj_dir.return_value = mock_cg
+
+        from src.languages.rust import function_spans
+
+        result = function_spans("/fake/proj", "/fake/proj/src/lib.rs")
+
+    if result is None:
+        return (
+            "ERROR",
+            "function_spans returned None — expected at least the mocked spans",
+        )
+
+    names = [name for name, _, _ in result]
+
+    has_top_level = "top_level" in names
+    has_method = "Foo::bar" in names
+
+    # Per spec: only top-level function declarations should be returned.
+    # If a method leaked through, the bug is confirmed.
+    if has_method:
+        return (
+            "CONFIRMED",
+            "function_spans returned method 'Foo::bar' (inside an impl block) "
+            f"in addition to top-level function 'top_level'. "
+            f"Spec requires only top-level functions. Full result: {result!r}",
+        )
+    elif has_top_level and not has_method:
+        return (
+            "NOT CONFIRMED",
+            f"function_spans correctly filtered to only top-level functions: {result!r}",
+        )
     else:
-        print(f'OK: "{label}" -> {actual!r}', file=sys.stderr)
+        return (
+            "NOT CONFIRMED",
+            f"Unexpected result (no top-level function found): {result!r}",
+        )
 
-# Verify from_proj_dir behavior
-cg_direct = CodeGraphExtractor.from_proj_dir(proj_dir)
-cg_from_subdir = CodeGraphExtractor.from_proj_dir(os.path.join(proj_dir, 'fm_agent'))
-print(f'cg from proj_dir: {cg_direct is not None}', file=sys.stderr)
-print(f'cg from subdir:  {cg_from_subdir is not None}', file=sys.stderr)
 
-if cg_from_subdir:
-    db_path = os.path.join(proj_dir, '.codegraph', 'codegraph.db')
-    db_root = os.path.dirname(os.path.dirname(os.path.abspath(db_path)))
-    print(f'DB root = {db_root}', file=sys.stderr)
-
-    test('subdir proj, internal file', os.path.join(proj_dir, 'fm_agent'),
-         os.path.join(proj_dir, 'fm_agent', 'bug_validation', 'summary.json'))
-
-    test('subdir proj, root file', os.path.join(proj_dir, 'fm_agent'),
-         os.path.join(proj_dir, 'config.py'))
-
-import sqlite3
-db_path = os.path.join(proj_dir, '.codegraph', 'codegraph.db')
-conn = sqlite3.connect(db_path)
-cur = conn.cursor()
-cur.execute("SELECT file_path FROM nodes WHERE language IN ('rust', 'python')")
-all_files = [r[0] for r in cur.fetchall()]
-conn.close()
-print(f'DB indexed files (first 5): {all_files[:5]}', file=sys.stderr)
-
-if any_bug:
-    print('CONFIRMED — bug triggered')
-else:
-    print('NOT CONFIRMED — function_spans correctly returns None for unindexed files')
+if __name__ == "__main__":
+    try:
+        status, msg = _run_probe()
+        print(f"{status} — {msg}")
+        if status == "ERROR":
+            sys.exit(1)
+    except Exception as exc:
+        print(f"ERROR — unhandled exception: {exc}")
+        sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-cg from proj_dir: True
-cg from subdir:  True
-DB root = /tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot
-OK: "subdir proj, internal file" -> None
-OK: "subdir proj, root file" -> None
-DB indexed files (first 5): ['config.py', 'config.py', 'config.py', 'config.py', 'config.py']
-NOT CONFIRMED — function_spans correctly returns None for unindexed files
+CONFIRMED — function_spans returned method 'Foo::bar' (inside an impl block) in addition to top-level function 'top_level'. Spec requires only top-level functions. Full result: [('top_level', 0, 2), ('Foo::bar', 4, 6)]
 ```

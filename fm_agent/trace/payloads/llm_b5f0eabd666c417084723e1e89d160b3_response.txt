@@ -1,0 +1,1 @@
+{"verdict": "MATCH", "counterexample": null, "offending_statements": null, "reason": "The base class method raises NotImplementedError, which satisfies the specification: it raises NotImplementedError when invoked directly on the abstract base class. The requirement for concrete subclasses to override is a design contract, not a behavior of this method."}

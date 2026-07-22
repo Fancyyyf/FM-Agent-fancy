@@ -1,44 +1,86 @@
+"""Probe script for bug: _select_functions_by_source missing return statement.
+
+Bug claim: After reaching line 40, the function falls off and returns None
+instead of the required (all_by_source, keep_by_source) tuple.
+
+Verification approach: static inspection of the function source code.
+"""
+
+import ast
 import sys
-import os
-import tempfile
-import shutil
+import textwrap
+from pathlib import Path
 
-# Add project root to path so src.entry_reasoning_pipeline resolves
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# Actually, use the snapshot root
-sys.path.insert(0, "/tmp/fm_agent_wt_FM-Agent_9w930mtx/snapshot")
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+SOURCE_FILE = REPO_ROOT / "src" / "entry_reasoning_pipeline.py"
 
-try:
-    from src.entry_reasoning_pipeline import _select_functions_by_source
 
-    # Create a temp directory with a single valid Python source file containing one function.
-    # This ensures extraction finds functions, but entry_func won't match any of them.
-    tmp_dir = tempfile.mkdtemp(prefix="bug_probe_")
-    src_file = os.path.join(tmp_dir, "hello.py")
-    with open(src_file, "w") as f:
-        f.write("def hello():\n    return 'world'\n")
+def _find_function_node(tree, func_name):
+    """Find the AST FunctionDef node for the given function name."""
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == func_name:
+            return node
+    return None
 
+
+def _has_explicit_return(func_node):
+    """Check if the function body contains at least one explicit Return statement."""
+    for node in ast.walk(func_node):
+        if isinstance(node, ast.Return) and node.value is not None:
+            return True
+    return False
+
+
+def _find_empty_phase_files_handler(func_node):
+    """Find the if-not-phase_files block and check it has a raise or return.
+
+    Returns (found: bool, has_raise_or_return: bool).
+    """
+    for node in ast.walk(func_node):
+        if not isinstance(node, ast.If):
+            continue
+        # Check if test is: not phase_files  (UnaryOp(Not(), Name('phase_files')))
+        test = node.test
+        if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
+            if isinstance(test.operand, ast.Name) and test.operand.id == "phase_files":
+                # Check if body contains a Raise or Return
+                for stmt in node.body:
+                    if isinstance(stmt, (ast.Raise, ast.Return)):
+                        return True, True
+                return True, False
+    return False, False
+
+
+def main():
     try:
-        # According to the spec, this should raise ValueError because entry_func
-        # is not among the extracted functions.
-        _select_functions_by_source(
-            tmp_dir,
-            "nonexistent_module::nonexistent_func",
-            end_funcs=[],
-        )
-        # If we reach here, no ValueError was raised — the bug is NOT confirmed.
-        print("NOT CONFIRMED — no ValueError raised for missing entry_func; the check is not present")
-    except ValueError as e:
-        msg = str(e)
-        if "entry_func" in msg and "not found" in msg:
-            print(f"NOT CONFIRMED — ValueError was raised for missing entry_func, as the spec requires: {msg}")
+        source = SOURCE_FILE.read_text()
+        tree = ast.parse(source)
+        func = _find_function_node(tree, "_select_functions_by_source")
+
+        if func is None:
+            print("ERROR: _select_functions_by_source not found in source")
+            sys.exit(1)
+
+        # Check 1: Does function have an explicit return?
+        has_return = _has_explicit_return(func)
+
+        # Check 2: Does the empty phase_files guard raise/return?
+        found_guard, has_raise = _find_empty_phase_files_handler(func)
+
+        # Bug is CONFIRMED if:
+        #   - No explicit return (function falls off => returns None)
+        #   - OR the empty phase_files guard has no raise/return (falls through)
+        bug_confirmed = not has_return or (found_guard and not has_raise)
+
+        if bug_confirmed:
+            print(f"CONFIRMED — has_return={has_return}, found_guard={found_guard}, has_raise={has_raise}")
         else:
-            print(f"CONFIRMED — unexpected ValueError raised (not the entry_func check): {msg}")
+            print(f"NOT CONFIRMED — has_return={has_return}, found_guard={found_guard}, has_raise={has_raise}")
+
     except Exception as e:
-        print(f"ERROR: {type(e).__name__}: {e}")
+        print(f"ERROR: {e}")
         sys.exit(1)
-    finally:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
-except Exception as e:
-    print(f"ERROR during import/setup: {type(e).__name__}: {e}")
-    sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,37 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all Go files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("go", proj_dir) if cg else {}
+```
+
+Condition A (what the code actually does):
+If CodeGraphExtractor.from_proj_dir(proj_dir) returns None, the function returns an empty dictionary {}. Otherwise, let cg be the returned instance; the function returns cg.get_functions_by_file('go', proj_dir), which is a dict mapping absolute file paths to lists of (func_name, body) tuples with each body ending with newline, tuples ordered by ascending line number, duplicate names disambiguated with numeric suffixes, unreadable source files silently skipped, and an empty dict if 'go' is not a recognized language. Formally: ret = ({} if cg is None else cg.get_functions_by_file('go', proj_dir)).
+
+Condition B (what the specification requires):
+- Returns a dict whose keys are absolute file paths (strings) of Go source files
+    and whose values are lists of (func_name, body) tuples for all function
+    definitions extracted from each file
+  - func_name is a string containing the canonicalized function identifier; body is
+    a string containing the full source text of the function definition
+  - Returns an empty dict {} when no codegraph backend is available for Go
+  - Only .go source files within proj_dir are processed
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> Optional[CodeGraphExtractor]
+Pre-condition: proj_dir is a valid project root path
+  Post-condition: Returns a CodeGraphExtractor instance configured for the project
+    when a codegraph backend is available; returns None otherwise
+
+CodeGraphExtractor.get_functions_by_file(lang_key: str, proj_dir: str = None) -> dict
+Pre-condition: lang_key is a string; proj_dir is a string path to a directory or None;
+    the receiver has an initialized codegraph database accessible for reading
+  Post-condition: Returns a dict whose keys are absolute file paths and whose values
+    are lists of (func_name, body) tuples, each body ending with a newline, ordered by
+    ascending line number. Duplicate function names in the same file are disambiguated
+    with numeric suffixes. If lang_key is not recognized, returns an empty dict;
+    unreadable source files are silently skipped.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

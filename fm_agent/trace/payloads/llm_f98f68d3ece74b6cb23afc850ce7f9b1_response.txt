@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a string that is the result of stripping leading and trailing whitespace from the original `settings.llm.effort`. The original `settings.llm.effort` is unchanged. Formal: let `old = settings.llm.effort` at function entry. Then the return value `r` satisfies `r = old.strip()` ∧ `isinstance(r, str)` ∧ `settings.llm.effort = old`."
+}

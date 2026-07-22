@@ -1,36 +1,33 @@
-"""Probe script for bug src--llm_client-py--_stable_user_id.
-
-Spec claim: _stable_user_id() always returns a non-empty string.
-Bug: os.environ.get("INJECT_ID") or _DEFAULT_INJECT_USER_ID can return falsy
-     when INJECT_ID is unset AND _DEFAULT_INJECT_USER_ID is falsy.
-"""
-
 import sys
 import os
 
-# Add repo root to sys.path so that 'src' and 'config' are importable
+# Add the repo root to sys.path so we can import the package
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../..")
 
-# Ensure INJECT_ID is NOT set in the environment
-os.environ.pop("INJECT_ID", None)
-
-# Import the module via its public entry point
-import src.llm_client as llm_client
-
 try:
-    # Monkey-patch _DEFAULT_INJECT_USER_ID to an empty string to trigger the bug
-    llm_client._DEFAULT_INJECT_USER_ID = ""
+    import config
+    from src.llm_client import _stable_user_id
 
-    actual = llm_client._stable_user_id()
-    # Spec requires: "The returned string is non-empty in all cases"
-    # Bug is triggered if the return is falsy (empty string or None)
-    bug_triggered = not actual
+    # Store original value and set inject.id to a non-string truthy value (integer)
+    original_id = config.settings.inject.id
+    config.settings.inject.id = 5  # truthy non-string → or returns this instead of the default
+
+    actual = _stable_user_id()
+
+    # Restore original value
+    config.settings.inject.id = original_id
+
+    # Bug is confirmed if _stable_user_id returned a non-string value
+    # The spec requires it to always return a string, but `or` returns the
+    # first truthy operand as-is — so when inject.id is a truthy non-string,
+    # the function returns that non-string value.
+    passed = not isinstance(actual, str)
 
 except Exception as e:
-    print(f"ERROR: {e}")
+    print(f'ERROR: {e}')
     sys.exit(1)
 
-if bug_triggered:
-    print(f"CONFIRMED — actual: {actual!r} | expected: non-empty string per spec")
+if passed:
+    print(f'CONFIRMED — actual type: {type(actual).__name__}, value: {actual!r} | expected type: str')
 else:
-    print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+    print(f'NOT CONFIRMED — actual is string: {actual!r}')

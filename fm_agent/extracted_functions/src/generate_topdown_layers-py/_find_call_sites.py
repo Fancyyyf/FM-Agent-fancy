@@ -27,10 +27,8 @@
 
 # [INFO]
 # _strip_comments_from_source(text, lang_key) -> str
-#   Pre-condition: text is source code text; lang_key is a recognized language key
-#   Post-condition: returns the source text with all comment content removed per
-#     the language's comment syntax; non-comment text, including whitespace and
-#     line structure, is preserved
+#   Pre-condition: text is a string containing source code (may be empty); lang_key is a string identifying a programming language
+#   Post-condition: returns a string of the same length as text, where characters inside comments and string literals are replaced by spaces (newlines within comments are preserved); all other characters remain unchanged
 # [SPLIT]
 # _get_call_regex(lang_key) -> Pattern
 #   Pre-condition: lang_key is a recognized language key

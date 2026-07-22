@@ -1,42 +1,67 @@
+"""Probe script for bug ID: src--languages--rust-py--batch_extract
+Tests whether batch_extract filters out empty-list values from get_functions_by_file.
+Spec requires non-empty lists; code passes through whatever get_functions_by_file returns.
+"""
 import sys
-from unittest.mock import MagicMock
+import os
 
-try:
-    import src.languages.rust
-    import src.languages.codegraph
+# The probe workspace is a temp dir; add snapshot to path to import the package.
+sys.path.insert(0, "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot")
 
-    # Save original for cleanup
-    _original = src.languages.rust.CodeGraphExtractor
 
-    # Patch CodeGraphExtractor to return a result with an empty list for one file
-    mock_extractor_cls = MagicMock()
-    mock_cg = MagicMock()
-    mock_cg.get_functions_by_file.return_value = {
-        "/proj/src/lib.rs": [("add", "fn add() { 1 + 2 }")],
-        "/proj/src/empty.rs": [],  # file with zero functions -> empty list, violates spec
+def main():
+    from unittest.mock import MagicMock, patch
+
+    # Mock CodeGraphExtractor so from_proj_dir returns a mock with
+    # get_functions_by_file returning a dict containing an empty-list entry.
+    mock_extractor = MagicMock()
+    mock_extractor.get_functions_by_file.return_value = {
+        "/fake/proj/src/main.rs": [
+            ("main", "fn main() {\n    println!(\"hello\");\n}\n"),
+        ],
+        "/fake/proj/src/empty_mod.rs": [],   # <-- spec violation: non-empty required
     }
-    mock_extractor_cls.from_proj_dir.return_value = mock_cg
-    src.languages.rust.CodeGraphExtractor = mock_extractor_cls
 
-    result = src.languages.rust.batch_extract("/proj")
+    with patch(
+        "src.languages.rust.CodeGraphExtractor"
+    ) as mock_cls:
+        mock_cls.from_proj_dir.return_value = mock_extractor
 
-    # Restore original
-    src.languages.rust.CodeGraphExtractor = _original
+        from src.languages.rust import batch_extract
 
-    has_empty = any(isinstance(v, list) and len(v) == 0 for v in result.values())
+        result = batch_extract("/fake/proj")
 
-    if has_empty:
-        actual_empty_files = [k for k, v in result.items() if isinstance(v, list) and len(v) == 0]
+    # Check: does the result contain the empty-list entry?
+    empty_key = "/fake/proj/src/empty_mod.rs"
+    spec_nonempty = "Each value must be a non-empty list of (function_name, function_body) tuples"
+
+    if empty_key in result and result[empty_key] == []:
+        confirmed = True
         print(
-            f'CONFIRMED — spec requires every value be a non-empty list, '
-            f'but these files have empty lists: {actual_empty_files!r}. '
-            f'Full result: {result!r}'
+            f"CONFIRMED — batch_extract does not filter empty-list values."
+            f" File '{empty_key}' maps to [] but spec requires {spec_nonempty}"
         )
     else:
-        print(f'NOT CONFIRMED — no empty lists found: {result!r}')
+        confirmed = False
+        if empty_key not in result:
+            print(
+                f"NOT CONFIRMED — empty-list entry was filtered out"
+                f" (key '{empty_key}' not in result)"
+            )
+        else:
+            print(
+                f"NOT CONFIRMED — empty-list entry was not empty:"
+                f" result[{empty_key!r}] = {result[empty_key]!r}"
+            )
 
-except Exception as e:
-    print(f'ERROR: {e}')
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    sys.exit(0 if confirmed else 0)  # always exit 0; verdict is in stdout
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

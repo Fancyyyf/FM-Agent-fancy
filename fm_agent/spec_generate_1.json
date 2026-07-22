@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: config.py\n#\n# _LayeredSource.__call__(self) -> dict\n#\n# Pre-condition:\n#   - None.\n#\n# Post-condition:\n#   - Returns a dictionary representing the resolved configuration for a Pydantic\n#     BaseSettings model. Each top-level key corresponds to a Settings field name;\n#     the associated value is a nested dictionary of sub-field values for that\n#     nested model field.\n#   - The returned dictionary contains only explicitly configured values (sourced\n#     from a TOML file and/or environment variables); no model-level defaults are\n#     included.\n#   - Multiple calls on the same instance return the identical dictionary object\n#     with unchanged content.\n#   - The call always succeeds; it never raises an exception.\n# [SPEC]",
+  "info_updated": false,
+  "new_info": "",
+  "updated_callees": []
+}

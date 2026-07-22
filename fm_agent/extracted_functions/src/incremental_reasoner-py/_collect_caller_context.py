@@ -26,11 +26,7 @@
 # [SPLIT]
 # extract_info_block(file_path) -> Optional[dict]
 #   Pre-condition: file_path is a pathlib.Path pointing to an extracted function file
-#   Post-condition: If the file contains an [INFO] block (delimited by "# [INFO]" start and end markers), returns a parsed representation of the block; returns None if the file exists but contains no [INFO] block
-# [SPLIT]
-# extract_callee_spec_from_info(info_block, fqn, aliases) -> Optional[str]
-#   Pre-condition: info_block is a parsed [INFO] block; fqn is a non-empty FQN string; aliases is an iterable of alias strings
-#   Post-condition: Searches the info block for an entry whose callee FQN matches fqn or any string in aliases; when exactly one match is found, returns its full textual content; when no entry matches, returns None
+#   Post-condition: If the file contains an [INFO] block (delimited by "
 # [INFO]
 
 def _collect_caller_context(fqn, callers_map, file_map, edge_aliases_map=None):

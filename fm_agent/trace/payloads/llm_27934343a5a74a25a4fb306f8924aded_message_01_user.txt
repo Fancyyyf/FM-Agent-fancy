@@ -1,0 +1,119 @@
+Programming language: Python
+
+Pre-condition:
+After executing lines 41–80 of the given code block, assuming the pre-condition P (which includes _resume_skip = False, attempt = 1, and the workflow file already deployed) and that the program counter is at line 41, one of two mutually exclusive outcomes occurs.
+
+Scenario 1 – Normal completion (no exception):
+  The variable prompt is updated to prompt0 + ( if is_incremental then " " + incremental_reminder else "" ) + ( if phase_plan_errors is non-empty then "\n\n" + schema_repair_prompt(phase_plan_errors) else "" ), where prompt0 is the prompt defined by P. The variable prompt_file equals os.path.join(proj_dir, "fm_agent", "workflow_generate_phases.md") (which is the same as wf_dst from P). The variable command is the result of build_llm_cli_command(model=OPENCODE_SETUP_MODEL, prompt=prompt, cwd=proj_dir, files=[prompt_file]). The function run_opencode_traced is called with arguments (proj_dir, work_dir, command, stage="generate_phases_json", input_files=["fm_agent/workflow_generate_phases.md", ...], output_files=["fm_agent/phases.json"], summary="OpenCode generate phases.json attempt 1", metadata={"attempt":1}) and returns a CompletedProcess (exit code 0). As a consequence, a new trace event is appended to fm_agent/trace/events.jsonl with stage="generate_phases_json", summary="OpenCode generate phases.json attempt 1", metadata={"attempt":1}, and a success outcome. The LLM subprocess executed by this call may have created or modified fm_agent/phases.json, but the exact content of phases.json is not further constrained by this block alone. After line 80, execution continues with the subsequent statement (not shown).
+
+Scenario 2 – Exception raised:
+  An exception (typically CalledProcessError from run_opencode_traced) occurs and propagates out of the block, terminating the function. In this case, the assignments to prompt, prompt_file, and command are in effect up to the point of the exception. Because run_opencode_traced is always called (the only non-trivial call that can raise), its post-condition guarantees that a trace event is recorded; therefore fm_agent/trace/events.jsonl will contain a new entry with the same stage, summary, and metadata but indicating failure (non‑zero exit or error). If the exception occurs before run_opencode_traced is reached (e.g., a theoretical failure in build_llm_cli_command), then no trace event is written for this attempt, but given the pre‑conditions model, prompt, cwd, and files are valid, such a failure is not expected. The state of fm_agent/phases.json after the exception is unspecified; the LLM subprocess may have partially written data. No further side effects from the block occur.
+
+Formal post-condition Q (using the state after P, with attempt=1, initial prompt=prompt0, wf_dst=os.path.join(work_dir, "fm_agent", "workflow_generate_phases.md"), trace_file=os.path.join(proj_dir, "fm_agent", "trace", "events.jsonl")):
+
+Q ≡ ( ∃ prompt_updated : string, cmd : CommandType.
+      prompt_updated = prompt0 ^ (is_incremental ? " " ^ incremental_reminder : "") ^ (phase_plan_errors ≠ [] ? "\n\n" ^ schema_repair_prompt(phase_plan_errors) : "")
+      ∧ prompt = prompt_updated
+      ∧ prompt_file = wf_dst
+      ∧ cmd = build_llm_cli_command(OPENCODE_SETUP_MODEL, prompt_updated, proj_dir, [wf_dst])
+      ∧ ( if no exception occurs then
+            run_opencode_traced(proj_dir, work_dir, cmd, "generate_phases_json", I, O, S, M) returned normally
+            ∧ the content of trace_file = initial_content ^ [one trace entry E with E.stage="generate_phases_json", E.summary=S, E.metadata={"attempt":1}, E.exit_code=0]
+            ∧ program_counter points just after line 80
+          else
+            ( exception raised )
+            ∧ if exception originates inside run_opencode_traced then
+                the content of trace_file = initial_content ^ [one trace entry E with E.stage="generate_phases_json", E.summary=S, E.metadata={"attempt":1}, E.exit_code≠0]
+              else
+                trace_file unchanged
+            ∧ the function terminates with that exception
+      )
+    )
+
+Code block:
+```python
+Line 81:             )
+Line 82:         except subprocess.CalledProcessError as e:
+Line 83:             logging.warning(f"Stage 1 attempt {attempt}: opencode exited with code {e.returncode}")
+Line 84:         phase_plan_errors = (
+Line 85:             _phase_plan_schema_errors(phases_json)
+Line 86:             if os.path.exists(phases_json)
+Line 87:             else ["phases.json is missing"]
+Line 88:         )
+Line 89:         phase_plan_ready = False
+Line 90:         if not phase_plan_errors:
+Line 91:             if submodules:
+Line 92:                 phase_plan_ready = _phases_cover_current_sources(
+Line 93:                     phases_json, proj_dir, submodules
+Line 94:                 )
+Line 95:             elif is_incremental:
+Line 96:                 phase_plan_ready = (
+Line 97:                     os.path.getmtime(phases_json) != prev_mtime
+Line 98:                     or _phases_cover_current_sources(phases_json, proj_dir)
+Line 99:                 )
+Line 100:             else:
+Line 101:                 phase_plan_ready = True
+Line 102:         if phase_plan_ready:
+Line 103:             break
+Line 104:         failure = "update phases.json" if is_incremental else "produce phases.json"
+Line 105:         if phase_plan_errors:
+Line 106:             missing = (
+Line 107:                 "phases.json schema validation failed: "
+Line 108:                 + "; ".join(phase_plan_errors)
+Line 109:             )
+Line 110:         else:
+Line 111:             missing = (
+Line 112:                 "phases.json was not updated"
+Line 113:                 if is_incremental
+Line 114:                 else "phases.json missing or invalid"
+Line 115:             )
+Line 116:         if attempt < OPENCODE_MAX_RETRIES:
+Line 117:             delay = 10
+Line 118:             print(
+Line 119:                 f"[Pipeline] Stage 1 failed to {failure} (attempt {attempt}/{OPENCODE_MAX_RETRIES}). "
+Line 120:                 f"Retrying in {delay}s..."
+Line 121:             )
+Line 122:             logging.warning(f"Stage 1 attempt {attempt} failed: {missing}. Retrying in {delay}s.")
+Line 123:             time.sleep(delay)
+Line 124:         else:
+Line 125:             print(
+Line 126:                 f"[Pipeline] ERROR: Stage 1 failed after {OPENCODE_MAX_RETRIES} attempts. "
+Line 127:                 f"{missing}. "
+Line 128:                 f"Check {os.path.basename(proj_dir)}/fm_agent/trace/ for details."
+Line 129:             )
+Line 130:             sys.exit(1)
+```
+
+Additional context:
+_phase_plan_complete(work_dir) -> bool
+Pre-condition: work_dir is an existing directory path
+  Post-condition: Returns True when phases.json exists under work_dir and satisfies the pipeline's completeness criteria; returns False otherwise
+
+_prepare_workflow_file(proj_dir, work_dir, script_dir, workflow_filename) -> None
+Pre-condition: proj_dir, work_dir, script_dir are existing directory paths; workflow_filename is a string naming a workflow instruction file
+  Post-condition: The workflow instruction file is copied from script_dir into fm_agent/ under work_dir
+
+build_llm_cli_command(model, prompt, cwd, files=None) -> CommandType
+Pre-condition: model is a string identifying a configured LLM model; prompt is a non-empty string; cwd is an existing directory path; files is None or a list of file path strings
+  Post-condition: Returns a command suitable for execution that invokes the configured backend with the given prompt and file attachments in the specified working directory
+
+run_opencode_traced(proj_dir, work_dir, command, stage, input_files, output_files, summary, metadata) -> CompletedProcess
+Pre-condition: All arguments are well-formed; command is a list of strings constituting a valid CLI command
+  Post-condition: Executes the command as a subprocess within work_dir; on non-zero exit raises subprocess.CalledProcessError; records a trace event to fm_agent/trace/events.jsonl with the given stage, summary, and metadata; returns a CompletedProcess on zero exit
+
+list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+Pre-condition: work_dir is an existing directory path
+  Post-condition: Returns a sorted list of project-relative file paths for all user-provided domain knowledge files staged under spec_prompts/domain_context/user_knowledge/; returns an empty list when no files are staged
+
+_phases_cover_current_sources(phases_json, proj_dir, submodules=None) -> bool
+Pre-condition: phases_json is a path to an existing JSON file; proj_dir is an existing directory path; submodules is None or an iterable of subdirectory name strings
+  Post-condition: Returns True when phases_json is a readable, valid JSON file with at least one source file entry, every listed source file exists under proj_dir (and under a submodule if submodules is given), and every source file under the relevant directories is listed; returns False when any condition fails. Backslash separators in paths are treated as forward slashes.
+
+_json_file_is_valid(phases_json) -> bool
+Pre-condition: phases_json is a file path string
+  Post-condition: Returns True when the path refers to an existing regular file whose content is valid JSON; returns False otherwise
+
+_phase_plan_schema_errors(phases_path) -> list[str]
+Pre-condition: phases_path is a string.
+  Post-condition: Returns a list of human-readable error message strings; empty list indicates the file is valid JSON conforming to the required phases schema; non-empty list indicates an error such as missing file, invalid JSON, or schema violation.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

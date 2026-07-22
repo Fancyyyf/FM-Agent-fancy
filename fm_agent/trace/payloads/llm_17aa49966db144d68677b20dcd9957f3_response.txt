@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "path='/tmp/symlink' where /tmp/symlink is a symbolic link to /tmp/real. source=None (or any). The code resolves the symlink to the real path, so the URI sent is file:///tmp/real, but the specification requires the URI to represent the path argument (file:///tmp/symlink).",
+  "offending_statements": "Line 2:         document = Path(path).resolve()",
+  "reason": "The code uses Path(path).resolve() which resolves symbolic links, so the resulting URI does not represent the original path argument as required by the specification. The specification requires the absolute file:// URI to represent the path argument, not its resolved target."
+}

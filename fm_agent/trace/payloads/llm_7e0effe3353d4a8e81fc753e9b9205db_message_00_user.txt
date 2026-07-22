@@ -1,0 +1,127 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::languages::codegraph-py::_node_fqn_map` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _extraction_ident, _fqn_for.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _node_fqn_map(cur, cg_langs) -> dict:
+    """Return {node_id: fqn} for every function/method node in the given languages.
+
+    The per-file name dedup (``Flush``, ``Flush_1``, ...) uses the SAME rule and
+    ordering as get_functions_by_file (``ORDER BY file_path, start_line``, then a
+    per-(file, name) counter), so the FQN assigned to a node here matches the FQN
+    the extracted file for that node receives. Keeping the two in lockstep is what
+    makes the call-edge identities line up with the extracted-function identities.
+    """
+    placeholders = ",".join("?" * len(cg_langs))
+    cur.execute(
+        f"""
+        SELECT id, name, qualified_name, file_path, start_line
+        FROM nodes
+        WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+        ORDER BY file_path, start_line
+        """,
+        cg_langs,
+    )
+    counts: dict = {}
+    result: dict = {}
+    for node_id, name, qualified_name, file_path, _start in cur.fetchall():
+        ident = _extraction_ident(name, qualified_name)
+        key = (file_path, ident)
+        c = counts.get(key, 0)
+        counts[key] = c + 1
+        deduped = ident if c == 0 else f"{ident}_{c}"
+        result[node_id] = _fqn_for(file_path, deduped)
+    return result
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/languages/codegraph-py/_node_fqn_map.py
+#
+# _node_fqn_map(cur, cg_langs) -> dict
+#
+# Pre-condition:
+#   - cur is a database cursor connected to a codegraph database containing a
+#     nodes table with columns id, name, file_path, start_line, kind, and
+#     language
+#   - cg_langs is a non-empty sequence of language key strings
+#
+# Post-condition:
+#   - Returns a dict mapping each node's id to its fully-qualified function
+#     name (FQN)
+#   - The mapping includes exactly the rows from the nodes table whose kind
+#     is either 'function' or 'method' and whose language is one of the given
+#     cg_langs values, ordered by (file_path ASC, start_line ASC)
+#   - Each FQN is derived from the node's file_path and a canonicalized,
+#     deduplicated function name in the canonical convention where path
+#     components are joined by "::" and the source file extension in the
+#     parent directory component is replaced by a hyphen
+#   - Function name canonicalization strips angle-bracket template parameters
+#     and normalizes operator-overload names to safe identifier forms
+#   - When N > 1 nodes share the same file_path and canonicalized name, the
+#     first such node in the result ordering receives the canonicalized name
+#     without a suffix, and each subsequent node (k-th, 1-indexed) receives
+#     the canonicalized name suffixed with _k
+#   - Returns an empty dict when the query matches no rows
+#   - The deduplication rule and ordering correspond to those used by
+#     get_functions_by_file, ensuring that the FQN assigned to a node here
+#     matches the FQN the extracted function file receives for the same node
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _bare_function_name(name) -> str
+#   Pre-condition: name is a string containing a function name possibly
+#     including angle-bracket template parameters
+#   Post-condition: Returns the function name with any angle-bracket-delimited
+#     template parameters and their brackets removed
+# [SPLIT]
+# canonicalize(bare) -> str
+#   Pre-condition: bare is a string containing a function name with template
+#     parameters already stripped
+#   Post-condition: Returns a canonicalized safe identifier form of the
+#     function name; operator-overload names are normalized to deterministic
+#     identifier strings
+# [SPLIT]
+# _fqn_for(file_path, deduped) -> str
+#   Pre-condition: file_path is a string path to a source file; deduped is a
+#     string containing the deduplicated canonical function name
+#   Post-condition: Returns a fully-qualified function name string in the
+#     canonical FQN format where directory components and the file-derived
+#     component are separated by "::"
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_extraction_ident, _fqn_for) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_extraction_ident, _fqn_for). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

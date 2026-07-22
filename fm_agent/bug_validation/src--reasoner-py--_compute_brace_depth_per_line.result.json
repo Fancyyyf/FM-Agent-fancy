@@ -1,11 +1,11 @@
 {
   "id": "src--reasoner-py--_compute_brace_depth_per_line",
-  "source_file": "src/reasoner-py/_compute_brace_depth_per_line.py",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/reasoner-py/_compute_brace_depth_per_line.py",
   "function_name": "_compute_brace_depth_per_line",
   "confirmation_status": "confirmed",
-  "attempts": 1,
+  "attempts": "1",
   "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_compute_brace_depth_per_line.py",
   "detail_file": "fm_agent/bug_validation/src--reasoner-py--_compute_brace_depth_per_line.md",
-  "probe_stdout": "CONFIRMED — actual: [0, -1] | expected: [0, 0]",
-  "trigger_summary": "Multi-line block comment /* ... */ is not tracked across lines; braces on lines after an unclosed /* are incorrectly counted, producing negative depth."
+  "probe_stdout": "CONFIRMED — actual: [0, 1, 0] | expected: [0, 0, 0]",
+  "trigger_summary": "Multi-line string not tracked: unterminated double quote on line 0 causes braces on subsequent lines to be counted instead of excluded."
 }

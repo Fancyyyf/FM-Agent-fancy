@@ -1,0 +1,103 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::generate_batch_prompts-py::extract_callee_spec_from_info` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _callee_match_names, _info_line_mentions_name.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def extract_callee_spec_from_info(
+    info_block: str,
+    callee_fqn: str,
+    aliases: Optional[Sequence[str]] = None,
+) -> Optional[str]:
+    """Find the [SPLIT]-separated entry for callee_fqn in an info_block."""
+    # Detect comment prefix from the info_block content itself
+    prefix = ""
+    for line in info_block.splitlines():
+        stripped = line.strip()
+        if stripped:
+            idx = stripped.find("[SPLIT]")
+            if idx != -1:
+                prefix = stripped[:idx].rstrip()
+                break
+    # If no [SPLIT] found in block, infer prefix from first non-empty line
+    if not prefix:
+        for line in info_block.splitlines():
+            stripped = line.strip()
+            if stripped:
+                m = re.match(r'^(\S+)\s', stripped)
+                if m:
+                    prefix = m.group(1)
+                break
+
+    split_tag = f"{prefix} [SPLIT]" if prefix else "[SPLIT]"
+    names = _callee_match_names(callee_fqn, aliases or ())
+    for entry in info_block.split(split_tag):
+        entry = entry.strip()
+        if not entry or "(no callees)" in entry:
+            continue
+        first_line = entry.split("\n")[0].strip()
+        # Strip the comment prefix to get the actual content
+        if prefix and first_line.startswith(prefix):
+            first_line = first_line[len(prefix):].strip()
+        if any(_info_line_mentions_name(first_line, name) for name in names):
+            return entry
+    return None
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/generate_batch_prompts-py/extract_callee_spec_from_info.py
+#
+# extract_callee_spec_from_info(info_block, callee_fqn, aliases) -> Optional[str]
+#
+# Pre-condition:
+#   - info_block is a string containing zero or more callee entries, where each entry is a block of lines delimited by "[SPLIT]" markers; each entry begins with a signature line followed by Pre-condition and Post-condition lines
+#   - callee_fqn is a non-empty string representing a fully qualified function name
+#   - aliases is None or a sequence of alternative name strings for the same callee
+#
+# Post-condition:
+#   - If info_block contains a [SPLIT]-delimited entry whose first line mentions callee_fqn or any of the aliases (when compared with the comment prefix stripped from that line), returns the full text of that entry exactly as it appears in info_block; otherwise returns None
+#   - Entries whose content includes the literal string "(no callees)" are treated as non-matching regardless of other content
+#   - The comment prefix used for stripping is the text preceding a "[SPLIT]" marker within info_block itself, or the first whitespace-delimited token of the block's first non-empty line if no "[SPLIT]" marker is present
+#   - Within the first line of a candidate entry, the mention check succeeds if any of the search names (callee_fqn or alias) appears as a substring or token
+#   - The returned entry text preserves the original formatting and comment prefix as found in info_block
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# (no callees)
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_callee_match_names, _info_line_mentions_name) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_callee_match_names, _info_line_mentions_name). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

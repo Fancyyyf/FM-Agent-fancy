@@ -22,9 +22,6 @@
 # [INFO]
 
 def _timeout_seconds() -> int:
-    value = os.environ.get("ELP_TIMEOUT_SECONDS", str(_DEFAULT_TIMEOUT_SECONDS))
-    try:
-        return max(1, int(value))
-    except ValueError:
-        logging.warning("Invalid ELP_TIMEOUT_SECONDS=%r; using %d", value, _DEFAULT_TIMEOUT_SECONDS)
-        return _DEFAULT_TIMEOUT_SECONDS
+    # ELP_TIMEOUT_SECONDS -> erlang.timeout_s is validated at config load (a
+    # non-integer value fails fast at startup), so it is always an int here.
+    return max(1, settings.erlang.timeout_s)

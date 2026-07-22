@@ -21,7 +21,7 @@
 # [SPLIT]
 # cg.get_function_spans(lang_key: str, filepath: str) where lang_key="cpp"
 #   Pre-condition: cg is a valid CodeGraphExtractor instance bound to the project
-#   Post-condition: Returns a list of (name, start, end) tuples for functions found in the given file, or None if the file is not indexed
+#   Post-condition: Returns a list of (name, start, end) tuples for functions found in the given file, or None if the codegraph backend cannot provide function spans for the file (e.g., language not recognized, file not indexed, file contains no functions, or file path not resolved)
 # [INFO]
 
 def function_spans(proj_dir: str, filepath: str):

@@ -1,0 +1,85 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::env_check-py::_check_comment_checker` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: (none).
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _check_comment_checker():
+    if not os.path.exists(OH_MY_OPENAGENT_CONFIG):
+        return False, f"oh-my-openagent config not found at {OH_MY_OPENAGENT_CONFIG}"
+
+    try:
+        with open(OH_MY_OPENAGENT_CONFIG, "r") as f:
+            cfg = json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        return False, f"Failed to read {OH_MY_OPENAGENT_CONFIG}: {e}"
+
+    if "comment-checker" not in cfg.get("disabled_hooks", []):
+        return False, (
+            "comment-checker hook is NOT disabled. FM-Agent writes function "
+            "specifications as comment blocks, which the comment-checker may "
+            "intercept, wasting tokens or deleting specs. Add "
+            '"disabled_hooks": ["comment-checker"] to ' + OH_MY_OPENAGENT_CONFIG
+        )
+
+    return True, None
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: fm_agent/extracted_functions/src/env_check-py/_check_comment_checker.py
+#
+# _check_comment_checker() -> (bool, Optional[str])
+#
+# Pre-condition:
+#   - OH_MY_OPENAGENT_CONFIG is a string path to the oh-my-openagent JSON
+#     configuration file
+#   - The filesystem is accessible for existence checks and file reads at that path
+#
+# Post-condition:
+#   - Returns (True, None) when the config file at OH_MY_OPENAGENT_CONFIG exists,
+#     parses as valid JSON, and the value of key "disabled_hooks" (defaulting to an
+#     empty list when absent) contains the string "comment-checker"
+#   - Returns (False, error_message) when the config file does not exist at
+#     OH_MY_OPENAGENT_CONFIG, with the error_message identifying the missing path
+#   - Returns (False, error_message) when the config file exists but cannot be
+#     parsed as valid JSON or cannot be opened for reading (IOError), with the
+#     error_message including the failure reason
+#   - Returns (False, error_message) when the config file exists and parses
+#     successfully but "disabled_hooks" does not contain "comment-checker", with
+#     the error_message describing the corrective action required
+#   - Does not modify any filesystem state
+# [SPEC]
+
+This function has no callees, so there is no [INFO] block to maintain.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees ((none)). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

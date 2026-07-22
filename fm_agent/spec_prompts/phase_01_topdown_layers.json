@@ -1,15 +1,43 @@
 {
   "phase": 1,
   "phase_name": "Environment & Pipeline Setup",
-  "total_functions": 148,
+  "total_functions": 156,
   "total_layers": 8,
   "layers": [
     {
       "layer": 0,
       "functions": [
         {
-          "name": "dashboard-py::cache_hit_rate",
-          "file": "extracted_functions/dashboard-py/cache_hit_rate.py",
+          "name": "config-py::Settings::settings_customise_sources",
+          "file": "extracted_functions/config-py/Settings::settings_customise_sources.py",
+          "unit": "config",
+          "phase1_callers": [],
+          "phase1_callees": [
+            "config-py::_LayeredSource::__init__"
+          ],
+          "all_callees": [
+            "config-py::_LayeredSource::__init__"
+          ]
+        },
+        {
+          "name": "config-py::_LayeredSource::__call__",
+          "file": "extracted_functions/config-py/_LayeredSource::__call__.py",
+          "unit": "config",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "config-py::_LayeredSource::get_field_value",
+          "file": "extracted_functions/config-py/_LayeredSource::get_field_value.py",
+          "unit": "config",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::State::cache_hit_rate",
+          "file": "extracted_functions/dashboard-py/State::cache_hit_rate.py",
           "unit": "dashboard",
           "phase1_callers": [],
           "phase1_callees": [],
@@ -21,18 +49,18 @@
           "unit": "dashboard",
           "phase1_callers": [],
           "phase1_callees": [
-            "dashboard-py::__init__",
-            "dashboard-py::build_layout",
-            "dashboard-py::scan_bugs",
-            "dashboard-py::tail_events",
-            "dashboard-py::tail_opencode"
+            "dashboard-py::State::__init__",
+            "dashboard-py::State::scan_bugs",
+            "dashboard-py::State::tail_events",
+            "dashboard-py::State::tail_opencode",
+            "dashboard-py::build_layout"
           ],
           "all_callees": [
-            "dashboard-py::__init__",
-            "dashboard-py::build_layout",
-            "dashboard-py::scan_bugs",
-            "dashboard-py::tail_events",
-            "dashboard-py::tail_opencode"
+            "dashboard-py::State::__init__",
+            "dashboard-py::State::scan_bugs",
+            "dashboard-py::State::tail_events",
+            "dashboard-py::State::tail_opencode",
+            "dashboard-py::build_layout"
           ]
         },
         {
@@ -100,7 +128,7 @@
             "src::file_utils-py::is_file_ready",
             "src::generate_topdown_layers-py::generate_topdown_layers",
             "src::languages::codegraph-py::try_codegraph_init",
-            "src::languages::erlang-py::run",
+            "src::languages::erlang-py::_JsonRpcReader::run",
             "src::pipeline_setup-py::_post_process_phases",
             "src::pipeline_setup-py::_run_generate_domain_context",
             "src::pipeline_setup-py::_run_generate_phases",
@@ -150,7 +178,7 @@
           "phase1_callers": [],
           "phase1_callees": [],
           "all_callees": [
-            "src::languages::erlang-py::run"
+            "src::languages::erlang-py::_JsonRpcReader::run"
           ]
         },
         {
@@ -159,12 +187,14 @@
           "unit": "env_check",
           "phase1_callers": [],
           "phase1_callees": [
+            "src::env_check-py::_check_codegraph_version",
             "src::env_check-py::_check_llm_api_key",
             "src::env_check-py::_load_ignored",
             "src::env_check-py::_save_ignored",
             "src::env_check-py::is_interactive"
           ],
           "all_callees": [
+            "src::env_check-py::_check_codegraph_version",
             "src::env_check-py::_check_llm_api_key",
             "src::env_check-py::_load_ignored",
             "src::env_check-py::_save_ignored",
@@ -194,7 +224,7 @@
           "phase1_callers": [],
           "phase1_callees": [],
           "all_callees": [
-            "src::languages::erlang-py::run"
+            "src::languages::erlang-py::_JsonRpcReader::run"
           ]
         },
         {
@@ -204,7 +234,7 @@
           "phase1_callers": [],
           "phase1_callees": [],
           "all_callees": [
-            "src::languages::erlang-py::run"
+            "src::languages::erlang-py::_JsonRpcReader::run"
           ]
         },
         {
@@ -221,10 +251,10 @@
           "unit": "git",
           "phase1_callers": [],
           "phase1_callees": [
-            "src::git-py::_git"
+            "src::git-py::frozen_worktree::_git"
           ],
           "all_callees": [
-            "src::git-py::_git"
+            "src::git-py::frozen_worktree::_git"
           ]
         },
         {
@@ -377,8 +407,18 @@
       "layer": 1,
       "functions": [
         {
-          "name": "dashboard-py::__init__",
-          "file": "extracted_functions/dashboard-py/__init__.py",
+          "name": "config-py::_LayeredSource::__init__",
+          "file": "extracted_functions/config-py/_LayeredSource::__init__.py",
+          "unit": "config",
+          "phase1_callers": [
+            "config-py::Settings::settings_customise_sources"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::State::__init__",
+          "file": "extracted_functions/dashboard-py/State::__init__.py",
           "unit": "dashboard",
           "phase1_callers": [
             "dashboard-py::main"
@@ -388,6 +428,44 @@
           ],
           "all_callees": [
             "dashboard-py::_locate_workdir"
+          ]
+        },
+        {
+          "name": "dashboard-py::State::scan_bugs",
+          "file": "extracted_functions/dashboard-py/State::scan_bugs.py",
+          "unit": "dashboard",
+          "phase1_callers": [
+            "dashboard-py::main"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::State::tail_events",
+          "file": "extracted_functions/dashboard-py/State::tail_events.py",
+          "unit": "dashboard",
+          "phase1_callers": [
+            "dashboard-py::main"
+          ],
+          "phase1_callees": [
+            "dashboard-py::State::_ingest_event"
+          ],
+          "all_callees": [
+            "dashboard-py::State::_ingest_event"
+          ]
+        },
+        {
+          "name": "dashboard-py::State::tail_opencode",
+          "file": "extracted_functions/dashboard-py/State::tail_opencode.py",
+          "unit": "dashboard",
+          "phase1_callers": [
+            "dashboard-py::main"
+          ],
+          "phase1_callees": [
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "all_callees": [
+            "dashboard-py::State::_ingest_opencode"
           ]
         },
         {
@@ -414,44 +492,6 @@
             "dashboard-py::render_recent",
             "dashboard-py::render_stages",
             "dashboard-py::render_tokens"
-          ]
-        },
-        {
-          "name": "dashboard-py::scan_bugs",
-          "file": "extracted_functions/dashboard-py/scan_bugs.py",
-          "unit": "dashboard",
-          "phase1_callers": [
-            "dashboard-py::main"
-          ],
-          "phase1_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "dashboard-py::tail_events",
-          "file": "extracted_functions/dashboard-py/tail_events.py",
-          "unit": "dashboard",
-          "phase1_callers": [
-            "dashboard-py::main"
-          ],
-          "phase1_callees": [
-            "dashboard-py::_ingest_event"
-          ],
-          "all_callees": [
-            "dashboard-py::_ingest_event"
-          ]
-        },
-        {
-          "name": "dashboard-py::tail_opencode",
-          "file": "extracted_functions/dashboard-py/tail_opencode.py",
-          "unit": "dashboard",
-          "phase1_callers": [
-            "dashboard-py::main"
-          ],
-          "phase1_callees": [
-            "dashboard-py::_ingest_opencode"
-          ],
-          "all_callees": [
-            "dashboard-py::_ingest_opencode"
           ]
         },
         {
@@ -504,6 +544,19 @@
             "src::domain_knowledge-py::_safe_staged_name",
             "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
             "src::domain_knowledge-py::resolve_domain_knowledge_paths"
+          ]
+        },
+        {
+          "name": "src::env_check-py::_check_codegraph_version",
+          "file": "extracted_functions/src/env_check-py/_check_codegraph_version.py",
+          "unit": "env_check",
+          "phase1_callers": [
+            "src::env_check-py::run"
+          ],
+          "phase1_callees": [],
+          "all_callees": [
+            "src::languages::codegraph-py::_codegraph_cmd",
+            "src::languages::erlang-py::_JsonRpcReader::run"
           ]
         },
         {
@@ -611,15 +664,15 @@
           ]
         },
         {
-          "name": "src::git-py::_git",
-          "file": "extracted_functions/src/git-py/_git.py",
+          "name": "src::git-py::frozen_worktree::_git",
+          "file": "extracted_functions/src/git-py/frozen_worktree::_git.py",
           "unit": "git",
           "phase1_callers": [
             "src::git-py::frozen_worktree"
           ],
           "phase1_callees": [],
           "all_callees": [
-            "src::languages::erlang-py::run"
+            "src::languages::erlang-py::_JsonRpcReader::run"
           ]
         },
         {
@@ -748,19 +801,19 @@
           ],
           "phase1_callees": [
             "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
-            "src::file_utils-py::_json_file_is_valid",
             "src::llm_client-py::build_llm_cli_command",
             "src::opencode_trace-py::run_opencode_traced",
             "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_phase_plan_schema_errors",
             "src::pipeline_setup-py::_phases_cover_current_sources",
             "src::pipeline_setup-py::_prepare_workflow_file"
           ],
           "all_callees": [
             "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
-            "src::file_utils-py::_json_file_is_valid",
             "src::llm_client-py::build_llm_cli_command",
             "src::opencode_trace-py::run_opencode_traced",
             "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_phase_plan_schema_errors",
             "src::pipeline_setup-py::_phases_cover_current_sources",
             "src::pipeline_setup-py::_prepare_workflow_file"
           ]
@@ -803,47 +856,47 @@
       "layer": 2,
       "functions": [
         {
-          "name": "dashboard-py::_ingest_event",
-          "file": "extracted_functions/dashboard-py/_ingest_event.py",
+          "name": "dashboard-py::State::_ingest_event",
+          "file": "extracted_functions/dashboard-py/State::_ingest_event.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::tail_events"
+            "dashboard-py::State::tail_events"
           ],
           "phase1_callees": [
+            "dashboard-py::State::_push_llm_status",
+            "dashboard-py::State::_push_recent",
             "dashboard-py::_cost_from_usage",
             "dashboard-py::_llm_code_for_event",
-            "dashboard-py::_parse_iso",
-            "dashboard-py::_push_llm_status",
-            "dashboard-py::_push_recent"
+            "dashboard-py::_parse_iso"
           ],
           "all_callees": [
+            "dashboard-py::State::_push_llm_status",
+            "dashboard-py::State::_push_recent",
             "dashboard-py::_cost_from_usage",
             "dashboard-py::_llm_code_for_event",
-            "dashboard-py::_parse_iso",
-            "dashboard-py::_push_llm_status",
-            "dashboard-py::_push_recent"
+            "dashboard-py::_parse_iso"
           ]
         },
         {
-          "name": "dashboard-py::_ingest_opencode",
-          "file": "extracted_functions/dashboard-py/_ingest_opencode.py",
+          "name": "dashboard-py::State::_ingest_opencode",
+          "file": "extracted_functions/dashboard-py/State::_ingest_opencode.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::tail_opencode"
+            "dashboard-py::State::tail_opencode"
           ],
           "phase1_callees": [
+            "dashboard-py::State::_push_llm_status",
             "dashboard-py::_cost_from_usage",
             "dashboard-py::_get_nested",
             "dashboard-py::_parse_iso",
-            "dashboard-py::_push_llm_status",
             "dashboard-py::_strip_star",
             "dashboard-py::_trace_value"
           ],
           "all_callees": [
+            "dashboard-py::State::_push_llm_status",
             "dashboard-py::_cost_from_usage",
             "dashboard-py::_get_nested",
             "dashboard-py::_parse_iso",
-            "dashboard-py::_push_llm_status",
             "dashboard-py::_strip_star",
             "dashboard-py::_trace_value"
           ]
@@ -853,7 +906,7 @@
           "file": "extracted_functions/dashboard-py/_locate_workdir.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::__init__"
+            "dashboard-py::State::__init__"
           ],
           "phase1_callees": [],
           "all_callees": []
@@ -877,11 +930,11 @@
           ],
           "phase1_callees": [
             "dashboard-py::_price_for",
-            "dashboard-py::bar_line"
+            "dashboard-py::render_cache::bar_line"
           ],
           "all_callees": [
             "dashboard-py::_price_for",
-            "dashboard-py::bar_line"
+            "dashboard-py::render_cache::bar_line"
           ]
         },
         {
@@ -892,12 +945,12 @@
             "dashboard-py::build_layout"
           ],
           "phase1_callees": [
-            "dashboard-py::_fmt_duration",
-            "dashboard-py::elapsed"
+            "dashboard-py::State::elapsed",
+            "dashboard-py::_fmt_duration"
           ],
           "all_callees": [
-            "dashboard-py::_fmt_duration",
-            "dashboard-py::elapsed"
+            "dashboard-py::State::elapsed",
+            "dashboard-py::_fmt_duration"
           ]
         },
         {
@@ -945,13 +998,13 @@
             "dashboard-py::_fmt_cost",
             "dashboard-py::_fmt_tokens",
             "dashboard-py::_price_for",
-            "dashboard-py::row"
+            "dashboard-py::render_tokens::row"
           ],
           "all_callees": [
             "dashboard-py::_fmt_cost",
             "dashboard-py::_fmt_tokens",
             "dashboard-py::_price_for",
-            "dashboard-py::row"
+            "dashboard-py::render_tokens::row"
           ]
         },
         {
@@ -968,7 +1021,7 @@
           "all_callees": [
             "src::cli_backend-py::build_agent_command",
             "src::cli_backend-py::messages_to_prompt",
-            "src::languages::erlang-py::run"
+            "src::languages::erlang-py::_JsonRpcReader::run"
           ]
         },
         {
@@ -1174,10 +1227,10 @@
             "src::pipeline_setup-py::_setup_outputs_complete"
           ],
           "phase1_callees": [
-            "src::file_utils-py::_json_file_is_valid"
+            "src::pipeline_setup-py::_phase_plan_schema_errors"
           ],
           "all_callees": [
-            "src::file_utils-py::_json_file_is_valid"
+            "src::pipeline_setup-py::_phase_plan_schema_errors"
           ]
         },
         {
@@ -1251,12 +1304,43 @@
       "layer": 3,
       "functions": [
         {
+          "name": "dashboard-py::State::_push_llm_status",
+          "file": "extracted_functions/dashboard-py/State::_push_llm_status.py",
+          "unit": "dashboard",
+          "phase1_callers": [
+            "dashboard-py::State::_ingest_event",
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::State::_push_recent",
+          "file": "extracted_functions/dashboard-py/State::_push_recent.py",
+          "unit": "dashboard",
+          "phase1_callers": [
+            "dashboard-py::State::_ingest_event"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::State::elapsed",
+          "file": "extracted_functions/dashboard-py/State::elapsed.py",
+          "unit": "dashboard",
+          "phase1_callers": [
+            "dashboard-py::render_header"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
           "name": "dashboard-py::_cost_from_usage",
           "file": "extracted_functions/dashboard-py/_cost_from_usage.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::_ingest_event",
-            "dashboard-py::_ingest_opencode"
+            "dashboard-py::State::_ingest_event",
+            "dashboard-py::State::_ingest_opencode"
           ],
           "phase1_callees": [
             "dashboard-py::_price_for"
@@ -1290,7 +1374,7 @@
           "file": "extracted_functions/dashboard-py/_get_nested.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::_ingest_opencode"
+            "dashboard-py::State::_ingest_opencode"
           ],
           "phase1_callees": [],
           "all_callees": []
@@ -1300,7 +1384,7 @@
           "file": "extracted_functions/dashboard-py/_llm_code_for_event.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::_ingest_event"
+            "dashboard-py::State::_ingest_event"
           ],
           "phase1_callees": [],
           "all_callees": []
@@ -1320,29 +1404,8 @@
           "file": "extracted_functions/dashboard-py/_parse_iso.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::_ingest_event",
-            "dashboard-py::_ingest_opencode"
-          ],
-          "phase1_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "dashboard-py::_push_llm_status",
-          "file": "extracted_functions/dashboard-py/_push_llm_status.py",
-          "unit": "dashboard",
-          "phase1_callers": [
-            "dashboard-py::_ingest_event",
-            "dashboard-py::_ingest_opencode"
-          ],
-          "phase1_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "dashboard-py::_push_recent",
-          "file": "extracted_functions/dashboard-py/_push_recent.py",
-          "unit": "dashboard",
-          "phase1_callers": [
-            "dashboard-py::_ingest_event"
+            "dashboard-py::State::_ingest_event",
+            "dashboard-py::State::_ingest_opencode"
           ],
           "phase1_callees": [],
           "all_callees": []
@@ -1352,7 +1415,7 @@
           "file": "extracted_functions/dashboard-py/_strip_star.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::_ingest_opencode"
+            "dashboard-py::State::_ingest_opencode"
           ],
           "phase1_callees": [],
           "all_callees": []
@@ -1362,14 +1425,14 @@
           "file": "extracted_functions/dashboard-py/_trace_value.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::_ingest_opencode"
+            "dashboard-py::State::_ingest_opencode"
           ],
           "phase1_callees": [],
           "all_callees": []
         },
         {
-          "name": "dashboard-py::bar_line",
-          "file": "extracted_functions/dashboard-py/bar_line.py",
+          "name": "dashboard-py::render_cache::bar_line",
+          "file": "extracted_functions/dashboard-py/render_cache::bar_line.py",
           "unit": "dashboard",
           "phase1_callers": [
             "dashboard-py::render_cache"
@@ -1384,18 +1447,8 @@
           ]
         },
         {
-          "name": "dashboard-py::elapsed",
-          "file": "extracted_functions/dashboard-py/elapsed.py",
-          "unit": "dashboard",
-          "phase1_callers": [
-            "dashboard-py::render_header"
-          ],
-          "phase1_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "dashboard-py::row",
-          "file": "extracted_functions/dashboard-py/row.py",
+          "name": "dashboard-py::render_tokens::row",
+          "file": "extracted_functions/dashboard-py/render_tokens::row.py",
           "unit": "dashboard",
           "phase1_callers": [
             "dashboard-py::render_tokens"
@@ -1460,9 +1513,7 @@
           "unit": "file_utils",
           "phase1_callers": [
             "src::file_utils-py::_get_incomplete_verification_files",
-            "src::pipeline_setup-py::_domain_context_complete",
-            "src::pipeline_setup-py::_phase_plan_complete",
-            "src::pipeline_setup-py::_run_generate_phases"
+            "src::pipeline_setup-py::_domain_context_complete"
           ],
           "phase1_callees": [],
           "all_callees": []
@@ -1579,10 +1630,10 @@
             "src::pipeline_setup-py::_clean_empty_phase_module"
           ],
           "phase1_callees": [
-            "src::pipeline_setup-py::types_path"
+            "src::pipeline_setup-py::_clean_domain_context_files::types_path"
           ],
           "all_callees": [
-            "src::pipeline_setup-py::types_path"
+            "src::pipeline_setup-py::_clean_domain_context_files::types_path"
           ]
         },
         {
@@ -1610,6 +1661,17 @@
           ],
           "phase1_callees": [],
           "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_phase_plan_schema_errors",
+          "file": "extracted_functions/src/pipeline_setup-py/_phase_plan_schema_errors.py",
+          "unit": "pipeline_setup",
+          "phase1_callers": [
+            "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_run_generate_phases"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
         }
       ]
     },
@@ -1621,7 +1683,7 @@
           "file": "extracted_functions/dashboard-py/_cache_rate.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::bar_line"
+            "dashboard-py::render_cache::bar_line"
           ],
           "phase1_callees": [],
           "all_callees": []
@@ -1631,9 +1693,9 @@
           "file": "extracted_functions/dashboard-py/_fmt_tokens.py",
           "unit": "dashboard",
           "phase1_callers": [
-            "dashboard-py::bar_line",
+            "dashboard-py::render_cache::bar_line",
             "dashboard-py::render_tokens",
-            "dashboard-py::row"
+            "dashboard-py::render_tokens::row"
           ],
           "phase1_callees": [],
           "all_callees": []
@@ -1831,8 +1893,8 @@
           ]
         },
         {
-          "name": "src::pipeline_setup-py::types_path",
-          "file": "extracted_functions/src/pipeline_setup-py/types_path.py",
+          "name": "src::pipeline_setup-py::_clean_domain_context_files::types_path",
+          "file": "extracted_functions/src/pipeline_setup-py/_clean_domain_context_files::types_path.py",
           "unit": "pipeline_setup",
           "phase1_callers": [
             "src::pipeline_setup-py::_clean_domain_context_files"
@@ -1943,9 +2005,13 @@
             "src::opencode_trace-py::_start_opencode_process"
           ],
           "phase1_callees": [
+            "src::opencode_trace-py::_deep_merge",
+            "src::opencode_trace-py::_opencode_provider_config",
             "src::opencode_trace-py::_trace_dir"
           ],
           "all_callees": [
+            "src::opencode_trace-py::_deep_merge",
+            "src::opencode_trace-py::_opencode_provider_config",
             "src::opencode_trace-py::_trace_dir"
           ]
         },
@@ -2020,6 +2086,26 @@
           "phase1_callers": [
             "src::cli_backend-py::command_display",
             "src::opencode_trace-py::_start_opencode_process"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::_deep_merge",
+          "file": "extracted_functions/src/opencode_trace-py/_deep_merge.py",
+          "unit": "opencode_trace",
+          "phase1_callers": [
+            "src::opencode_trace-py::_opencode_env"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::_opencode_provider_config",
+          "file": "extracted_functions/src/opencode_trace-py/_opencode_provider_config.py",
+          "unit": "opencode_trace",
+          "phase1_callers": [
+            "src::opencode_trace-py::_opencode_env"
           ],
           "phase1_callees": [],
           "all_callees": []

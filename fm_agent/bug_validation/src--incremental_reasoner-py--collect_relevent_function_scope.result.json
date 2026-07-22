@@ -1,11 +1,11 @@
 {
   "id": "src--incremental_reasoner-py--collect_relevent_function_scope",
-  "source_file": "src/incremental_reasoner.py",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/collect_relevent_function_scope.py",
   "function_name": "collect_relevent_function_scope",
   "confirmation_status": "not_confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--collect_relevent_function_scope.py",
   "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--collect_relevent_function_scope.md",
-  "probe_stdout": "NOT CONFIRMED — result is non-empty (1 function(s)): ['src/foo-py/bar.py']\nThe function correctly selected the module via the changed_functions criterion (the 'or any(...)' clause on line 142-146), even though the LLM returned no modules by description assessment.\n",
-  "trigger_summary": "LLM-based module description assessment returns no modules, but a module containing a file in changed_functions should still be selected via the OR clause at lines 142-146."
+  "probe_stdout": "NOT CONFIRMED — changed_functions criterion IS incorporated: selected modules=['util_module'], expected=['util_module']\n",
+  "trigger_summary": "Bug claim asserts changed_functions criterion is not incorporated; code inspection at lines 1158-1162 shows the or any() clause IS present, and the probe confirms it selects modules with changed files even when LLM assessment returns empty."
 }

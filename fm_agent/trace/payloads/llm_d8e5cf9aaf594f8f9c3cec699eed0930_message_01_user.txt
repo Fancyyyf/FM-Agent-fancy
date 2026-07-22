@@ -1,0 +1,58 @@
+Programming language: Python
+
+Pre-condition:
+- phases_path is a string.
+
+Code block:
+```python
+Line 1: def _phase_plan_schema_errors(phases_path):
+Line 2:     """Return human-readable schema errors for phases.json."""
+Line 3:     try:
+Line 4:         with open(phases_path, "r") as f:
+Line 5:             data = json.load(f)
+Line 6:     except OSError as exc:
+Line 7:         return [f"phases.json could not be read: {exc}"]
+Line 8:     except json.JSONDecodeError as exc:
+Line 9:         return [f"phases.json is not valid JSON: {exc}"]
+Line 10:     if not isinstance(data, dict):
+Line 11:         return ["the top-level value must be an object"]
+Line 12:     phases = data.get("phases")
+Line 13:     if not isinstance(phases, list):
+Line 14:         return ['top-level field "phases" must be an array']
+Line 15:     errors = []
+Line 16:     for phase_index, phase in enumerate(phases):
+Line 17:         phase_path = f"phases[{phase_index}]"
+Line 18:         if not isinstance(phase, dict):
+Line 19:             errors.append(f"{phase_path} must be an object")
+Line 20:             continue
+Line 21:         modules = phase.get("modules")
+Line 22:         if not isinstance(modules, list):
+Line 23:             errors.append(f"{phase_path}.modules must be an array")
+Line 24:             continue
+Line 25:         for module_index, module in enumerate(modules):
+Line 26:             module_path = f"{phase_path}.modules[{module_index}]"
+Line 27:             if not isinstance(module, dict):
+Line 28:                 errors.append(f"{module_path} must be an object")
+Line 29:                 continue
+Line 30:             module_name = module.get("name", "")
+Line 31:             context = (
+Line 32:                 f"{module_path} ({module_name!r})"
+Line 33:                 if module_name
+Line 34:                 else module_path
+Line 35:             )
+Line 36:             if "source_files" not in module:
+Line 37:                 errors.append(f"{context}.source_files is missing")
+Line 38:                 continue
+Line 39:             source_files = module["source_files"]
+Line 40:             if not isinstance(source_files, list):
+Line 41:                 errors.append(f"{context}.source_files must be an array")
+Line 42:                 continue
+Line 43:             for source_index, source_file in enumerate(source_files):
+Line 44:                 if not isinstance(source_file, str):
+Line 45:                     errors.append(
+Line 46:                         f"{context}.source_files[{source_index}] must be a string"
+Line 47:                     )
+Line 48:     return errors
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

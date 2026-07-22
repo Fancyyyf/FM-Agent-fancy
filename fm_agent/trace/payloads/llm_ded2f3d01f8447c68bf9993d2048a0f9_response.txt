@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _SourceIndex.build(source) -> _SourceIndex\n#   Pre-condition: source is a string\n#   Post-condition: Returns a _SourceIndex instance whose operations are scoped to the given source string\n# [SPLIT]\n# _SourceIndex.source_for_range(lsp_range) -> str\n#   Pre-condition: lsp_range is a dict with keys 'start' and 'end', each having 'line' (int, 0-based) and 'character' (int, 0-based UTF-16 code unit offset) keys, and the start position does not follow the end position in source order\n#   Post-condition: Returns the substring of the indexed source that spans from the byte offset corresponding to the start position (inclusive) to the byte offset corresponding to the end position (exclusive)\n# [INFO]"
+}

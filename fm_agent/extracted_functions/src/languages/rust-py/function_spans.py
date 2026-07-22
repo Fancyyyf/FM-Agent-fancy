@@ -24,11 +24,14 @@
 #   Post-condition: Returns an initialized CodeGraphExtractor instance for the
 #     project at proj_dir, or None when the codegraph backend cannot be initialized
 # [SPLIT]
-# CodeGraphExtractor.get_function_spans(language: str, filepath: str) -> list[tuple[str, int, int]]
-#   Pre-condition: language is a supported language key; filepath is a path to a
-#     source file within the indexed project
-#   Post-condition: Returns a list of (name, start_idx, end_idx) tuples for each
-#     top-level function in filepath, with 0-indexed inclusive line indices
+# CodeGraphExtractor.get_function_spans(lang_key: str, abs_filepath: str) -> list[tuple[str, int, int]] | None
+#   Pre-condition: lang_key is a non-empty string identifying a programming language;
+#     abs_filepath is an absolute filesystem path to a source file residing within the
+#     project root
+#   Post-condition: Returns None when lang_key is not recognized by the codegraph backend
+#     or when the database contains no rows for the given file; otherwise returns a list
+#     of (name, start_idx, end_idx) tuples for every function and method definition
+#     detected, with 0-indexed inclusive line indices, ordered by ascending start_idx
 # [INFO]
 
 def function_spans(proj_dir: str, filepath: str):

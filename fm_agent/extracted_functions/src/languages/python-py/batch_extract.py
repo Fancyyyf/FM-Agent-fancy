@@ -21,7 +21,7 @@
 # [SPLIT]
 # cg.get_functions_by_file(language: str, proj_dir: str) -> dict
 #   Pre-condition: language is a valid language key string (e.g., "python").
-#   Post-condition: Returns a dict mapping absolute file paths to lists of (function_name, function_body) tuples for all source files of the given language under proj_dir.
+#   Post-condition: Returns a dict mapping absolute file paths to lists of (function_name, function_body) tuples for source files of the given language under proj_dir; files that cannot be opened for reading are omitted.
 # [INFO]
 
 def batch_extract(proj_dir: str) -> dict:

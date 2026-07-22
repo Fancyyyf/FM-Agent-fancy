@@ -20,7 +20,10 @@
 # [SPEC]
 
 # [INFO]
-# (no callees)
+# _anthropic_create:
+#   - Pre: model non-empty string; messages list of dicts with "role" and "content"
+#   - Post: returns (text: str, usage: dict) on success; may raise RuntimeError on non-JSON response
+#   - Relies on global settings LLM_API_BASE_URL, LLM_API_KEY, _ANTHROPIC_MAX_TOKENS
 # [INFO]
 
 def _retry_create(client, model, messages):

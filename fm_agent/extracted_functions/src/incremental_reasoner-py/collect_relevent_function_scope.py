@@ -49,6 +49,17 @@
 #     to 3 decimal places), each containing keys 'file', 'name', 'lineno', 'end_lineno', 'score',
 #     and 'reason'. Length ≤ top_k. Returns an empty list when the source file has no parseable
 #     functions. Every 'name' is unique within the result and names a function defined in src_path.
+# _extracted_files_by_method(func_dir) -> dict-like
+#   Pre-condition: func_dir is a filesystem path (may or may not be an existing directory)
+#   Post-condition: Returns a mutable dict-like mapping from string keys (function names) to
+#     lists of absolute filesystem paths, each list containing one or more entries. When
+#     func_dir is not an existing directory, returns an empty mapping. When func_dir is an
+#     existing directory, every regular file reachable by recursive descent is indexed under
+#     one or two keys using the file's basename stem (name without final extension): always
+#     the full stem, and if the stem contains "::", also the substring after the last "::"
+#     (the bare method name). The order of paths within each list reflects the order they
+#     were encountered during traversal. Accessing a missing key returns an empty list
+#     without modifying the mapping.
 # [INFO]
 
 def collect_relevent_function_scope(proj_dir, developer_intent, changed_functions, range=None):
@@ -264,9 +275,15 @@ def collect_relevent_function_scope(proj_dir, developer_intent, changed_function
 
             if ranked:
                 # Keep the extracted-function file for each selected function name.
+                # The dual-key index resolves the name whether scope reports it bare
+                # ("Flush") or class-qualified ("LocalStorage::Flush"); a bare name
+                # matching two classes keeps both members — safe for scope.
+                by_method = _extracted_files_by_method(func_dir)
                 for f in ranked:
-                    cand = os.path.join(func_dir, f"{f['name']}.{ext}")
-                    if os.path.isfile(cand):
+                    cands = by_method.get(f["name"]) or by_method.get(
+                        re.sub(r"_\d+$", "", f["name"]), []
+                    )
+                    for cand in cands:
                         _record(os.path.relpath(cand, extracted_dir), f.get("score", 0.0))
                 logging.info(
                     "    [scope] pass 3/3: %s -> %s",
@@ -274,11 +291,14 @@ def collect_relevent_function_scope(proj_dir, developer_intent, changed_function
                     ", ".join(f"{f['name']}={f.get('score', 0.0):.2f}" for f in ranked),
                 )
             else:
-                # scope.py could not localize within this file — keep all of its functions.
-                for fname in os.listdir(func_dir):
-                    cand = os.path.join(func_dir, fname)
-                    if os.path.isfile(cand):
-                        _record(os.path.relpath(cand, extracted_dir), 0.0)
+                # scope.py could not localize within this file — keep all of its
+                # extracted-function files (walked; the layout is flat but os.walk
+                # stays robust to any legacy nested file).
+                for root, _dirs, fnames in os.walk(func_dir):
+                    for fname in fnames:
+                        cand = os.path.join(root, fname)
+                        if os.path.isfile(cand):
+                            _record(os.path.relpath(cand, extracted_dir), 0.0)
 
     # Order by descending relevance score (path as a deterministic tie-breaker), then keep
     # only the first `range` functions when a limit is given.

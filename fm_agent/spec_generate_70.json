@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/opencode_trace.py\n#\n# _opencode_provider_config() -> dict | None\n#\n# Pre-condition:\n#   - The global settings object has been loaded and its .llm attribute provides\n#     access to the LLM configuration fields api_key, base_url, name, provider,\n#     and api_style.\n#\n# Post-condition:\n#   - Returns None when any of api_key, base_url, name, or provider is falsy\n#     (i.e., an empty string, None, or otherwise evaluates to False).\n#   - When all of api_key, base_url, name, and provider are truthy, returns a\n#     dict that, when included in an OpenCode configuration, defines a valid\n#     provider.\n#   - The returned dict nests under a \"provider\" key, keyed by the value of the\n#     provider setting, and contains an npm adapter package name, a base URL, a\n#     model name, and an API key reference.\n#   - The npm adapter is chosen based on the api_style setting: the Anthropic SDK\n#     package when api_style is \"anthropic\", and an OpenAI-compatible SDK package\n#     otherwise.\n#   - The API key is specified as an environment-variable reference\n#     ({env:LLM_API_KEY}) rather than a literal key value.\n#   - The function has no side effects: it does not mutate any global state,\n#     perform I/O, or modify any passed-in arguments.\n#   - No exceptions are raised under normal operation.\n# [SPEC]",
+  "info_updated": false,
+  "new_info": "",
+  "updated_callees": []
+}

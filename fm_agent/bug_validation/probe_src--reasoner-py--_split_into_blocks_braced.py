@@ -1,81 +1,80 @@
+"""Probe for bug src--reasoner-py--_split_into_blocks_braced.
+
+Bug: _split_into_blocks_braced computes entry_depth as first positive depth when
+depths[0]==0, but the first block starts at line 0 (depth 0) instead of at a line
+with depth==entry_depth. This violates the spec that each segment begins and ends
+at the same nesting depth as the function's entry depth.
+
+Repro: C function body with opening brace on the second line.
+"""
+import importlib
 import sys
 import os
 
-# Ensure the project root is on sys.path so `config` and `src` resolve
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../..')
-
-# Override GRANULARITY to a small value so splitting occurs
-import config
-config.GRANULARITY = 1
+# All file I/O in a fresh temp directory (self-validation guard)
+TMP = os.environ.get("FM_AGENT_TMP", "/tmp/opencode")
+os.makedirs(TMP, exist_ok=True)
+os.chdir(TMP)
 
 try:
-    from src.reasoner import _split_into_blocks_braced
-    from src.reasoner import _compute_brace_depth_per_line
+    # Load _split_into_blocks_braced via the package's internal module.
+    # Per the FM-Agent self-validation guard, testing the smallest relevant
+    # pure-computation unit is allowed — this does not start an FM-Agent workflow.
+    import src.reasoner as reasoner
 
-    # Trigger condition from the bug report:
-    #   language='c', func='{\n    int a;\n}'
-    #   - entry_depth is 1 (depth after line 0: '{')
-    #   - when GRANULARITY=1, the last block '}' ends at depth 0 != entry_depth → VIOLATION
-    func = '{\n    int a;\n}'
-    language = 'c'
+    # Monkey-patch GRANULARITY to 1 so a small function body triggers the split logic
+    reasoner.GRANULARITY = 1
 
-    result = _split_into_blocks_braced(func, language)
+    # C function body: opening brace on the second line
+    # depths: line0=0, line1=1, line2=1, line3=0
+    func = "int main()\n{\n    return 0;\n}"
+    language = "c"
 
-    # Compute entry depth to check against
-    stripped = func.strip()
-    raw_lines = stripped.split('\n')
-    # Strip "Line N: " prefix from lines (as the function does internally)
-    stripped_lines = []
-    for line in raw_lines:
-        if line.startswith("Line "):
-            colon = line.find(":", 5)
-            if colon != -1:
-                line = line[colon + 1:].lstrip()
-        stripped_lines.append(line)
-    depths = _compute_brace_depth_per_line(stripped_lines)
-    entry_depth = depths[0] if depths else 0
-    if entry_depth == 0:
-        entry_depth = next((d for d in depths if d > 0), 0)
+    # Compute depths for verification
+    stripped = func.strip().split("\n")
+    depths = reasoner._compute_brace_depth_per_line(stripped)
 
-    # Spec claim: every segment begins and ends at the same nesting depth as entry_depth.
-    # Track the cumulative line position within the full function body.
-    blocked_lines = []
-    for block in result:
-        blocked_lines.extend(block.strip().split('\n'))
+    # entry_depth per the code: depths[0]=0 → next positive = 1
+    entry_depth = depths[0] if depths[0] > 0 else next((d for d in depths if d > 0), 0)
 
-    # Recompute depths on the concatenated blocked lines (same as full function body).
-    # Then check block boundary positions.
-    blocked_depths = _compute_brace_depth_per_line(blocked_lines)
+    # Run the buggy function
+    blocks = reasoner._split_into_blocks_braced(func, language)
 
-    violated = False
-    violation_detail = ""
-    cursor = 0
-    for idx, block in enumerate(result):
-        block_line_count = len(block.strip().split('\n'))
-        block_end_idx = cursor + block_line_count - 1
-        block_end_depth = blocked_depths[block_end_idx]
-        if block_end_idx < len(blocked_depths) and block_end_depth != entry_depth:
-            violated = True
-            violation_detail = (
-                f"Block[{idx}] ends at depth {block_end_depth} "
-                f"(line index {block_end_idx}), "
-                f"expected entry_depth {entry_depth}. "
-                f"Block content: {block!r}"
-            )
-            break
-        cursor += block_line_count
+    # Verify: per spec, the first block should begin at entry_depth.
+    # The buggy code produces a first block that includes line 0 (depth 0),
+    # which is below entry_depth. Check that the first block starts at a depth
+    # that is NOT equal to entry_depth.
+    first_block_lines = blocks[0].split("\n")
+    first_line_depth = depths[0]  # depth of the first line in the first block
 
-    expected = f"all segments end at depth {entry_depth}"
-    if violated:
-        print(f'CONFIRMED — {violation_detail}')
-        print(f'  All blocks: {result!r}')
-        print(f'  Entry depth: {entry_depth}')
-        print(f'  Expected: {expected}')
+    # The spec requires: each segment begins at entry_depth.
+    # Bug reproduced if first block begins at depth != entry_depth.
+    starts_at_entry = (first_line_depth == entry_depth)
+
+    mid_line_depths = [depths[i] for i in range(len(first_block_lines))]
+    ends_at_entry = (mid_line_depths[-1] == entry_depth)
+
+    bug_reproduced = (not starts_at_entry) and ends_at_entry and len(blocks) >= 2
+
+    if bug_reproduced:
+        print(
+            f"CONFIRMED — first block starts at depth {first_line_depth}, "
+            f"not entry_depth {entry_depth}. "
+            f"Block: {blocks[0]!r} "
+            f"| all_blocks: {blocks} "
+            f"| depths: {depths}"
+        )
     else:
-        print(f'NOT CONFIRMED — all blocks end at entry_depth {entry_depth}. Blocks: {result!r}')
+        print(
+            f"NOT CONFIRMED — first block starts at depth {first_line_depth}, "
+            f"entry_depth={entry_depth}. "
+            f"blocks: {blocks} "
+            f"| depths: {depths}"
+        )
+
+    # Restore GRANULARITY
+    importlib.reload(reasoner)
 
 except Exception as e:
-    import traceback
-    print(f'ERROR: {e}')
-    traceback.print_exc()
+    print(f"ERROR: {e}")
     sys.exit(1)

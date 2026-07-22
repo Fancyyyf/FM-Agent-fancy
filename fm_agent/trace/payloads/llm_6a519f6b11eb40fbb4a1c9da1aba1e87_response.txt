@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "ELP_COMMAND environment variable is not set, causing settings.erlang.command to be None.",
+  "offending_statements": "Line 2: command = settings.erlang.command.strip() or \"elp\"",
+  "reason": "When ELP_COMMAND is not set, settings.erlang.command may be None. Calling .strip() on None raises AttributeError, so the function does not return a list of strings as required by the specification."
+}

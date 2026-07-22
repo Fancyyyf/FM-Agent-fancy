@@ -1,1 +1,11 @@
-{"id": "src--llm_client-py--_messages_to_anthropic", "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/llm_client-py/_messages_to_anthropic.py", "function_name": "_messages_to_anthropic", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_messages_to_anthropic.py", "detail_file": "fm_agent/bug_validation/src--llm_client-py--_messages_to_anthropic.md", "probe_stdout": "CONFIRMED — actual: '  hello world  ' | expected: 'hello world'", "trigger_summary": "A single system message with surrounding whitespace is not stripped, violating the spec requirement that system_text always has leading/trailing whitespace removed."}
+{
+  "id": "src--llm_client-py--_messages_to_anthropic",
+  "source_file": "src/llm_client-py/_messages_to_anthropic.py",
+  "function_name": "_messages_to_anthropic",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_messages_to_anthropic.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--_messages_to_anthropic.md",
+  "probe_stdout": "CONFIRMED — bug reproduced. Failures:\n  [three systems (key test)]\n    actual:   'a\\n\\n  b\\n\\nc'\n    expected: 'a\\n\\n  b  \\n\\nc'\n  [four systems]\n    actual:   'x  \\n\\n  y\\n\\n  z\\n\\nw'\n    expected: 'x  \\n\\n  y\\n\\n  z  \\n\\nw'",
+  "trigger_summary": "With 3+ system messages, the code's iterative .strip() on line 92 prematurely removes trailing whitespace from intermediate messages' content, while the spec requires concatenating all contents first and stripping only the final result."
+}

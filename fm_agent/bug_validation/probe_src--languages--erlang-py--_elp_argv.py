@@ -1,30 +1,32 @@
-"""Probe script for _elp_argv bug: shlex.split raises ValueError on unbalanced quoting."""
-import os
+"""Probe for _elp_argv bug: settings.erlang.command.strip() fails when command is None."""
 import sys
-import traceback
+import os
 
-# Ensure the project root is on sys.path so the public entry-point import works
-_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
-# Set ELP_COMMAND to a value with unbalanced quoting that triggers shlex.split ValueError
-os.environ["ELP_COMMAND"] = '"unclosed'
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, repo_root)
 
 try:
-    from src.languages.erlang import _elp_argv
+    from config import settings
+    from src.languages import erlang as erlang_module
 
-    actual = _elp_argv()
-    if isinstance(actual, list) and len(actual) > 0:
-        print(f"NOT CONFIRMED — function returned list: {actual!r}")
-    else:
-        print(f"CONFIRMED — function returned non-list or empty: {actual!r}")
+    # Save original value
+    orig = settings.erlang.command
 
-except ValueError:
-    # Spec: function must return a non-empty list of strings.
-    # Actual: shlex.split raises ValueError on unbalanced quoting.
-    print("CONFIRMED — shlex.split raised ValueError on unbalanced quoting (spec requires non-empty list)")
+    # Bypass pydantic validation to set command to None
+    object.__setattr__(settings.erlang, 'command', None)
+
+    try:
+        result = erlang_module._elp_argv()
+        # If we reach here, no AttributeError was raised
+        print(f'NOT CONFIRMED — _elp_argv() returned {result!r} without error')
+    except AttributeError as e:
+        print(f'CONFIRMED — AttributeError raised when command is None: {e}')
+    except Exception as e:
+        print(f'ERROR — unexpected exception: {type(e).__name__}: {e}')
+    finally:
+        # Restore original value
+        object.__setattr__(settings.erlang, 'command', orig)
+
 except Exception as e:
-    print(f"ERROR: {e}")
-    traceback.print_exc()
+    print(f'ERROR: {e}')
     sys.exit(1)

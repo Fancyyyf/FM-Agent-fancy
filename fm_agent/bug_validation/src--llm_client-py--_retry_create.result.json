@@ -6,6 +6,6 @@
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_retry_create.py",
   "detail_file": "fm_agent/bug_validation/src--llm_client-py--_retry_create.md",
-  "probe_stdout": "WARNING:root:LLM error (URLError: <urlopen error Connection reset by peer>), sleeping 7.3s (attempt 1)\nCONFIRMED — treated as transient instead of rate limit: LLM request failed after 2 retries: <urlopen error Connection reset by peer>",
-  "trigger_summary": "URLError from Anthropic native endpoint (e.g. connection reset by rate-limiting proxy) is caught by except Exception and treated as transient, not rate-limit — violating per-category retry budgets."
+  "probe_stdout": "WARNING:root:LLM error (TypeError: invalid messages type: expected list of dicts, got str), sleeping 7.8s (attempt 1)\nWARNING:root:LLM error (TypeError: invalid messages type: expected list of dicts, got str), sleeping 12.9s (attempt 2)\nWARNING:root:LLM error (TypeError: invalid messages type: expected list of dicts, got str), sleeping 22.5s (attempt 3)\nWARNING:root:LLM error (TypeError: invalid messages type: expected list of dicts, got str), sleeping 41.7s (attempt 4)\nCONFIRMED — TypeError was retried (5x with 5 retry budget) instead of propagating immediately; final result was RuntimeError: LLM request failed after 5 retries: invalid messages type: expected list of dicts, got str",
+  "trigger_summary": "Passing input that causes a TypeError inside client.chat.completions.create() triggers the catch-all except Exception handler, which retries it 5 times as a transient error instead of propagating it immediately."
 }

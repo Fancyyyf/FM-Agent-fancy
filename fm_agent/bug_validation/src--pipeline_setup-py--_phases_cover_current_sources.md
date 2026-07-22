@@ -1,6 +1,6 @@
 # Bug Report: _phases_cover_current_sources
 
-**Source file:** `src/pipeline_setup.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_phases_cover_current_sources.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -15,10 +15,11 @@ The following actual behavior cannot satisfy the specification.
 - Returns True when all of the following hold: (a) phases_json is a readable file
     whose content parses as valid JSON, (b) the JSON contains at least one source file
     entry across all phases and modules, (c) every source file path listed in the JSON
-    resolves to an existing file under proj_dir, (d) when submodules is not None, every
-    listed source file path falls under at least one of the specified submodule
-    directories, and (e) every source file under the project directories scoped by
-    submodules (or under all of proj_dir when submodules is None) appears in the JSON
+    resolves to an existing file under proj_dir, (d) when submodules is neither None
+    nor an empty iterable, every listed source file path falls under at least one of
+    the specified submodule directories (as determined by _is_under_submodules),
+    and (e) every source file under the project directories scoped by submodules
+    (or under all of proj_dir when submodules is None) appears in the JSON
   - Returns False when any of (a)-(e) fails
   - Backslash separators in source file paths within the JSON are treated as forward
     slashes for path comparison and file existence resolution
@@ -28,42 +29,41 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-The function returns True if and only if all of the following hold: (1) opening and JSON-parsing the file at `phases_json` succeeds without raising `OSError` or `ValueError`; (2) the parsed JSON yields a non-empty set of source-file paths (after normalizing backslashes to '/') from the 'phases'[].'modules'[].'source_files'[] structure; (3) when `submodules` is truthy (non-None, non-empty), every such path contains at least one string from `submodules` as a path component (as defined by `_is_under_submodules`); (4) for every such path, `os.path.exists(os.path.join(proj_dir, sf))` evaluates to `True`; (5) the set of all discoverable source files under `proj_dir` (restricted to `submodules` when provided, otherwise the whole directory) is a subset of the listed set. Otherwise the function returns False. Formally, let `listed` be the set of strings extracted from the JSON if loading succeeds, undefined otherwise; let `actual = _collect_project_source_files(proj_dir, submodules)`; then the return value `R` satisfies: `R = True`  `load_success(phases_json)`  `listed  `  `(submodules is falsy   sf  listed, _is_under_submodules(sf, submodules))`  `( sf  listed, os.path.exists(os.path.join(proj_dir, sf)))`  `actual  listed`, and `R = False` otherwise. All other program state (global variables, file system) is unchanged, and no exceptions propagate.
+After execution, the return value is True iff all the following hold: (i) the file at phases_json is successfully opened and parsed as JSON (no OSError/ValueError); (ii) the parsed data yields a non-empty set listed of source file paths, each with backslashes converted to forward slashes, extracted from the phasesmodulessource_files hierarchy; (iii) if submodules is not None, every path in listed satisfies _is_under_submodules(sf, submodules) (i.e., contains one of the submodule strings as a path component); (iv) every path in listed corresponds to an existing file in proj_dir (i.e., os.path.exists(join(proj_dir, sf))); (v) the set of all project source files collected by _collect_project_source_files(proj_dir, submodules) is a subset of listed. If any of these conditions fails, or if the read/parse fails, the function returns False. No mutable state is modified. Formally: ret_val = True  (read_parse_success(phases_json)  listed    (submodules=None  sflisted: _is_under_submodules(sf,submodules))  sflisted: os.path.exists(os.path.join(proj_dir,sf))  _collect_project_source_files(proj_dir,submodules)  listed).
 
 ---
 
 ## Code Evidence
 
-Line 15: if submodules and any(not _is_under_submodules(sf, submodules) for sf in listed):
-Line 16:     return False
+Line 17: if any(not os.path.exists(os.path.join(proj_dir, sf)) for sf in listed):
 
 ---
 
 ## Trigger Condition
 
-The code uses 'if submodules' which treats an empty list as falsy, thereby skipping the submodule check when submodules=[] (not None). The specification's condition (d) is gated on 'when submodules is not None' and must be enforced for any nonNone value, including an empty sequence. An empty sequence provides no valid submodule directories, so condition (d) can never be satisfied, requiring False, but the code erroneously returns True when all other conditions pass.
+The existence check does not ensure the file is under proj_dir; absolute paths (or relative paths with '..') can refer to files outside proj_dir, causing the function to return True when the specification requires False.
 
 ---
 
 ## How to trigger the bug
 
-Describe the concrete inputs used in the probe, what the buggy code returns, and what the specification requires.
+The function on line 749 (`src/pipeline_setup.py`) uses `os.path.exists(os.path.join(proj_dir, sf))` to verify that each listed source file exists. When `sf` is an absolute path (e.g., `/etc/hostname`), `os.path.join(proj_dir, "/etc/hostname")` returns `"/etc/hostname"` — the `proj_dir` prefix is silently dropped. If that absolute file exists on the system, the check passes, and the function returns `True` even though the file is **not** under `proj_dir`. This violates specification condition (c): "every source file path listed in the JSON resolves to an existing file **under proj_dir**."
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `phases_json` | Path to a valid `phases.json` file listing source files that all exist under `proj_dir` |
-| `proj_dir` | A project directory containing exactly the source files listed in `phases_json` |
-| `submodules` | `[]` (an empty list — not None) |
+| `phases_json` | A JSON file containing `{"phases": [{"phase": 1, "modules": [{"module": "test", "source_files": ["/etc/hostname"]}]}]}` |
+| `proj_dir` | A temporary empty directory (e.g., `/tmp/bug_probe_xxxxx/fake_project/`) |
+| `submodules` | `None` |
 
 ### Expected (spec-correct) Output
 
-`False` — because `submodules` is not `None` (it is `[]`), condition (d) applies. An empty list provides no valid submodule directories, so no listed source file can satisfy "falls under at least one of the specified submodule directories."
+`False` — `/etc/hostname` exists but is **not** under `proj_dir`, so condition (c) fails.
 
 ### Actual (buggy) Output
 
-`True` — because `if submodules` evaluates `[]` as falsy, so the submodule check on line 686 is skipped entirely. When all other conditions (a)-(c) and (e) pass, the function returns `True`.
+`True` — `os.path.join(proj_dir, "/etc/hostname")` returns `"/etc/hostname"` (absolute path, `proj_dir` ignored), `os.path.exists("/etc/hostname")` is `True`, so the check passes. The function returns `True`.
 
 ### How to Reproduce
 
@@ -73,115 +73,100 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import sys
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot')
-from src.pipeline_setup import _phases_cover_current_sources
+import os, json, tempfile, sys
+sys.path.insert(0, ".")
+import src.pipeline_setup as psetup
 
-# With submodules=None, function correctly returns True
-result_none = _phases_cover_current_sources("phases.json", ".", submodules=None)
-# With submodules=[], function should return False but returns True
-result_empty = _phases_cover_current_sources("phases.json", ".", submodules=[])
+tmpdir = tempfile.mkdtemp(prefix="bug_repro_")
+proj_dir = os.path.join(tmpdir, "fake_project")
+os.makedirs(proj_dir)
+
+phases_json = os.path.join(tmpdir, "phases.json")
+with open(phases_json, "w") as f:
+    json.dump({"phases": [{"phase": 1, "modules": [{"module": "test", "source_files": ["/etc/hostname"]}]}]}, f)
+
+result = psetup._phases_cover_current_sources(phases_json, proj_dir)
 # actual (buggy) output: True
 # expected (correct) output: False
+print(result)
 ```
 
 ---
 
 ## Probe Script
 
-```py
-"""Probe script for bug: src--pipeline_setup-py--_phases_cover_current_sources
-
-Bug: `if submodules` on line 686 treats empty list as falsy, skipping submodule
-check when submodules=[]. Per spec condition (d), when submodules is not None
-(which [] is), every listed source file must be under a submodule directory.
-An empty list means no such directory exists → must return False.
-"""
+```python
 import sys
 import os
 import json
 import tempfile
-import shutil
-
-# Add the project root to Python path so we can import src modules
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot')
 
 try:
-    from src.pipeline_setup import _phases_cover_current_sources
+    import src.pipeline_setup as psetup
 
-    # Create a temporary project directory with source files
-    tmpdir = tempfile.mkdtemp(prefix='probe_phases_cover_')
+    # Create a temporary directory for fixtures (FM-Agent guard rule).
+    tmpdir = tempfile.mkdtemp(prefix="bug_probe_")
 
-    # Create source files under src/
-    src_dir = os.path.join(tmpdir, 'src')
-    os.makedirs(src_dir)
-    with open(os.path.join(src_dir, 'main.py'), 'w') as f:
-        f.write('def main():\n    pass\n')
-    with open(os.path.join(src_dir, 'helper.py'), 'w') as f:
-        f.write('def helper():\n    return 42\n')
+    # proj_dir: a temp subdirectory that definitely does NOT contain /etc/hostname
+    proj_dir = os.path.join(tmpdir, "fake_project")
+    os.makedirs(proj_dir, exist_ok=True)
 
-    # Create a phases.json that lists both source files
-    phases_json = os.path.join(tmpdir, 'phases.json')
+    # phases.json with an absolute path to a file outside proj_dir
+    phases_json_path = os.path.join(tmpdir, "phases.json")
     phases_data = {
         "phases": [
             {
                 "phase": 1,
-                "name": "Core",
                 "modules": [
                     {
-                        "name": "core_module",
-                        "source_files": ["src/main.py", "src/helper.py"]
+                        "module": "test",
+                        "source_files": [
+                            "/etc/hostname"  # absolute path outside proj_dir
+                        ]
                     }
-                ],
-                "depends_on_phases": []
+                ]
             }
         ]
     }
-    with open(phases_json, 'w') as f:
+    with open(phases_json_path, "w") as f:
         json.dump(phases_data, f)
 
-    # --- Test 0: submodules=None → should return True (conditions a-c,e pass) ---
-    result_none = _phases_cover_current_sources(phases_json, tmpdir, submodules=None)
+    # Call the function under test.
+    # Spec (post-condition c): "every source file path listed in the JSON
+    #   resolves to an existing file under proj_dir"
+    # /etc/hostname exists but is NOT under proj_dir, so the spec requires False.
+    actual = psetup._phases_cover_current_sources(phases_json_path, proj_dir)
+    expected = False
 
-    # --- Test 1 (BUG TARGET): submodules=[] → spec says should return False ---
-    # Per spec condition (d): "when submodules is not None, every listed source
-    # file path falls under at least one of the specified submodule directories."
-    # An empty list [] is not None, so condition (d) applies. But [] provides
-    # no valid submodule directories, so no source file can satisfy the check.
-    # Expected: False.
-    # Actual (bug): The code uses 'if submodules' which is falsy for [], so
-    # the submodule check is skipped entirely. When all other conditions pass,
-    # the function returns True — violating the spec.
-    result_empty = _phases_cover_current_sources(phases_json, tmpdir, submodules=[])
+    passed = actual != expected  # True means bug reproduced (actual=True, expected=False)
+
+    if passed:
+        print(
+            "CONFIRMED -- actual: {!r} | expected: {!r} | "
+            "absolute path /etc/hostname (exists) passed the existence check "
+            "via os.path.join(proj_dir, '/etc/hostname') = '/etc/hostname', "
+            "but the spec requires False because the file is not under proj_dir.".format(
+                actual, expected
+            )
+        )
+    else:
+        print(
+            "NOT CONFIRMED -- actual matched expected: {!r}".format(actual)
+        )
 
     # Cleanup
-    shutil.rmtree(tmpdir)
-
-    # Bug confirmation: spec says should be False, but code returns True
-    expected = False
-    actual = result_empty
-    passed = actual != expected  # True → bug reproduced
+    import shutil
+    shutil.rmtree(tmpdir, ignore_errors=True)
 
 except Exception as e:
     import traceback
-    print(f'ERROR: {e}')
+    print("ERROR: {}".format(e))
     traceback.print_exc()
     sys.exit(1)
-
-# Report
-print(f'submodules=None result: {result_none!r} (expected: True, sanity check)')
-print(f'submodules=[]  result: {actual!r} (expected: False per spec)')
-
-if passed:
-    print(f'CONFIRMED — actual: {actual!r} | expected: {expected!r}')
-else:
-    print(f'NOT CONFIRMED — actual matched expected: {actual!r}')
 ```
 
 ### Probe Output
 
 ```
-submodules=None result: True (expected: True, sanity check)
-submodules=[]  result: True (expected: False per spec)
-CONFIRMED — actual: True | expected: False
+CONFIRMED -- actual: True | expected: False | absolute path /etc/hostname (exists) passed the existence check via os.path.join(proj_dir, '/etc/hostname') = '/etc/hostname', but the spec requires False because the file is not under proj_dir.
 ```

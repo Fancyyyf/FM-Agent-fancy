@@ -1,0 +1,57 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _handle_server_message(self, message: dict):
+Line 2:         method = message.get("method")
+Line 3:         params = message.get("params")
+Line 4:         if params is None:
+Line 5:             params = {}
+Line 6:         if method == "elp/status":
+Line 7:             self._status = params.get("status")
+Line 8:         if "id" not in message or not method:
+Line 9:             return
+Line 10:         if method == "workspace/configuration":
+Line 11:             result = [None for _ in params.get("items", [])]
+Line 12:         elif method == "workspace/workspaceFolders":
+Line 13:             result = [{"uri": self.root_uri, "name": os.path.basename(self.proj_dir)}]
+Line 14:         elif method == "workspace/applyEdit":
+Line 15:             result = {"applied": False}
+Line 16:         else:
+Line 17:             result = None
+Line 18:         self._send({"jsonrpc": "2.0", "id": message["id"], "result": result})
+```
+
+Condition A (what the code actually does):
+After execution of _handle_server_message: if the incoming message's method field equals 'elp/status', the client's _status attribute is set to the value of params.get('status') (which may be None). If the message contains an 'id' and the method field is truthy (non-empty string), a JSON-RPC 2.0 response with the same id and a computed result is sent to the ELP server via the stdin pipe, using the transport protocol framing; the server will receive it as its next input. The result sent is: for 'workspace/configuration', a list of None of length equal to len(params.get('items', [])); for 'workspace/workspaceFolders', [{'uri': self.root_uri, 'name': os.path.basename(self.proj_dir)}]; for 'workspace/applyEdit', {'applied': False}; for any other method with an id, None. No response is sent if the message is a notification (no 'id') or the method is falsy. The ELP subprocess remains running and the message reader thread continues to be active. Formal logic: Let pre-state satisfy IsRunning(pre) ∧ ThreadActive(pre) ∧ pre_message = message. Then the post-state satisfies: IsRunning(post) ∧ ThreadActive(post) ∧ (self._status = pre_self._status ⊕ (message.method = 'elp/status' → self._status = message.params.get('status'))) ∧ ((('id' ∈ message ∧ is_truthy(message.method)) ↔ ∃ sent_response : sent_response.jsonrpc = '2.0' ∧ sent_response.id = message.id ∧ WrittenToStdin(sent_response) ∧ sent_response.result = RESULT(message.method, params, self))) with RESULT = λ method, params, self. case method of 'workspace/configuration' → [None | _ ∈ params.get('items', [])], 'workspace/workspaceFolders' → [{'uri': self.root_uri, 'name': os.path.basename(self.proj_dir)}], 'workspace/applyEdit' → {'applied': False}, other → None.
+
+Condition B (what the specification requires):
+- When message.method is "elp/status", updates self._status to the
+    value of message.params.status; if the params dict is absent or lacks
+    a "status" key, self._status is unchanged
+  - When message lacks an "id" field, or message.method is absent or
+    falsy, no response is sent (the message is treated as a notification)
+  - When message carries both a non-empty "method" and an "id" (a server
+    request), sends a JSON-RPC response with jsonrpc "2.0" and the same
+    id; the result value satisfies the protocol-defined expectation for
+    that method:
+    - For workspace configuration queries: result is a list whose length
+      equals the number of requested configuration items, each element
+      being null
+    - For workspace folder queries: result is a singleton list containing
+      the workspace-folder descriptor with the project root URI and
+      directory name
+    - For workspace edit requests: result indicates the edit was declined
+      (applied is false)
+    - For any other method the client does not handle: result is null
+
+Additional context:
+_send(self, message: dict)
+Pre-condition: self is an ElpClient whose stdin pipe to the ELP
+    subprocess is open and writable; message is a dict representing a
+    well-formed JSON-RPC message to be delivered to the server
+  Post-condition: The JSON-serialized form of message has been written
+    to the subprocess's stdin, following the LSP transport protocol
+    framing; the server will receive the complete message as its next
+    input
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

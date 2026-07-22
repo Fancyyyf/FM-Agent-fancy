@@ -1,0 +1,45 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `_stable_user_id`'s behavioral specification was just updated. The caller `src::llm_client-py::_metadata_body` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/llm_client.py
+#
+# _stable_user_id() -> str
+#
+# Pre-condition:
+#   - None (takes no arguments)
+#
+# Post-condition:
+#   - Returns the value of `settings.inject.id` when that value is truthy
+#   - Returns the predefined static default `_DEFAULT_INJECT_USER_ID` when `settings.inject.id` is falsy (empty or None)
+#   - The returned string is non-empty in all cases
+# [SPEC]
+
+## Caller's current source
+
+```python
+def _metadata_body():
+    return {"metadata": {"user_id": _stable_user_id()}}
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# _stable_user_id() -> str
+#   Pre-condition: None (takes no arguments)
+#   Post-condition: Returns a string that uniquely and stably identifies the current user or installation context
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `_stable_user_id` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `_stable_user_id` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

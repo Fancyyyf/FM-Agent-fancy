@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/path/to/valid_project' (where CodeGraphExtractor.from_proj_dir returns a valid instance) and filepath='/path/to/valid_project/empty.c' (an existing C source file with no function definitions)",
+  "offending_statements": "Line 8: return cg.get_function_spans(\"c\", filepath) if cg else None",
+  "reason": "The specification states that None is returned only when a codegraph instance cannot be initialized from proj_dir; otherwise a list (possibly empty) of function tuples must be returned. The code, however, also returns None when get_function_spans returns None for reasons other than initialization failure (e.g., the file has no definitions). This violates the specification because for valid proj_dir and a C file with no functions, the code returns None instead of an empty list."
+}

@@ -1,0 +1,44 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one Python file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("python", filepath) if cg else None
+```
+
+Condition A (what the code actually does):
+Natural language: The function returns None under any of these conditions: (1) CodeGraphExtractor.from_proj_dir(proj_dir) returns None (codegraph cannot index the project), or (2) the obtained CodeGraphExtractor instance's get_function_spans('python', filepath) returns None. The latter occurs when the filepath is not an absolute path within the project root, the file is not indexed, it contains no function/method definitions, or the language 'python' is not recognized. If none of those failures happen, it returns a list of (name, start_idx, end_idx) tuples for each function or method definition in the file, with class-qualified names, 0-indexed inclusive line indices, and sorted by increasing start_idx. The filepath argument is passed directly; no conversion to an absolute path is performed, so relative paths are likely to cause get_function_spans to return None. The function has no side effects on the caller-visible state, although codegraph may access the filesystem internally. Formal logic: Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg == None, then result = None. If cg != None, then let sp = cg.get_function_spans('python', filepath). Result = sp. sp is either None or a list of tuples (name: str, start_idx: int, end_idx: int) satisfying: (∀ i, 0 ≤ start_idx_i ≤ end_idx_i) ∧ (∀ i < j, start_idx_i ≤ start_idx_j) ∧ each name is class-qualified when appropriate. sp == None iff cg is None ∨ (cg != None ∧ the filepath does not resolve to an indexed file containing at least one function/method definition for 'python').
+
+Condition B (what the specification requires):
+- If a codegraph backend is available and indexes the project at proj_dir,
+    returns a list of (name, start_idx, end_idx) tuples, one per function
+    defined in the Python source file at filepath, where start_idx and
+    end_idx are 0-indexed inclusive line numbers delimiting each function body.
+  - Returns None when the codegraph backend cannot be initialized for the
+    project or does not index the given filepath, signaling the caller to
+    fall back to regex-based function extraction for this file.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a valid path to a project directory
+  Post-condition: Returns a CodeGraphExtractor instance when the project is
+    indexable by codegraph; returns None otherwise.
+
+CodeGraphExtractor.get_function_spans(language: str, filepath: str) -> list[tuple[str, int, int]] | None
+Pre-condition: language is a non-empty string identifying a programming
+    language; filepath is an absolute filesystem path to a source file
+    residing within the project root.
+  Post-condition: Returns None when language does not map to a recognized
+    codegraph language, or when the database contains no rows for the file
+    (i.e., file not indexed, file has no functions/methods, or file path
+    does not resolve relative to the project root). Otherwise returns a
+    list of (name, start_idx, end_idx) tuples for every function and method
+    definition, with class-qualified names, 0-indexed inclusive line
+    indices, and ordered by ascending start_idx.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

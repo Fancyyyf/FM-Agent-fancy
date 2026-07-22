@@ -48,8 +48,8 @@
 #     subprocess.Popen as the command to execute
 # [SPLIT]
 # _opencode_env(work_dir, event_id) -> dict
-#   Pre-condition: work_dir is an existing directory path; event_id is a
-#     non-empty string
+#   Pre-condition: work_dir is a path to an existing directory on the filesystem (the fm_agent/
+#     workspace directory); event_id is a non-empty string uniquely identifying a trace event
 #   Post-condition: returns a dictionary of environment variables for the
 #     subprocess, derived from work_dir and event_id, that is a superset of
 #     the current process environment

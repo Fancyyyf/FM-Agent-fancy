@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Assume `self._data = {\"db_host\": \"localhost\"}` where the field `db_host` has a model default of `\"localhost\"` that was not explicitly set via TOML or environment variables. Calling the method returns `{\"db_host\": \"localhost\"}`, which includes a default value, violating the specification's requirement that only explicitly configured values are included.",
+  "offending_statements": "Line 1:     def __call__(self) -> dict:\nLine 2:         return self._data",
+  "reason": "The code returns `self._data` directly without filtering out model defaults, allowing non‑explicitly‑configured values to appear in the output."
+}

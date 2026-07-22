@@ -1,0 +1,93 @@
+# Reconcile a Caller's [INFO] Block with a Changed Callee
+
+The callee `_extraction_ident`'s behavioral specification was just updated. The caller `src::languages::codegraph-py::_node_fqn_map` (language `python`) records the expected specs of the callees it depends on in its [INFO] block. Update that block so its entry for the callee is CONSISTENT with the callee's new spec — it need NOT be identical, it only must not conflict (no contradictory pre/post-conditions). Leave the entries for every other callee unchanged.
+
+Comment prefix for this language: `#`.
+
+## Callee's updated [SPEC] block
+
+# [SPEC]
+# Unit: src/languages/codegraph.py
+#
+# _extraction_ident(name: str, qualified_name: str) -> str
+#
+# Pre-condition:
+#   - name and qualified_name are strings obtained from the codegraph database for a single function or method node
+#
+# Post-condition:
+#   - Returns a string composed of one or more components joined by the literal "::"
+#   - When qualified_name is non-empty and its suffix equals name, the leading components of the returned string (all except the last) correspond, in order, to the scope qualifiers extracted from the prefix of qualified_name that precedes name
+#   - When qualified_name is empty or its suffix does not equal name, the returned string consists of exactly one component
+#   - The final component of the returned string is derived from name
+#   - No component of the returned string contains any character that would be a directory separator in any filesystem
+#   - No component of the returned string contains signature syntax, pointer syntax, or template syntax that may have been present in the raw database column values
+#   - The same (name, qualified_name) pair always produces the same returned string
+#   - The separator character ("." vs "::") used in qualified_name does not affect the set or order of scope components in the returned string
+# [SPEC]
+
+## Caller's current source
+
+```python
+def _node_fqn_map(cur, cg_langs) -> dict:
+    """Return {node_id: fqn} for every function/method node in the given languages.
+
+    The per-file name dedup (``Flush``, ``Flush_1``, ...) uses the SAME rule and
+    ordering as get_functions_by_file (``ORDER BY file_path, start_line``, then a
+    per-(file, name) counter), so the FQN assigned to a node here matches the FQN
+    the extracted file for that node receives. Keeping the two in lockstep is what
+    makes the call-edge identities line up with the extracted-function identities.
+    """
+    placeholders = ",".join("?" * len(cg_langs))
+    cur.execute(
+        f"""
+        SELECT id, name, qualified_name, file_path, start_line
+        FROM nodes
+        WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+        ORDER BY file_path, start_line
+        """,
+        cg_langs,
+    )
+    counts: dict = {}
+    result: dict = {}
+    for node_id, name, qualified_name, file_path, _start in cur.fetchall():
+        ident = _extraction_ident(name, qualified_name)
+        key = (file_path, ident)
+        c = counts.get(key, 0)
+        counts[key] = c + 1
+        deduped = ident if c == 0 else f"{ident}_{c}"
+        result[node_id] = _fqn_for(file_path, deduped)
+    return result
+```
+
+## Caller's current [INFO] block (the expected specs of its callees)
+
+# [INFO]
+# _bare_function_name(name) -> str
+#   Pre-condition: name is a string containing a function name possibly
+#     including angle-bracket template parameters
+#   Post-condition: Returns the function name with any angle-bracket-delimited
+#     template parameters and their brackets removed
+# [SPLIT]
+# canonicalize(bare) -> str
+#   Pre-condition: bare is a string containing a function name with template
+#     parameters already stripped
+#   Post-condition: Returns a canonicalized safe identifier form of the
+#     function name; operator-overload names are normalized to deterministic
+#     identifier strings
+# [SPLIT]
+# _fqn_for(file_path, deduped) -> str
+#   Pre-condition: file_path is a string path to a source file; deduped is a
+#     string containing the deduplicated canonical function name
+#   Post-condition: Returns a fully-qualified function name string in the
+#     canonical FQN format where directory components and the file-derived
+#     component are separated by "::"
+# [INFO]
+
+## Steps
+
+1. Decide whether the caller's [INFO] entry for `_extraction_ident` already is consistent with the callee's new spec. If it is, no update is needed.
+2. If it conflicts, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, every line prefixed with `#`), adjusting only the `_extraction_ident` entry to be consistent and leaving the other entries as-is.
+3. Return ONLY a JSON object with keys:
+   - "info_updated": boolean.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   Do not include Markdown, tags, or prose outside the JSON object.

@@ -45,6 +45,13 @@
 #     function name; operator-overload names are normalized to deterministic
 #     identifier strings
 # [SPLIT]
+# _extraction_ident(name: str, qualified_name: str) -> str
+#   Pre-condition: name and qualified_name are strings obtained from the
+#     codegraph database for a single function or method node
+#   Post-condition: Returns a string composed of one or more components
+#     joined by "::", derived from the inputs without introducing any
+#     filesystem separator characters, signature syntax, or template syntax
+# [SPLIT]
 # _fqn_for(file_path, deduped) -> str
 #   Pre-condition: file_path is a string path to a source file; deduped is a
 #     string containing the deduplicated canonical function name
@@ -65,7 +72,7 @@ def _node_fqn_map(cur, cg_langs) -> dict:
     placeholders = ",".join("?" * len(cg_langs))
     cur.execute(
         f"""
-        SELECT id, name, file_path, start_line
+        SELECT id, name, qualified_name, file_path, start_line
         FROM nodes
         WHERE kind IN ('function', 'method') AND language IN ({placeholders})
         ORDER BY file_path, start_line
@@ -74,12 +81,11 @@ def _node_fqn_map(cur, cg_langs) -> dict:
     )
     counts: dict = {}
     result: dict = {}
-    for node_id, name, file_path, _start in cur.fetchall():
-        bare = _bare_function_name(name)
-        cname = canonicalize(bare)
-        key = (file_path, cname)
+    for node_id, name, qualified_name, file_path, _start in cur.fetchall():
+        ident = _extraction_ident(name, qualified_name)
+        key = (file_path, ident)
         c = counts.get(key, 0)
         counts[key] = c + 1
-        deduped = cname if c == 0 else f"{cname}_{c}"
+        deduped = ident if c == 0 else f"{ident}_{c}"
         result[node_id] = _fqn_for(file_path, deduped)
     return result

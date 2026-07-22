@@ -1,6 +1,6 @@
 # Bug Report: _deduplicate_phases
 
-**Source file:** `src/pipeline_setup.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/src/pipeline_setup.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -36,43 +36,39 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-After successful execution (no exceptions), the following holds:
-
-Natural language:
-The file at `phases_path = os.path.join(phases_dir, "phases.json")` is overwritten with a JSON object `new_data` that preserves the original phases and modules structure (same order, same counts, same names) but with each module's `source_files` list deduplicated so that every source file appears at most once overall. For each source file that appeared in the original `old_data`, it is kept only in the module that first claims it according to ascending phase number (ties broken by original stable order among phases with equal numbers) and then by original module order within that phase; later occurrences are removed. Modules that lose all files are retained without dropping phases or renumbering. Within each module, the relative order of retained files matches their original order. The function returns a dictionary `result` with key `"modified_modules"`, whose value is a list of objects, one per module whose `source_files` list changed. Each object contains the phase number (`"phase"`), module name (`"module"`), the list of removed files in original order (`"removed_files"`), and the new deduplicated list (`"source_files"`). Log messages are emitted for each removed duplicate file.
+If the function returns a value R without raising an exception, the following properties hold: (1) The file at os.path.join(phases_dir, 'phases.json') has been overwritten with a JSON object data such that data['phases'] is a list of the same length and order as in the original data; for each phase p in data['phases'], p['phase'] equals the original integer, and p['modules'] is the original list of modules in the same order; for each module m in p['modules'], m['name'] is unchanged, and m['source_files'] is the subsequence of the original m['source_files'] containing exactly those files that were not in the set Seen constructed by iterating phases sorted by phase ascending and modules in their original order, with Seen growing as files are encountered for the first time; thus every source file path that ever appears in the original data appears in exactly one module's source_files list in data, specifically the first module (by phase, then module order) that originally claimed it, and the relative order of kept files in each module is preserved. (2) No phases or modules are added, removed, or reordered. (3) R is a dict with key 'modified_modules'; R['modified_modules'] is a list of objects, one per module whose source_files list changed (i.e., some file was removed), ordered by the same traversal; each object has 'phase': integer phase number, 'module': module name string (or '' if missing), 'removed_files': list of removed file paths, and 'source_files': the final deduplicated list for that module. All changed modules are included, and unchanged modules are omitted. (4) Side effect: for each duplicate file found, logging.info() was called with a message indicating the file path, phase, and module. (5) If an exception is raised before the 'with open(..., "w")' block, the original file remains unchanged and the function does not return. If an exception is raised during the final write, the file state is unspecified (may be partially written or unmodified). Return value: modified_modules list spec mismatch - deduplication gap on removed_files duplicates
 
 ---
 
 ## Code Evidence
 
-Line 22-30: the deduplication loop that removes any source file already in the global `seen` set, which incorrectly removes duplicate files within the same module.
+Line 32: removed_files = [sf for sf in original if sf not in deduped]
 
 ---
 
 ## Trigger Condition
 
-The specification requires deduplication only for files appearing in multiple modules. In this input, 'a.py' appears twice in the same module, not in multiple modules. The code removes the second occurrence, changing the module's source_files and reporting it as modified, whereas the specification expects the file list to remain unchanged and 'modified_modules' to be empty.
+removed_files may contain duplicate file paths if the original source_files list in a module contained duplicate entries of a file that is entirely removed from that module. The specification requires the list of removed files to be deduplicated, i.e., each distinct file path should appear at most once.
 
 ---
 
 ## How to trigger the bug
 
-The bug is triggered when a module's `source_files` list contains the same file path more than once. The global `seen` set (`seen = set()` on line 71) tracks all file paths encountered across all phases and modules. When the same file appears twice within a single module, the second occurrence is already in `seen`, so the deduplication loop removes it — but the specification requires deduplication only across *different* modules, not within the same module.
+When a module's `source_files` list contains duplicate entries of the same file path, and that file path is entirely removed from the module (because a prior module already claimed it), the list comprehension that builds `removed_files` preserves those duplicates. The spec requires `removed_files` to be a deduplicated list — each distinct file path should appear at most once.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| phases_dir | (temp directory containing phases.json) |
-| phases.json → phases[0].modules[0].source_files | `["a.py", "b.py", "a.py"]` |
+| phases_dir (temp dir containing phases.json) | A temporary directory with `phases.json` containing two modules: module_a with `["a.py", "b.py"]` and module_b with `["a.py", "a.py", "c.py"]` (both in phase 1) |
 
 ### Expected (spec-correct) Output
 
-`["a.py", "b.py", "a.py"]` — source_files unchanged, `modified_modules` is `[]`
+`removed_files` for module_b should be `["a.py"]` (unique entries only)
 
 ### Actual (buggy) Output
 
-`["a.py", "b.py"]` — the second occurrence of `a.py` was incorrectly removed
+`removed_files` for module_b is `["a.py", "a.py"]` (duplicate entries preserved)
 
 ### How to Reproduce
 
@@ -82,30 +78,27 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import json, os, tempfile
+import sys, os, json, tempfile
+sys.path.insert(0, os.getcwd())
 from src.pipeline_setup import _deduplicate_phases
 
 with tempfile.TemporaryDirectory() as tmpdir:
-    phases_json = os.path.join(tmpdir, "phases.json")
-    data = {
-        "phases": [{
-            "phase": 1,
-            "modules": [{
-                "name": "module_foo",
-                "source_files": ["a.py", "b.py", "a.py"]
+    with open(os.path.join(tmpdir, "phases.json"), "w") as f:
+        json.dump({
+            "phases": [{
+                "phase": 1,
+                "modules": [
+                    {"name": "module_a", "source_files": ["a.py", "b.py"]},
+                    {"name": "module_b", "source_files": ["a.py", "a.py", "c.py"]}
+                ]
             }]
-        }]
-    }
-    with open(phases_json, "w") as f:
-        json.dump(data, f)
-
+        }, f)
     result = _deduplicate_phases(tmpdir)
-
-    with open(phases_json, "r") as f:
-        out = json.load(f)
-    print(out["phases"][0]["modules"][0]["source_files"])
-    # actual (buggy) output: ['a.py', 'b.py']
-    # expected (correct) output: ['a.py', 'b.py', 'a.py']
+    for mod in result["modified_modules"]:
+        if mod["module"] == "module_b":
+            print(mod["removed_files"])
+            # actual (buggy) output: ['a.py', 'a.py']
+            # expected (correct) output: ['a.py']
 ```
 
 ---
@@ -113,38 +106,45 @@ with tempfile.TemporaryDirectory() as tmpdir:
 ## Probe Script
 
 ```python
-"""Probe script for bug: _deduplicate_phases incorrectly deduplicates
-files within the same module.
+"""
+Probe script for bug: src--pipeline_setup-py--_deduplicate_phases
 
-The spec: deduplication should only remove files that appear in MULTIPLE
-modules. Within a single module, duplicate entries should be preserved.
-
-The bug: the global `seen` set tracks ALL seen files, so if a file appears
-twice in the same module's source_files, the second occurrence gets removed.
+Bug: _deduplicate_phases() returns duplicate file paths in removed_files
+when the original source_files list in a module contains duplicate entries
+of a file that is entirely removed from that module.
 """
 import sys
 import os
 import json
 import tempfile
 
-# Import via the public entry point (src package)
-from src.pipeline_setup import _deduplicate_phases
+# The probe runs from the repo root — add it to the path for src/ imports
+REPO_ROOT = os.getcwd()
+sys.path.insert(0, REPO_ROOT)
 
-def test():
-    # Create a temp directory with a phases.json containing a module
-    # that lists the same source file twice in its source_files list.
-    with tempfile.TemporaryDirectory() as tmpdir:
+try:
+    from src.pipeline_setup import _deduplicate_phases
+
+    # Set up a temp workspace with a phases.json that has duplicate entries
+    with tempfile.TemporaryDirectory(prefix="probe_dedup_") as tmpdir:
         phases_json_path = os.path.join(tmpdir, "phases.json")
 
-        # Input: one phase, one module, "a.py" appears TWICE in source_files
-        input_data = {
+        # Module A (phase 1) claims "a.py" first
+        # Module B (phase 1, same or later) has ["a.py", "a.py", "c.py"] -
+        # "a.py" appears twice, and since "a.py" was already claimed by Module A,
+        # it will be entirely removed from Module B.
+        phases_data = {
             "phases": [
                 {
                     "phase": 1,
                     "modules": [
                         {
-                            "name": "module_foo",
-                            "source_files": ["a.py", "b.py", "a.py"]
+                            "name": "module_a",
+                            "source_files": ["a.py", "b.py"]
+                        },
+                        {
+                            "name": "module_b",
+                            "source_files": ["a.py", "a.py", "c.py"]
                         }
                     ]
                 }
@@ -152,44 +152,45 @@ def test():
         }
 
         with open(phases_json_path, "w") as f:
-            json.dump(input_data, f)
+            json.dump(phases_data, f, indent=2)
 
-        # Call the function under test
         result = _deduplicate_phases(tmpdir)
 
-        # Read back the modified phases.json
-        with open(phases_json_path, "r") as f:
-            output_data = json.load(f)
+        # Find module_b's entry in modified_modules
+        mod_b_entry = None
+        for mod in result.get("modified_modules", []):
+            if mod.get("module") == "module_b":
+                mod_b_entry = mod
+                break
 
-        output_files = output_data["phases"][0]["modules"][0]["source_files"]
+        if mod_b_entry is None:
+            print("ERROR: module_b not found in modified_modules")
+            sys.exit(1)
 
-        # Spec says: dedup only across modules, not within the same module.
-        # "a.py" appears twice in ONE module → should be preserved (both copies).
-        # Expected: ["a.py", "b.py", "a.py"] — unchanged
-        # Actual (buggy): ["a.py", "b.py"] — second "a.py" removed
-        expected = ["a.py", "b.py", "a.py"]
-        actual = output_files
+        removed = mod_b_entry.get("removed_files", [])
+        expected_unique = sorted(set(removed))
+        has_duplicates = len(removed) != len(set(removed))
 
-        # The bug is confirmed if actual != expected
-        if actual != expected:
-            print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
-            print(f"modified_modules: {result.get('modified_modules')!r}")
+        if has_duplicates:
+            print(
+                f"CONFIRMED — duplicate removed_files for module_b: "
+                f"actual={removed!r} | expected (unique)={expected_unique!r}"
+            )
         else:
-            print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+            print(
+                f"NOT CONFIRMED — removed_files already unique: "
+                f"actual={removed!r}"
+            )
 
-if __name__ == "__main__":
-    try:
-        test()
-    except Exception as e:
-        print(f"ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+except Exception as e:
+    import traceback
+    print(f"ERROR: {e}")
+    traceback.print_exc()
+    sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: ['a.py', 'b.py'] | expected: ['a.py', 'b.py', 'a.py']
-modified_modules: []
+CONFIRMED — duplicate removed_files for module_b: actual=['a.py', 'a.py'] | expected (unique)=['a.py']
 ```

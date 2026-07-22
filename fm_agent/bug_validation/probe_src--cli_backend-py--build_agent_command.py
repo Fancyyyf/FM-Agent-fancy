@@ -1,43 +1,46 @@
 import sys
 import os
 
-# Add repo root to path so the "src" package is discoverable
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+# Ensure repo root is on sys.path so 'config' and 'src' packages are importable.
+repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, repo_root)
 
 try:
     from src.cli_backend import build_agent_command
 except Exception as e:
-    print(f"ERROR: {e}")
+    print(f'ERROR: {e}')
     sys.exit(1)
 
-actual = None
-expected = None
-passed = None
+test_files = ["a.txt", "b.txt"]
+backends_to_test = ["codex-cli", "claude-cli"]
 
-try:
-    cwd = os.path.abspath(os.getcwd())
-    files = ["test_file.txt"]
+all_confirmed = True
+details = []
 
-    actual = build_agent_command(
-        model="test-model",
-        prompt="test prompt",
-        cwd=cwd,
-        files=files,
-        backend="codex-cli",
-    )
+for backend in backends_to_test:
+    try:
+        cmd = build_agent_command(
+            model="test-model",
+            prompt="test prompt",
+            cwd="/tmp",
+            files=test_files,
+            backend=backend,
+        )
+    except Exception as e:
+        print(f'ERROR building command for {backend}: {e}')
+        sys.exit(1)
 
-    # Spec says: "each file path in files is attached as context to the
-    # backend invocation." That means file paths SHOULD appear in argv.
-    # Bug claim: the code only composes stdin, never adds file paths to argv.
-    file_path_in_argv = any("test_file.txt" in arg for arg in actual.argv)
-    expected_contains_files = True
-    passed = not file_path_in_argv  # bug confirmed when files NOT in argv
+    argv_flat = " ".join(cmd.argv)
+    file_in_argv = any(f in argv_flat for f in test_files)
 
-except Exception as e:
-    print(f"ERROR: {e}")
-    sys.exit(1)
+    if file_in_argv:
+        details.append(f'{backend}: file paths FOUND in argv → spec satisfied → NOT CONFIRMED')
+        all_confirmed = False
+    else:
+        details.append(f'{backend}: file paths MISSING from argv → spec violated → CONFIRMED')
 
-if passed:
-    print(f"CONFIRMED — file path 'test_file.txt' NOT found in argv: {actual.argv}")
+# Print verdict
+if all_confirmed:
+    print('CONFIRMED — file paths missing from argv for all backends:', ' | '.join(details))
 else:
-    print(f"NOT CONFIRMED — file path found in argv: {actual.argv}")
+    print('NOT CONFIRMED — file paths found in argv for at least one backend:', ' | '.join(details))

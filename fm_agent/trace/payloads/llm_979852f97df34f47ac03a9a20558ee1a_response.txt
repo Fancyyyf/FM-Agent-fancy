@@ -1,0 +1,3 @@
+{
+  "post_condition": "After execution, the __call__ method returns the value of the instance attribute self._data, which is expected to be a dict. The state of self._data remains unchanged. Formal: \\result == self._data"
+}

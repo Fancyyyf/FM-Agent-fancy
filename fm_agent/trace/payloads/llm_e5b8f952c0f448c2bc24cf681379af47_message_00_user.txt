@@ -1,0 +1,69 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::generate_batch_prompts-py::phase_callee_info_names_key` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: (none).
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def phase_callee_info_names_key(func: dict, phase: int) -> Optional[str]:
+    target = f"phase{phase}_callee_info_names_by_caller"
+    if target in func:
+        return target
+    for key in func.keys():
+        if key.endswith("_callee_info_names_by_caller") and key.startswith("phase"):
+            return key
+    return None
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/generate_batch_prompts-py/phase_callee_info_names_key.py
+#
+# phase_callee_info_names_key(func, phase) -> Optional[str]
+#
+# Pre-condition:
+#   - func is a dictionary
+#   - phase is a non-negative integer
+#
+# Post-condition:
+#   - If func contains a key exactly equal to the string
+#     "phase<phase>_callee_info_names_by_caller" (where <phase> is the decimal
+#     representation of the phase argument), returns that exact key string
+#   - Otherwise, if func contains any key that starts with "phase" and ends with
+#     "_callee_info_names_by_caller", returns that key string
+#   - Otherwise, returns None
+#   - The return value is either a string that is an actual key present in func,
+#     or None
+# [SPEC]
+
+This function has no callees, so there is no [INFO] block to maintain.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees ((none)). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

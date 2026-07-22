@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/tmp/test_project' containing a readable Rust file 'main.rs' that has no function definitions (e.g., empty or only comments). CodeGraphExtractor.from_proj_dir returns a valid extractor, and get_functions_by_file('rust', proj_dir) returns {'/tmp/test_project/main.rs': []}.",
+  "offending_statements": "Line 4: return cg.get_functions_by_file(\"rust\", proj_dir) if cg else {}",
+  "reason": "The specification requires each value in the returned dictionary to be a non-empty list of (function_name, function_body) tuples. The code directly returns the result of get_functions_by_file, which can include entries mapping a readable file to an empty list when no functions are detected. This violates the non-empty requirement."
+}

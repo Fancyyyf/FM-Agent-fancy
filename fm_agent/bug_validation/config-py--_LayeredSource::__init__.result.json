@@ -1,0 +1,11 @@
+{
+  "id": "config-py--_LayeredSource::__init__",
+  "source_file": "config.py",
+  "function_name": "_LayeredSource::__init__",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_config-py--_LayeredSource::__init__.py",
+  "detail_file": "fm_agent/bug_validation/config-py--_LayeredSource::__init__.md",
+  "probe_stdout": "CONFIRMED — diagnostic prints relative path instead of absolute path | stderr: 'FM-Agent: nonexistent_config_test.toml not found at nonexistent_config_test.toml; using built-in defaults.\\n'",
+  "trigger_summary": "When path does not exist, the diagnostic prints the path as given (potentially relative) instead of the absolute path as required by the specification."
+}

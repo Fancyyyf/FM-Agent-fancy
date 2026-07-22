@@ -1,11 +1,1 @@
-{
-  "id": "src--languages--javascript-py--function_spans",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_dlsr6ukl/snapshot/fm_agent/extracted_functions/src/languages/javascript-py/function_spans.py",
-  "function_name": "function_spans",
-  "confirmation_status": "not_confirmed",
-  "attempts": 3,
-  "probe_script": "fm_agent/bug_validation/probe_src--languages--javascript-py--function_spans.py",
-  "detail_file": "fm_agent/bug_validation/src--languages--javascript-py--function_spans.md",
-  "probe_stdout": "NOT CONFIRMED — get_function_spans returned sorted results for all 33 files with 2+ functions.\nThe SQL query in get_function_spans uses 'ORDER BY start_line' with INTEGER column,\nwhich guarantees numeric ordering. All language modules (javascript, python, go, etc.)\ndelegate to this same method without additional sorting, but the backend's ORDER BY\nclause already satisfies the ordering requirement from the spec.\n",
-  "trigger_summary": "function_spans delegates to get_function_spans without explicit sorting, but the backend SQL already uses ORDER BY start_line (INTEGER column), guaranteeing numeric ordering."
-}
+{"id": "src--languages--javascript-py--function_spans", "source_file": "src/languages/javascript.py", "function_name": "function_spans", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--languages--javascript-py--function_spans.py", "detail_file": "fm_agent/bug_validation/src--languages--javascript-py--function_spans.md", "probe_stdout": "CONFIRMED — actual: [('func_c', 40, 52), ('func_a', 5, 18), ('func_b', 22, 35)] | expected: [('func_a', 5, 18), ('func_b', 22, 35), ('func_c', 40, 52)]\n", "trigger_summary": "function_spans returns the raw list from cg.get_function_spans without sorting by start_idx; when the backend returns unordered spans the spec's ascending-start_idx guarantee is violated."}

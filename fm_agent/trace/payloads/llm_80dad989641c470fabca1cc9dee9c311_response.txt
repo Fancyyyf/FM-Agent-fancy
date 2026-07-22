@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "source=\"a\", lsp_range={'start': {'line': 0, 'character': 2}, 'end': {'line': 0, 'character': 1}}",
+  "offending_statements": "Line 3: return _SourceIndex.build(source).source_for_range(lsp_range)",
+  "reason": "The specification requires returning the substring from start to end for any input, but the code's behavior is undefined when start follows end. For the counterexample, start character 2 > end character 1. The code may raise an exception or return an arbitrary result, while the specification implies returning an empty substring (the span from start to end exclusive when start > end is empty). Thus the code violates the specification."
+}

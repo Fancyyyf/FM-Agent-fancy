@@ -1,0 +1,67 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _get_phase_files(phases_data, phase_num, input_dir):
+Line 2:     """Return relative paths of extracted function files for a given phase."""
+Line 3:     phase = next(p for p in phases_data["phases"] if p["phase"] == phase_num)
+Line 4:     phase_files = []
+Line 5:     for module in phase["modules"]:
+Line 6:         for src_file in module["source_files"]:
+Line 7:             dir_part = os.path.dirname(src_file)
+Line 8:             base = os.path.basename(src_file)
+Line 9:             dot_idx = base.rfind(".")
+Line 10:             if dot_idx >= 0:
+Line 11:                 subdir = base[:dot_idx] + "-" + base[dot_idx + 1:]
+Line 12:             else:
+Line 13:                 subdir = base
+Line 14:             extracted_dir = os.path.join(input_dir, dir_part, subdir)
+Line 15:             if os.path.isdir(extracted_dir):
+Line 16:                 # Every extracted function is a flat file directly in
+Line 17:                 # extracted_dir, member functions keeping the class qualifier in
+Line 18:                 # the name (<file>-cpp/LocalStorage::Flush.cpp). os.walk stays
+Line 19:                 # robust to any legacy nested file.
+Line 20:                 for root, _dirs, fnames in os.walk(extracted_dir):
+Line 21:                     for fname in sorted(fnames):
+Line 22:                         fpath = os.path.join(root, fname)
+Line 23:                         if os.path.isfile(fpath):
+Line 24:                             phase_files.append(os.path.relpath(fpath, input_dir))
+Line 25:     return phase_files
+```
+
+Condition A (what the code actually does):
+If a phase dict with `phase == phase_num` exists, the function returns a list of relative file paths (strings) from `input_dir` for all regular files found inside the extracted directories that exist. Otherwise, `StopIteration` is raised; other exceptions (e.g., `OSError`) may propagate if filesystem operations fail. Formally:
+
+∃ p ∈ phases_data["phases"] : p["phase"] = phase_num ⇒
+  let M = {p | p ∈ phases_data["phases"] ∧ p["phase"] = phase_num} (singleton by pre-condition).
+  For each module ∈ M["modules"], for each src_file ∈ module["source_files"]:
+    let base = basename(src_file), ext_idx = base.rfind("."),
+        subdir = (base[:ext_idx] + "-" + base[ext_idx+1:]) if ext_idx ≥ 0 else base,
+        extracted_dir = join(input_dir, dirname(src_file), subdir).
+    If is_dir(extracted_dir), then for every (root, dirs, files) in os.walk(extracted_dir) (top-down, arbitrary order),
+    for every fname ∈ sorted(files):
+      let fpath = join(root, fname).
+      If is_file(fpath), then append relpath(fpath, input_dir) to result list.
+  Return the final list (deterministic for a given filesystem state).
+
+Otherwise (no matching phase), `StopIteration` is raised.
+
+Condition B (what the specification requires):
+- Returns a list of relative path strings, each being the path from input_dir to a
+    regular file located under an extracted-function subdirectory.
+  - Each returned path originates from a source file declared in the modules of the
+    phase identified by phase_num; the mapping from a source file path to its
+    extracted-function subdirectory follows the engine convention: the last "." in the
+    source file's basename is replaced by "-", and the resulting name is used as a
+    subdirectory under input_dir joined with the source file's directory portion.
+  - Source files whose corresponding extracted-function subdirectory does not exist
+    under input_dir contribute no entries to the result (they are silently skipped).
+  - Within each extracted-function subdirectory, contained regular files appear in
+    lexicographically sorted order by filename.
+  - The overall order of paths in the result preserves: the iteration order of
+    phases_data["phases"], the iteration order of modules within the matched phase,
+    and the iteration order of source_files within each module.
+  - The returned list may be empty when the matched phase has no modules, no source
+    files, or none of its source files have an existing extracted-function directory.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

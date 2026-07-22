@@ -1,11 +1,1 @@
-{
-  "id": "src--generate_topdown_layers-py--_collect_phase_files",
-  "source_file": "fm_agent/extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py",
-  "function_name": "_collect_phase_files",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
-  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_collect_phase_files.py",
-  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_collect_phase_files.md",
-  "probe_stdout": "CONFIRMED — actual count: 0 | expected count: 1",
-  "trigger_summary": "The condition `last_dot > 0` skips '.' to '-' replacement when a source file basename has a leading dot (e.g., .hiddenfile), causing the function to look in extracted_functions/.hiddenfile instead of extracted_functions/-hiddenfile and miss files."
-}
+{"id": "src--generate_topdown_layers-py--_collect_phase_files", "source_file": "src/generate_topdown_layers.py", "function_name": "_collect_phase_files", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_collect_phase_files.py", "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_collect_phase_files.md", "probe_stdout": "CONFIRMED — actual: {'/tmp/probe_collect_phase_files_cztzyoif/extracted_functions/.hidden/buggy_file.py'} | spec-expected (look in -hidden/): {'/tmp/probe_collect_phase_files_cztzyoif/extracted_functions/-hidden/correct_file.py'} | code looked in .hidden/ instead because last_dot>0 is False when last_dot==0", "trigger_summary": "When a source file's basename starts with a dot (e.g., '.hidden'), last_dot equals 0 and the guard last_dot > 0 fails, so the code looks for directory '.hidden' instead of the spec-correct '-hidden'."}

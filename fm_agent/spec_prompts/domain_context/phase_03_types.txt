@@ -1,151 +1,145 @@
-Phase 3 — Scope Analysis & Layer Organization
-====================================================
+# Phase 3: Scope Analysis & Layer Organization — Types and Invariants
 
-This phase identifies relevant functions for incremental analysis, builds
-dependency-ordered top-down layers from call graphs, and creates batched prompt
-files for parallel specification generation.
+## Overview
 
-Key Types and Structs
----------------------
+Phase 3 has two responsibilities: (1) function-level localization for incremental
+mode (heuristic scoring + optional LLM re-ranking), and (2) building dependency-ordered
+top-down layers from intra-phase call graphs for batch prompt generation.
 
-Scope Functions (src/scope.py):
-  rank_functions_in_file(filepath, src_path, issue, signals, top_k, llm_client, ...)
-  Returns list of ranked function dicts, sorted by descending score:
-  [
-    {"file": str,           # source file path
-     "name": str,           # function name (deduped, matches extracted file name)
-     "lineno": int,         # 1-based start line
-     "end_lineno": int,     # 1-based end line
-     "score": float,        # relevance score (computed via heuristic + enrichments)
-     "reason": "heuristic"|"llm"|"heuristic_pad"
-    }
-  ]
+## Key Types — Scope Analysis (scope.py)
 
-  Signal weights (float constants):
-    W_TRACEBACK       = 10.0   # "in func_name" traceback lines
-    W_BACKTICK_NAME   =  5.0   # function name in backtick spans
-    W_BACKTICK_BODY   =  2.0   # backtick identifiers in function body
-    W_DOTTED_REF      = 15.0   # Class.method explicit dotted references
-    W_PLAIN_NAME      =  3.0   # CamelCase/snake_case in prose
-    W_NAME_ALL_WORDS  =  1.5   # name-parts ∩ prose words (≥5 chars)
-    W_FUZZY_NAME      =  1.4   # typo-tolerant name matching (≥75% similarity, ≥5 chars)
-    W_EXCEPTION_MATCH =  4.0   # exception type mentioned in issue found in body
-    W_BODY_WORDS      =  1.0   # body-word overlap / √(body_lines)
+### Signal Extraction
 
-  Call-graph propagation (per-file):
-    CALLEE_INHERIT = 0.30   # callee gets 30% of caller's score
-    CALLER_INHERIT = 0.20   # caller gets 20% of callee's score
+**`_parse_issue_signals(issue_text) → dict[str, set[str]]`:**
+- `traceback_funcs` — T1: Python traceback function names (×10)
+- `backtick_idents` — T2: backtick/code-block identifiers (×5 name, ×2 body)
+- `dotted_refs` — T3: method names from Class.method refs (×15)
+- `dotted_classes` — T3: class names from Class.method refs
+- `plain_idents` — T4: CamelCase/snake_case in prose (×3)
+- `exception_types` — T5: exception type names (×4)
+- `all_words` — T6: all alphabetic words ≥ 4 chars, not in `_STOP` (×1)
 
-  Class-scope narrowing (Python only):
-    W_CLASS_NAME_MATCH   = 6.0
-    W_CLASS_DOC_MATCH    = 2.0
-    CLASS_METHOD_INHERIT = 0.40  # method gets 40% of class score
-    CLASS_BOOST_CAP      = 8.0   # hard cap on per-method class bonus
+### Per-Function Info Dict
+```python
+{
+    "name": str,        "start": int,       "end": int,
+    "calls": set[str],  "idents": set[str],
+    "body_words": set[str],  "exc_types": set[str],
+    "docstring": str,   # Python only
+}
+```
 
-  LLM re-ranking triggers (configurable):
-    - File has ≥ SCOPE_LLM_TRIGGER_FUNCS deduped functions (default 5), OR
-    - Top heuristic score < SCOPE_LLM_CONFIDENCE_THRESHOLD (default 8.0)
+### Score Enrichments
 
-  Issue signals (per developer intent text):
-  {
-    "traceback_funcs": set[str],    # T1: function names from tracebacks
-    "backtick_idents": set[str],    # T2: identifiers in backticks/blocks
-    "dotted_refs":     set[str],    # T3: method names from Class.method refs
-    "dotted_classes":  set[str],    # T3: class names from Class.method refs
-    "plain_idents":    set[str],    # T4: CamelCase/snake_case in prose
-    "exception_types": set[str],    # T5: exception type names
-    "all_words":       set[str],    # T6: all alphabetic words ≥4 chars (non-stop-words)
-  }
+**Call-graph propagation (intra-file):**
+- `CALLEE_INHERIT = 0.30` — callee of high-scoring function gets 30% of its score
+- `CALLER_INHERIT = 0.20` — caller of high-scoring function gets 20% of its score
 
-Topdown Layer JSON (phase_NN_topdown_layers.json):
-  {
-    "phase": int,
-    "phase_name": string,
-    "total_functions": int,
-    "total_layers": int,
-    "layers": [
-      {
-        "layer": int,              # 0-indexed layer number
-        "cycle_resolution": bool?, # present=true if this layer resolves an SCC
-        "functions": [
-          {
-            "name": string,        # FQN (e.g. "src::engine::loader-cpp::loadData")
-            "file": string,        # relative path to extracted function file
-            "unit": string,        # module name from phases.json
-            "phaseN_callers": [string],  # in-phase callers (FQNs)
-            "phaseN_callees": [string],  # in-phase callees (FQNs)
-            "all_callees": [string],     # all-phase callees (FQNs)
-            "phaseN_callee_info_names_by_caller"?: {caller_fqn: [info_names]}
-          }
-        ]
-      }
-    ]
-  }
+**Class-scope narrowing (Python only):**
+- `W_CLASS_NAME_MATCH = 6.0` — per token overlap: class name × intent
+- `W_CLASS_DOC_MATCH = 2.0` — per token overlap: class docstring × intent
+- `CLASS_METHOD_INHERIT = 0.40` — fraction of class score to each method
+- `CLASS_BOOST_CAP = 8.0` — hard cap on per-method class bonus
 
-  Invariants:
-  - Layers are topologically sorted: callees appear in lower-numbered layers
-    than their callers.
-  - SCC members (mutual recursion) are placed in the same layer.
-  - all_callees may reference functions from other phases (cross-phase edges).
-  - phaseN_callers and phaseN_callees are scoped to THE SAME phase only.
+### LLM Re-ranking
 
-Batch Prompt Manifest (manifest.json):
-  {
-    "phase": int,
-    "layers": string,            # "start-end" or single index
-    "total_functions": int,
-    "total_batches": int,
-    "batches": [
-      {
-        "index": int,
-        "file": string,          # prompt filename (e.g. "batch_000_layer0_extracted_b0.txt")
-        "layer": int,
-        "is_cycle": bool,
-        "num_functions": int,    # total functions in this batch
-        "num_pending": int,      # unspecced functions (may be < num_functions on resume)
-        "functions": [string]    # fm_agent/-prefixed extracted function paths
-      }
-    ]
-  }
+Triggers when: file has ≥ `LLM_TRIGGER_FUNCS` (default 5) unique functions,
+OR top heuristic score < `LLM_CONFIDENCE_THRESHOLD` (default 8.0).
 
-  Batch size defaults to 2 functions per prompt file.
-  On resume: num_pending < num_functions when some functions are already specced.
+**Input:** `"<name> | <signature> | <docstring first line>"` per function.
+**Output:** `["func_name_1", ...]` JSON array.
+Falls back to heuristic on failure (3 attempts with backoff).
 
-Function Signatures (Entry Points)
-----------------------------------
+### `rank_functions_in_file()` Return
+```python
+list[dict]  # each: {"file", "name", "lineno", "end_lineno", "score", "reason"}
+```
+`reason` ∈ `{"heuristic", "llm", "heuristic_pad"}`.
+Capped at `TOP_K` (default 5).
 
-src/scope.py:
-  rank_functions_in_file(filepath, src_path, issue, signals, top_k=TOP_K,
-                         llm_client=None, llm_model="", llm_trigger=LLM_TRIGGER_FUNCS,
-                         llm_top_k=LLM_TOP_K,
-                         llm_confidence_threshold=LLM_CONFIDENCE_THRESHOLD,
-                         proj_dir=None) → list[dict]
-  _parse_issue_signals(issue_text) → dict[str, set[str]]
+## Key Types — Top-Down Layers (generate_topdown_layers.py)
 
-src/generate_topdown_layers.py:
-  generate_topdown_layers(proj_dir, phase_numbers=None, extra_call_edges=None) → [output_paths]
-    Reads phases.json, collects extracted function files, builds call graph via static
-    analysis (codegraph + regex fallback), computes topological layers via Kahn's algorithm
-    with Tarjan SCC for cycles, writes per-phase JSON files.
+### Call Graph Construction
 
-  _build_call_graph(phase_files, proj_dir, global_stem_to_fqns=None, extra_call_edges=None)
-    → (callees_map, callers_map, all_callees_map, file_map, module_map, edge_aliases_map)
-    All maps keyed by FQN. edge_aliases_map: callee → caller → set of supplemental names.
+**`_build_call_graph()` returns:**
+```python
+(
+    callees_map: dict[fqn, set[fqn]],     # within-phase callees
+    callers_map: dict[fqn, set[fqn]],     # within-phase callers
+    all_callees_map: dict[fqn, set[fqn]], # any phase
+    file_map: dict[fqn, filepath],
+    module_map: dict[fqn, module_name],
+    edge_aliases_map: dict[callee_fqn, dict[caller_fqn, set[alias]]],
+)
+```
 
-  _compute_layers(phase_fqns, callees_map, callers_map) → list[layer_dicts]
-    Kahn's algorithm for topological ordering, Tarjan SCC for cycle resolution.
+**Edge resolution:**
+- Codegraph: precise `caller_fqn → callee_fqn`; only extracted callees kept.
+- Regex fallback: bare-name call sites resolved to every same-named FQN.
+- Supplemental edges: resolved via `_resolve_extra_call_edges` into
+  `by_caller_fqn` (exact) and `by_callsite` (callsite name match).
 
-src/generate_batch_prompts.py:
-  main() → int  # CLI entry (python3 generate_batch_prompts.py --phase N --layers R)
-  build_prompt(phase, layer_idx, is_cycle, functions, func_to_layer, all_funcs,
-               work_dir, fm_agent_prefix, ext_to_lang) → string
-    Constructs the full batch prompt including: earlier-layer caller specs,
-    callee expectations from callers, cycle guidance, per-function file references,
-    and the mandatory spec format template.
+**Call-site regex patterns:**
+- C/C++/Java/JS/TS/CUDA/ArkTS: `\b(\w+)\s*(?:<[^>]*>)?\s*\(`
+- Rust: `\b(\w+)\s*(?:::<[^>]*>)?\s*\(` (turbofish)
+- Go: `\b(\w+)\s*(?:\[[^\]]*\])?\s*\(` (type params)
 
-  extract_spec_block(filepath) → Optional[str]
-    Returns the full [SPEC] ... [SPEC] block or None.
-  extract_info_block(filepath) → Optional[str]
-    Returns content between [INFO] markers or None.
-  extract_callee_spec_from_info(info_block, callee_fqn, aliases) → Optional[str]
-    Finds the [SPLIT]-separated entry for a callee in an info block.
+### Layer Computation
+
+**`_compute_layers(phase_fqns, callees_map, callers_map)`:**
+Returns `list[{"layer": int, "functions": list[str], "cycle_resolution": bool}]`.
+
+Algorithm:
+1. Kahn's algorithm: find functions with all same-phase callers already assigned.
+2. On cycle: compute SCCs via iterative Tarjan's, build SCC DAG, topologically sort.
+3. SCCs with >1 node: `cycle_resolution: True`.
+
+**Invariant:** For any function F with phase-internal callee C, C's layer ≤ F's layer.
+
+### Top-Down Layer Output
+Written to `spec_prompts/phase_NN_topdown_layers.json`:
+```json
+{
+  "phase": N, "phase_name": "...",
+  "total_functions": N, "total_layers": N,
+  "layers": [{
+    "layer": 0, "cycle_resolution": false,
+    "functions": [{
+      "name": "fqn", "file": "extracted_functions/...",
+      "unit": "module", "phaseN_callers": [...],
+      "phaseN_callees": [...], "all_callees": [...],
+      "phaseN_callee_info_names_by_caller": {...}
+    }]
+  }]
+}
+```
+
+### Batch Prompt Types (generate_batch_prompts.py)
+
+**`build_prompt()`** generates per-batch prompt files containing:
+- Language/comment style, required reading files, key rules
+- Earlier-layer caller specs (from lower layers)
+- Callee expectations from callers' [INFO] blocks
+- Cycle layer guidance (for mutual recursion)
+- Function list with caller metadata, spec format template, process instructions
+
+**Output:** `batch_NNN_layerM_extracted_bI.txt` or `..._cycle_bI.txt`
+plus `manifest.json`:
+```json
+{
+  "phase": N, "layers": "0-M",
+  "total_functions": N, "total_batches": N,
+  "batches": [{
+    "index": 0, "file": "batch_000_layer0_extracted_b0.txt",
+    "layer": 0, "is_cycle": false,
+    "num_functions": 2, "num_pending": 2,
+    "functions": ["fm_agent/extracted_functions/..."]
+  }]
+}
+```
+
+**`COMMENT_PREFIX_BY_LANG`:**
+```
+c/cpp/java/go/rust/javascript/typescript → "//"
+python/ruby → "#", sql → "--", erlang → "%"
+```

@@ -8,24 +8,29 @@
 #
 # Post-condition:
 #   - Returns True when the file phases.json exists under work_dir, is a
-#     regular file, and parses as valid JSON.
+#     regular file, its content parses as valid JSON, and it conforms to the
+#     required schema (as determined by _phase_plan_schema_errors).
 #   - Returns False when phases.json does not exist under work_dir, is not a
-#     regular file, or exists but does not parse as valid JSON.
+#     regular file, does not parse as valid JSON, or does not conform to the
+#     required schema.
 #   - The return value is idempotent for the same filesystem state: repeated
-#     calls with the same work_dir and same phases.json content return the same
-#     boolean.
+#     calls with the same work_dir and same file content yield the same boolean
+#     result.
 # [SPEC]
 
 # [INFO]
-# _json_file_is_valid(file_path) -> bool
-#   Pre-condition: file_path is a string path.
-#   Post-condition: Returns True when the file at file_path exists, is a
-#     regular file, and its content parses as valid JSON; returns False when
-#     the file does not exist, is not a regular file, or its content does not
-#     parse as valid JSON.
+# _phase_plan_schema_errors(file_path) -> any
+#   Pre-condition: file_path is a string path to a file.
+#   Post-condition: Returns a truthy value (a non-empty list of error strings)
+#     if the file cannot be read (any OS error including absent file or
+#     permission denied), if the file content is not valid JSON, or if the
+#     decoded JSON violates the required schema.
+#   - Returns a falsey value (an empty list) when the file is readable, its
+#     content is valid JSON, and the decoded JSON fully conforms to the
+#     required schema.
 # [INFO]
 
 def _phase_plan_complete(work_dir):
-    """Return True only if phases.json exists and is valid JSON."""
+    """Return True only if phases.json exists and matches the required schema."""
     phases_path = os.path.join(work_dir, "phases.json")
-    return _json_file_is_valid(phases_path)
+    return not _phase_plan_schema_errors(phases_path)

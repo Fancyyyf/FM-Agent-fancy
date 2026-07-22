@@ -26,7 +26,7 @@
 
 def _fmt_cost(usd):
     if usd is None:
-        return "\u2014"
+        return "—"
     a = abs(usd)
     if a < 1:    return f"${usd:.3f}"
     if a < 100:  return f"${usd:.2f}"

@@ -43,7 +43,7 @@
 #     "claude" → "claude-cli")
 # [SPLIT]
 # resolve_model_backend() -> str
-#   Pre-condition: None (reads environment or configuration)
+#   Pre-condition: `settings.llm.backend` contains a string value (reads environment or configuration)
 #   Post-condition: Returns the canonical backend name of the configured
 #     model backend; "auto" resolves to a concrete backend
 # [SPLIT]
@@ -55,9 +55,10 @@
 #     backend subprocess; returns None when files is empty
 # [SPLIT]
 # cli_effort() -> str
-#   Pre-condition: None (reads environment or configuration)
-#   Post-condition: Returns the configured reasoning effort level as a
-#     string, or an empty string when no effort level is configured
+#   Pre-condition: `settings.llm.effort` is a string
+#   Post-condition: Returns the value of `settings.llm.effort` with leading
+#     and trailing whitespace removed; returns an empty string if the value
+#     is empty or whitespace-only
 # [SPLIT]
 # AgentCommand(argv, stdin, backend) -> AgentCommand
 #   Pre-condition: argv is a list of argument strings; stdin is a string

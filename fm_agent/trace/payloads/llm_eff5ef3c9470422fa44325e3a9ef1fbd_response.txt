@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "An ElpClient instance with _MAX_CONTENT_MODIFIED_RETRIES set to 0, self.timeout set to any non-negative value, and self._next_id initialized to an integer. Call request('test', None). The loop body is skipped, causing an AssertionError to be raised.",
+  "offending_statements": "Line 4:     for attempt in range(_MAX_CONTENT_MODIFIED_RETRIES):\nLine 26:         raise AssertionError(\"unreachable\")",
+  "reason": "The specification only permits returning a result, raising TimeoutError, or raising RuntimeError. When _MAX_CONTENT_MODIFIED_RETRIES ≤ 0, the code raises an AssertionError, which is not among the allowed outcomes."
+}

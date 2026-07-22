@@ -1,0 +1,81 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::file_utils-py::_has_source_code` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _iter_project_source_files.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _has_source_code(proj_dir, submodules=None):
+    """Check whether proj_dir contains at least one source code file."""
+    for _ in _iter_project_source_files(proj_dir, submodules):
+        return True
+    return False
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/file_utils.py
+#
+# _has_source_code(proj_dir, submodules=None) -> bool
+#
+# Pre-condition:
+#   - proj_dir is a directory path.
+#   - submodules is None or a non-empty list of subdirectory name strings.
+#
+# Post-condition:
+#   - Returns True when proj_dir (optionally scoped to submodules) contains at least one
+#     file whose extension matches a pipeline-supported programming language.
+#   - Returns False when no such file exists within the applicable scope, including when
+#     proj_dir does not exist, is empty, contains no recognized source files, or when
+#     submodules narrows the scope to a subset of the tree that contains no recognized
+#     source files.
+#   - When submodules is None, the search covers the entire directory tree under proj_dir,
+#     excluding directories whose names begin with "." and well-known build/package
+#     directories.
+#   - When submodules is provided and non-empty, only files whose project-relative path
+#     begins with one of the listed subdirectory names are considered.
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _iter_project_source_files(proj_dir, submodules=None) -> Iterator[str]
+#   Pre-condition: proj_dir is a directory path; submodules is None or a non-empty list
+#     of subdirectory name strings.
+#   Post-condition: yields every project-relative file path (using "/" separators) under
+#     proj_dir whose extension matches a pipeline-supported language, optionally scoped
+#     to the submodules tree(s) when submodules is provided; directories whose names begin
+#     with "." and well-known build/package directories are excluded from traversal.
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_iter_project_source_files) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_iter_project_source_files). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

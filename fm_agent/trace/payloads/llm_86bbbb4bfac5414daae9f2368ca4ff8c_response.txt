@@ -1,0 +1,4 @@
+{
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _phase_plan_schema_errors(file_path) -> any\n#   Pre-condition: file_path is a string path to a file.\n#   Post-condition: Returns a truthy value (a non-empty list of error strings)\n#     if the file cannot be read (any OS error including absent file or\n#     permission denied), if the file content is not valid JSON, or if the\n#     decoded JSON violates the required schema.\n#   - Returns a falsey value (an empty list) when the file is readable, its\n#     content is valid JSON, and the decoded JSON fully conforms to the\n#     required schema.\n# [INFO]"
+}

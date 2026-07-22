@@ -1,6 +1,6 @@
 # Bug Report: batch_extract
 
-**Source file:** `src/languages/rust-py/batch_extract.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/src/languages/rust-py/batch_extract.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -23,43 +23,48 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-If the function returns normally, it yields a dictionary. Calling CodeGraphExtractor.from_proj_dir(proj_dir) either returns a configured instance (cg  None) or None. When cg is None the result is {}. When cg is not None the result is cg.get_functions_by_file("rust", proj_dir), a dict mapping each absolute path of a Rust source file under proj_dir to a list of (function_name, function_body) tuples. No sideeffects on proj_dir occur. Any exception raised by from_proj_dir or get_functions_by_file propagates uncaught to the caller, and the function does not return a value in that case.
+The function returns a dictionary mapping absolute file paths of Rust source files in the project directory `proj_dir` to lists of their contained function definitions as `(function_name: str, function_body: str)` tuples. If `CodeGraphExtractor.from_proj_dir(proj_dir)` fails (returns `None`), the function returns an empty dictionary `{}`. If the extractor initializes successfully, the dictionary may still be empty if no Rust sources are found or all such files are unreadable. Formally: `result = batch_extract(proj_dir)  result  dict  ( (CodeGraphExtractor.from_proj_dir(proj_dir) = None  result = {})  (CodeGraphExtractor.from_proj_dir(proj_dir)  None  (k  keys(result), k is an absolute path of a readable Rust file in proj_dir  result[k] is a list of (name, body) pairs for functions in that file  (f in projects Rust sources, if f is readable then  entry in result with key abs(f) and value that list, else f is omitted))) )`.
 
 ---
 
 ## Code Evidence
 
-Line 4
+Line 4: return cg.get_functions_by_file("rust", proj_dir) if cg else {}
 
 ---
 
 ## Trigger Condition
 
-The specification requires every value in the returned dictionary to be a non-empty list of (function_name, function_body) tuples. The code delegates to cg.get_functions_by_file without filtering out files that contain zero functions, thus potentially returning a dictionary with empty lists.
+The specification requires each value in the returned dictionary to be a non-empty list of (function_name, function_body) tuples. The code directly returns the result of get_functions_by_file, which can include entries mapping a readable file to an empty list when no functions are detected. This violates the non-empty requirement.
 
 ---
 
 ## How to trigger the bug
 
+The bug manifests when `CodeGraphExtractor.get_functions_by_file` returns a dictionary that includes a file path key with an empty list as its value. The `batch_extract` function returns this result verbatim without filtering out empty-list entries, violating the specification's requirement that each value be a non-empty list.
+
+In the current codebase, `get_functions_by_file` (in `src/languages/codegraph.py`) does not produce empty lists because every file entry originates from at least one SQL query result row. However, if the underlying implementation were to ever produce empty-list entries (e.g., due to future changes or an edge case in file reading), `batch_extract` would propagate them without defense.
+
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| proj_dir  | "/proj" (any valid project directory with Rust files) |
+| `proj_dir` | `"/fake/proj"` (any directory; the test mocks `CodeGraphExtractor` to simulate the buggy scenario) |
 
 ### Expected (spec-correct) Output
 
-A dictionary where every value is a non-empty list of `(function_name, function_body)` tuples. Files containing zero functions should be excluded from the result:
-
-`{"/proj/src/lib.rs": [("add", "fn add() { 1 + 2 }")]}`
+A dictionary containing only entries with non-empty function lists. The entry `"/fake/proj/src/empty_mod.rs"` should be **absent** from the result since it has zero detected functions.
 
 ### Actual (buggy) Output
 
-A dictionary that may include files with empty lists:
+```json
+{
+  "/fake/proj/src/main.rs": [["main", "fn main() {\n    println!(\"hello\");\n}\n"]],
+  "/fake/proj/src/empty_mod.rs": []
+}
+```
 
-`{"/proj/src/lib.rs": [("add", "fn add() { 1 + 2 }")], "/proj/src/empty.rs": []}`
-
-The file `/proj/src/empty.rs` has an empty list `[]` as its value, violating the "non-empty list" requirement in the specification.
+The empty-list entry for `empty_mod.rs` is included, violating the non-empty requirement.
 
 ### How to Reproduce
 
@@ -67,21 +72,24 @@ The file `/proj/src/empty.rs` has an empty list `[]` as its value, violating the
 2. Run the following snippet (uses the package entry point):
 
 ```python
-from unittest.mock import MagicMock
-import src.languages.rust
+from unittest.mock import MagicMock, patch
+import sys
+sys.path.insert(0, "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot")
 
-mock_extractor_cls = MagicMock()
-mock_cg = MagicMock()
-mock_cg.get_functions_by_file.return_value = {
-    "/proj/src/lib.rs": [("add", "fn add() { 1 + 2 }")],
-    "/proj/src/empty.rs": [],
+mock_extractor = MagicMock()
+mock_extractor.get_functions_by_file.return_value = {
+    "/fake/proj/src/main.rs": [("main", "fn main() {}\n")],
+    "/fake/proj/src/empty_mod.rs": [],  # empty list — spec violation
 }
-mock_extractor_cls.from_proj_dir.return_value = mock_cg
-src.languages.rust.CodeGraphExtractor = mock_extractor_cls
 
-result = src.languages.rust.batch_extract("/proj")
-# actual (buggy) output: {'/proj/src/lib.rs': [('add', 'fn add() { 1 + 2 }')], '/proj/src/empty.rs': []}
-# expected (correct) output: {'/proj/src/lib.rs': [('add', 'fn add() { 1 + 2 }')]}
+with patch("src.languages.rust.CodeGraphExtractor") as mock_cls:
+    mock_cls.from_proj_dir.return_value = mock_extractor
+    from src.languages.rust import batch_extract
+    result = batch_extract("/fake/proj")
+
+print("/fake/proj/src/empty_mod.rs" in result)  # True — bug: empty list not filtered
+# actual (buggy) output: True (empty-list entry preserved)
+# expected (correct) output: False (empty-list entry should be absent)
 ```
 
 ---
@@ -89,52 +97,77 @@ result = src.languages.rust.batch_extract("/proj")
 ## Probe Script
 
 ```python
+"""Probe script for bug ID: src--languages--rust-py--batch_extract
+Tests whether batch_extract filters out empty-list values from get_functions_by_file.
+Spec requires non-empty lists; code passes through whatever get_functions_by_file returns.
+"""
 import sys
-from unittest.mock import MagicMock
+import os
 
-try:
-    import src.languages.rust
-    import src.languages.codegraph
+# The probe workspace is a temp dir; add snapshot to path to import the package.
+sys.path.insert(0, "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot")
 
-    # Save original for cleanup
-    _original = src.languages.rust.CodeGraphExtractor
 
-    # Patch CodeGraphExtractor to return a result with an empty list for one file
-    mock_extractor_cls = MagicMock()
-    mock_cg = MagicMock()
-    mock_cg.get_functions_by_file.return_value = {
-        "/proj/src/lib.rs": [("add", "fn add() { 1 + 2 }")],
-        "/proj/src/empty.rs": [],  # file with zero functions -> empty list, violates spec
+def main():
+    from unittest.mock import MagicMock, patch
+
+    # Mock CodeGraphExtractor so from_proj_dir returns a mock with
+    # get_functions_by_file returning a dict containing an empty-list entry.
+    mock_extractor = MagicMock()
+    mock_extractor.get_functions_by_file.return_value = {
+        "/fake/proj/src/main.rs": [
+            ("main", "fn main() {\n    println!(\"hello\");\n}\n"),
+        ],
+        "/fake/proj/src/empty_mod.rs": [],   # <-- spec violation: non-empty required
     }
-    mock_extractor_cls.from_proj_dir.return_value = mock_cg
-    src.languages.rust.CodeGraphExtractor = mock_extractor_cls
 
-    result = src.languages.rust.batch_extract("/proj")
+    with patch(
+        "src.languages.rust.CodeGraphExtractor"
+    ) as mock_cls:
+        mock_cls.from_proj_dir.return_value = mock_extractor
 
-    # Restore original
-    src.languages.rust.CodeGraphExtractor = _original
+        from src.languages.rust import batch_extract
 
-    has_empty = any(isinstance(v, list) and len(v) == 0 for v in result.values())
+        result = batch_extract("/fake/proj")
 
-    if has_empty:
-        actual_empty_files = [k for k, v in result.items() if isinstance(v, list) and len(v) == 0]
+    # Check: does the result contain the empty-list entry?
+    empty_key = "/fake/proj/src/empty_mod.rs"
+    spec_nonempty = "Each value must be a non-empty list of (function_name, function_body) tuples"
+
+    if empty_key in result and result[empty_key] == []:
+        confirmed = True
         print(
-            f'CONFIRMED — spec requires every value be a non-empty list, '
-            f'but these files have empty lists: {actual_empty_files!r}. '
-            f'Full result: {result!r}'
+            f"CONFIRMED — batch_extract does not filter empty-list values."
+            f" File '{empty_key}' maps to [] but spec requires {spec_nonempty}"
         )
     else:
-        print(f'NOT CONFIRMED — no empty lists found: {result!r}')
+        confirmed = False
+        if empty_key not in result:
+            print(
+                f"NOT CONFIRMED — empty-list entry was filtered out"
+                f" (key '{empty_key}' not in result)"
+            )
+        else:
+            print(
+                f"NOT CONFIRMED — empty-list entry was not empty:"
+                f" result[{empty_key!r}] = {result[empty_key]!r}"
+            )
 
-except Exception as e:
-    print(f'ERROR: {e}')
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    sys.exit(0 if confirmed else 0)  # always exit 0; verdict is in stdout
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — spec requires every value be a non-empty list, but these files have empty lists: ['/proj/src/empty.rs']. Full result: {'/proj/src/lib.rs': [('add', 'fn add() { 1 + 2 }')], '/proj/src/empty.rs': []}
+CONFIRMED — batch_extract does not filter empty-list values. File '/fake/proj/src/empty_mod.rs' maps to [] but spec requires Each value must be a non-empty list of (function_name, function_body) tuples
 ```

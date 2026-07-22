@@ -1,0 +1,7 @@
+{
+  "spec_updated": true,
+  "new_spec": "# [SPEC]\n# Unit: src/languages/erlang.py\n#\n# _SourceIndex.source_for_range(self, lsp_range) -> str\n#\n# Pre-condition:\n#   - self is a _SourceIndex instance whose .source attribute is a string and whose position resolution matches the encoding used for the character values in lsp_range\n#   - lsp_range is a dict with keys 'start' and 'end', each being a dict with keys 'line' (int, 0-based) and 'character' (int, 0-based UTF-16 code unit offset)\n#   - The position described by lsp_range[\"start\"] does not follow the position described by lsp_range[\"end\"] in source order\n#\n# Post-condition:\n#   - Returns the substring of self.source that spans from the byte offset corresponding to lsp_range[\"start\"] (inclusive) to the byte offset corresponding to lsp_range[\"end\"] (exclusive)\n# [SPEC]\n",
+  "info_updated": true,
+  "new_info": "# [INFO]\n# _SourceIndex.position_to_offset(self, position) -> int\n#   Pre-condition: self is a _SourceIndex instance with indexed source; position is a dict with keys 'line' (int, 0-based) and 'character' (int, 0-based UTF-16 code unit offset)\n#   Post-condition: Returns the 0-based byte offset in self.source that corresponds to the given position, accounting for UTF-16 code unit encoding of characters\n# [INFO]\n",
+  "updated_callees": ["_SourceIndex.position_to_offset"]
+}

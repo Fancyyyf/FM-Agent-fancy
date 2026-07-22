@@ -1,6 +1,6 @@
 # Bug Report: _parse_spec_check_json
 
-**Source file:** `src/prompts.py`
+**Source file:** `src/prompts-py/_parse_spec_check_json.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -26,41 +26,76 @@ The following actual behavior cannot satisfy the specification.
 
 ### Actual Behavior
 
-The function either raises a ValueError or returns a tuple. In case of a ValueError, one of the following conditions holds: (1) response is not valid JSON (ValueError with message starting 'spec-check response is not valid JSON:'); (2) the parsed JSON is not a dict (ValueError: 'spec-check JSON must be an object'); (3) the dict lacks any of the required fields 'verdict', 'counterexample', 'offending_statements', 'reason' (ValueError: 'spec-check JSON missing required field(s): ...'); (4) the 'verdict' field, after uppercasing if string, is not 'MATCH' or 'MISMATCH' (ValueError: 'spec-check JSON verdict must be MATCH or MISMATCH'); (5) 'counterexample' is neither None nor a string ('spec-check JSON field counterexample must be a string or null'); (6) 'offending_statements' is neither None nor a string ('spec-check JSON field offending_statements must be a string or null'); (7) 'reason' is not a string ('spec-check JSON field reason must be a string'); (8) verdict is 'MISMATCH' and any of 'counterexample', 'offending_statements', 'reason' is missing or is not a non-empty string after stripping (ValueError: 'spec-check MISMATCH JSON missing non-empty field(s): ...'); (9) verdict is 'MATCH' and either 'counterexample' or 'offending_statements' is a non-empty string after stripping (ValueError: 'spec-check MATCH JSON must not include counterexample or offending_statements'). If the function returns normally, it returns a tuple (is_mismatch, offending_stmt, reason_str, data_dict) where: is_mismatch is a boolean (True if verdict is 'MISMATCH', else False); offending_stmt is a non-empty stripped string when is_mismatch is True, otherwise None; reason_str is a stripped string (non-empty when is_mismatch is True, may be empty otherwise); data_dict is the parsed dict updated with 'verdict' set to the normalized uppercase verdict, 'counterexample' and 'offending_statements' set to stripped strings (MISMATCH) or None (MATCH), and 'reason' set to the stripped value.
+Given a non-empty string `response`, the function `_parse_spec_check_json` either raises a `ValueError` or returns a tuple `(match_flag, offending, reason, data)`. The possible outcomes are:
+
+1. If `_load_spec_check_json(response)` raises a `JSONDecodeError`, a `ValueError` with message `spec-check response is not valid JSON: {exc}` is raised.
+2. Otherwise, let `data` be the parsed JSON object. If `data` is not a dictionary (`not isinstance(data, dict)`), a `ValueError` with message `spec-check JSON must be an object` is raised.
+3. If any of the required fields `'verdict'`, `'counterexample'`, `'offending_statements'`, `'reason'` are missing from `data`, a `ValueError` is raised with message `spec-check JSON missing required field(s): ...` listing the missing keys.
+4. Otherwise, let `verdict_raw = data['verdict']`, `counterexample_raw = data.get('counterexample')`, `offending_statements_raw = data.get('offending_statements')`, `reason_raw = data.get('reason')`. Let `verdict = verdict_raw.upper() if isinstance(verdict_raw, str) else verdict_raw`. If `verdict not in ('MATCH', 'MISMATCH')`, a `ValueError` is raised with message `spec-check JSON verdict must be MATCH or MISMATCH`.
+5. If `counterexample_raw is not None and not isinstance(counterexample_raw, str)`, raise `ValueError('spec-check JSON field counterexample must be a string or null')`. If `offending_statements_raw is not None and not isinstance(offending_statements_raw, str)`, raise `ValueError('spec-check JSON field offending_statements must be a string or null')`. If `not isinstance(reason_raw, str)`, raise `ValueError('spec-check JSON field reason must be a string')`.
+6. Update `data['verdict'] = verdict`.
+   - **Case MISMATCH** (`verdict == 'MISMATCH'`):
+       - Define `valid = lambda x: isinstance(x, str) and bool(x.strip())`. If any of `counterexample_raw`, `offending_statements_raw`, `reason_raw` fails `valid(x)`, raise `ValueError('spec-check MISMATCH JSON missing non-empty field(s): ...')` listing those failing.
+       - Else, set `data['counterexample'] = counterexample_raw.strip()`, `data['offending_statements'] = offending_statements_raw.strip()`, `data['reason'] = reason_raw.strip()`. Return `(True, data['offending_statements'], data['reason'], data)`.
+   - **Case MATCH** (`verdict == 'MATCH'`):
+       - If `valid(counterexample_raw)` or `valid(offending_statements_raw)`, raise `ValueError('spec-check MATCH JSON must not include counterexample or offending_statements')`.
+       - Else, set `data['counterexample'] = None`, `data['offending_statements'] = None`, `data['reason'] = reason_raw.strip()`. Return `(False, None, None, data)`.
+
+Formally:
+\[
+\begin{aligned}
+&\text{pre: } response \in \Sigma^+ \\
+&\text{post: } \left( \begin{aligned}
+&(\neg valid\_json(response) \Rightarrow \text{raise ValueError}) \\
+&\land (valid\_json(response) \land D = parse(response) \land \neg isinstance(D, dict) \Rightarrow \text{raise ValueError}) \\
+&\land (isinstance(D, dict) \land keys\_missing(D) \Rightarrow \text{raise ValueError}) \\
+&\land (isinstance(D, dict) \land \neg keys\_missing(D) \land \neg valid\_verdict(D) \Rightarrow \text{raise ValueError}) \\
+&\land (\text{valid fields and verdict} \land \neg valid\_counterexample\_type(D) \Rightarrow \text{raise ValueError}) \\
+&\land (\text{valid fields and verdict} \land \neg valid\_offending\_type(D) \Rightarrow \text{raise ValueError}) \\
+&\land (\text{valid fields and verdict} \land \neg valid\_reason\_type(D) \Rightarrow \text{raise ValueError}) \\
+&\land (\text{valid types} \land verdict\_up = \text{MISMATCH} \land \neg all\_nonempty\_strings(D) \Rightarrow \text{raise ValueError listing failing fields}) \\
+&\land (\text{valid types} \land verdict\_up = \text{MISMATCH} \land all\_nonempty\_strings(D) \Rightarrow \text{return } (True, strip(O), strip(R), D')) \\
+&\land (\text{valid types} \land verdict\_up = \text{MATCH} \land (nonempty\_str(C) \lor nonempty\_str(O)) \Rightarrow \text{raise ValueError}) \\
+&\land (\text{valid types} \land verdict\_up = \text{MATCH} \land \neg nonempty\_str(C) \land \neg nonempty\_str(O) \Rightarrow \text{return } (False, None, None, D''))
+\end{aligned} \right)
+\end{aligned}
+\]
+where predicates follow the Python code semantics.
 
 ---
 
 ## Code Evidence
 
-Line 27: def _nonempty_string(value):
-Line 28:     return isinstance(value, str) and bool(value.strip())
-Line 47:     if _nonempty_string(counterexample) or _nonempty_string(offending_statements):
+Line 47: if _nonempty_string(counterexample) or _nonempty_string(offending_statements):
+Line 48:     raise ValueError(
+Line 49:         "spec-check MATCH JSON must not include counterexample or offending_statements"
+Line 50:     )
 
 ---
 
 ## Trigger Condition
 
-The specification requires raising a ValueError if counterexample or offending_statements is a non-empty string for a MATCH verdict, but the code treats whitespace-only strings as empty and does not raise an error, violating the requirement.
+The specification states: for MATCH verdict, raises ValueError if counterexample or offending_statements is a non-empty string. A whitespace-only string (e.g., '   ') is a non-empty string (length > 0), so it should raise ValueError. The code's _nonempty_string checks bool(value.strip()), treating whitespace-only strings as empty, and does not raise an error, violating the spec.
 
 ---
 
 ## How to trigger the bug
 
-The function `_parse_spec_check_json` in `src/prompts.py` uses a helper `_nonempty_string()` to check whether `counterexample` or `offending_statements` is a non-empty string for MATCH verdicts. However, `_nonempty_string()` calls `bool(value.strip())`, which strips leading and trailing whitespace before checking emptiness. This means whitespace-only strings like `"   "` are treated as empty, and the function does not raise `ValueError` as the specification requires.
+The `_nonempty_string` helper function (line 64) uses `bool(value.strip())` to determine "non-empty". A whitespace-only string like `"   "` has length > 0 (non-empty) but `.strip()` yields `""` (falsy). The spec requires `ValueError` for any non-empty string, but the code silently accepts whitespace-only `counterexample` / `offending_statements` for MATCH verdicts and returns a tuple instead.
 
 ### Inputs
 
 | Parameter | Value |
-|-----------|-------|
-| `response` (JSON string) | `{"verdict": "MATCH", "counterexample": "   ", "offending_statements": null, "reason": "all good"}` |
+|---|---|
+| `response` | `{"verdict": "MATCH", "counterexample": "   ", "offending_statements": "   ", "reason": "The code behaves correctly."}` |
 
 ### Expected (spec-correct) Output
 
-`ValueError` raised because `counterexample` is a non-empty string.
+`ValueError` with message: `"spec-check MATCH JSON must not include counterexample or offending_statements"`
 
 ### Actual (buggy) Output
 
-`(False, None, None, {'verdict': 'MATCH', 'counterexample': None, 'offending_statements': None, 'reason': 'all good'})` — a tuple is returned without error.
+`(False, None, None, data)` — a 4-tuple with no error, where `data` is the parsed dict with `counterexample` and `offending_statements` set to `None`.
 
 ### How to Reproduce
 
@@ -73,17 +108,19 @@ Step-by-step instructions to trigger the bug manually:
 import json
 from src.prompts import _parse_spec_check_json
 
-input_json = json.dumps({
+# MATCH verdict with whitespace-only counterexample and offending_statements
+response = json.dumps({
     "verdict": "MATCH",
     "counterexample": "   ",
-    "offending_statements": None,
-    "reason": "all good"
+    "offending_statements": "   ",
+    "reason": "The code behaves correctly.",
 })
 
-result = _parse_spec_check_json(input_json)
-print(result)
-# actual (buggy) output: (False, None, None, {'verdict': 'MATCH', 'counterexample': None, 'offending_statements': None, 'reason': 'all good'})
-# expected (correct) output: ValueError raised
+# Per spec, this should raise ValueError.
+# Per code, it returns (False, None, None, ...) without error.
+result = _parse_spec_check_json(response)
+# actual (buggy) output: (False, None, None, data) — no error
+# expected (correct) output: ValueError
 ```
 
 ---
@@ -91,54 +128,50 @@ print(result)
 ## Probe Script
 
 ```py
-import sys
-import os
-import json
+"""Probe for bug: _nonempty_string treats whitespace-only strings as empty,
+violating the _parse_spec_check_json spec for MATCH verdict."""
 
-# Ensure repo root is on sys.path so 'import src' works
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import json
+import sys
+
+# Add repo root to path so src.prompts import resolves
+sys.path.insert(0, ".")
 
 try:
     from src.prompts import _parse_spec_check_json
-
-    # The spec says for MATCH verdict, any non-empty string in counterexample
-    # or offending_statements should raise ValueError.
-    # The code uses _nonempty_string() which strips whitespace first,
-    # so whitespace-only strings like "   " are treated as empty.
-    # This test passes a whitespace-only counterexample to trigger the bug.
-
-    input_json = json.dumps({
-        "verdict": "MATCH",
-        "counterexample": "   ",
-        "offending_statements": None,
-        "reason": "all good"
-    })
-
-    actual = None
-    expected = "ValueError"
-
-    result = _parse_spec_check_json(input_json)
-    # No ValueError raised → BUG CONFIRMED (spec violated)
-    actual = "no error (returned tuple: %s)" % str(result)
-
-    # Bug: spec says should raise ValueError, but code doesn't
-    passed = True  # True means bug reproduced (actual != expected)
-except ValueError as e:
-    # ValueError raised → spec-correct behavior, bug NOT reproduced
-    actual = "ValueError('%s')" % str(e)
-    passed = False
-except Exception as e:
-    print('ERROR:', str(e))
+except ImportError as e:
+    print(f"ERROR: Could not import _parse_spec_check_json: {e}")
     sys.exit(1)
 
-if passed:
-    print('CONFIRMED — actual: %s | expected: %s' % (actual, expected))
-else:
-    print('NOT CONFIRMED — actual matched expected: %s' % actual)
+# Build a MATCH-verdict JSON where counterexample is a whitespace-only string.
+# Per the spec, any non-empty string (length > 0) should trigger ValueError.
+# The code's _nonempty_string uses bool(value.strip()), which treats
+# whitespace-only as empty and does NOT raise.
+match_with_whitespace_counterexample = json.dumps({
+    "verdict": "MATCH",
+    "counterexample": "   ",
+    "offending_statements": "   ",
+    "reason": "The code behaves correctly.",
+})
+
+try:
+    result = _parse_spec_check_json(match_with_whitespace_counterexample)
+    # No ValueError → bug reproduced.
+    actual = result
+    expected = "ValueError"
+    print(f"CONFIRMED — _nonempty_string treats whitespace-only as empty, "
+          f"but spec requires ValueError for any non-empty string. "
+          f"Actual: returned tuple {result[:3]!r} (no error) | Expected: {expected!r}")
+except ValueError:
+    # ValueError raised → spec-correct behavior.
+    print("NOT CONFIRMED — ValueError correctly raised for whitespace-only counterexample/offending_statements")
+except Exception as e:
+    print(f"ERROR: Unexpected exception: {e}")
+    sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: no error (returned tuple: (False, None, None, {'verdict': 'MATCH', 'counterexample': None, 'offending_statements': None, 'reason': 'all good'})) | expected: ValueError
+CONFIRMED — _nonempty_string treats whitespace-only as empty, but spec requires ValueError for any non-empty string. Actual: returned tuple (False, None, None) (no error) | Expected: 'ValueError'
 ```

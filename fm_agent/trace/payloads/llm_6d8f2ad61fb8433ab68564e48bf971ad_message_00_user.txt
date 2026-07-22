@@ -1,0 +1,107 @@
+# Update Function Specification
+
+A modification is being applied to a codebase to achieve the developer intent below. Decide whether this function's behavioral specification must change to reflect that intent.
+
+- Function fully-qualified name: `src::opencode_trace-py::_opencode_env` (language: `python`).
+- Comment prefix for this language: `#`.
+- Known callees of this function: _deep_merge, _opencode_provider_config, _trace_dir.
+
+## Developer intent
+
+# Incremental self-validation intent
+
+Validate all behavioral and correctness impacts introduced between the recorded
+FM-Agent baseline and the current checked-out main-derived revision. Regenerate
+specifications for changed or relevant functions and verify affected callers.
+Pay particular attention to file readiness, incremental reasoning, CLI backend,
+codegraph integration, tracing, environment checks, and pipeline setup changes.
+Do not modify project source files; write validation artifacts only under the
+FM-Agent workspace.
+
+## Current function source
+
+```python
+def _opencode_env(work_dir, event_id):
+    env = os.environ.copy()
+    trace_dir = os.path.abspath(os.path.join(_trace_dir(work_dir), "opencode"))
+    os.makedirs(trace_dir, exist_ok=True)
+    env["TRACE_DIR"] = trace_dir
+    env["TRACE_FILENAME"] = event_id
+    provider_config = _opencode_provider_config()
+    if provider_config is not None:
+        # Make the resolved key available under LLM_API_KEY so the injected
+        # `{env:LLM_API_KEY}` resolves regardless of where config read it from.
+        env["LLM_API_KEY"] = settings.llm.api_key
+        # Merge our provider block into any OPENCODE_CONFIG_CONTENT the caller
+        # already set (rather than overwriting it), so their inline plugins /
+        # permissions / MCP / agents survive; our provider still wins on the
+        # provider key it defines.
+        existing = {}
+        raw = env.get("OPENCODE_CONFIG_CONTENT")
+        if raw:
+            try:
+                loaded = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                loaded = None
+            if isinstance(loaded, dict):
+                existing = loaded
+        env["OPENCODE_CONFIG_CONTENT"] = json.dumps(_deep_merge(existing, provider_config))
+    # subprocess.Popen(cwd=...) chdirs the child but doesn't sync PWD; opencode
+    # walks PWD upward looking for AGENTS.md, so without this it picks up the
+    # fm-agent repo's own AGENTS.md instead of the target's, baking ~10K bytes
+    # of repo docs into every system prompt and invalidating the cache prefix
+    # on every edit.
+    proj_dir = os.path.dirname(os.path.abspath(work_dir))
+    env["PWD"] = proj_dir
+    return env
+```
+
+## Current [SPEC] block (this function's own behavioral specification)
+
+# [SPEC]
+# Unit: src/opencode_trace.py
+#
+# _opencode_env(work_dir, event_id) -> dict
+#
+# Pre-condition:
+#   - work_dir is a path to an existing directory on the filesystem (the fm_agent/
+#     workspace directory)
+#   - event_id is a non-empty string uniquely identifying a trace event
+#
+# Post-condition:
+#   - Returns a copy of the current process environment (os.environ) with three
+#     additional entries: TRACE_DIR, TRACE_FILENAME, and PWD
+#   - TRACE_DIR is set to the absolute path of the "opencode" subdirectory under the
+#     trace directory derived from work_dir; the directory at TRACE_DIR is created
+#     if it does not already exist
+#   - TRACE_FILENAME is set to the value of event_id
+#   - PWD is set to the absolute path of the parent directory of work_dir (the
+#     project root directory)
+#   - The returned dictionary contains all entries present in the calling process's
+#     environment at the time of the call, preserving their original values except
+#     where overwritten by the three entries above
+# [SPEC]
+
+## Current [INFO] block (the expected specs of the callees this function depends on)
+
+# [INFO]
+# _trace_dir(work_dir) -> str
+#   Pre-condition: work_dir is a filesystem path
+#   Post-condition: Returns a path string representing the trace data directory
+#     under work_dir
+# [INFO]
+
+NOTE: a modification may have changed which callees this function calls, so this block may be missing entries for some current callees (_deep_merge, _opencode_provider_config, _trace_dir) or contain entries for callees no longer called.
+
+## Steps
+
+1. Decide whether the [SPEC] block still correctly and completely describes the function's behavior after the intended modification. If it remains correct, no update is needed.
+2. If it must change, produce the COMPLETE replacement [SPEC] block — the `[SPEC]` ... `[SPEC]` block only, markers included, every line prefixed with `#`, and NO source code.
+3. ONLY if you updated the [SPEC] block AND this function has callees: bring the [INFO] block into line with this function's CURRENT callees (_deep_merge, _opencode_provider_config, _trace_dir). That means: (a) keep entries whose recorded expectation still matches the callee's role, (b) ADD an entry for any current callee not yet recorded (e.g. one the modification introduced), (c) DROP entries for callees this function no longer calls, and (d) revise any entry whose expected spec must change as a consequence of the new [SPEC]. If any of (a)-(d) changes the block, produce the COMPLETE replacement [INFO] block (the `[INFO]` ... `[INFO]` block only, markers included, lines prefixed with `#`) and list the names of the callees whose expected spec you added or changed.
+4. Return ONLY a JSON object with keys:
+   - "spec_updated": boolean.
+   - "new_spec": string — the full replacement [SPEC] block, or "" if not updated.
+   - "info_updated": boolean — true when you produced a new/replacement [INFO] block.
+   - "new_info": string — the full replacement [INFO] block, or "" if not updated.
+   - "updated_callees": array of callee name strings whose expected spec you added or changed, or [].
+   Do not include Markdown, tags, or prose outside the JSON object.

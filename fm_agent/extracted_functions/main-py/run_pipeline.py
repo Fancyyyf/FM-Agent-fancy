@@ -62,7 +62,7 @@
 # [SPLIT]
 # streaming_reasoner(input_dir, output_dir, file_list, proj_dir, work_dir, spec_procs, already_processed, resume) -> set[str]
 #   Pre-condition: input_dir contains extracted function files; file_list is a list of relative paths to functions to process
-#   Post-condition: produces a verification result JSON for each processed function under output_dir; returns the set of function FQNs that were newly verified
+#   Post-condition: produces a verification result JSON for each processed function under output_dir; returns a set of file paths (absolute within input_dir) that were successfully verified, including any provided in already_processed
 # [SPLIT]
 # _run_spec_generation_batch(proj_dir, work_dir, attempt, phase_num, layer_idx, batch_rel_dir, batch_info) -> None
 #   Pre-condition: batch_info describes a batch prompt file and its target function paths; work_dir contains the workflow spec and system prompt

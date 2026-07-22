@@ -28,9 +28,9 @@
 #   Pre-condition: func is a string containing function body text, language identifies the source programming language
 #   Post-condition: Returns a list of strings, each being a syntactically complete and non-overlapping segment of the function. For brace-delimited languages, segment boundaries occur only at brace depths matching the entry depth. The ordered concatenation of all returned segments reconstructs the original function body.
 # [SPLIT]
-# _generate_block_post_condition(block, pre_condition, info, language, trace_dir=None, trace_meta=None)
-#   Pre-condition: block is a string containing code statements, pre_condition is a string describing the state assumed before the block, info is a callee specification mapping, language identifies the source language
-#   Post-condition: Returns either a string describing the strongest post-condition that must hold after executing the block from the given pre-condition, or None if the post-condition could not be determined
+# _generate_block_post_condition(block, pre_condition, knowledge, language, trace_dir=None, trace_meta=None)
+#   Pre-condition: block is a non-empty string of code statements possibly with "Line N:" prefixes, pre_condition is a non-empty string describing the state before the block, knowledge is an optional string of contextual information (may be empty or falsy), language is a non-empty string identifying the source language, trace_dir, if not None, is a directory path for tracing, trace_meta, if not None, is a dict of metadata for tracing
+#   Post-condition: Returns a string describing the strongest post-condition that must hold after executing the block from the given pre-condition, covering all execution paths (including early returns and exceptional exits), or returns None if the post-condition could not be determined. The returned post-condition is expressed in natural language suitable for implication checks.
 # [SPLIT]
 # _has_terminating_statement(block, language)
 #   Pre-condition: block is a string containing code statements, language identifies the source language

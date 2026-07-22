@@ -1,0 +1,74 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _opencode_provider_config():
+Line 2:     """Build an OpenCode ``provider`` block from FM-Agent's own LLM settings.
+Line 3:     ``fm-agent.toml`` is the single source of truth for provider / base URL /
+Line 4:     model: instead of the user hand-writing (and keeping in sync) a provider
+Line 5:     block in ``~/.config/opencode/opencode.json``, FM-Agent injects an equivalent
+Line 6:     block into the OpenCode subprocess via ``OPENCODE_CONFIG_CONTENT``. That is
+Line 7:     OpenCode's highest-precedence config source, so it wins over any same-named
+Line 8:     provider in the user's ``opencode.json``; OpenCode deep-merges per key, so
+Line 9:     other providers and the ``plugin`` array in that file are preserved.
+Line 10:     Returns ``None`` (injecting nothing) unless we have every field needed to
+Line 11:     build a working block — provider, base URL, model, and an API key. Without a
+Line 12:     key the injected ``{env:LLM_API_KEY}`` would be empty and would clobber a
+Line 13:     working config, so we stay out of the way and leave OpenCode's own config in
+Line 14:     effect.
+Line 15:     """
+Line 16:     llm = settings.llm
+Line 17:     if not (llm.api_key and llm.base_url and llm.name and llm.provider):
+Line 18:         return None
+Line 19:     adapter = (
+Line 20:         "@ai-sdk/anthropic"
+Line 21:         if llm.api_style == "anthropic"
+Line 22:         else "@ai-sdk/openai-compatible"
+Line 23:     )
+Line 24:     return {
+Line 25:         "provider": {
+Line 26:             llm.provider: {
+Line 27:                 "npm": adapter,
+Line 28:                 "options": {
+Line 29:                     "baseURL": llm.base_url,
+Line 30:                     # Resolved by OpenCode from the child env (set below), so the
+Line 31:                     # key is never written to a config file on disk.
+Line 32:                     "apiKey": "{env:LLM_API_KEY}",
+Line 33:                 },
+Line 34:                 "models": {llm.name: {}},
+Line 35:             }
+Line 36:         }
+Line 37:     }
+```
+
+Condition A (what the code actually does):
+The function _opencode_provider_config() does not modify any global state (e.g., the settings object remains unchanged). Its return value is determined as follows: if any of the attributes settings.llm.api_key, settings.llm.base_url, settings.llm.name, or settings.llm.provider is falsy (None, empty string, etc.), the function returns None. Otherwise, it returns a dictionary with exactly one top-level key 'provider', whose value is a dictionary containing exactly one key equal to settings.llm.provider. That inner dictionary has the keys 'npm', 'options', and 'models'. The value of 'npm' is '@ai-sdk/anthropic' if settings.llm.api_style equals the string 'anthropic', else '@ai-sdk/openai-compatible'. The value of 'options' is a dictionary with keys 'baseURL' (set to settings.llm.base_url) and 'apiKey' (set to the literal string '{env:LLM_API_KEY}'). The value of 'models' is a dictionary with a single key settings.llm.name whose value is an empty dictionary {}. Formally:
+
+let llm = settings.llm in
+(¬(llm.api_key ∧ llm.base_url ∧ llm.name ∧ llm.provider) ⇒ result = None) ∧
+((llm.api_key ∧ llm.base_url ∧ llm.name ∧ llm.provider) ⇒
+  result = { 'provider': { llm.provider: {
+      'npm': '@ai-sdk/anthropic' if llm.api_style = 'anthropic' else '@ai-sdk/openai-compatible',
+      'options': { 'baseURL': llm.base_url, 'apiKey': '{env:LLM_API_KEY}' },
+      'models': { llm.name: {} }
+  } } })
+
+Condition B (what the specification requires):
+- Returns None when any of api_key, base_url, name, or provider is falsy
+    (i.e., an empty string, None, or otherwise evaluates to False).
+  - When all of api_key, base_url, name, and provider are truthy, returns a
+    dict that, when included in an OpenCode configuration, defines a valid
+    provider.
+  - The returned dict nests under a "provider" key, keyed by the value of the
+    provider setting, and contains an npm adapter package name, a base URL, a
+    model name, and an API key reference.
+  - The npm adapter is chosen based on the api_style setting: the Anthropic SDK
+    package when api_style is "anthropic", and an OpenAI-compatible SDK package
+    otherwise.
+  - The API key is specified as an environment-variable reference
+    ({env:LLM_API_KEY}) rather than a literal key value.
+  - The function has no side effects: it does not mutate any global state,
+    perform I/O, or modify any passed-in arguments.
+  - No exceptions are raised under normal operation.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.
