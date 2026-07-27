@@ -83,7 +83,16 @@ FM-Agent 的[官方网站](http://fm-agent.ai/)提供了在线代码库推理服
 
 设置 FM-Agent 和 OpenCode 共用的 LLM API 密钥。推荐使用 [OpenRouter](https://openrouter.ai/)：FM-Agent 会并发调用 LLM，而 OpenRouter 的 RPM（每分钟请求数）和 TPM（每分钟 Token 数）限制更宽松——不过任何兼容的 provider 都可以。
 
-把 API 密钥放进 `.env`（已 gitignore，FM-Agent 通过 python-dotenv 自动加载）；其余所有配置在 `fm-agent.toml` 里都有 committed 的默认值。复制模板：
+把 API 密钥放进 `.env`（已 gitignore，FM-Agent 通过 python-dotenv 自动加载）；其余所有配置在 `fm-agent.toml` 里都有 committed 的默认值。最简单的配置方式是运行交互式向导：
+
+```bash
+uv run python src/configure_llm.py
+```
+
+该向导会先展示预览、备份已有文件，然后更新当前生效的 FM-Agent TOML、把 API 密钥写入 `.env` 和供独立 OpenCode 使用的私有本地密钥文件，并同步对应的 OpenCode provider 到 `~/.config/opencode/opencode.json`（或当前平台上的等价路径），无需手写 JSON。
+若在向导中选择 `auto`、`codex-cli` 或 `claude-cli`，则会更新当前生效的 FM-Agent TOML 中的 backend，并清除项目 `.env` 里残留的非密钥 LLM 覆盖项；其中模型和 effort 的值会先迁移到 TOML。本地 CLI 使用自身认证，不需要 API 密钥或 OpenCode provider 配置。
+
+如果你更希望手动编辑文件，可以复制模板：
 
 ```bash
 cp .env.example .env
@@ -95,7 +104,15 @@ cp .env.example .env
 LLM_API_KEY=your-api-key-here
 ```
 
-非密钥配置——模型、endpoint、backend、provider 等——在 `fm-agent.toml` 的 `[llm]` 段,直接改它是永久生效的做法。若不想动这个被 git 跟踪的文件（比如你是 git clone、之后会 `git pull` 更新），可以用对应的环境变量覆盖,写在 `.env` 或 shell 里即可。优先级为 `env > .env > fm-agent.toml`；由于 `.env` 会盖过 toml,残留的旧值会覆盖你后来对 toml 的修改——所以改了 toml 不生效时,先检查 `.env`。详情及 OpenCode provider 配置见 [docs/config_llm.md](docs/config_llm.md)。
+非密钥配置——模型、endpoint、backend、provider 等——在 `fm-agent.toml` 的 `[llm]` 段，直接改它是永久生效的做法。若不想动这个被 git 跟踪的文件（比如你是 git clone、之后会 `git pull` 更新），可以用对应的环境变量覆盖，写在 `.env` 或 shell 里即可。优先级为 `env > .env > fm-agent.toml`；由于 `.env` 会盖过 toml，残留的旧值会覆盖你后来对 toml 的修改——所以改了 toml 不生效时，先检查 `.env`。向导会顺手清理常见的旧 LLM 覆盖变量，并在启动向导的 shell 已导出 LLM 变量时提示使用 `unset`，否则该变量仍会覆盖保存的配置。详情及 OpenCode provider 配置见 [docs/config_llm.md](docs/config_llm.md)。
+
+如需只修改某一项非密钥 LLM 配置，无需手动编辑文件。例如，将模型后端切换到本地 Codex CLI：
+
+```bash
+uv run python src/configure_llm.py set --backend codex-cli
+```
+
+该命令会预览并备份 `fm-agent.toml`，只修改命令中指定的配置项。它还支持 `--name`、`--provider`、`--base-url`、`--effort` 和 `--api-style`；完整语法见 [docs/config_llm.md](docs/config_llm.md)。若 `.env` 中仍有会覆盖本次 TOML 修改的旧值，命令会在写入前给出警告。
 
 上述所有依赖（Ubuntu 和 Python 除外）均可通过以下脚本一键安装：
 
@@ -111,9 +128,10 @@ Erlang 工具链不影响其他语言，因此默认不安装。如需自动安�
 
 该选项在 macOS 上使用 Homebrew；在 Ubuntu 上，当系统 OTP 缺失或版本过低时使用 RabbitMQ Team Erlang PPA。Ubuntu 配置已使用 Erlang/OTP 26+ 验证；macOS Erlang 配置尚未测试，将使用 Homebrew 选择的当前公式版本。Linux 下的 rebar3 和 ELP 会安装到 `~/.local/bin`，请确保新终端的 `PATH` 包含该目录。你也可以手动安装这些工具，确认 `rebar3 version` 和 `elp version` 可执行，并在需要时将 `ELP_COMMAND` 设置为 ELP 的绝对路径。
 
-FM-Agent 会从 `fm-agent.toml` 自动配置 OpenCode 的 provider，因此无需手动编辑 `~/.config/opencode/opencode.json` 来设置模型或密钥（见 [docs/config_llm.md](docs/config_llm.md)）。
+FM-Agent 会从 `fm-agent.toml` 自动配置 OpenCode 的 provider，因此无需手动编辑 `~/.config/opencode/opencode.json` 来设置模型或密钥。上面的配置向导仍然可以把该文件同步好，并把 API 密钥写入用户状态/配置目录下按 provider 区分的私有本地文件，方便独立使用 OpenCode（见 [docs/config_llm.md](docs/config_llm.md)）。
+如果你已经设置了 `OPENCODE_CONFIG`，向导会优先更新那个文件，而不是默认的全局路径。若未设置该变量但设置了 `OPENCODE_CONFIG_DIR`，向导会更新该目录中的 `opencode.jsonc`（存在时）或 `opencode.json`。
 
-**重要提示：** FM-Agent 会根据推理过程自动生成测试用例，以触发潜在 Bug，帮助开发者定位和修复问题。运行 FM-Agent 前，请确保目标代码库的测试环境已就绪，并在必要时在 `md/bug_validator.md` 中指定测试用例的运行方式。若未指定，Agent 将自主决定执行方式。
+**重要提示：** FM-Agent 会根据推理过程自动生成测试用例，以触发潜在 Bug，帮助开发者定位和修复问题。运行 FM-Agent 前，请确保目标代码库的测试环境已就绪。如需提供项目特定的验证指令，请使用 `--bug-validator`；否则，Agent 将自主决定测试用例的执行方式。
 
 ## 参数配置
 
@@ -134,7 +152,7 @@ FM-Agent 会从 `fm-agent.toml` 自动配置 OpenCode 的 provider，因此无�
 ## 快速开始
 
 ```bash
-uv run python main.py <proj_dir> [--resume] [--domain-knowledge FILE ...] [--submodule PATH [PATH ...]]
+uv run python main.py <proj_dir> [--resume] [--domain-knowledge FILE ...] [--bug-validator FILE] [--submodule PATH [PATH ...]]
 ```
 
 | 参数 | 描述 |
@@ -143,6 +161,7 @@ uv run python main.py <proj_dir> [--resume] [--domain-knowledge FILE ...] [--sub
 | `--resume` | 续跑上一次中断的运行，而非从头开始 |
 | `--incremental INTENT_FILE` | 以增量模式运行，参数值为描述本次修改目标的意图文件路径。 |
 | `--domain-knowledge FILE [FILE ...]` | 将额外的 Markdown 领域知识文件复制到本次运行中，并提供给 setup、规约生成和 Bug 验证 Agent。别名：`--knowledge`；可重复传入。 |
+| `--bug-validator FILE` | 使用自定义 Markdown 提示词执行 Bug 验证，替代内置的 `md/bug_validator.md`。 |
 | `--isolate` | 针对项目的隔离 git worktree 快照运行，而非直接在项目目录上运行。 |
 | `--submodule PATH [PATH ...]` | 只处理 `proj_dir` 中一个或多个子目录下的源代码。 |
 | `--extra-edge FILE` | 从 JSON 文件或目录向静态调用图补充 caller 到 callee 的边。 |
@@ -158,6 +177,14 @@ uv run python main.py <proj_dir> --domain-knowledge docs/invariants.md docs/prot
 
 FM-Agent 会将这些文件暂存到 `fm_agent/spec_prompts/domain_context/user_knowledge/`，并在本次运行中让相关 Agent 读取。也可以通过 `FM_AGENT_DOMAIN_KNOWLEDGE` 提供使用 `os.pathsep` 分隔的 Markdown 文件列表。
 
+如需自定义候选 Bug 的测试与确认方式，可通过 `--bug-validator` 指定 Markdown 文件：
+
+```bash
+uv run python main.py <proj_dir> --bug-validator prompts/compiler_bug_validator.md
+```
+
+该文件会替代内置 `md/bug_validator.md` 的验证指令。`--bug-validator` 的相对路径以启动 FM-Agent 命令时的当前目录为基准，而不是以 `proj_dir` 为基准。FM-Agent 仍会在每个 Bug 验证提示词中加入当前 Bug ID、目标验证结果，以及通过 `--domain-knowledge` 提供的领域知识。
+
 使用 `--submodule` 可以把完整运行或增量运行限制到指定项目子目录：
 
 ```bash
@@ -169,7 +196,7 @@ uv run python main.py <proj_dir> --incremental intent.md --submodule src/core sr
 
 默认情况下，每次运行都会清空已有的 `fm_agent/` 目录并从头开始，因此一旦运行中断，之前的所有进度都会丢失。可通过 `--resume` 参数（或设置环境变量 `FM_AGENT_RESUME=1`）从上一次中断处继续。在续跑模式下，FM-Agent 会保留已有的 `fm_agent/` 目录，只执行剩余的工作。
 
-使用 `--only-spec` 可以在生成行为规约后即停止，跳过推理与 Bug 验证阶段。它会为每个函数生成 `[SPEC]` 块，而不在验证上花费时间，适用于只需要规约、或希望先审阅规约再运行完整分析的场景。该参数不能与 `--incremental` 一起使用，因为增量模式本质上是一个推理/Bug 验证流程。
+使用 `--only-spec` 可以在生成行为规约后即停止，跳过推理与 Bug 验证阶段。它会为每个函数生成相邻的 `.spec.json` 和 `.info.json` 元数据文件，而不在验证上花费时间，适用于只需要规约、或希望先审阅规约再运行完整分析的场景。该参数不能与 `--incremental` 一起使用，因为增量模式本质上是一个推理/Bug 验证流程。
 
 ```bash
 uv run python main.py <proj_dir> --only-spec
@@ -200,7 +227,7 @@ Extra-edge 字段规则：
 - `caller.callsite_names`：源码 callsite 函数名。源码中包含这些 callsite 的函数都会作为 caller，补一条到 `callee.fqn` 的边。可以为空。
   - `caller.fqn` 和 `caller.callsite_names` 至少有一个非空。
 - `callee.fqn`：单个 callee 的精确 FQN。
-- `callee.info_names`：可选，用于匹配生成的 `[INFO]` 块里指代该 callee 的名字。它只用于 `[INFO]` 匹配和传递调用者期望。
+- `callee.info_names`：可选，用于匹配生成的 `.info.json` 中指代该 callee 的条目。它只用于 `.info.json` 匹配和传递调用者期望。
 
 
 ### 增量模式
@@ -254,7 +281,7 @@ FM-Agent 会在代码库目录下创建 `fm_agent/` 目录，主要输出内容�
 ## 注意事项
 
 1. FM-Agent 会在代码库目录下创建 `fm_agent/` 目录，请确保不存在命名冲突。
-2. `md/` 目录下的 Markdown 文件提供了引导 Agent 推理过程的通用说明。针对项目特定的上下文（如不变量、协议、编码规则、领域术语），优先使用 `--domain-knowledge`。对于可复用的框架行为，可定制内置提示词；例如，若正在推理编译器的正确性，可修改 `md/bug_validator.md`，指示 Agent 将输出与参考实现（如 GCC）进行对比。
+2. `md/` 目录下的 Markdown 文件提供了引导 Agent 推理过程的通用说明。针对项目特定的上下文（如不变量、协议、编码规则、领域术语），优先使用 `--domain-knowledge`。对于项目特定的 Bug 验证流程，请使用 `--bug-validator`，无需直接修改内置提示词；例如，编译器项目的自定义 validator 可以要求 Agent 将输出与 GCC 等参考实现进行对比。
 3. **支持的编程语言**：Rust、C、C++、Python、Java、Go、CUDA、JavaScript、TypeScript、ArkTS、Erlang。Erlang 的函数抽取与调用图需要 ELP；ELP 不可用时会给出警告并跳过 Erlang 文件。
 
 ## 论文引用
