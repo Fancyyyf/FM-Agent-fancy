@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input text: `# this is a comment\\n` with language configuration where `comment_prefix` is '#'. According to Condition A, since no string literal is present, all characters except those inside a string remain unchanged. The specification B requires that the '#' and the rest of the line be replaced by spaces, but the code leaves them unchanged.",
-  "offending_statements": "Line 59-64 (hash comment handling) are either not executed or do not affect the behavior described by A. According to A, the code does not mask comments, violating the requirement in B that comment regions be replaced with spaces.",
-  "reason": "Condition A states that only string literals are masked; characters not in string literals are preserved unchanged. Specification B requires that comment regions also be masked (replaced with spaces). Any input containing a comment (e.g., '# comment\\n') will result in the comment characters being left as-is by A, whereas B requires them to be spaces. This is a direct violation."
-}

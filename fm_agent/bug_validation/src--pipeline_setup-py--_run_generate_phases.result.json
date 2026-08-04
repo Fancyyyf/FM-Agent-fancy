@@ -1,11 +1,11 @@
 {
   "id": "src--pipeline_setup-py--_run_generate_phases",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_run_generate_phases.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_run_generate_phases.py",
   "function_name": "_run_generate_phases",
   "confirmation_status": "confirmed",
-  "attempts": 1,
+  "attempts": "1",
   "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_run_generate_phases.py",
   "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_run_generate_phases.md",
-  "probe_stdout": "CONFIRMED — buggy condition (OR) produces phase_plan_ready=True, but spec-correct condition (AND) produces phase_plan_ready=False. phases.json was modified (mtime changed) but still does not cover all source files (missing real_source.py). The OR incorrectly accepts it as ready.\n  Bug location: src/pipeline_setup.py, lines 1003-1007\n  Current:  phase_plan_ready = (mtime_changed OR _phases_cover_current_sources(...))\n  Should be: phase_plan_ready = (mtime_changed AND _phases_cover_current_sources(...))",
-  "trigger_summary": "When is_incremental=True and phases.json mtime changes but _phases_cover_current_sources returns False, the OR operator sets phase_plan_ready=True, incorrectly accepting the incomplete phases.json."
+  "probe_stdout": "CONFIRMED — mtime_changed=True, coverage_ok=False, buggy_phase_plan_ready=True, expected_phase_plan_ready=False",
+  "trigger_summary": "In incremental mode, the mtime-based OR check at lines 1034-1037 accepts a phases.json rewrite even when coverage is incomplete, bypassing the required _phases_cover_current_sources verification."
 }

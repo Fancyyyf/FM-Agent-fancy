@@ -1,3 +1,0 @@
-{
-  "post_condition": "After normal execution: (1) The parent class __init__ has been invoked with argument str(error). (2) The instance attribute 'error' is bound to the input dict error. If super().__init__ raises an exception, 'error' attribute is not set and the exception propagates. Formally: (¬exceptional ⇒ self.error = error ∧ super().__init__(str(error)) called) ∧ (exceptional ⇒ 'error' ∉ dir(self))"
-}

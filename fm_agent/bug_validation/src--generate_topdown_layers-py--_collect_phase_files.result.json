@@ -1,1 +1,11 @@
-{"id": "src--generate_topdown_layers-py--_collect_phase_files", "source_file": "src/generate_topdown_layers.py", "function_name": "_collect_phase_files", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_collect_phase_files.py", "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_collect_phase_files.md", "probe_stdout": "CONFIRMED — actual: {'/tmp/probe_collect_phase_files_cztzyoif/extracted_functions/.hidden/buggy_file.py'} | spec-expected (look in -hidden/): {'/tmp/probe_collect_phase_files_cztzyoif/extracted_functions/-hidden/correct_file.py'} | code looked in .hidden/ instead because last_dot>0 is False when last_dot==0", "trigger_summary": "When a source file's basename starts with a dot (e.g., '.hidden'), last_dot equals 0 and the guard last_dot > 0 fails, so the code looks for directory '.hidden' instead of the spec-correct '-hidden'."}
+{
+  "id": "src--generate_topdown_layers-py--_collect_phase_files",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py",
+  "function_name": "_collect_phase_files",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_collect_phase_files.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_collect_phase_files.md",
+  "probe_stdout": "CONFIRMED — duplicate fpaths found in result: ['extracted_functions/foo/bar-cpp/func_a.cpp', 'extracted_functions/foo/bar-cpp/func_b.cpp']\nResults:\n  extracted_functions/foo/bar-cpp/func_b.cpp -> module=module_A\n  extracted_functions/foo/bar-cpp/func_a.cpp -> module=module_A\n  extracted_functions/foo/bar-cpp/func_b.cpp -> module=module_B\n  extracted_functions/foo/bar-cpp/func_a.cpp -> module=module_B\n",
+  "trigger_summary": "Same source file appearing in multiple modules causes duplicate fpath entries in the returned list, violating the uniqueness constraint in the specification."
+}

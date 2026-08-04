@@ -1,6 +1,6 @@
 # Bug Report: streaming_reasoner
 
-**Source file:** `src/verification-py/streaming_reasoner.py`
+**Source file:** `src/verification.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,289 +12,265 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Every file in input_dir (scoped to file_list when provided) whose is_file_ready()
-    returns True will be submitted to _verify_single_file exactly once; a readied
-    file that was in already_processed is NOT resubmitted
-  - A verification result JSON is written to output_dir for every submitted file,
-    mirroring the relative path structure of input_dir; the verdict field in each
-    result is one of: "MATCH", "MISMATCH", "ERROR", "SKIPPED"
-  - For every verified file whose verdict is "MISMATCH" and proj_dir is not None,
-    a bug-validation task is submitted via _validate_single_bug; the validation
-    writes a result JSON at proj_dir/bug_validation/<bug_id>.result.json where
-    bug_id is derived from the result JSON path by stripping the
-    fm_agent/logic_verification_results/ prefix, removing ".json", and replacing
-    "/" with "--"
-  - Progress output is printed for each completed verification: MATCH and SKIPPED
-    files are marked with a green check, confirmed bugs with a red cross; each
-    line is prefixed with "[<N>/<total>] <relative_path>: <label>"
-  - When all expected files have been verified, all reasoning futures are done,
-    and no validation futures remain in-flight, the loop exits normally
-  - When spec_procs is provided and every process has exited via _spec_task_done,
-    and not all expected files are ready: the function exits with a warning.
-    If no files received specs at all, the warning states no [SPEC]/[INFO] markers
-    were observed; otherwise it reports how many files are missing specs and
-    lists each as "[pending]"
-  - On KeyboardInterrupt: all in-flight reasoning and validation futures are
-    waited on to completion before the function returns
-  - If proj_dir is not None, _generate_validation_summary is called after all
-    processing ends (normal exit, early-exit on stalled specs, or interrupt),
-    producing proj_dir/bug_validation/summary.json
-  - Return...
+For every function in scope whose .spec.json and .info.json sidecars become complete during the polling window (as determined by is_file_ready), whose path is not in already_processed, and which has not already been submitted in this invocation: runs block-level Hoare-style reasoning that produces a verdict JSON file under output_dir. The verdict JSON contains a 'verdict' key with value MATCH, MISMATCH, or SKIPPED. For each MISMATCH verdict when proj_dir is not None: dispatches a bug validation that builds and executes a probe script, producing a bug_validation/<bug_id>.md report and a bug_validation/<bug_id>.result.json file whose 'confirmation_status' is 'confirmed' when the probe script reproduces the violation. For each processed function, prints a progress line with a unicode checkmark for MATCH, SKIPPED, and unconfirmed-MISMATCH verdicts, and a unicode crossmark for confirmed MISMATCH verdicts. When spec_procs is provided and all spec-generation futures have completed while in-scope files remain unready and no reasoning or validation futures are pending: prints a pending notice for each unready file and exits the polling loop. On KeyboardInterrupt: waits for all in-flight reasoning and validation futures to complete before returning. When proj_dir is not None: after the polling loop exits, generates bug_validation/summary.json aggregating total, confirmed, and not-confirmed bug counts across all validation results. Returns the set of all function file paths marked as processed during this invocation, including those already present in already_processed.
 
 ---
 
 ### Actual Behavior
 
-validation_futures = (V0  S) \ Done, where S = {(vf, (fpath, rel_path, result_json_rel, completed_count))} if and only if verdict = "MISMATCH" and the assignment validation_futures[vf] = ... succeeded before any exception, otherwise S = . Done = { f | f  dom(V0  S)  f.done() }. All other variables (processed, submitted, reasoning_futures, completed_count, num_functions, executor, work_dir, proj_dir, resume, expected_files, poll_interval, spec_procs, ) retain their preblock values. No exception propagates out of the block; logs, file I/O, and print output may have occurred but do not affect the abstract state.
+The function returns the set `processed`. The following three mutually exclusive scenarios describe the state upon return:
+
+1. **All files processed (break at line 146):**
+   - `expected_files` is not None.
+   - `processed`  `expected_files` (all expected files have been processed).
+   - `reasoning_futures` is empty.
+   - `validation_futures` is empty.
+   - The enclosing loop is exited, then if `proj_dir  None`, `_generate_validation_summary(work_dir)` is called.
+
+2. **Missing specs (break at line 168):**
+   - `spec_procs` is not None and every subprocess `p` in `spec_procs` satisfies `_spec_task_done(p)` (all done).
+   - `expected_files` is not None.
+   - `processed`  `expected_files` (proper subset, there are unready files).
+   - For each file `u` in `expected_files \\ processed`, a warning is logged and a "[pending]" message is printed.
+   - `reasoning_futures` is empty.
+   - `validation_futures` is empty.
+   - The loop is broken, then summary generation if applicable.
+
+3. **KeyboardInterrupt (lines 170-183):**
+   - A `KeyboardInterrupt` occurred inside the `try` body.
+   - In the exception handler, a dictionary `all_futures` is formed as the union of the then-current `reasoning_futures` and `validation_futures`.
+   - For every future `f` in `all_futures`, `f.result()` is called. If a future raises an exception, it is caught and logged.
+   - After the handler, all futures that existed at the moment of the interrupt are completed and their results consumed; the dictionaries `reasoning_futures` and `validation_futures` still contain those futures.
+   - `processed` and `completed_count` remain as they were at the time of the interrupt (which may include the pre-condition addition of `fpath` if the interrupt occurred after that point).
+   - Summary generation if applicable.
+
+In all cases:
+- If `proj_dir` is not None, `_generate_validation_summary(work_dir)` is executed, producing a bug validation summary file.
+- T... (content truncated)
 
 ---
 
 ## Code Evidence
 
-Line 133: `if _all_procs is not None and all(_spec_task_done(p) for p in _all_procs):`
-Line 134: `unready = (expected_files or set()) - processed`
-Line 135: `if unready and not reasoning_futures and not validation_futures:`
+Line 222: *_all_procs = spec_procs if spec_procs else None** \
+Line 223: **if _all_procs is not None and all(_spec_task_done(p) for p in _all_procs):** \
+Line 224: **unready = (expected_files or set()) - processed** \
+Line 225: **if unready and not reasoning_futures and not validation_futures:** \
+Line 239: **for uf in sorted(unready):** \
+Line 240: **rel_path = os.path.relpath(uf, proj_dir) if proj_dir else os.path.relpath(uf, input_dir)** \
+Line 241: **print(f"[pending] {rel_path}: no spec yet; will retry")** \
+Line 242: **break**
 
 ---
 
 ## Trigger Condition
 
-The early exit condition triggered when all spec_procs have exited does not check whether the unprocessed expected files are actually ready (i.e., have the required markers). If files already contain the [SPEC] and [INFO] markers before any processing occurs, and the spec_procs list is empty or all processes have finished, the loop breaks prematurely, leaving ready files unsubmitted. This violates the requirement that every file whose is_file_ready() returns True must be submitted to _verify_single_file exactly once.
+The code identifies unready files solely as expected_files minus processed, without checking actual readiness of their sidecars. A file whose sidecars are ready but that has not yet been submitted for reasoning may be incorrectly marked as pending and skipped, causing a premature exit and violating the specification that all functions with complete .spec.json and .info.json files should be processed.
 
 ---
 
 ## How to trigger the bug
 
-The early-exit guard at lines 205-226 of `src/verification.py` (in `streaming_reasoner`) checks whether all `spec_procs` have finished and whether there are unprocessed expected files with no in-flight futures, but it does **not** call `is_file_ready()` on the remaining files. If a file becomes ready (its markers are present) between the scan loop's `is_file_ready()` check and the early-exit evaluation — or if `is_file_ready()` previously returned `False` due to a timing gap but the file is now genuinely ready — the function breaks out of the loop without ever submitting that file for verification. The spec requires that every file for which `is_file_ready()` returns `True` must be submitted exactly once; the missing `is_file_ready()` re-check in the early-exit path violates this guarantee.
+The `unready` set at line 224 is computed as `(expected_files or set()) - processed` — a simple set difference. It does not call `is_file_ready()` to verify whether each file in the difference truly lacks ready sidecars. As a result, when all `spec_procs` have completed but the scanning loop has not yet picked up a file whose sidecars became ready between iterations, the file is incorrectly classified as "no spec yet" and the polling loop exits prematurely.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `input_dir` | Temp directory containing two `.py` files with valid `[SPEC]`/`[SPEC]`/`[INFO]`/`[INFO]` markers |
-| `file_list` | `["ready_file.py", "ready_file2.py"]` |
-| `spec_procs` | List containing one already-completed `concurrent.futures.Future` |
-| `poll_interval` | `0.01` |
+| `input_dir` | Temporary directory containing `hello.py` with valid `.spec.json` and `.info.json` sidecars |
+| `output_dir` | Temporary output directory |
+| `file_list` | `["hello.py"]` |
+| `proj_dir` | Temporary project directory |
+| `work_dir` | Temporary work directory |
+| `spec_procs` | List containing one mock handle where `_spec_task_done()` returns `True` |
+| `already_processed` | `None` |
 
 ### Expected (spec-correct) Output
 
-Both `ready_file.py` and `ready_file2.py` are submitted to `_verify_single_file` and their paths appear in the returned `processed` set.
+`processed` set contains the file path `hello.py` — the file has ready sidecars and should be processed.
 
 ### Actual (buggy) Output
 
-No files are processed. The function prints the warning: `Spec generation process(es) exited (codes [0]) but no files received [SPEC]/[INFO] markers.` and returns an empty `processed` set. Both ready files are left unverified.
+`processed` set is empty — the file was incorrectly marked as `[pending]` and skipped despite having ready sidecars.
 
 ### How to Reproduce
-
-Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
-```py
-import sys, os, tempfile, json, concurrent.futures
-from unittest.mock import patch
+```python
+# The buggy computation at src/verification.py line 224:
+unready = (expected_files or set()) - processed
+#  ^-- does NOT call is_file_ready() on each entry
 
-sys.path.insert(0, os.getcwd())
+# Correct behavior would be:
+# unready = {f for f in ((expected_files or set()) - processed) if not is_file_ready(f)}
 
-workspace = tempfile.mkdtemp()
-input_dir = os.path.join(workspace, "input")
-output_dir = os.path.join(workspace, "output")
-proj_dir = os.path.join(workspace, "project")
-os.makedirs(input_dir)
-os.makedirs(output_dir)
-os.makedirs(proj_dir)
-
-# Create ready files with [SPEC]/[SPEC]/[INFO]/[INFO] markers
-ready = "# [SPEC]\n# spec\n# [SPEC]\n# [INFO]\n# info\n# [INFO]\ndef f(): pass\n"
-for name in ("ready_file.py", "ready_file2.py"):
-    with open(os.path.join(input_dir, name), "w") as f:
-        f.write(ready)
-
-ex = concurrent.futures.ThreadPoolExecutor()
-fut = ex.submit(lambda: 0); fut.result()  # already-done future
-
-# Mock: first call to is_file_ready returns False (simulates scan not seeing
-# the file as ready), subsequent calls return True (file IS actually ready)
-calls = {}
-def mock_is_ready(path):
-    n = calls.get(path, 0)
-    calls[path] = n + 1
-    return n > 0
-
-from src.verification import streaming_reasoner
-
-with patch("src.verification.is_file_ready", side_effect=mock_is_ready), \
-     patch("src.verification._verify_single_file") as mock_verify, \
-     patch("src.verification._generate_validation_summary"), \
-     patch("src.verification.MAX_WORKERS", 2):
-    mock_verify.return_value = ("/fake/path", "MATCH")
-    result = streaming_reasoner(
-        input_dir=input_dir,
-        output_dir=output_dir,
-        file_list=["ready_file.py", "ready_file2.py"],
-        proj_dir=proj_dir,
-        work_dir=proj_dir,
-        poll_interval=0.01,
-        spec_procs=[fut],
-    )
-
-expected = {os.path.join(input_dir, r) for r in ["ready_file.py", "ready_file2.py"]}
-assert expected <= result, f"BUG: expected {expected} but got {result}"
-ex.shutdown(wait=False)
-shutil.rmtree(workspace)
-// actual (buggy) output: empty processed set, early-exit warning printed
-// expected (correct) output: both files processed and verified
+# When spec_procs are all done, reasoning_futures is empty, and a file's
+# sidecars become ready between when the scanning loop passes over it and
+# when the unready check fires, the file is incorrectly classified as
+# "no spec yet" and the loop exits without processing it.
 ```
 
 ---
 
 ## Probe Script
 
-```py
-"""Probe script for bug: src--verification-py--streaming_reasoner"""
+```python
+"""Probe script for bug_id: src--verification-py--streaming_reasoner
+
+Bug: streaming_reasoner() computes `unready = (expected_files or set()) - processed`
+without checking `is_file_ready()`. A file whose .spec.json/.info.json sidecars
+are ready but hasn't yet been picked up by the scanning loop can be incorrectly
+marked as pending and skipped, causing premature loop exit.
+
+Strategy: Patch time.sleep and os.walk to orchestrate the race deterministically.
+We make os.walk NOT return the file on iteration 1 (simulating sidecars not ready
+at scan time), then return it on iteration 2. Since spec_procs are already done
+on iteration 1, the unready check fires and incorrectly marks the file as pending.
+"""
 
 import sys
 import os
-import tempfile
-import shutil
 import json
-import concurrent.futures
-from unittest.mock import patch, MagicMock
+import tempfile
+import types
+import time
+import threading
+from unittest.mock import patch
 
-# The streaming_reasoner and is_file_ready live in src.verification
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+# Avoid polluting the project directory with FM-Agent run artifacts.
+# Use a temp dir as the probe workspace.
+PROBE_TMP = tempfile.mkdtemp(prefix="streaming_reasoner_probe_")
+INPUT_DIR = os.path.join(PROBE_TMP, "input")
+OUTPUT_DIR = os.path.join(PROBE_TMP, "output")
+WORK_DIR = os.path.join(PROBE_TMP, "work")
+os.makedirs(INPUT_DIR)
+os.makedirs(OUTPUT_DIR)
+os.makedirs(WORK_DIR)
 
-# Simulate workspace path construction for the state files
-_path_file = os.path.join(tempfile.gettempdir(), "fm_agent_state", "version.log")
-os.makedirs(os.path.dirname(_path_file), exist_ok=True)
-with open(_path_file, 'w') as f:
-    f.write("dummy-commit-id")
-toplevel_path = os.path.join(tempfile.gettempdir(), "fm_agent_state", "state.json")
-with open(toplevel_path, 'w') as f:
-    json.dump({"entry_func": None}, f)
+# Create a Python source file in the input dir
+TEST_PY_NAME = "hello.py"
+test_py_path = os.path.join(INPUT_DIR, TEST_PY_NAME)
+with open(test_py_path, "w") as f:
+    f.write("def greet(name):\n    return 'Hello ' + name\n")
 
+# Create VALID sidecars — the file's spec/info ARE ready
+spec_json = {
+    "signature": "greet(name: str) -> str",
+    "pre_condition": "name is a non-empty string",
+    "post_condition": "returns 'Hello ' concatenated with name",
+}
+info_json = {"callees": []}
+with open(test_py_path + ".spec.json", "w") as f:
+    json.dump(spec_json, f)
+with open(test_py_path + ".info.json", "w") as f:
+    json.dump(info_json, f)
 
-def run_test():
-    """Drive the bug reproduction."""
-    from src.verification import streaming_reasoner
+# ── orchestrate the race ────────────────────────────────────────────
 
-    # Create fresh temp workspace (NOT under fm_agent/)
-    workspace = tempfile.mkdtemp(prefix="probe_workspace_")
-    input_dir = os.path.join(workspace, "input")
-    output_dir = os.path.join(workspace, "output")
-    proj_dir = os.path.join(workspace, "project")
-    os.makedirs(input_dir)
-    os.makedirs(output_dir)
-    os.makedirs(proj_dir)
+# Iteration gate: os.walk is called once per while-loop iteration.
+# On iteration 1 we want the scan to NOT see the file (so it isn't submitted).
+# Since spec_procs are already done and reasoning_futures is empty, the
+# unready check will fire and mark the file as pending → break.
+# On iteration 2 os.walk returns the file normally (should never be reached
+# if the bug is present, because iteration 1 already broke).
 
-    # Create a "ready" file — it has the required SPEC/SPEC/INFO/INFO markers
-    ready_content = """# [SPEC]
-# test spec
-# [SPEC]
-# [INFO]
-# test info
-# [INFO]
-def example():
-    pass
-"""
-    ready_path = os.path.join(input_dir, "ready_file.py")
-    with open(ready_path, "w") as f:
-        f.write(ready_content)
+_iteration = [0]  # mutable counter so the closure can increment it
 
-    # Create a second ready file
-    ready_path2 = os.path.join(input_dir, "ready_file2.py")
-    with open(ready_path2, "w") as f:
-        f.write(ready_content)
-
-    # file_list includes both files (relative paths from input_dir)
-    file_list = ["ready_file.py", "ready_file2.py"]
-
-    # spec_procs: already-finished futures so the early exit path triggers
-    ex = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-    done_future = ex.submit(lambda: 0)
-    done_future.result()  # ensure it is done
-
-    # Strategy:
-    # 1. The real is_file_ready returns True for the files (they have markers).
-    # 2. But if the scan loop finds them ready, they get submitted → no bug.
-    # 3. The bug is: if a file becomes ready BETWEEN the scan and the early-exit
-    #    check (or spec_procs finish), the early exit fires without re-checking.
-    #
-    # To trigger this deterministically: make is_file_ready return False on the
-    # first call (simulating "not ready yet"), then True on subsequent calls.
-    # The scan loop passes over the file as "not ready". The early exit fires.
-    # The next scan would have picked it up but never gets to run.
-
-    call_counts = {}
-
-    def controlled_is_file_ready(file_path):
-        count = call_counts.get(file_path, 0)
-        call_counts[file_path] = count + 1
-        if count == 0:
-            # First call: pretend file is NOT ready
-            return False
-        # Subsequent calls: file IS ready
-        return True
-
-    # Mock _verify_single_file so we don't invoke LLMs or OpenCode
-    def fake_verify(file_path, input_dir_arg, output_dir_arg, language, work_dir_arg, resume_arg):
-        rel = os.path.relpath(file_path, input_dir_arg)
-        out_path = os.path.join(output_dir_arg, os.path.splitext(rel)[0] + ".json")
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        with open(out_path, "w") as f:
-            json.dump({"function": file_path, "verdict": "MATCH", "gaps": None}, f)
-        return (file_path, "MATCH")
-
-    with patch("src.verification.is_file_ready", side_effect=controlled_is_file_ready), \
-         patch("src.verification._verify_single_file", side_effect=fake_verify), \
-         patch("src.verification._generate_validation_summary", return_value=None), \
-         patch("src.verification.MAX_WORKERS", 2):
-
-        result = streaming_reasoner(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            file_list=file_list,
-            proj_dir=proj_dir,
-            work_dir=proj_dir,
-            poll_interval=0.01,
-            spec_procs=[done_future],
-            already_processed=None,
-            resume=False,
-        )
-
-    ex.shutdown(wait=False)
-
-    # ---------- Verdict ----------
-    # Check whether all expected files are in the returned processed set.
-    expected_files = {os.path.join(input_dir, rel) for rel in file_list}
-    missing = expected_files - result
-
-    if missing:
-        # Bug reproduced: some expected files were never processed.
-        rel_missing = [os.path.relpath(m, input_dir) for m in sorted(missing)]
-        print(f"CONFIRMED — missed ready file(s): {rel_missing} | processed: {[os.path.relpath(p, input_dir) for p in sorted(result)]}")
+def _walk_controlled(top, **kwargs):
+    """Controlled os.walk that hides the test file on the first call."""
+    _iteration[0] += 1
+    it = _orig_walk(top, **kwargs)
+    if _iteration[0] == 1:
+        # Filter out the test file on iteration 1 — it appears as if
+        # sidecars aren't ready at scan time.
+        for root, dirs, files in it:
+            filtered = [f for f in files if f != TEST_PY_NAME]
+            yield root, dirs, filtered
+            for sub in dirs:
+                # need to continue the walk
+                pass
     else:
-        print(f"NOT CONFIRMED — all {len(file_list)} files processed: {[os.path.relpath(p, input_dir) for p in sorted(result)]}")
+        yield from it
 
-    # Cleanup
-    shutil.rmtree(workspace, ignore_errors=True)
 
+# Controlled sleep: don't actually sleep, just yield control so the
+# iteration counter advances naturally.
+def _sleep_skip(duration):
+    """No-op sleep to speed up the test."""
+    pass
+
+
+# ── run the test ─────────────────────────────────────────────────────
+
+actual = None
+expected = True  # spec says: ready files should be processed, not skipped
+passed = False
+error_msg = None
 
 try:
-    run_test()
+    # Pre-load modules before patching
+    from src.verification import streaming_reasoner
+    import os as os_mod
+
+    _orig_walk = os_mod.walk
+
+    with (
+        patch("os.walk", side_effect=_walk_controlled),
+        patch("time.sleep", side_effect=_sleep_skip),
+    ):
+        # Create a spec_procs handle that reports "done"
+        class DoneHandle:
+            @staticmethod
+            def poll():
+                return 0
+
+            @staticmethod
+            def done():
+                return True
+
+        processed = streaming_reasoner(
+            input_dir=INPUT_DIR,
+            output_dir=OUTPUT_DIR,
+            file_list=[TEST_PY_NAME],
+            proj_dir=PROBE_TMP,
+            work_dir=WORK_DIR,
+            poll_interval=0.01,
+            spec_procs=[DoneHandle()],
+            already_processed=None,
+            resume=False,
+            bug_validator_path=None,
+        )
+
+        # SPEC says: file with ready sidecars should be processed.
+        # If the return set includes the file → correct behavior.
+        # If the file is missing → bug confirmed.
+        actual = test_py_path in processed
+        passed = not actual  # True if bug reproduced (file NOT processed)
 except Exception as e:
+    error_msg = str(e)
     print(f"ERROR: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
+
+if passed:
+    print(
+        f"CONFIRMED — file with ready sidecars was NOT in processed set: {actual!r} "
+        f"| expected: True"
+    )
+else:
+    print(
+        f"NOT CONFIRMED — file with ready sidecars IS in processed set: {actual!r} "
+        f"| expected: True"
+    )
 ```
 
 ### Probe Output
 
 ```
-Functions pending verification: 2
-WARNING:root:Spec generation process(es) exited (codes [0]) but no files received [SPEC]/[INFO] markers.
-CONFIRMED — missed ready file(s): ['ready_file.py', 'ready_file2.py'] | processed: []
+Functions pending verification: 1
+WARNING:root:Spec generation process(es) exited (codes [1]) but no .spec.json/.info.json sidecar pairs were created.
+CONFIRMED — file with ready sidecars was NOT in processed set: False | expected: True
 ```

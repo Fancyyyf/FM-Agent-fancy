@@ -1,3 +1,0 @@
-{
-  "post_condition": "After execution: the method returns `False`. The subprocess managed by `self` is fully shut down: a graceful shutdown was attempted with a bounded wait; if the process survived, it was terminated and then forcibly killed; its stdin and stdout streams are closed; and `self._proc` is set to `None`. No exception is raised by this method. Any exception passed via `exc_type`/`exc`/`tb` is not suppressed (due to returning `False`). Formal logic: `self._proc = None` ∧ `result = False` ∧ (subprocess is not alive) ∧ (no exception raised from `__exit__`). Given the pre-condition of an active ELP subprocess connection, the shutdown always occurs."
-}

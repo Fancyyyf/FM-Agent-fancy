@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "lang_key='python' with _CG_LANG['python'] = ['Python'], proj_dir='.', database contains a row with file_path='foo.py' and the file './foo.py' exists. The function returns a dict with key './foo.py', which is not an absolute path as required by specification B.",
-  "offending_statements": "Line 32: abs_path = os.path.join(proj_dir, file_path) if proj_dir else file_path",
-  "reason": "Specification B requires that when proj_dir is provided, the returned dict keys are absolute filesystem paths. The code uses os.path.join(proj_dir, file_path) but does not ensure the result is absolute; passing a relative proj_dir produces relative keys, violating the specification."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Call record_opencode_call with summary='' (empty string) and stage='build'. The specification requires the summary to be '' (the provided non-None value), but the code produces 'OpenCode build' because empty string is falsy and `summary or f\"OpenCode {stage}\"` evaluates to the default.",
-  "offending_statements": "Line 48: \"summary\": summary or f\"OpenCode {stage}\"",
-  "reason": "The code uses `summary or ...` which substitutes the default summary for any falsy value (e.g., empty string), while the specification requires using the provided summary for any non-None value. This causes incorrect output when the caller passes a non-None but falsy summary."
-}

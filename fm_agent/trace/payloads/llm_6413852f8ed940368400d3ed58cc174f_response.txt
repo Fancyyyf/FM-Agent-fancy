@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir has a previous full run (check_last_run_existence returns True). intent_file_path points to a regular file with content 'fix bug'. The fm_agent/ directory contains the subdirectories logic_verification_results/ and bug_validation/, and also files like 'select_relevant_previous.json', 'relevant_list.txt', and 'spec_update_2023.log' from an earlier incremental attempt. After the code block executes, the two directories are removed but the prefixed artifact files remain. The specification requires all such artifacts to be removed before producing new output, but they are not.",
-  "offending_statements": "Line 77: for stale_dir in (output_dir, os.path.join(work_dir, \"bug_validation\")):",
-  "reason": "The cleanup loop on lines 77-79 removes only the logic_verification_results and bug_validation directories. The specification additionally mandates removal of incremental scope-selection and spec-update artifacts with prefixes \"select_relevant_\", \"relevant_\", and \"spec_update_\" inside fm_agent/. The code never deletes those files, leaving stale incremental artifacts that violate the requirement to clear all such data before producing new output. A concrete input with a non-empty intent file and existing prefixed artifacts demonstrates this violation."
-}

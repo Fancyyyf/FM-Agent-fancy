@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input: extracted_rel = '-cpp/func.cpp' (assuming 'cpp' is a key in EXT_TO_LANG and the OS uses '/' as the path separator)",
-  "offending_statements": "Line 16: if hyphen > 0 and comp[hyphen + 1:] in EXT_TO_LANG:",
-  "reason": "The specification requires any component whose suffix after the last hyphen is in EXT_TO_LANG to be treated as the extraction directory, without requiring the hyphen index to be greater than 0. The code's condition 'hyphen > 0' on line 16 excludes components like '-cpp' where the hyphen is at the start. For input '-cpp/func.cpp', the specification would identify '-cpp' as the extraction directory and return '.cpp', but the code's loop skips it, falls back to the immediate parent, and returns '-cpp', violating the specification."
-}

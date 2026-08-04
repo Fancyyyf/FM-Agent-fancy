@@ -1,11 +1,1 @@
-{
-  "id": "src--incremental_reasoner-py--_extracted_files_by_method",
-  "source_file": "src/incremental_reasoner.py",
-  "function_name": "_extracted_files_by_method",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
-  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_extracted_files_by_method.py",
-  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_extracted_files_by_method.md",
-  "probe_stdout": "BUG CONFIRMED (Test 1): accessing missing key 'nonexistent_key' and mutating returned list modified the mapping. Initial key count: 0, Final key count: 1. Spec requires: mutating returned list does NOT affect the mapping.\nBUG CONFIRMED (Test 2): accessing missing key 'NonExistentFunction' and mutating returned list modified the mapping with existing files. Keys before: ['Bar', 'Foo'], Keys after: ['Bar', 'Foo', 'NonExistentFunction']. Spec requires: mutating returned list does NOT affect the mapping.\nCONFIRMED\n",
-  "trigger_summary": "Accessing a missing key on the returned defaultdict(list) and mutating the returned list permanently adds the key+value to the mapping, violating the spec that mutations to the returned list must not affect the mapping."
-}
+{"id":"src--incremental_reasoner-py--_extracted_files_by_method","source_file":"/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_extracted_files_by_method.py","function_name":"_extracted_files_by_method","confirmation_status":"confirmed","attempts":2,"probe_script":"fm_agent/bug_validation/probe_src--incremental_reasoner-py--_extracted_files_by_method.py","detail_file":"fm_agent/bug_validation/src--incremental_reasoner-py--_extracted_files_by_method.md","probe_stdout":"CONFIRMED — PermissionError from os.walk propagated instead of returning a dict","trigger_summary":"os.walk raises PermissionError on an inaccessible directory and the exception propagates unhandled instead of returning a dict as the spec requires."}

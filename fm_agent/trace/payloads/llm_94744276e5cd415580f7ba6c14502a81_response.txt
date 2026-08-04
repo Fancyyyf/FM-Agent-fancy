@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a list of strings, specifically the result of (shlex.split(settings.erlang.command.strip() or 'elp', posix=(os.name != 'nt')) or ['elp']) + ['server']. In natural language: the return value r is a non‑empty list whose last element is 'server'. The prefix list is obtained by taking the stripped value of settings.erlang.command, defaulting to 'elp' if empty, splitting it into tokens via shlex.split (with posix mode true when os.name is not 'nt'), and using ['elp'] if that split yields an empty list. Formally: ∀ r = _elp_argv() · r = (let c = settings.erlang.command.strip() in let cmd = c if c != '' else 'elp' in let parts = shlex.split(cmd, posix=(os.name != 'nt')) in (parts if parts else ['elp'])) + ['server']."
-}

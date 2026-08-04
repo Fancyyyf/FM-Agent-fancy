@@ -1,11 +1,1 @@
-{
-  "id": "src--cli_backend-py--build_agent_command",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/cli_backend-py/build_agent_command.py",
-  "function_name": "build_agent_command",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
-  "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--build_agent_command.py",
-  "detail_file": "fm_agent/bug_validation/src--cli_backend-py--build_agent_command.md",
-  "probe_stdout": "CONFIRMED — file paths missing from argv for all backends: codex-cli: file paths MISSING from argv → spec violated → CONFIRMED | claude-cli: file paths MISSING from argv → spec violated → CONFIRMED",
-  "trigger_summary": "When files=['a.txt','b.txt'], AgentCommand.argv lacks file path flags, violating the spec that requires each file path be attached as context to the backend invocation."
-}
+{"id": "src--cli_backend-py--build_agent_command", "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/build_agent_command.py", "function_name": "build_agent_command", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--build_agent_command.py", "detail_file": "fm_agent/bug_validation/src--cli_backend-py--build_agent_command.md", "probe_stdout": "CONFIRMED — bug reproduced: file paths absent from argv.\n  argv:      ['codex', 'exec', '--sandbox', 'danger-full-access', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', '-C', '/tmp/test-workdir', '--model', 'test-model', '-c', 'model_reasoning_effort=\"high\"', '-']\n  files:     ['src/foo.py', 'README.md']\n  backend:   codex-cli\n  stdin:     'Read these file(s) before acting:\\n- src/foo.py\\n- README.md\\n\\ntest prompt'", "trigger_summary": "When files is non-empty, build_agent_command never adds any file path to argv; neither the codex-cli branch nor the claude-cli branch includes the given file paths in the command list."}

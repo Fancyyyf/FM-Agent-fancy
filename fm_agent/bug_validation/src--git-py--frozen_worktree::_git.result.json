@@ -1,1 +1,11 @@
-{"id": "src--git-py--frozen_worktree::_git", "source_file": "src/git-py/frozen_worktree::_git.py", "function_name": "_git", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--git-py--frozen_worktree::_git.py", "detail_file": "fm_agent/bug_validation/src--git-py--frozen_worktree::_git.md", "probe_stdout": "CONFIRMED — TypeError raised with duplicate 'capture_output': <MagicMock name='run' id='136370205191552'> got multiple values for keyword argument 'capture_output'", "trigger_summary": "_git() hardcodes check=True, capture_output=True, text=True but passes **kwargs to subprocess.run; passing any of these keys in kwargs raises TypeError due to duplicate keyword argument."}
+{
+  "id": "src--git-py--frozen_worktree::_git",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/git-py/frozen_worktree::_git.py",
+  "function_name": "_git",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--git-py--frozen_worktree::_git.py",
+  "detail_file": "fm_agent/bug_validation/src--git-py--frozen_worktree::_git.md",
+  "probe_stdout": "CONFIRMED — TypeError raised when passing capture_output=False via kwargs: subprocess.run() got multiple values for keyword argument 'capture_output' — spec says capture_output default is overridable, but the hardcoded capture_output=True prevents any override",
+  "trigger_summary": "_git() hardcodes capture_output=True in subprocess.run(), preventing any override via kwargs — passing capture_output=False raises TypeError for duplicate keyword arguments, contradicting the specification which states both defaults are overridable."
+}

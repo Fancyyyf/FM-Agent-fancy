@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "`__init__`",
-  "offending_statements": "Line 8: t = token.lower().strip('_')",
-  "reason": "The code strips leading and trailing underscores from identifiers, but the specification does not mention such stripping. For the input '`__init__`', the code returns {'init'} while the specification expects {'__init__'}."
-}

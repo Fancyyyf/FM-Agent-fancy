@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "If config.settings.codegraph.version is \"1.0.0\" (so want = \"1.0.0\"), config.settings.codegraph.bin_dir is \"/opt/bin\", and the codegraph binary at /opt/bin/codegraph exists, is executable, and when run with --version produces no output (empty string), then got=''. The code returns (False, '...not installed...'), but the specification expects (False, version mismatch message) because an empty version string was obtained and does not equal the pinned version.",
-  "offending_statements": "Line 19: if not got:",
-  "reason": "The code treats an empty version string (got='') the same as a failure to execute the binary, returning a 'not installed' error. The specification requires that if the binary executes successfully (even with empty output), the obtained version string (empty) should be compared against the pinned version. An empty string is not equal to a non-empty pinned version, so the correct behavior per spec is to return a version-mismatch error, not a missing-binary error."
-}

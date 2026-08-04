@@ -1,78 +1,18 @@
 {
   "phase": 3,
-  "layers": "3",
-  "total_functions": 11,
-  "total_batches": 6,
+  "layers": "4",
+  "total_functions": 1,
+  "total_batches": 1,
   "batches": [
     {
       "index": 0,
-      "file": "batch_000_layer3_extracted_b0.txt",
-      "layer": 3,
-      "is_cycle": false,
-      "num_functions": 2,
-      "num_pending": 0,
-      "functions": [
-        "fm_agent/extracted_functions/src/generate_batch_prompts-py/_callee_match_names.py",
-        "fm_agent/extracted_functions/src/generate_batch_prompts-py/_detect_comment_prefix.py"
-      ]
-    },
-    {
-      "index": 1,
-      "file": "batch_001_layer3_extracted_b1.txt",
-      "layer": 3,
-      "is_cycle": false,
-      "num_functions": 2,
-      "num_pending": 0,
-      "functions": [
-        "fm_agent/extracted_functions/src/generate_batch_prompts-py/_info_line_mentions_name.py",
-        "fm_agent/extracted_functions/src/generate_topdown_layers-py/_get_call_regex.py"
-      ]
-    },
-    {
-      "index": 2,
-      "file": "batch_002_layer3_extracted_b2.txt",
-      "layer": 3,
-      "is_cycle": false,
-      "num_functions": 2,
-      "num_pending": 0,
-      "functions": [
-        "fm_agent/extracted_functions/src/generate_topdown_layers-py/_strip_comments_from_source.py",
-        "fm_agent/extracted_functions/src/scope-py/_collect_calls.py"
-      ]
-    },
-    {
-      "index": 3,
-      "file": "batch_003_layer3_extracted_b3.txt",
-      "layer": 3,
-      "is_cycle": false,
-      "num_functions": 2,
-      "num_pending": 0,
-      "functions": [
-        "fm_agent/extracted_functions/src/scope-py/_collect_func_idents.py",
-        "fm_agent/extracted_functions/src/scope-py/_extract_classes.py"
-      ]
-    },
-    {
-      "index": 4,
-      "file": "batch_004_layer3_extracted_b4.txt",
-      "layer": 3,
-      "is_cycle": false,
-      "num_functions": 2,
-      "num_pending": 0,
-      "functions": [
-        "fm_agent/extracted_functions/src/scope-py/_fuzzy_name_score.py",
-        "fm_agent/extracted_functions/src/scope-py/_generic_func_info.py"
-      ]
-    },
-    {
-      "index": 5,
-      "file": "batch_005_layer3_extracted_b5.txt",
-      "layer": 3,
+      "file": "batch_000_layer4_extracted_b0.txt",
+      "layer": 4,
       "is_cycle": false,
       "num_functions": 1,
       "num_pending": 0,
       "functions": [
-        "fm_agent/extracted_functions/src/scope-py/_name_parts.py"
+        "fm_agent/extracted_functions/src/pipeline_setup-py/_clean_domain_context_files::types_path.py"
       ]
     }
   ]

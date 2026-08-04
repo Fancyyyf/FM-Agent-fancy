@@ -1,11 +1,11 @@
 {
   "id": "src--extract-py--run_extraction",
-  "source_file": "src/extract.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/extract-py/run_extraction.py",
   "function_name": "run_extraction",
-  "confirmation_status": "confirmed",
-  "attempts": 2,
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--extract-py--run_extraction.py",
   "detail_file": "fm_agent/bug_validation/src--extract-py--run_extraction.md",
-  "probe_stdout": "Extraction complete: 1 written, 0 skipped.\nCONFIRMED - is_file_ready returned False for 1+1 markers, causing overwrite (written=1, skipped=0) when spec says file with both SPEC+INFO markers should be skipped. content changed from 99 to 42\n",
-  "trigger_summary": "is_file_ready requires exactly 2 SPEC + 2 INFO markers in strict order, so a file with only 1 SPEC + 1 INFO is treated as not-ready and gets overwritten, violating the spec that says \"contains both [SPEC] marker lines and [INFO] marker lines\" should be sufficient to skip."
+  "probe_stdout": "Extraction complete: 2 written, 0 skipped.\nNOT CONFIRMED - output files follow path convention\nConvention paths found: ['mypkg/utils-py/add.py', 'mypkg/utils-py/sub.py']",
+  "trigger_summary": "Source files should follow path convention <source_rel_dir>/<basename-ext>/<func_name>.<ext> but the verification claimed flat output; actual code produces nested paths matching the spec."
 }

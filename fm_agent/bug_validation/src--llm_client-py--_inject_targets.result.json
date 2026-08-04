@@ -1,11 +1,11 @@
 {
   "id": "src--llm_client-py--_inject_targets",
-  "source_file": "src/llm_client.py",
+  "source_file": "src/llm_client-py/_inject_targets.py",
   "function_name": "_inject_targets",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_inject_targets.py",
   "detail_file": "fm_agent/bug_validation/src--llm_client-py--_inject_targets.md",
-  "probe_stdout": "CONFIRMED — reads from settings.inject.hosts instead of INJECT_HOST env var | actual: [] | expected: ['alpha', 'beta', 'gamma']\n",
-  "trigger_summary": "INJECT_HOST env var is set to comma-separated hosts but settings.inject.hosts is empty; function returns [] instead of the parsed env var values"
+  "probe_stdout": "CONFIRMED — AttributeError on truthy non-string input: 'list' object has no attribute 'split'\n",
+  "trigger_summary": "settings.inject.hosts set to a list instead of a comma-separated string causes .split(',') to raise AttributeError"
 }

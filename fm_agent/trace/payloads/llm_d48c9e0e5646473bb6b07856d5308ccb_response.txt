@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/project', filepath='/project/app.js'. app.js contains function 'first' at lines 2-5 and function 'second' at lines 10-13. CodeGraphExtractor.from_proj_dir returns a valid cg, and cg.get_function_spans('javascript', '/project/app.js') returns [('second', 10, 13), ('first', 2, 5)] (unsorted order).",
-  "offending_statements": "Line 8: return cg.get_function_spans('javascript', filepath) if cg else None",
-  "reason": "Specification B requires the returned list to be ordered by appearance (ascending start_idx). The code simply passes through the list from get_function_spans without enforcing any order. If the backend returns an unsorted list, the code's output violates the ordering requirement. The counterexample shows a concrete scenario where the backend returns tuples in non-ascending start_idx order, causing a mismatch between A and B."
-}

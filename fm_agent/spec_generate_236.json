@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: src/incremental_reasoner.py\n#\n# _StdoutTee.flush(self)\n#\n# Pre-condition:\n#   - self._console is an open, writable stream that supports a flush operation.\n#   - self._log_stream is a writable stream whose open/closed state is unknown and that supports a flush operation.\n#\n# Post-condition:\n#   - All data previously written to self._console via this tee's write operations that remains buffered is pushed to the underlying console output device.\n#   - All data previously written to self._log_stream via this tee's write operations that remains buffered is pushed to the underlying log file, if and only if self._log_stream is open (not closed).\n#   - Does not raise an exception when self._log_stream is closed; the flush of self._console still succeeds regardless.\n# [SPEC]\n",
-  "info_updated": false,
-  "new_info": "",
-  "updated_callees": []
-}

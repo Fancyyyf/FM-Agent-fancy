@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function `clear_test_file_exemptions` is bound in the module's global scope. The set `_TEST_FILE_EXEMPTIONS` exists and retains its previous contents; none of its elements have been added or removed. Formally: (clear_test_file_exemptions ∈ globals()) ∧ (_TEST_FILE_EXEMPTIONS ∈ globals()) ∧ (_TEST_FILE_EXEMPTIONS = old(_TEST_FILE_EXEMPTIONS))."
-}

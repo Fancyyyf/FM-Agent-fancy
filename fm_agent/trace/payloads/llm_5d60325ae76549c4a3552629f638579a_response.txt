@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a list containing, in the same relative order as in the input `batches`, every batch `b` from `batches` for which there exists at least one relative file‑path string `func_rel` in `b.get(\"functions\", [])` such that `is_file_ready(os.path.join(proj_dir, func_rel))` evaluates to `False`. A `False` result from `is_file_ready` means the file does not exist, is unreadable, or lacks the required specification artifacts. Batches whose `\"functions\"` key is missing or whose list is empty are never included. Formally: let `pending = [b for b in batches if ∃ func_rel ∈ b.get(\"functions\", []) : ¬ is_file_ready(os.path.join(proj_dir, func_rel))]`. The returned list is `pending`."
-}

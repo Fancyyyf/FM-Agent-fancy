@@ -1,4 +1,0 @@
-{
-  "info_updated": true,
-  "new_info": "# [INFO]\n# _extracted_file_to_source_rel(extracted_rel) -> str\n#   Pre-condition: extracted_rel is a relative path referring to an extracted\n#     function file under the extracted_functions/ directory layout\n#   Post-condition: Returns the corresponding source-file relative path by\n#     reversing the extraction directory naming convention: the extraction\n#     directory name <basename>-<ext> is mapped back to <basename>.<ext>, and\n#     the function-name file component is removed\n#   Post-condition: The returned path uses the OS-native path separator\n# [INFO]"
-}

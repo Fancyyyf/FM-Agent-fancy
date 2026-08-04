@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "INJECT_HOST='app1, app2'; settings.inject does not exist or settings.inject.hosts is not defined.",
-  "offending_statements": "Line 2: return [s.strip() for s in (settings.inject.hosts or \"\").split(\",\") if s.strip()]",
-  "reason": "The function reads the host list from settings.inject.hosts, but the specification requires reading from the INJECT_HOST environment variable. When INJECT_HOST is set but settings.inject.hosts is absent or contains different data, the function either raises an error or returns an incorrect list, violating the specification."
-}

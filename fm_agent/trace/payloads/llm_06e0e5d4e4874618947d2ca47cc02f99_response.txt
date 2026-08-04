@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "work_dir=\"/tmp/test\", directory spec_prompts/domain_context/user_knowledge exists and contains a symbolic link named \"example.md\" pointing to a regular file (e.g., \"/tmp/test/some.md\"). The function will return [\"fm_agent/spec_prompts/domain_context/user_knowledge/example.md\"], but the specification requires symlinks to be excluded (only regular files, not symlinks).",
-  "offending_statements": "Line 7: if not path.is_file() or path.name == \"manifest.json\":",
-  "reason": "Condition A uses path.is_file() which resolves symbolic links, returning True for a symlink that points to a regular file. Condition B explicitly requires the file to be a regular file and not a symlink, so symlinks must be excluded. The code therefore incorrectly includes symlinks."
-}

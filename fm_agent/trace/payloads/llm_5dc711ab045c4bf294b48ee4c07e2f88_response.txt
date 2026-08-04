@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "src_path = Path('example.java') pointing to a valid Java source file, lang_key='java', proj_dir=None (where the '_function_spans' call successfully determines function boundaries but the global LANG_CONFIG dictionary has no entry for 'java').",
-  "offending_statements": "Line 22: lang_cfg = LANG_CONFIG[lang_key]",
-  "reason": "The specification requires returning (funcs_info, source_lines, []) whenever the file can be read and function boundaries can be determined. If _function_spans succeeds for a language that is not present in LANG_CONFIG, the statement `LANG_CONFIG[lang_key]` raises an unhandled KeyError instead of returning the required tuple, so the code violates condition B."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A UTF-16 encoded source file containing two function bodies: 'foo' (in keep_names) and 'bar' (not in keep_names). The code will remove 'bar' and overwrite the file using the system default text encoding (e.g., UTF-8), thereby changing the file's encoding from UTF-16 to the default, which violates the specification that encoding is preserved.",
-  "offending_statements": "Line 28: with open(filepath, \"w\") as f:",
-  "reason": "The code opens the file in default text mode ('w') without capturing or reusing the encoding from the original file. When the file is overwritten, its bytes are re-encoded using the system default, which may differ from the original encoding, failing to preserve the file encoding as required by the specification."
-}

@@ -1,11 +1,1 @@
-{
-  "id": "src--file_utils-py--_get_phase_files",
-  "source_file": "src/file_utils-py/_get_phase_files.py",
-  "function_name": "_get_phase_files",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
-  "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--_get_phase_files.py",
-  "detail_file": "fm_agent/bug_validation/src--file_utils-py--_get_phase_files.md",
-  "probe_stdout": "CONFIRMED — actual (os.walk order): ['src/file-cpp/z.txt', 'src/file-cpp/sub/a.txt'] | expected (spec order): ['src/file-cpp/sub/a.txt', 'src/file-cpp/z.txt']\n",
-  "trigger_summary": "When an extracted-function subdirectory contains nested subdirectories, os.walk yields root-level files before child-directory files, producing an overall file list that is not globally sorted by filename as the spec requires."
-}
+{"id": "src--file_utils-py--_get_phase_files", "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/file_utils-py/_get_phase_files.py", "function_name": "_get_phase_files", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--_get_phase_files.py", "detail_file": "fm_agent/bug_validation/src--file_utils-py--_get_phase_files.md", "probe_stdout": "CONFIRMED \u2014 actual: ['foo-py/some_func.py', 'foo-py/some_func.py'] | expected: non-duplicate list of length 1\n  total entries=2, unique=1, duplicates=1\n", "trigger_summary": "Duplicate entries in source_files cause the same extracted directory to be visited multiple times, appending identical relative paths to the result list without deduplication."}

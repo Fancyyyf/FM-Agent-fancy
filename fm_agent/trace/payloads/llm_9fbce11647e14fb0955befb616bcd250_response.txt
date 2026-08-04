@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A phase_files list containing a filepath that triggers OSError on open (e.g., '/path/to/func1.py' with no read permission), with lang_key in registry_langs, and existing registry_edges for that fqn that resolve to callees in phase_fqns and known_fqns. For instance, filepath='/path/to/func1.py', fqn='mymodule::func1', registry_edges['mymodule::func1']={'mymodule::helper'}, known_fqns and phase_fqns contain 'mymodule::helper', and open(filepath) raises PermissionError. Then the code adds 'mymodule::helper' to callees_map and all_callees_map for 'mymodule::func1', violating the specification that no callee edges should be added for that file.",
-  "offending_statements": "Line 63: callee_fqns = {c for c in registry_edges.get(fqn, set())\nLine 64:                if c != fqn and c in known_fqns}",
-  "reason": "Specification B states that if a source file cannot be opened for reading, no callee edges are added for that file and it is silently skipped. In the codegraph path (lang_key in registry_langs), the code still adds callee edges from registry_edges even when the file open fails, which violates this requirement."
-}

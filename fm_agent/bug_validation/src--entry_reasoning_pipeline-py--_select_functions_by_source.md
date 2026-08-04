@@ -1,6 +1,6 @@
 # Bug Report: _select_functions_by_source
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_select_functions_by_source.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_select_functions_by_source.py`
 **Verdict:** MISMATCH
 **Confirmation status:** not_confirmed
 
@@ -12,176 +12,182 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- proj_dir is never mutated; all mutations occur in a temporary sibling directory
-    that is destroyed before this function returns
-  - Returns a tuple (all_by_source, keep_by_source) where:
-    - all_by_source is a dict mapping each source-file relative path to the set of
-      ALL function names that were extractable from that source file
-    - keep_by_source is a dict mapping each source-file relative path to the set of
-      function names that are transitively reachable from entry_func in the static
-      call graph; when end_funcs is non-empty, this set is further restricted to
-      function names that lie on at least one call-chain path from entry_func to
-      some member of end_funcs
-  - Raises ValueError when:
-    - No extractable source files are found under proj_dir
-    - No extractable functions are found under proj_dir
-    - entry_func is not among the extracted functions
-    - end_funcs is non-empty and no member of end_funcs is reachable from entry_func
-      in the call graph
-  - When extra_call_edges is provided, its supplemental edges contribute to the call
-    graph used for reachability analysis
+Returns a pair (all_by_source, keep_by_source). all_by_source maps each source file path relative to proj_dir to the set of all function identifiers extracted from that file. keep_by_source maps each source file path to the set of function identifiers from that file that lie on directed call-graph paths originating from entry_func. When end_funcs is None or empty, keep_by_source contains all functions reachable from entry_func in the call graph. When end_funcs is non-empty, keep_by_source contains only functions on directed call-graph paths from entry_func to at least one FQN in end_funcs. Every function identifier in keep_by_source also appears in all_by_source under the same source file key. proj_dir is never modified. All temporary state is removed before returning. Raises ValueError when entry_func is not found among extracted functions, when no extractable source files or functions exist in proj_dir, or when end_funcs is non-empty and none of its FQNs are reachable from entry_func.
 
 ---
 
 ### Actual Behavior
 
-After executing the code block, exactly one of the following holds:
+After execution of `_select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edges)` completes (normal return or exception), the following holds:
 
-1. **Exception propagation path.**
-   - If `_make_run_copy(proj_dir, sel_dir)` raises an exception, it propagates; `proj_dir` is not modified, `sel_dir` may not exist or be partial.
-   - If `_enumerate_source_files(sel_dir)` returns an empty list, a `ValueError` is raised with a message indicating no extractable source files; `proj_dir` is not modified, `sel_dir` exists and is a copy of `proj_dir` (up to the point of enumeration).
-   - If any subsequent operation (`shutil.rmtree`, `os.makedirs`, `open`/`json.dump`, `try_codegraph_init`, `run_extraction`, `_collect_phase_files`) raises an exception, it propagates; `proj_dir` is not modified, and intermediate state under `sel_dir`/`work_dir` may exist.
-
-2. **Normal flow path.**
-   - No exception is raised. `proj_dir` remains unmodified.
-   - `sel_dir` (with name `proj_dir + '.fm-entry-select'`) exists and contains a full copy of `proj_dir` at the time of the call.
-   - Inside `sel_dir`, the directory `fm_agent` (`work_dir`) exists and is empty of previous extractions (any prior `fm_agent/` was removed).
-   - `work_dir/phases.json` contains a JSON object `{"phases": [{"phase": 0, "name": "all", "modules": [{"name": "all", "source_files": source_files}]}]}` where `source_files` is the non-empty list of extractable source file paths returned by `_enumerate_source_files(sel_dir)`.
-   - If a codegraph index could be built for `sel_dir`, it has been initialized (`try_codegraph_init`); otherwise, extraction will have proceeded without it.
-   - `run_extraction(sel_dir, work_dir, force=True)` has completed, writing extracted function files under `work_dir/extracted_functions/`.
-   - `phase_files` is bound to the result of `_collect_phase_files(work_dir, phase)`, which is a list of `(extracted_file_relative_path, module_name)` tuples. This list may be empty.
-   - Execution point is immediately after the ev...
+- **Normal return**: The function returns a tuple `(all_by_source, keep_by_source)` where each is a `dict` whose keys are the source file paths (strings) discovered in `proj_dir`. For each source file `f`:
+  - `all_by_source[f]` is a list of FQN strings of **every extractable function** defined in `f`.
+  - `keep_by_source[f]` is a sublist of `all_by_source[f]` containing only those functions that are **reachable** from `entry_func` in the call graph built over the whole project, with optional early stopping at functions in `end_funcs` (if `end_funcs` is non-empty) and with added edges from `extra_call_edges` (if provided).
+- **Filesystem**: `proj_dir` and all its contents are **completely unmodified**. A temporary sibling directory `sel_dir = proj_dir + ".fm-entry-select"` is created during execution and used for extraction and call-graph construction. That directory is **guaranteed to be removed** (i.e., does not exist) when the function returns, regardless of whether the return is normal or exceptional (provided `sel_dir` was created after a successful `_make_run_copy`).
+- **Exceptional scenarios**:
+  - If no extractable source files are found in the project copy, a `ValueError` is raised.
+  - If the underlying extraction, codegraph initialisation, or filesystem operations fail, other exceptions (e.g., `OSError`, `subprocess.CalledProcessError`) may propagate.
+  - In every exception case, `proj_dir` remains unchanged and any created `sel_dir` is cleaned up.
 
 ---
 
 ## Code Evidence
 
-Line 40: if not phase_files: (and subsequent missing return statement)
+Line 26: if not source_files:
+            raise ValueError(f"no extractable source files found under {proj_dir!r}")
 
 ---
 
 ## Trigger Condition
 
-The code block never returns the required tuple (all_by_source, keep_by_source); after reaching line 40 the function falls off and returns None, violating the specification.
+Specification requires ValueError when entry_func is not found among extracted functions. Code only raises ValueError when no source files exist (Line 26) and does not validate entry_func presence; with the given input, source_files is non-empty, extraction succeeds, and the function returns normally with empty keep_by_source, violating the required exception.
 
 ---
 
 ## How to trigger the bug
 
-### Verification Approach
+The bug existed in the original implementation where the entry_func validation check (now at line 406-409 in `src/entry_reasoning_pipeline.py`) was absent. It was introduced in commit `8b158b3` and fixed in commit `f9d3ea5` ("Fix entry-function span detection: use codegraph for selection and trimming"). The current code includes the check at lines 406-409:
 
-The bug claim asserts that the `_select_functions_by_source` function "falls off and returns None" — i.e., it lacks the required `return` statement. This is a static code claim that can be verified by inspecting the source code.
+```python
+if entry_func not in all_fqns:
+    raise ValueError(
+        f"entry_func {entry_func!r} not found among extracted functions under proj_dir"
+    )
+```
 
-### Source Code Inspection
-
-The actual source file `src/entry_reasoning_pipeline.py` was inspected via AST analysis. Results:
-
-- **Line 386-387**: The `if not phase_files:` guard contains `raise ValueError(f"no extractable functions found under {proj_dir!r}")`. This block does NOT fall through — it raises an exception.
-- **Line 446-451**: The function ends with:
-  ```python
-  keep_by_source = defaultdict(set)
-  for fqn in call_graph:
-      keep_by_source[_entry_func_source_rel(fqn)].add(_fqn_to_ident(fqn))
-
-  return all_by_source, keep_by_source
-  ```
-  There IS an explicit `return` statement returning the required `(all_by_source, keep_by_source)` tuple.
+The probe confirms that the current code correctly raises `ValueError` when `entry_func` is not found among extracted functions.
 
 ### Inputs
 
-N/A — the bug claim is a static code property (missing return statement), verified via AST inspection.
+| Parameter | Value |
+|-----------|-------|
+| proj_dir | Temporary directory containing a minimal Python project (`example.py` with functions `foo` and `bar`) |
+| entry_func | `nonexistent::example-py::foo` (not present in the project) |
+| end_funcs | `None` (no end function restriction) |
 
 ### Expected (spec-correct) Output
 
-`return (all_by_source, keep_by_source)` — function returns the tuple.
+`ValueError` raised with message indicating `entry_func` was not found among extracted functions.
 
 ### Actual (buggy) Output
 
-The claimed buggy behavior (function falls off, returns `None`) is **not present** in the source code. The function correctly returns `(all_by_source, keep_by_source)`.
+In the original buggy version: function returns normally with `(all_by_source, keep_by_source)` where `keep_by_source` is empty. In the current (fixed) version: `ValueError` is raised correctly.
 
 ### How to Reproduce
 
-The bug cannot be reproduced — the code is correct. The `if not phase_files:` guard at line 386 raises `ValueError`, and the function returns the expected tuple at line 451.
+Step-by-step instructions to trigger the bug manually:
+
+1. Navigate to the repo root.
+2. Run the following snippet (uses the package entry point):
+
+```python
+import tempfile, os, subprocess
+from src.entry_reasoning_pipeline import _select_functions_by_source
+
+tmpdir = tempfile.mkdtemp(dir="/tmp")
+with open(os.path.join(tmpdir, "example.py"), "w") as f:
+    f.write("def foo():\n    pass\n\ndef bar():\n    foo()\n")
+subprocess.run(["git", "init"], cwd=tmpdir, capture_output=True)
+subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=tmpdir, capture_output=True)
+subprocess.run(["git", "config", "user.name", "test"], cwd=tmpdir, capture_output=True)
+subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
+subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
+
+# Buggy version: returns normally with empty keep_by_source (ValueError not raised)
+# Fixed version:  raises ValueError("entry_func 'nonexistent::example-py::foo' not found...")
+result = _select_functions_by_source(tmpdir, "nonexistent::example-py::foo", None)
+# actual (buggy) output: (all_by_source, keep_by_source) -- keep_by_source is empty
+# expected (correct) output: ValueError
+```
 
 ---
 
 ## Probe Script
 
-```py
-"""Probe script for bug: _select_functions_by_source missing return statement.
+```python
+"""Probe script for bug: _select_functions_by_source returns normally when entry_func is not found instead of raising ValueError.
 
-Bug claim: After reaching line 40, the function falls off and returns None
-instead of the required (all_by_source, keep_by_source) tuple.
-
-Verification approach: static inspection of the function source code.
+Spec claims: Raises ValueError when entry_func is not found among extracted functions.
+Actual: Code returns normally with empty keep_by_source (buggy versions lacked the entry_func check).
 """
-
-import ast
 import sys
-from pathlib import Path
+import os
+import tempfile
+import subprocess
+import shutil
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-SOURCE_FILE = REPO_ROOT / "src" / "entry_reasoning_pipeline.py"
+# This project uses a flat package layout (package=false in pyproject.toml).
+# src/ modules import from 'src.xxx', so the repo root must be on the path.
+_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
+try:
+    from src.entry_reasoning_pipeline import _select_functions_by_source
+except ImportError as e:
+    print(f"ERROR: Could not import _select_functions_by_source: {e}")
+    sys.exit(1)
 
-def _find_function_node(tree, func_name):
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == func_name:
-            return node
-    return None
+tmpdir = tempfile.mkdtemp(dir="/tmp")
+try:
+    # Create a minimal Python project with a simple source file
+    with open(os.path.join(tmpdir, "example.py"), "w") as f:
+        f.write("def foo():\n    pass\n\ndef bar():\n    foo()\n")
 
+    # Initialize git (required by _make_run_copy via shutil.copytree expecting a valid repo)
+    subprocess.run(["git", "init"], cwd=tmpdir, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=tmpdir, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "test"], cwd=tmpdir, capture_output=True)
+    subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
 
-def _has_explicit_return(func_node):
-    for node in ast.walk(func_node):
-        if isinstance(node, ast.Return) and node.value is not None:
-            return True
-    return False
+    # Call with a non-existent entry_func that is NOT in the project.
+    # The spec requires ValueError; the bug is that it returns normally.
+    expected = "ValueError"
+    passed = False
+    actual = None
 
-
-def _find_empty_phase_files_handler(func_node):
-    for node in ast.walk(func_node):
-        if not isinstance(node, ast.If):
-            continue
-        test = node.test
-        if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
-            if isinstance(test.operand, ast.Name) and test.operand.id == "phase_files":
-                for stmt in node.body:
-                    if isinstance(stmt, (ast.Raise, ast.Return)):
-                        return True, True
-                return True, False
-    return False, False
-
-
-def main():
     try:
-        source = SOURCE_FILE.read_text()
-        tree = ast.parse(source)
-        func = _find_function_node(tree, "_select_functions_by_source")
-
-        if func is None:
-            print("ERROR: _select_functions_by_source not found in source")
-            sys.exit(1)
-
-        has_return = _has_explicit_return(func)
-        found_guard, has_raise = _find_empty_phase_files_handler(func)
-        bug_confirmed = not has_return or (found_guard and not has_raise)
-
-        if bug_confirmed:
-            print(f"CONFIRMED — has_return={has_return}, found_guard={found_guard}, has_raise={has_raise}")
-        else:
-            print(f"NOT CONFIRMED — has_return={has_return}, found_guard={found_guard}, has_raise={has_raise}")
-
+        result = _select_functions_by_source(
+            tmpdir,
+            "nonexistent::example-py::foo",  # not found in the project
+            None,  # no end_funcs restriction
+        )
+        # Reached here means NO ValueError was raised -- bug reproduced.
+        actual = f"returned normally: all_by_source has {len(result[0])} key(s), keep_by_source has {len(result[1])} key(s)"
+        passed = True
+    except ValueError as e:
+        # Correct behavior: ValueError raised as spec requires.
+        actual = f"ValueError: {e}"
+        passed = False
     except Exception as e:
-        print(f"ERROR: {e}")
-        sys.exit(1)
+        actual = f"{type(e).__name__}: {e}"
+        passed = True  # Wrong exception type is also a bug
 
+except Exception as e:
+    print(f"ERROR: Setup failed: {e}")
+    sys.exit(1)
+finally:
+    # Clean up leftover .fm-entry-select directory if the function crashed mid-way
+    sel_dir = tmpdir + ".fm-entry-select"
+    if os.path.exists(sel_dir):
+        shutil.rmtree(sel_dir, ignore_errors=True)
+    shutil.rmtree(tmpdir, ignore_errors=True)
 
-if __name__ == "__main__":
-    main()
+if passed:
+    expected_str = str(expected)
+    actual_str = repr(actual)
+    print(f"CONFIRMED -- actual: {actual_str} | expected: {expected_str}")
+else:
+    actual_str = repr(actual)
+    print(f"NOT CONFIRMED -- actual matched expected: {actual_str}")
 ```
 
 ### Probe Output
 
 ```
-NOT CONFIRMED — has_return=True, found_guard=True, has_raise=True
+[Pipeline] Building codegraph index...
+[Pipeline] codegraph index built.
+Extraction complete: 2 written, 0 skipped.
+NOT CONFIRMED -- actual matched expected: "ValueError: entry_func 'nonexistent::example-py::foo' not found among extracted functions under proj_dir"
 ```

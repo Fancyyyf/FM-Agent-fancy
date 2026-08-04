@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "{\"verdict\": \"MATCH\", \"counterexample\": \"   \", \"offending_statements\": null, \"reason\": \"some reason\"}",
-  "offending_statements": "Line 47: if _nonempty_string(counterexample) or _nonempty_string(offending_statements):\nLine 48:     raise ValueError(\nLine 49:         \"spec-check MATCH JSON must not include counterexample or offending_statements\"\nLine 50:     )",
-  "reason": "The specification states: for MATCH verdict, raises ValueError if counterexample or offending_statements is a non-empty string. A whitespace-only string (e.g., '   ') is a non-empty string (length > 0), so it should raise ValueError. The code's _nonempty_string checks bool(value.strip()), treating whitespace-only strings as empty, and does not raise an error, violating the spec."
-}

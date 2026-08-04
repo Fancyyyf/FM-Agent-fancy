@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/test_project' (exists, contains .py files), resume=True, required_source_files=None, domain_knowledge_files=None, submodules=None, one_phase=False, extra_call_edges_path=None, only_spec=False, and the directory /tmp/test_project/fm_agent/ already exists containing a valid phases.json from a previous run.",
-  "offending_statements": "Line 27-32: the resume handling only prints messages and may set resume=False, but does not skip subsequently called pipeline stages. The code unconditionally proceeds to execute _run_generate_phases, _run_generate_domain_context, etc., even when resume is True and fm_agent/ exists, causing previously completed stages to be re-executed.",
-  "reason": "The specification requires that 'If resume is truthy and fm_agent/ exists, previously completed stages are not re-executed.' Condition A describes that the pipeline always runs _run_generate_phases and later stages, without any check to skip them when resuming. Thus, for an input where resume=True and fm_agent/ already exists, the code re-executes phase generation (and likely other stages), violating the specification."
-}

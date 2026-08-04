@@ -1,6 +1,6 @@
 # Bug Report: _remove_stale_extracted
 
-**Source file:** `src/incremental_reasoner.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_remove_stale_extracted.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,50 +12,46 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- For every absolute source-file path that is either a key in modified_functions or listed in the "source_files" entries of all phases loaded from phases.json, the extracted-function tree under fm_agent/extracted_functions/ associated with that source file is reconciled with the current codegraph output. Any extracted function file or directory that no longer corresponds to a current source function (including when the source file itself is absent) is deleted, and any empty parent directories are pruned.
-  - Files and directories under fm_agent/extracted_functions/ that correspond to source files not in the union of modified_functions keys and phases.json entries are unchanged.
+Removes extracted function files from extracted_functions/ that no longer correspond to an existing source function. For every function listed under 'removed' in modified_functions, the corresponding extracted function file and its adjacent .spec.json and .info.json sidecars are deleted from disk. For every source file whose functions are ALL listed as removed (i.e. the source file is deleted or became empty of functions), the entire extracted directory corresponding to that source file under extracted_functions/ is removed, including any remaining sidecar files. Additionally, every source file registered in the current project pipeline configuration is also reconciled: any extracted function file under its corresponding extracted directory whose source function does not exist in the current state of that source file is removed, together with its sidecar files; if after reconciliation an extracted directory contains no remaining extracted function files, the directory itself is removed. Extracted function files for functions listed as 'added' or 'modified' in modified_functions are NOT removed. After reconciliation, every remaining file under extracted_functions/ corresponds to a source function that exists in a tracked source file in the current state of the repository — no orphaned extracted function files remain.
 
 ---
 
 ### Actual Behavior
 
-After execution, the extracted-functions subdirectory tree under fm_agent/ has been updated such that for every source file path that belongs to the union S = modified_functions.keys()  (if loading phases.json succeeded) the set of absolute paths derived from all source_files entries in modules within phases of phases.json, the extracted directory corresponding to that source file (if it exists) contains only files that are currently expected according to the function spans of that source file, any stale extracted files have been deleted, and empty subdirectories have been pruned. For any source file path not in S, no changes have been made to its extracted directory. No other side effects occur. Formal logic: Let M = dom(modified_functions). Let P =  if an OSError, ValueError, or KeyError was raised during loading of phases.json; otherwise P = { os.path.abspath(os.path.join(proj_dir, rel)) | phase  phases_data['phases'], module  phase['modules'], rel  module['source_files'] }. Then S = M  P. For each abs_src  S, the effect of _reconcile_extracted_dir(proj_dir, abs_src) has been applied, meaning: the extracted directory for abs_src (if non-existent) was left untouched; otherwise, its contents now equal the set of expected extracted file paths derived from the current source, and all stale files/directories have been removed. For abs_src  S, its extracted directory (if any) is unchanged. The function returns None.
+The function returns normally without uncaught exceptions. Let PHASES_FILES be the set of absolute paths of source files parsed from `phases.json` (converted from relative paths using `proj_dir` as base) if `_load_phases` succeeds, otherwise let PHASES_FILES be the empty set. Let S = set(modified_functions.keys()) ∪ PHASES_FILES. For every path `abs_src` in S, the extracted-function directory `D` associated with `abs_src` (located under `proj_dir/extracted_functions/`) has been updated as follows: (a) if `abs_src` exists on disk, `D` contains only those extracted function files (and their `.spec.json` and `.info.json` sidecar files) whose functions are currently present in the source file at `abs_src`; any stale extracted function files and their sidecars have been removed, and if `D` becomes empty after these removals, `D` itself is removed; (b) if `abs_src` does not exist on disk, `D` and all its contents are entirely removed if they existed. No other files or directories outside the extracted-function directory tree are modified. The source files at each `abs_src` are not altered.
 
 ---
 
 ## Code Evidence
 
-Line 23: for abs_src in srcs:
-Line 24:     _reconcile_extracted_dir(proj_dir, abs_src)
+Line 14: `srcs = set(modified_functions)  ;`  Line 23: `for abs_src in srcs:  ;`  Line 24: `        _reconcile_extracted_dir(proj_dir, abs_src)`
 
 ---
 
 ## Trigger Condition
 
-The code only calls _reconcile_extracted_dir for each individual source file. This may leave empty parent directories (like a/) that are shared by multiple source-specific directories when all children are removed. The specification explicitly requires pruning any empty parent directories, which the code does not guarantee.
+The code only reconciles source file paths present in the union of modified_functions keys and the phases.json source files. It does not visit or clean up extracted directories for source files that are no longer tracked (not in the pipeline and not present in modified_functions). The specification requires that after reconciliation every remaining file under extracted_functions/ corresponds to a source function that exists in a tracked source file, i.e., no orphaned extracted function files remain. By failing to remove extracted directories for untracked source files, the code's behavior (Condition A) violates Condition B.
 
 ---
 
 ## How to trigger the bug
 
-_remove_stale_extracted calls _reconcile_extracted_dir for each source file. _reconcile_extracted_dir removes stale extracted files and prunes subdirectories within `func_dir`, but explicitly does NOT remove `func_dir` itself (the `root != func_dir` guard on the pruning loop), and does NOT prune the empty parent directories above `func_dir`. When multiple deleted source files share a common parent directory under `fm_agent/extracted_functions/`, their empty `func_dir` directories are left behind, violating the spec's requirement that "any empty parent directories are pruned."
+A source file previously existed in the pipeline (phases.json) and had extracted function files generated. The file is then removed from phases.json (untracked) and the source file itself is also deleted. Since the file is not in `modified_functions` (it wasn't part of the diff between the old and new commit — it was simply removed from the pipeline config), and it is no longer in `phases.json`, the function `_remove_stale_extracted` never visits its extracted directory. The extracted function files and their sidecars remain as orphans.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `proj_dir` | A temp project directory |
-| `modified_functions` | Two absolute source paths (neither file exists on disk): `{<proj_dir>/pkg/a.py: {"removed": ["stale_func"]}, <proj_dir>/pkg/b.py: {"removed": ["stale_func"]}}` |
-| `phases.json` | Contains a module with `source_files: ["pkg/a.py", "pkg/b.py"]` |
-| Extracted tree | `fm_agent/extracted_functions/pkg/a-py/stale_func.py` and `fm_agent/extracted_functions/pkg/b-py/stale_func.py` exist |
+| `proj_dir` | temporary directory with `fm_agent/phases.json`, `src/tracked.py`, and `fm_agent/extracted_functions/old/untracked-py/` containing stale files |
+| `modified_functions` | `{}` (empty — no modified functions) |
 
 ### Expected (spec-correct) Output
 
-Empty `a-py/` and `b-py/` directories should be removed, and the now-empty shared parent `pkg/` should also be pruned. No orphaned directories should remain under `fm_agent/extracted_functions/`.
+The orphan extracted directory `fm_agent/extracted_functions/old/untracked-py/` is removed, along with all contained function files and sidecar files. No orphaned extracted file remains.
 
 ### Actual (buggy) Output
 
-`a-py/` and `b-py/` remain as empty directories under `pkg/`. The shared parent `pkg/` is not pruned because its children (`a-py/` and `b-py/`) were never removed by `_reconcile_extracted_dir`. The result is orphaned empty directories that violate the spec.
+The orphan extracted directory and all its files (`old_func.py`, `old_func.py.spec.json`, `old_func.py.info.json`) remain on disk. The directory was never visited because its source path is absent from both `modified_functions` and `phases.json`.
 
 ### How to Reproduce
 
@@ -63,45 +59,27 @@ Empty `a-py/` and `b-py/` directories should be removed, and the now-empty share
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import os, json, tempfile
-
-# Add the FM-Agent source to the import path
-repo_root = os.path.dirname(os.path.abspath(__file__))
-import sys; sys.path.insert(0, repo_root)
+import json, os, tempfile, shutil
 from src.incremental_reasoner import _remove_stale_extracted
 
-# Set up a project with stale extracted directories under a shared parent
-tmp = tempfile.mkdtemp()
-proj_dir = os.path.join(tmp, "project")
-os.makedirs(os.path.join(proj_dir, "pkg"))
+proj_dir = tempfile.mkdtemp()
+os.makedirs(os.path.join(proj_dir, "src"), exist_ok=True)
+os.makedirs(os.path.join(proj_dir, "fm_agent", "extracted_functions", "old", "untracked-py"), exist_ok=True)
 
-fm = os.path.join(proj_dir, "fm_agent")
-os.makedirs(fm)
-with open(os.path.join(fm, "phases.json"), "w") as f:
-    json.dump({"phases": [{"phase": 1, "modules": [{"name": "m", "source_files": ["pkg/a.py", "pkg/b.py"]}]}]}, f)
+# A phases.json that does NOT reference old/untracked.py
+with open(os.path.join(proj_dir, "fm_agent", "phases.json"), "w") as f:
+    json.dump({"phases": [{"name": "p1", "modules": [{"name": "m1", "source_files": ["src/tracked.py"]}]}]}, f)
 
-ext = os.path.join(fm, "extracted_functions")
-for name in ("a", "b"):
-    d = os.path.join(ext, f"pkg/{name}-py")
-    os.makedirs(d)
-    with open(os.path.join(d, "stale_func.py"), "w") as f:
-        f.write("# stale")
+# Stale extracted files for an untracked source file
+orphan_dir = os.path.join(proj_dir, "fm_agent", "extracted_functions", "old", "untracked-py")
+with open(os.path.join(orphan_dir, "old_func.py"), "w") as f: f.write("pass\n")
+with open(os.path.join(orphan_dir, "old_func.py.spec.json"), "w") as f: json.dump({}, f)
+with open(os.path.join(orphan_dir, "old_func.py.info.json"), "w") as f: json.dump({}, f)
 
-# Source files pkg/a.py and pkg/b.py do NOT exist (deleted)
-modified = {
-    os.path.abspath(os.path.join(proj_dir, "pkg/a.py")): {"removed": ["stale_func"]},
-    os.path.abspath(os.path.join(proj_dir, "pkg/b.py")): {"removed": ["stale_func"]},
-}
-
-_remove_stale_extracted(proj_dir, modified)
-
-# Check: empty func directories remain
-a_py = os.path.join(ext, "pkg/a-py")
-b_py = os.path.join(ext, "pkg/b-py")
-print("a-py still exists:", os.path.isdir(a_py))  # True (BUG)
-print("b-py still exists:", os.path.isdir(b_py))  # True (BUG)
-# actual (buggy) output: both a-py and b-py remain as empty directories
-# expected (correct) output: both removed, pkg/ pruned
+_remove_stale_extracted(proj_dir, {})
+print(os.listdir(orphan_dir))  # ['old_func.py', 'old_func.py.spec.json', 'old_func.py.info.json'] — NOT empty!
+# expected: directory should be removed
+shutil.rmtree(proj_dir)
 ```
 
 ---
@@ -109,110 +87,153 @@ print("b-py still exists:", os.path.isdir(b_py))  # True (BUG)
 ## Probe Script
 
 ```python
-import sys
-import os
+"""
+Probe script for bug: _remove_stale_extracted does not clean up extracted
+directories for source files not tracked in phases.json and not present in
+modified_functions, leaving orphaned extracted function files.
+
+Bug ID: src--incremental_reasoner-py--_remove_stale_extracted
+
+Scenario:
+  - Source file old/untracked.py once existed and had extracted functions.
+  - It was removed from phases.json (pipeline config) and the file itself
+    was deleted — so it is in neither modified_functions nor phases.json.
+  - _remove_stale_extracted should remove its stale extracted directory,
+    but the current code never visits it, so orphans remain.
+"""
+
 import json
-import tempfile
+import os
 import shutil
+import sys
+import tempfile
 
-# Import the function under test from the FM-Agent source.
-# The workspace root is the snapshot directory (repo root for imports).
-# The probe runs from the repo root; ensure the source package is importable.
-repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, repo_root)
-from src.incremental_reasoner import _remove_stale_extracted
+# Ensure the repo root is on sys.path so `from src.incremental_reasoner`
+# resolves.  The probe runs from the repo root, but the script's directory
+# (fm_agent/bug_validation/) would otherwise shadow the root import.
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_repo_root = os.path.dirname(os.path.dirname(_script_dir))
+sys.path.insert(0, _repo_root)
 
-# ── Create a fresh temporary workspace ──────────────────────────────────────
-tmp = tempfile.mkdtemp(prefix="bv_rm_stale_")
-proj_dir = os.path.join(tmp, "project")
-src_dir = os.path.join(proj_dir, "pkg")
+try:
+    from src.incremental_reasoner import _remove_stale_extracted
+except ImportError as e:
+    print(f"ERROR: cannot import _remove_stale_extracted: {e}")
+    sys.exit(1)
 
-os.makedirs(src_dir, exist_ok=True)
 
-# ── phases.json ─────────────────────────────────────────────────────────────
-fm_agent_dir = os.path.join(proj_dir, "fm_agent")
-os.makedirs(fm_agent_dir, exist_ok=True)
-phases_data = {
-    "phases": [
-        {
-            "phase": 1,
-            "modules": [
+def main():
+    """Set up a minimal project tree, run _remove_stale_extracted, assert result."""
+
+    # ── 1. Build a temporary project directory ────────────────────────────
+    proj_dir = tempfile.mkdtemp(prefix="fm_agent_probe_")
+    try:
+        # phases.json tracked source file — NOT the orphan
+        tracked_rel = "src/tracked.py"
+        tracked_abs = os.path.abspath(os.path.join(proj_dir, tracked_rel))
+
+        # The orphan source file that was removed from the pipeline:
+        #   - was previously in phases.json → extracted functions exist
+        #   - is now deleted from disk
+        #   - removed from phases.json
+        #   - not in modified_functions (wasn't modified; was just un-tracked)
+        orphan_rel = "old/untracked.py"
+        orphan_abs = os.path.abspath(os.path.join(proj_dir, orphan_rel))
+
+        # Compute the extracted-function directory for the orphan file
+        extracted_base = os.path.join(proj_dir, "fm_agent", "extracted_functions")
+        orphan_dir_name = orphan_rel.rsplit(".", 1)[0].replace("/", "-").replace(".", "-")
+        orphan_func_dir = os.path.join(extracted_base, "old", "untracked-py")
+        # Actually, let's use _src_rel_to_func_dir if accessible, or hardcode:
+        # old/untracked.py → extracted_functions/old/untracked-py/
+
+        # ── 2. Create the tracked source file (so phases.json is valid) ──
+        os.makedirs(os.path.join(proj_dir, "src"), exist_ok=True)
+        with open(tracked_abs, "w") as f:
+            f.write("def tracked_func():\n    return 1\n")
+
+        # ── 3. Create phases.json that ONLY lists the tracked file ────────
+        os.makedirs(os.path.join(proj_dir, "fm_agent"), exist_ok=True)
+        phases = {
+            "phases": [
                 {
-                    "name": "test_module",
-                    "source_files": ["pkg/a.py", "pkg/b.py"]
+                    "name": "test-phase",
+                    "modules": [
+                        {
+                            "name": "test_module",
+                            "source_files": [tracked_rel],
+                        }
+                    ],
                 }
             ]
         }
-    ]
-}
-with open(os.path.join(fm_agent_dir, "phases.json"), "w") as f:
-    json.dump(phases_data, f)
+        with open(os.path.join(proj_dir, "fm_agent", "phases.json"), "w") as f:
+            json.dump(phases, f)
 
-# ── Stale extracted-function directories (source files are DELETED) ─────────
-# They share the common parent directory  fm_agent/extracted_functions/pkg/
-extracted_base = os.path.join(fm_agent_dir, "extracted_functions")
+        # ── 4. Create stale extracted-function files for the orphan ───────
+        os.makedirs(orphan_func_dir, exist_ok=True)
 
-for name in ("a", "b"):
-    func_dir = os.path.join(extracted_base, f"pkg/{name}-py")
-    os.makedirs(func_dir, exist_ok=True)
-    stale_file = os.path.join(func_dir, f"stale_func.py")
-    with open(stale_file, "w") as f:
-        f.write("# stale extracted function\n")
+        orphan_func_file = os.path.join(orphan_func_dir, "old_func.py")
+        orphan_spec_file = orphan_func_file + ".spec.json"
+        orphan_info_file = orphan_func_file + ".info.json"
 
-    # Also create a "deleted" source path that does NOT exist on disk.
-    # The probe does not create pkg/a.py or pkg/b.py, so they are absent.
+        with open(orphan_func_file, "w") as f:
+            f.write("def old_func():\n    pass\n")
+        with open(orphan_spec_file, "w") as f:
+            json.dump({"pre": "true", "post": "true"}, f)
+        with open(orphan_info_file, "w") as f:
+            json.dump({"fqn": "old_func", "file": "old/untracked.py"}, f)
 
-# ── modified_functions: both source files are "removed" ─────────────────────
-modified_functions = {
-    os.path.abspath(os.path.join(proj_dir, "pkg", "a.py")): {"removed": ["stale_func"]},
-    os.path.abspath(os.path.join(proj_dir, "pkg", "b.py")): {"removed": ["stale_func"]},
-}
+        # Sanity: files exist before the call
+        assert os.path.isfile(orphan_func_file), "orphan func file missing"
+        assert os.path.isfile(orphan_spec_file), "orphan spec file missing"
+        assert os.path.isfile(orphan_info_file), "orphan info file missing"
 
-# ── Call the function under test ────────────────────────────────────────────
-_remove_stale_extracted(proj_dir, modified_functions)
+        # ── 5. Call _remove_stale_extracted ───────────────────────────────
+        #  modified_functions is empty — the orphan source is not there
+        _remove_stale_extracted(proj_dir, {})
 
-# ── Verify: the spec requires that empty parent directories be pruned ───────
-#
-# The spec (spec_claim) says:
-#   "...any empty parent directories are pruned."
-#
-# _reconcile_extracted_dir removes stale FILES from func_dir and prunes
-# subdirectories within func_dir, but never removes func_dir itself
-# (see the `root != func_dir` guard on line 526). After both a-py/ and
-# b-py/ had all their files removed:
-#   - a-py/ and b-py/ remain as EMPTY directories (should be removed)
-#   - their shared parent pkg/ thus still has children (should be empty & pruned)
-# Both conditions violate the spec.
+        # ── 6. Assert ─────────────────────────────────────────────────────
+        # Specification claim: every remaining file under extracted_functions/
+        # corresponds to a source function that exists in a tracked source
+        # file. The orphan file path is neither in phases.json nor in
+        # modified_functions, so it is untracked. Its extracted files should
+        # be removed.
+        stale_remain = os.path.isfile(orphan_func_file)
+        spec_remain = os.path.isfile(orphan_spec_file)
+        info_remain = os.path.isfile(orphan_info_file)
 
-a_py_dir = os.path.join(extracted_base, "pkg", "a-py")
-b_py_dir = os.path.join(extracted_base, "pkg", "b-py")
-pkg_dir = os.path.join(extracted_base, "pkg")
+        expected_removed = not stale_remain and not spec_remain and not info_remain
+        actual_stale = stale_remain or spec_remain or info_remain
 
-a_stale = os.path.isdir(a_py_dir) and len(os.listdir(a_py_dir)) == 0
-b_stale = os.path.isdir(b_py_dir) and len(os.listdir(b_py_dir)) == 0
+        if actual_stale:
+            print(
+                "CONFIRMED"
+                f" — orphan extracted files remain after _remove_stale_extracted"
+                f" (func_file={stale_remain}, spec={spec_remain}, info={info_remain})"
+                f" | expected: all removed (orphans cleaned)"
+            )
+        else:
+            print(
+                "NOT CONFIRMED"
+                f" — all orphan extracted files were removed as expected"
+                f" (func_file={stale_remain}, spec={spec_remain}, info={info_remain})"
+            )
 
-bug_confirmed = a_stale and b_stale
+    except Exception as exc:
+        print(f"ERROR: {exc}")
+        sys.exit(1)
+    finally:
+        # Clean up temp dir
+        shutil.rmtree(proj_dir, ignore_errors=True)
 
-if bug_confirmed:
-    print(f"CONFIRMED — empty func directories a-py and b-py left behind; parent pkg/ not pruned. Spec requires pruning all empty parent directories.")
-else:
-    details = []
-    if not os.path.isdir(a_py_dir):
-        details.append("a-py was removed")
-    elif not a_stale:
-        details.append(f"a-py not empty: {os.listdir(a_py_dir)}")
-    if not os.path.isdir(b_py_dir):
-        details.append("b-py was removed")
-    elif not b_stale:
-        details.append(f"b-py not empty: {os.listdir(b_py_dir)}")
-    print(f"NOT CONFIRMED — {', '.join(details)}")
 
-# ── Cleanup ─────────────────────────────────────────────────────────────────
-shutil.rmtree(tmp, ignore_errors=True)
+if __name__ == "__main__":
+    main()
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — empty func directories a-py and b-py left behind; parent pkg/ not pruned. Spec requires pruning all empty parent directories.
+CONFIRMED — orphan extracted files remain after _remove_stale_extracted (func_file=True, spec=True, info=True) | expected: all removed (orphans cleaned)
 ```

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Suppose `settings.inject.id` is set to 'abc' in one call, and later changed to 'def' in a subsequent call. Then `_metadata_body()` returns `{\"metadata\": {\"user_id\": \"abc\"}}` followed by `{\"metadata\": {\"user_id\": \"def\"}}`. This violates the specification's requirement that the user_id be a stable, consistent string across calls within the same installation.",
-  "offending_statements": "Line 2: return {\"metadata\": {\"user_id\": _stable_user_id()}}",
-  "reason": "The function relies on `_stable_user_id()`, which returns `settings.inject.id` when truthy. Because that setting can mutate between calls, the output user_id is not guaranteed to be stable, conflicting with the specification."
-}

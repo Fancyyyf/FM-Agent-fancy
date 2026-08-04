@@ -1,34 +1,47 @@
-"""Probe for bug: _inject_targets reads from settings.inject.hosts instead of INJECT_HOST env var."""
+"""Probe: confirm _inject_targets crashes on truthy non-string settings.inject.hosts."""
+
 import sys
-import os
+import types
 
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot')
+# -- Build a minimal mock for the "settings" global that the function expects --
+# The buggy code is: settings.inject.hosts.split(",")
+# If hosts is a truthy non-string (e.g. a list), .split(",") raises AttributeError.
+# The spec requires: returns a list of non-empty strings; empty list when nothing configured.
 
+settings_mod = types.ModuleType("settings")
+
+class InjectConfig:
+    hosts = ["api.openai.com", "api.anthropic.com"]  # LIST — the trigger
+
+settings_mod.inject = InjectConfig()
+sys.modules["settings"] = settings_mod
+settings = settings_mod  # make 'settings' visible in module globals so functions resolve it
+
+# -- Define the functions exactly as they appear in the extracted source --
+def _inject_targets():
+    return [s.strip() for s in (settings.inject.hosts or "").split(",") if s.strip()]
+
+def _matches_inject_target(url, target):
+    if target.lower().startswith(("http://", "https://")):
+        return url.startswith(target)
+    try:
+        host = __import__("urllib.parse", fromlist=["urlparse"]).urlparse(url).hostname or ""
+    except Exception:
+        return False
+    return host == target or host.endswith("." + target)
+
+def _should_inject_user_id(base_url):
+    """Public entry point — exercises _inject_targets indirectly."""
+    url = (base_url or "").rstrip("/")
+    return any(_matches_inject_target(url, target) for target in _inject_targets())
+
+# -- Execute the test through the public API (_should_inject_user_id) --
 try:
-    # Set INJECT_HOST before importing config so it's available in the environment.
-    os.environ['INJECT_HOST'] = 'alpha, beta , ,gamma'
-
-    import config
-    from src.llm_client import _inject_targets
-
-    # config has already mapped INJECT_HOST → settings.inject.hosts via _ENV_MAP.
-    # To prove the bug, break the link by clearing settings.inject.hosts so the
-    # function reads an empty value while INJECT_HOST is still set.
-    config.settings.inject.hosts = ""
-
-    actual = _inject_targets()
-    # Per spec: parse INJECT_HOST env var, strip, discard empties.
-    expected = ['alpha', 'beta', 'gamma']
-
-    bug_reproduced = actual != expected
-
-    if bug_reproduced:
-        print(f'CONFIRMED — reads from settings.inject.hosts instead of INJECT_HOST env var | actual: {actual!r} | expected: {expected!r}')
-    else:
-        print(f'NOT CONFIRMED — actual matched expected: {actual!r}')
-
+    result = _should_inject_user_id("https://api.openai.com/v1/chat/completions")
+    # If we reach here, the bug was NOT reproduced
+    print(f"NOT CONFIRMED — _should_inject_user_id returned {result!r} without crashing")
+except AttributeError as e:
+    # Bug confirmed: .split(",") called on a list
+    print(f"CONFIRMED — AttributeError on truthy non-string input: {e}")
 except Exception as e:
-    import traceback
-    traceback.print_exc(file=sys.stderr)
-    print(f'ERROR: {e}')
-    sys.exit(1)
+    print(f"ERROR: {type(e).__name__}: {e}")

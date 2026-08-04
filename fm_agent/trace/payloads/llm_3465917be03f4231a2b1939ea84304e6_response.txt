@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "text = '\"hello\"' (lang_key default, e.g., unused or omitted, causing // comment style)",
-  "offending_statements": "Line 41: while i < len(result):\nLine 44: result[i] = \" \"\nLine 46: result[i + 1] = \" \"\nLine 51: result[i] = \" \"\nLine 55: result[i] = \" \"",
-  "reason": "Condition A states that positions inside string literals are not replaced (out[i] = text[i] when InStringLiteral is true). Specification B requires that every position inside a string literal be replaced with a space. For the given counterexample, A outputs '\"hello\"' (preserving literal contents), while B requires '       ' (all seven positions replaced by spaces)."
-}

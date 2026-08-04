@@ -1,33 +1,3 @@
-# [SPEC]
-# Unit: src/parser-py/_remove_func_comments.py
-#
-# _remove_func_comments(code: str) -> str
-#
-# Pre-condition:
-#   - code is a string of arbitrary content, typically source code that may contain
-#     comments and string literals
-#
-# Post-condition:
-#   - Returns a copy of code with all comments removed and all string literal
-#     content preserved exactly as in the input
-#   - Comments removed are: block comments delimited by /* and */, line comments
-#     starting with //, and # comments that appear after at least one non-whitespace
-#     character on the same line
-#   - A # character that is the first non-whitespace character on a line is NOT
-#     treated as a comment start and is preserved in the output
-#   - Within string literals delimited by " or ', no character is interpreted as
-#     comment syntax; all characters within string literals are preserved verbatim,
-#     including backslash-escaped characters
-#   - Lines that contain only whitespace after comment removal are omitted from
-#     the output
-#   - The relative order of all preserved characters, including newlines, is
-#     unchanged from the input
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _remove_func_comments(code):
     result = []
     index = 0

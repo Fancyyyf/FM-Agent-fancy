@@ -1,52 +1,73 @@
-"""Probe for bug: ElpClient._send does not raise RuntimeError when stdin is unavailable."""
+"""Probe script for bug: src--languages--erlang-py--ElpClient::_send
 
+Bug: ElpClient._send() raises OSError (BrokenPipeError) instead of RuntimeError
+when the server process has exited but self._proc is not None. The spec requires
+RuntimeError when the server process is not running; the code only checks for
+None values, not whether the process is alive via poll().
+"""
 import sys
-import threading
+from pathlib import Path
 from unittest.mock import MagicMock
 
-# Package entry-point import
-sys.path.insert(0, '.')
+# Ensure the repo root is on sys.path so 'src.languages.erlang' is importable.
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
 from src.languages.erlang import ElpClient
 
 
-def main():
+try:
+    # ------------------------------------------------------------------
+    # Build a mock ElpClient that bypasses real __init__ (no subprocess).
+    # Set up self._proc: not None, stdin not None, but poll() shows exited.
+    # This simulates: the ELP server process terminates unexpectedly, but
+    # the Popen object and its stdin pipe still exist.
+    # ------------------------------------------------------------------
+    client = object.__new__(ElpClient)
+    client._write_lock = MagicMock()
+
+    mock_proc = MagicMock()
+    mock_proc.poll.return_value = 0          # Process has exited (return code 0)
+    mock_proc.stdin = MagicMock()
+    # Writing to a dead process's stdin raises BrokenPipeError on Linux
+    mock_proc.stdin.write.side_effect = BrokenPipeError
+
+    client._proc = mock_proc
+
+    # ------------------------------------------------------------------
+    # Exercise _send through the public API: notify().
+    # ------------------------------------------------------------------
+    actual_type = None
     try:
-        client = ElpClient('/tmp')
-
-        # Simulate: self._proc is not None and self._proc.stdin is not None,
-        # but stdin is closed/unavailable (e.g., pipe already closed).
-        mock_proc = MagicMock()
-        mock_stdin = MagicMock()
-        mock_stdin.closed = True
-        mock_stdin.write.side_effect = ValueError('write to closed file')
-        mock_stdin.flush.side_effect = ValueError('flush on closed file')
-        mock_proc.stdin = mock_stdin
-
-        client._proc = mock_proc
-        client._write_lock = threading.Lock()
-
-        # Call a public method that internally uses _send
-        client.notify('test/method', {'key': 'val'})
-
-        # Spec requires RuntimeError; code reached here → bug NOT confirmed
-        print('NOT CONFIRMED — no exception raised, but RuntimeError expected per spec')
+        client.notify("test/method", {"key": "value"})
     except RuntimeError:
-        # RuntimeError IS raised → code matches spec → bug NOT confirmed
-        print('NOT CONFIRMED — RuntimeError raised, which matches the spec')
-    except Exception as exc:
-        actual_type = type(exc).__name__
-        expected = 'RuntimeError'
+        actual_type = RuntimeError
+    except BrokenPipeError:
+        actual_type = BrokenPipeError
+    except OSError:
+        actual_type = OSError
+    except Exception as e:
+        actual_type = type(e)
 
-        if actual_type != expected:
-            # Wrong exception type raised → bug CONFIRMED
-            print(
-                f'CONFIRMED — code raised {actual_type}("{exc}") '
-                f'but spec requires {expected} when stdin is unavailable. '
-                f'_proc.stdin is non-None (mock: {mock_stdin!r}) '
-                f'yet stdin is closed/unavailable.'
-            )
-        else:
-            print('NOT CONFIRMED — RuntimeError raised as expected')
+    # Spec says: "If the server process is not running or its stdin stream
+    # is not writable, raises RuntimeError."
+    # The code only checks for None, so it proceeds to write and gets
+    # BrokenPipeError (a subclass of OSError) instead of RuntimeError.
+    expected_type = RuntimeError
+    bug_reproduced = actual_type != expected_type
 
-if __name__ == '__main__':
-    main()
+    if bug_reproduced:
+        print(
+            f"CONFIRMED — actual: {actual_type.__name__} raised "
+            f"| expected: RuntimeError | process exited (poll()=0) but "
+            f"self._proc is not None, so None check passes; write to dead "
+            f"pipe raises {actual_type.__name__} instead of RuntimeError"
+        )
+    else:
+        print(f"NOT CONFIRMED — actual matched expected: {actual_type.__name__}")
+
+except Exception as e:
+    print(f"ERROR: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)

@@ -1,140 +1,3 @@
-# [SPEC]
-# Unit: src/incremental_reasoner-py/run_incremental_pipeline.py
-#
-# run_incremental_pipeline(proj_dir, intent_file_path, old_commit_id,
-#                          domain_knowledge_files=None, submodules=None,
-#                          one_phase=False, extra_call_edges_path=None)
-#   -> list[str] | None
-#
-# Pre-condition:
-#   - proj_dir is a path to an existing directory containing source code under
-#     version control; fm_agent/ is a writable subdirectory within it.
-#   - intent_file_path is a string; when non-empty and pointing to a regular
-#     file, its content describes the developer's modification goal.
-#   - old_commit_id is a string identifying a prior commit in proj_dir's git
-#     repository.
-#   - domain_knowledge_files, when not None, is a list of paths to Markdown
-#     files providing project-specific domain context.
-#   - submodules, when not None, is a list of subdirectory paths within proj_dir
-#     to scope analysis to.
-#   - one_phase is a bool (default False) controlling whether all source files
-#     are placed into a single phase.
-#   - extra_call_edges_path, when not None, is a path to a JSON file defining
-#     supplemental call-graph edges.
-#
-# Post-condition:
-#   - If proj_dir has no previous full-run baseline (fm_agent/phases.json absent
-#     or fm_agent/extracted_functions/ incomplete given submodules), delegates
-#     the entire pipeline to a full run via run_pipeline() with the same
-#     arguments and returns None.
-#   - If intent_file_path does not refer to an existing regular file, or the
-#     file content is empty after whitespace stripping, logs an error and
-#     returns None without modifying any project or fm_agent/ file.
-#   - Before producing any new output, removes all files under
-#     fm_agent/logic_verification_results/ and fm_agent/bug_validation/, and
-#     removes incremental scope-selection and spec-update artifacts prefixed
-#     with "select_relevant_", "relevant_", and "spec_update_" from fm_agent/.
-#   - Regenerates fm_agent/phases.json from the current working tree.
-#   - Re-extracts every function from the current code, then restores the
-#     captured [SPEC] and [INFO] blocks from the prior run onto each function
-#     whose body is identical between old_commit_id and the current working
-#     tree.
-#   - Produces a mapping from each changed source-file path to the sets of
-#     function names added, modified, or removed since old_commit_id; deletes
-#     extracted-function files for removed functions.
-#   - Produces a ranked list of extracted-function relative paths whose
-#     implementations are judged relevant to the developer intent.
-#   - For every function that is either changed (added or modified) or appears
-#     in the relevance-ranked list, re-evaluates whether its [SPEC] and/or
-#     [INFO] blocks need updating to reflect the current code and intent;
-#     when a callee's [SPEC] changes, propagates the update to every caller's
-#     [INFO] block. Writes the set of files whose specs were modified to
-#     fm_agent/incremental_updated_specs.json.
-#   - Runs verification on the affected subset: every changed function, every
-#     function with an updated spec, and every function that calls a callee
-#     whose spec was updated. Returns a sorted list of extracted-function
-#     relative paths for which the reasoner reported a spec-to-code mismatch
-#     (MISMATCH verdict) and bug validation subsequently confirmed the
-#     violation. Returns an empty list when no such violations are confirmed.
-#   - Does not modify any file under proj_dir outside of fm_agent/.
-# [SPEC]
-
-# [INFO]
-# check_last_run_existence(proj_dir, submodules=None) -> bool
-#   Pre-condition: proj_dir is a valid directory path; submodules is None or
-#     a list of subdirectory names
-#   Post-condition: Returns True when fm_agent/phases.json exists and
-#     fm_agent/extracted_functions/ contains at least one spec-complete
-#     extracted-function file per phase (scoped to submodules when provided).
-#     Returns False otherwise.
-# [SPLIT]
-# extract_existing_specs(proj_dir) -> dict[str, {"spec": str, "info": str?}]
-#   Pre-condition: fm_agent/extracted_functions/ exists and contains extracted
-#     function files, some of which may have [SPEC] and [INFO] blocks
-#   Post-condition: Returns a dict mapping each extracted-function relative path
-#     to an object containing the text of its existing [SPEC] block and,
-#     when present, its [INFO] block. Paths without [SPEC] blocks are omitted
-#     from the returned dict.
-# [SPLIT]
-# _collect_changed_functions(proj_dir, old_commit_id, submodules=None)
-#   -> dict[str, {"added": [str], "removed": [str], "modified": [str]}]
-#   Pre-condition: proj_dir is a git repository containing old_commit_id;
-#     submodules is None or a list of subdirectory names
-#   Post-condition: Returns a dict keyed by source-file paths relative to
-#     proj_dir. Each value contains lists of function names that were added,
-#     removed, or modified between old_commit_id and the current working tree.
-#     Source files with no function-level changes are omitted from the dict.
-# [SPLIT]
-# _remove_stale_extracted(proj_dir, modified_functions) -> None
-#   Pre-condition: proj_dir is an absolute path to the project root and
-#     fm_agent/extracted_functions/ and fm_agent/phases.json exist under it;
-#     modified_functions is a dict whose keys are absolute source-file paths.
-#   Post-condition: For every absolute source-file path that is a key in
-#     modified_functions or listed in phases.json, the corresponding
-#     extracted-function tree under fm_agent/extracted_functions/ is
-#     reconciled with current codegraph output; any extracted function file
-#     or directory that no longer corresponds to a current function is
-#     deleted, empty parent directories pruned. Other extracted-function
-#     files and directories are unchanged.
-# [SPLIT]
-# collect_relevent_function_scope(proj_dir, developer_intent,
-#                                 changed_functions, range=None) -> list[str]
-#   Pre-condition: developer_intent is a non-empty string describing a
-#     modification goal; changed_functions maps source files to change sets
-#   Post-condition: Returns a list of extracted-function relative paths
-#     ordered by descending relevance to the developer intent, derived by
-#     module-level, file-level, and function-level relevance scoring.
-# [SPLIT]
-# _update_specs_for_intent(proj_dir, work_dir, developer_intent,
-#                          changed_functions, spec_files,
-#                          extra_call_edges=None) -> list[str]
-#   Pre-condition: developer_intent is a non-empty string; changed_functions
-#     maps source files to their change sets; spec_files lists candidate
-#     extracted-function relative paths
-#   Post-condition: Returns a list of extracted-function relative paths whose
-#     [SPEC] and/or [INFO] blocks were modified. For each function that is
-#     either changed or present in spec_files, re-evaluates whether the
-#     intended behavior spec needs updating; when a callee's spec is updated,
-#     cascading [INFO] updates are applied to all callers of that callee.
-# [SPLIT]
-# _verify_incremental_functions(proj_dir, work_dir, changed_functions,
-#                               updated_spec_files, submodules=None) -> list[str]
-#   Pre-condition: updated_spec_files lists functions whose [SPEC] or [INFO]
-#     blocks were modified in the spec-update stage
-#   Post-condition: Returns a list of extracted-function relative paths where
-#     the reasoner produced a MISMATCH verdict and bug validation confirmed the
-#     violation. Verification scope is limited to: changed functions, functions
-#     with updated specs, and functions that call a callee whose spec was
-#     updated.
-# [SPLIT]
-# run_pipeline(proj_dir, domain_knowledge_files=None, submodules=None,
-#              one_phase=False, extra_call_edges_path=None) -> None
-#   Pre-condition: proj_dir is a valid directory containing source code
-#   Post-condition: Executes the full 6-phase pipeline on proj_dir, producing
-#     extracted functions, specs, verification results, and bug validation
-#     reports under fm_agent/. Returns None.
-# [INFO]
-
 def run_incremental_pipeline(
     proj_dir,
     intent_file_path,
@@ -143,6 +6,8 @@ def run_incremental_pipeline(
     submodules=None,
     one_phase=False,
     extra_call_edges_path=None,
+    bug_validator_path=None,
+    plugin_config=None,
 ):
     """
     Run the pipeline in incremental mode, intent_file_path is a file (absolute path) defining the goal of modification.
@@ -195,6 +60,8 @@ def run_incremental_pipeline(
             submodules=submodules,
             one_phase=one_phase,
             extra_call_edges_path=extra_call_edges_path,
+            bug_validator_path=bug_validator_path,
+            plugin_config=plugin_config,
         )
         return
     logging.info("  -> previous full run found; proceeding with incremental analysis.")
@@ -250,18 +117,13 @@ def run_incremental_pipeline(
         proj_dir, work_dir, script_dir,
         is_incremental=True, submodules=submodules,
         one_phase=one_phase,
+        plugin_config=plugin_config,
     )
     logging.info("  -> phases.json regenerated.")
 
-    # 4. Update functions under fm_agent/extracted_functions/.
-    #    Capture the previous run's specs first (re-extraction overwrites each file with
-    #    the raw source for the current code), then re-extract, then restore the captured
-    #    [SPEC]/[INFO] headers onto every function that still exists. Functions that were
-    #    added or whose extraction path changed are left unspecced for the spec-update
-    #    stage to handle; unchanged functions keep their previous specs verbatim.
-    logging.info("[Stage 4/10] Re-extracting functions and restoring previous specs...")
-    old_spec = extract_existing_specs(proj_dir)
-    logging.info("  -> captured %d existing spec block(s) before re-extraction.", len(old_spec))
+    # 4. Update functions under fm_agent/extracted_functions/. Re-extraction replaces
+    #    only source files; adjacent .spec.json and .info.json sidecars are retained.
+    logging.info("[Stage 4/10] Re-extracting function source files...")
     # Rebuild the codegraph index before re-extraction. The index still reflects the code as
     # of the previous full run, but the working tree has changed since then; run_extraction
     # (and the downstream scope ranking) read function bodies and spans from codegraph, so a
@@ -269,8 +131,7 @@ def run_incremental_pipeline(
     # default; no-op when codegraph is uninstalled (extraction then falls back to regex).
     try_codegraph_init(proj_dir)
     run_extraction(proj_dir, work_dir=work_dir, force=True, verbose=True)
-    _reapply_existing_specs(proj_dir, old_spec)
-    logging.info("  -> functions re-extracted and prior [SPEC]/[INFO] headers reapplied.")
+    logging.info("  -> function sources re-extracted; metadata sidecars retained.")
 
     # 5. Collect changed functions by comparing against the old version of functions in commit_id
     logging.info("[Stage 5/10] Collecting changed functions vs. base commit...")
@@ -338,6 +199,7 @@ def run_incremental_pipeline(
     buggy_files = _verify_incremental_functions(
         proj_dir, work_dir, changed_functions, updated_spec_files,
         submodules=submodules,
+        bug_validator_path=bug_validator_path,
     )
     logging.info("=" * 70)
     logging.info(

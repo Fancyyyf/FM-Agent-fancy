@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "name='foo', idents={'bar'}, body_words=set(), exc_types=set(), body_lines=1, signals={'traceback_funcs': set(), 'backtick_idents': {'bar'}, 'dotted_refs': set(), 'plain_idents': set(), 'all_words': set(), 'exception_types': set()}",
-  "offending_statements": "Line 16",
-  "reason": "The code adds a contribution from body identifiers intersecting with backtick identifiers (W_BACKTICK_BODY * |idents ∩ backtick_idents|), which is not listed among the specification's permitted categories. For the given input, the code returns W_BACKTICK_BODY > 0 while the specification requires 0."
-}

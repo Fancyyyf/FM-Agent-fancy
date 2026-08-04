@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "name='foo', qualified_name=' bar::foo'",
-  "offending_statements": "Line 14: q = (qualified_name or \"\").strip()",
-  "reason": "The specification requires extracting the scope prefix from the original qualified_name (without stripping), but the code strips whitespace via Line 14 before processing. For qualified_name=' bar::foo', the specification would yield [' bar', 'foo'] because the prefix ' bar::' split on '::' gives ' bar', while the code strips to 'bar::foo' and returns ['bar', 'foo'], violating the requirement that the returned list reflects the scope components of the original qualified_name prefix."
-}

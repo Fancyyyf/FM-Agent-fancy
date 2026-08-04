@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: fm_agent/extracted_functions/src/cli_backend-py/cli_effort.py\n#\n# cli_effort() -> str\n#\n# Pre-condition:\n#   - `settings.llm.effort` is a string\n#\n# Post-condition:\n#   - Returns the value of `settings.llm.effort` with leading and trailing\n#     whitespace removed\n#   - If the value is empty or consists only of whitespace, returns an empty\n#     string\n# [SPEC]",
-  "info_updated": false,
-  "new_info": "",
-  "updated_callees": []
-}

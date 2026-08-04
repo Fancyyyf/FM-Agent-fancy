@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "file_names = ['a', 'b']; output_path = 'existing.json'. The file 'existing.json' already exists and contains the JSON array [\"c\", \"d\"]. The specification requires returning that parsed array without modifying the file. The code overwrites the file with [\"a\", \"b\"] and returns ['a', 'b'].",
-  "offending_statements": "Line 5-7: open(tmp_path, 'w') and subsequent json.dump and os.replace execute unconditionally, without checking whether output_path already contains a valid JSON array of strings as required by the specification.",
-  "reason": "The specification states that if output_path already exists and contains a JSON-parsable array of strings, the function should return that parsed array and not modify the file. The code never reads or checks the existing file; it unconditionally overwrites output_path with a sorted, deduplicated version of file_names and returns that instead."
-}

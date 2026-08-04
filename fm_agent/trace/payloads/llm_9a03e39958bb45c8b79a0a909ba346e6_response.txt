@@ -1,3 +1,0 @@
-{
-  "post_condition": "After successful execution, the global set _TEST_FILE_EXEMPTIONS contains the string resulting from `rel_path.replace('\\\\', '/')` (all backslashes replaced with forward slashes), and all other elements of the set remain unchanged. The function returns None. Formally: _TEST_FILE_EXEMPTIONS_post = _TEST_FILE_EXEMPTIONS_pre ∪ {rel_path.replace('\\\\', '/')} ∧ return_value is None."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A matching response message with id=request_id, no 'method' field, and 'error' field set to null (e.g., {\"id\": 1, \"result\": \"ok\", \"error\": null})",
-  "offending_statements": "Line 6: if error:",
-  "reason": "The code checks truthiness of the 'error' value with 'if error:', which is False for None (and other false-like values). The specification requires that any matching response containing an 'error' field raises an exception (RuntimeError if not the specific content-modified error). Thus, for a response with error=null, the code incorrectly returns the 'result' instead of raising RuntimeError."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "trace_dir='/tmp', path='/tmp/foo'",
-  "offending_statements": "Line 2: return os.path.relpath(path, os.path.dirname(trace_dir))",
-  "reason": "The specification requires a relative path computed from trace_dir to path. The code computes the relative path from the parent directory of trace_dir (os.path.dirname(trace_dir)) instead. For the given inputs, the code returns 'tmp/foo', but the correct relative path from '/tmp' to '/tmp/foo' is 'foo'. Joining the return value with trace_dir yields '/tmp/tmp/foo', which does not resolve to the original path."
-}

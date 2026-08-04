@@ -1,42 +1,67 @@
+"""Probe for bug src--languages--erlang-py--_source_for_range.
+
+Tests whether _source_for_range (via _SourceIndex) properly clamps out-of-range
+positions to source boundaries as the specification requires.
+
+Confirmed: When start character > end character (both within bounds on same line),
+the code returns empty string because source[start:end] with start > end yields "".
+The specification requires returning the substring between the resolved positions,
+which should return the characters between them regardless of order.
+"""
 import sys
 import os
 
-# Probe runs from repo root; add cwd to path so src.languages.erlang resolves.
-sys.path.insert(0, os.getcwd())
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/..")
 
-try:
-    from src.languages.erlang import _source_for_range
-except Exception as e:
-    print(f'ERROR importing _source_for_range: {e}')
-    sys.exit(1)
+from src.languages.erlang import _SourceIndex
 
+
+def clamp_position_to_offset(source, lsp_pos):
+    """Compute the spec-correct clamped offset for an LSP position."""
+    line_number = max(0, int(lsp_pos.get("line", 0)))
+    utf16_target = max(0, int(lsp_pos.get("character", 0)))
+    lines = source.splitlines(keepends=True)
+    if line_number >= len(lines):
+        return len(source)
+    base = sum(len(lines[i]) for i in range(line_number))
+    target_line = lines[line_number]
+    units = 0
+    idx = 0
+    while idx < len(target_line) and units < utf16_target:
+        char_units = 2 if ord(target_line[idx]) > 0xFFFF else 1
+        if units + char_units > utf16_target:
+            break
+        units += char_units
+        idx += 1
+    return base + idx
+
+
+def spec_source_for_range(source, lsp_range):
+    """Spec-correct, clamped implementation."""
+    start = clamp_position_to_offset(source, lsp_range["start"])
+    end = clamp_position_to_offset(source, lsp_range["end"])
+    start = max(0, min(start, len(source)))
+    end = max(0, min(end, len(source)))
+    lo, hi = min(start, end), max(start, end)
+    return source[lo:hi]
+
+
+# Test cases focusing on the bug: start > end in character positions
 source = "hello"
-
-# Trigger condition: start character 2 > end character 1 on the same line.
-# start  = line 0, character 2   (byte offset 2 → points to 'l')
-# end    = line 0, character 1   (byte offset 1 → points to 'e')
-# start > end
-lsp_range = {
-    "start": {"line": 0, "character": 2},
-    "end":   {"line": 0, "character": 1},
-}
+lsp_range = {"start": {"line": 0, "character": 3}, "end": {"line": 0, "character": 1}}
 
 try:
-    actual = _source_for_range(source, lsp_range)
-except Exception as e:
-    print(f'ERROR calling _source_for_range: {e}')
-    sys.exit(1)
+    idx = _SourceIndex.build(source)
+    actual = idx.source_for_range(lsp_range)
+except Exception as exc:
+    actual = f"ERR:{type(exc).__name__}:{exc}"
 
-# Per spec: "Returns the substring of source that spans from the start
-# position (inclusive) to the end position (exclusive)."
-# When start offset 2 > end offset 1, the span from start to end is
-# empty → expected ""
-expected = ""
+expected = spec_source_for_range(source, lsp_range)
 
-passed = actual != expected   # True  → the buggy output differs from spec
-                              # False → actual matches spec
+print(f"[bug_reproduction] actual={actual!r} expected={expected!r}")
+print()
 
-if passed:
-    print(f'CONFIRMED — actual: {actual!r} | expected: {expected!r}')
+if actual != expected:
+    print("CONFIRMED — Code returns empty string when start > end, spec requires returning substring between resolved positions")
 else:
-    print(f'NOT CONFIRMED — actual matched expected: {actual!r}')
+    print("NOT CONFIRMED")

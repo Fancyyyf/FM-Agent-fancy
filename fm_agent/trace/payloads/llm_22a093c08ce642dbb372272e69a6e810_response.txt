@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: src/pipeline_setup-py/_phase_plan_complete.py\n#\n# _phase_plan_complete(work_dir) -> bool\n#\n# Pre-condition:\n#   - work_dir is a string path to an existing directory.\n#\n# Post-condition:\n#   - Returns True when the file phases.json exists under work_dir, is a\n#     regular file, its content parses as valid JSON, and it conforms to the\n#     required schema (as determined by _phase_plan_schema_errors).\n#   - Returns False when phases.json does not exist under work_dir, is not a\n#     regular file, does not parse as valid JSON, or does not conform to the\n#     required schema.\n#   - The return value is idempotent for the same filesystem state: repeated\n#     calls with the same work_dir and same file content yield the same boolean\n#     result.\n# [SPEC]",
-  "info_updated": true,
-  "new_info": "# [INFO]\n# _phase_plan_schema_errors(file_path) -> any\n#   Pre-condition: file_path is a string path to a file.\n#   Post-condition: Returns a truthy value (e.g., a non-empty error list or\n#     error message string) if the file does not exist, is not a regular file,\n#     does not contain valid JSON, or fails to conform to the required schema.\n#   - Returns a falsey value (e.g., None or empty list) when the file exists,\n#     is a regular file, parses as valid JSON, and fully conforms to the\n#     required schema.\n# [INFO]",
-  "updated_callees": ["_phase_plan_schema_errors"]
-}

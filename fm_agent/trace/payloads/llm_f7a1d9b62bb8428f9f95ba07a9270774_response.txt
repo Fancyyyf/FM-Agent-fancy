@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "model = 'gpt-4'; _MODEL_COST = {'gpt-4': 0.03} (a float instead of a dict with per-token pricing components)",
-  "offending_statements": "Line 6: return _MODEL_COST[key] and Line 11: return _MODEL_COST[bare]",
-  "reason": "The specification requires the function to return either a dict whose keys are per-token pricing component names and whose values are positive floats, or None. The code does not validate the type of the value retrieved from _MODEL_COST; it returns whatever is stored. If _MODEL_COST holds a non-dict (e.g., a float 0.03) for a valid model, the code returns that value, which violates the specification's dict requirement."
-}

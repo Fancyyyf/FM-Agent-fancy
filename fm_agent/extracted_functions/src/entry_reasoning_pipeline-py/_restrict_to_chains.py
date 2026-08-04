@@ -1,27 +1,3 @@
-# [SPEC]
-# Unit: fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_restrict_to_chains.py
-#
-# _restrict_to_chains(call_graph, entry_func, end_funcs) -> dict
-#
-# Pre-condition:
-#   - call_graph is a dict mapping each FQN string to a list of callee FQN strings, where every callee referenced in any value list is also a key in call_graph (the graph is closed under its FQN space)
-#   - entry_func is an FQN string that is a key in call_graph
-#   - end_funcs is an iterable of FQN strings, possibly empty
-#
-# Post-condition:
-#   - call_graph is never mutated; a new dict is returned (or the original when end_funcs is falsy)
-#   - When end_funcs is empty or falsy, call_graph is returned unchanged
-#   - When end_funcs is non-empty, the returned dict contains exactly those FQNs that satisfy both:
-#     1. Reachable from entry_func via zero or more edges in call_graph, AND
-#     2. Can reach at least one member of end_funcs via zero or more edges in call_graph
-#   - For each FQN in the returned dict that is also a member of end_funcs: its callee list is empty (the FQN is a terminal stop-point)
-#   - For each FQN in the returned dict that is not a member of end_funcs: its callee list contains exactly the subset of its callees from call_graph that also appear in the returned dict
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _restrict_to_chains(call_graph, entry_func, end_funcs):
     """Keep only functions lying on a call chain from entry_func to an end_func.
 

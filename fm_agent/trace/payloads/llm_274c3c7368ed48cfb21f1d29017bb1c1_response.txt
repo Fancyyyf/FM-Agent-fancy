@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/test', specs={'func.py': {'spec': '[SPEC] spec content\\n'}} with a file at /test/fm_agent/extracted_functions/func.py containing 'def foo():\\n    pass\\n' and not containing '[SPEC]' in its first line. Calling _reapply_existing_specs('/test', specs) modifies the file but returns None instead of 1.",
-  "offending_statements": "Line 17: for rel_path, entry in specs.items(): ... Line 39: f.write(header + \"\\n\\n\" + source.lstrip(\"\\n\")) (the function never accumulates a count of modified files and has no return statement, so it returns None)",
-  "reason": "The specification explicitly states that the function returns the count of files for which the spec header was written. The code never initializes a counter, never increments it when a file is modified, and implicitly returns None at the end of the loop, violating the required behavior for any valid input where files are modified."
-}

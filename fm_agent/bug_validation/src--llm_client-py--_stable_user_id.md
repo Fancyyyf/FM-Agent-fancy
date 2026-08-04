@@ -1,6 +1,6 @@
 # Bug Report: _stable_user_id
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,47 +12,45 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns the value of `settings.inject.id` when that value is truthy
-  - Returns the predefined static default `_DEFAULT_INJECT_USER_ID` when `settings.inject.id` is falsy (empty or None)
-  - The returned string is non-empty in all cases
+Returns a non-empty string that identifies the current user. The returned value is stable: repeated calls within the same execution environment yield the same string. The value is the configured user identifier when set, or a built-in default identifier otherwise. The returned string is suitable for injection into LLM API request metadata for prompt-cache affinity.
 
 ---
 
 ### Actual Behavior
 
-The function returns the value of settings.inject.id if it is truthy (as per Python bool conversion), otherwise returns _DEFAULT_INJECT_USER_ID. No external state is modified. Formally: let ret be the return value. Then ret = settings.inject.id if bool(settings.inject.id) else _DEFAULT_INJECT_USER_ID, and all module-level objects remain unchanged.
+The function `_stable_user_id` is defined in the current namespace. It takes no arguments. When called, its return value is the result of evaluating `settings.inject.id or _DEFAULT_INJECT_USER_ID`.
 
 ---
 
 ## Code Evidence
 
-Line 2: return settings.inject.id or _DEFAULT_INJECT_USER_ID
+Line 2:     return settings.inject.id or _DEFAULT_INJECT_USER_ID
 
 ---
 
 ## Trigger Condition
 
-The specification states that the returned string is non-empty in all cases, implying the function must always return a string. However, when settings.inject.id is a truthy non-string (e.g., an integer 5), the code returns that non-string value, violating the requirement that the return value be a string.
+The function does not store the initial user ID; it reevaluates the setting on each call. Therefore, if settings.inject.id changes between calls, the returned string is not stable, violating the specification.
 
 ---
 
 ## How to trigger the bug
 
-The bug occurs because Python's `or` operator returns the first truthy operand as-is without type coercion. When `settings.inject.id` is a truthy value of a non-string type (e.g., integer `5`), `settings.inject.id or _DEFAULT_INJECT_USER_ID` evaluates to `5` (an `int`), not a string. The specification requires the function to always return a non-empty string, but the code does not enforce a string return type.
+The function `_stable_user_id()` reads `settings.inject.id` on every call without caching or memoizing the first computed value. If `settings.inject.id` is mutated between calls — either directly via assignment or through a configuration reload — the returned user ID changes, violating the stability guarantee promised by the specification.
 
 ### Inputs
 
 | Parameter | Value |
-|---|---|
-| `settings.inject.id` | `5` (integer) |
+|-----------|-------|
+| (none) | `_stable_user_id()` takes no arguments |
 
 ### Expected (spec-correct) Output
 
-The function should return a string. If the intent is to return the stringified value of `settings.inject.id`, the expected output would be `"5"`.
+`"stable-user-or-session-id-xxxxxxx123"` (the default user ID, stable across all calls)
 
 ### Actual (buggy) Output
 
-`5` (type: `int`, not `str`)
+First call: `"stable-user-or-session-id-xxxxxxx123"` — after `settings.inject.id` is changed to `"altered-user-999"`, second call: `"altered-user-999"`
 
 ### How to Reproduce
 
@@ -65,16 +63,13 @@ Step-by-step instructions to trigger the bug manually:
 import config
 from src.llm_client import _stable_user_id
 
-# Temporarily set inject.id to a non-string truthy value
-original = config.settings.inject.id
-config.settings.inject.id = 5
+first = _stable_user_id()
+# first -> "stable-user-or-session-id-xxxxxxx123"
 
-result = _stable_user_id()
-# actual (buggy) output: 5 (int)
-# expected (correct) output: a string (e.g., "5")
-
-config.settings.inject.id = original
-print(type(result))  # <class 'int'>
+config.settings.inject.id = "altered-user-999"
+second = _stable_user_id()
+# second -> "altered-user-999"  ← BUG: value changed, violating stability spec
+# expected (correct) output: "stable-user-or-session-id-xxxxxxx123"
 ```
 
 ---
@@ -85,40 +80,53 @@ print(type(result))  # <class 'int'>
 import sys
 import os
 
-# Add the repo root to sys.path so we can import the package
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../..")
+# Ensure we import from the repo root (cwd for the probe runner).
+sys.path.insert(0, os.getcwd())
 
 try:
     import config
     from src.llm_client import _stable_user_id
-
-    # Store original value and set inject.id to a non-string truthy value (integer)
-    original_id = config.settings.inject.id
-    config.settings.inject.id = 5  # truthy non-string → or returns this instead of the default
-
-    actual = _stable_user_id()
-
-    # Restore original value
-    config.settings.inject.id = original_id
-
-    # Bug is confirmed if _stable_user_id returned a non-string value
-    # The spec requires it to always return a string, but `or` returns the
-    # first truthy operand as-is — so when inject.id is a truthy non-string,
-    # the function returns that non-string value.
-    passed = not isinstance(actual, str)
-
 except Exception as e:
-    print(f'ERROR: {e}')
+    print(f"ERROR: import failed — {e}")
     sys.exit(1)
 
-if passed:
-    print(f'CONFIRMED — actual type: {type(actual).__name__}, value: {actual!r} | expected type: str')
-else:
-    print(f'NOT CONFIRMED — actual is string: {actual!r}')
+try:
+    # Record initial state
+    saved_id = config.settings.inject.id
+
+    # First call: settings.inject.id defaults to "" (empty),
+    # so _stable_user_id() should return _DEFAULT_INJECT_USER_ID.
+    first = _stable_user_id()
+
+    # Change settings.inject.id to a different value.
+    config.settings.inject.id = "altered-user-999"
+
+    # Second call: should now return the new value, NOT the original.
+    second = _stable_user_id()
+
+    # Restore original setting to keep the environment clean.
+    config.settings.inject.id = saved_id
+
+    # spec says: "stable — repeated calls within the same execution
+    # environment yield the same string"
+    # If first != second, the bug is confirmed.
+    if first != second:
+        print(
+            f"CONFIRMED — first: {first!r} | second: {second!r} "
+            f"| setting changed from {saved_id!r} to 'altered-user-999'"
+        )
+    else:
+        print(
+            f"NOT CONFIRMED — first: {first!r} | second: {second!r} "
+            f"| values matched (function is stable)"
+        )
+except Exception as e:
+    print(f"ERROR: {type(e).__name__}: {e}")
+    sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual type: int, value: 5 | expected type: str
+CONFIRMED — first: 'stable-user-or-session-id-xxxxxxx123' | second: 'altered-user-999' | setting changed from '' to 'altered-user-999'
 ```

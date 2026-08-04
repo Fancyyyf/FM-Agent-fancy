@@ -1,8 +1,8 @@
 # Bug Report: _setup_outputs_complete
 
-**Source file:** `src/pipeline_setup.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_setup_outputs_complete.py`
 **Verdict:** MISMATCH
-**Confirmation status:** confirmed
+**Confirmation status:** not_confirmed
 
 ---
 
@@ -12,46 +12,47 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns True when phases.json, engine_overview.txt, and at least one file whose name matches the pattern phase_NN_types.txt (where NN is one or more digits) all exist as regular files under work_dir.
-  - Returns False when any one of the three required output categories is absent from work_dir.
+Returns True if and only if all of the following exist at their expected paths under work_dir: (1) phases.json, (2) spec_prompts/domain_context/engine_overview.txt, and (3) for every phase number P declared in the phases.json file, a file spec_prompts/domain_context/phase_P_types.txt
 
 ---
 
 ### Actual Behavior
 
-After the function returns, the boolean result R satisfies: R = True if and only if (a) a regular file "phases.json" exists under "work_dir", its content parses as valid JSON and conforms to the required schema, and (b) both "engine_overview.txt" and at least one regular file matching the pattern "phase_NN_types.txt" (with NN one or more digits) exist under "work_dir". Otherwise R = False. The "work_dir" path is unchanged.
+The function returns True if and only if both the phase plan and domain context are complete: the file 'phases.json' exists under 'work_dir' and contains a valid phases plan, the file 'engine_overview.txt' exists under 'work_dir', and for every phase number P defined in that 'phases.json', the file 'phase_P_types.txt' exists under 'work_dir'. Returns False otherwise.
 
 ---
 
 ## Code Evidence
 
-Line 3
+Line 3: return _phase_plan_complete(work_dir) and _domain_context_complete(work_dir)
 
 ---
 
 ## Trigger Condition
 
-The code returns False if phases.json is not valid JSON/schema-conformant, but the specification only requires the file's existence. Hence, for an input where phases.json exists but is invalid JSON, the code returns False while the specification mandates True.
+The specification requires engine_overview.txt and phase_P_types.txt to be placed under the spec_prompts/domain_context/ subdirectory. The actual code checks for these files directly under work_dir (as per Condition A). Thus, when the required files exist directly under work_dir but not in the subdirectory, the code returns True, violating the specification which expects False.
 
 ---
 
 ## How to trigger the bug
 
-`_setup_outputs_complete` delegates to `_phase_plan_complete`, which calls `_phase_plan_schema_errors` that validates both JSON parseability and schema conformance of `phases.json`. The specification only requires that `phases.json` exists as a regular file — it says nothing about valid JSON or schema conformance. Therefore, when `phases.json` exists on disk but contains invalid JSON (e.g., the text `"this is not valid json {{{"`), the code returns `False`, while the specification mandates `True` (since all three output categories exist).
+The bug could not be reproduced. The LLM analysis that produced the "actual behavior" description mischaracterized the code. The `_domain_context_complete` function (called by `_setup_outputs_complete` at line 719 of `src/pipeline_setup.py`) actually constructs `domain_dir` as `os.path.join(work_dir, "spec_prompts", "domain_context")` at line 696 and checks for `engine_overview.txt` and `phase_*_types.txt` files under that subdirectory — exactly matching the specification.
+
+When files are placed directly under `work_dir` (e.g., `work_dir/engine_overview.txt`) without the `spec_prompts/domain_context/` subdirectory, the code correctly returns `False`.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `work_dir` | A temporary directory containing: `phases.json` (exists, invalid JSON content `"this is not valid json {{{"`), `spec_prompts/domain_context/engine_overview.txt` (exists), `spec_prompts/domain_context/phase_01_types.txt` (exists) |
+| `work_dir` | A temporary directory containing `phases.json` (valid), `engine_overview.txt` (directly under work_dir), and `phase_01_types.txt` (directly under work_dir). No `spec_prompts/domain_context/` subdirectory exists. |
 
 ### Expected (spec-correct) Output
 
-`True` — all three required output categories (phases.json, engine_overview.txt, phase_NN_types.txt) exist as regular files under work_dir.
+`False` — files at wrong location (not under `spec_prompts/domain_context/`) should not satisfy the completeness check.
 
 ### Actual (buggy) Output
 
-`False` — `_phase_plan_complete` returns `False` because `phases.json` is not valid JSON, causing `_setup_outputs_complete` to return `False`.
+`False` — The actual output matches the expected output. The code correctly rejects the files placed at the wrong location.
 
 ### How to Reproduce
 
@@ -61,26 +62,21 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import os
-import tempfile
+import os, json, tempfile
 import sys
 sys.path.insert(0, ".")
-
 from src.pipeline_setup import _setup_outputs_complete
 
-with tempfile.TemporaryDirectory() as tmpdir:
-    domain_dir = os.path.join(tmpdir, "spec_prompts", "domain_context")
-    os.makedirs(domain_dir, exist_ok=True)
-    with open(os.path.join(domain_dir, "engine_overview.txt"), "w") as f:
-        f.write("dummy overview")
-    with open(os.path.join(domain_dir, "phase_01_types.txt"), "w") as f:
-        f.write("dummy types")
-    with open(os.path.join(tmpdir, "phases.json"), "w") as f:
-        f.write("this is not valid json {{{")
+tmpdir = tempfile.mkdtemp()
+with open(os.path.join(tmpdir, "phases.json"), "w") as f:
+    json.dump({"phases": [{"phase": 1, "name": "Test", "modules": [{"name": "m", "source_files": ["f.py"], "description": "d"}]}]}, f)
+open(os.path.join(tmpdir, "engine_overview.txt"), "w").close()
+open(os.path.join(tmpdir, "phase_01_types.txt"), "w").close()
 
-    result = _setup_outputs_complete(tmpdir)
-    print(result)  # actual (buggy) output: False
-    # expected (correct) output: True
+result = _setup_outputs_complete(tmpdir)
+# actual (buggy) output: False
+# expected (correct) output: False
+print(f"result = {result!r}")
 ```
 
 ---
@@ -88,71 +84,109 @@ with tempfile.TemporaryDirectory() as tmpdir:
 ## Probe Script
 
 ```python
-"""Probe script for bug: _setup_outputs_complete validates JSON schema instead of
-only checking file existence.
+"""Probe for bug src--pipeline_setup-py--_setup_outputs_complete.
 
-Spec claim: Returns True when phases.json, engine_overview.txt, and at least one
-phase_NN_types.txt all exist as regular files under work_dir.
+Bug claim: _setup_outputs_complete checks for engine_overview.txt and
+phase_P_types.txt directly under work_dir, when the spec requires them under
+spec_prompts/domain_context/.
 
-Actual behavior: Returns False when phases.json is not valid JSON/schema-conformant,
-even though all three required output categories exist on disk.
+Test: Create files at work_dir/ directly (wrong location, NOT under
+spec_prompts/domain_context/) with a valid phases.json. If the code accepts
+them, the bug is confirmed. If it correctly rejects them, NOT CONFIRMED.
 """
 
-import os
 import sys
+import os
+import json
+import shutil
 import tempfile
+import traceback
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.pipeline_setup import _setup_outputs_complete
+def main():
+    # Ensure the project root is on sys.path so that 'src' is importable.
+    # The probe lives at fm_agent/bug_validation/probe_*.py under repo root.
+    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
 
-with tempfile.TemporaryDirectory() as tmpdir:
-    # Create engine_overview.txt (exists)
-    with open(os.path.join(tmpdir, "engine_overview.txt"), "w") as f:
-        f.write("dummy overview")
-
-    # Create phase_01_types.txt (exists)
-    with open(os.path.join(tmpdir, "phase_01_types.txt"), "w") as f:
-        f.write("dummy types")
-
-    # Create spec_prompts/domain_context/ subdirectory structure for
-    # _domain_context_complete to find the files
-    domain_dir = os.path.join(tmpdir, "spec_prompts", "domain_context")
-    os.makedirs(domain_dir, exist_ok=True)
-    with open(os.path.join(domain_dir, "engine_overview.txt"), "w") as f:
-        f.write("dummy overview")
-    with open(os.path.join(domain_dir, "phase_01_types.txt"), "w") as f:
-        f.write("dummy types")
-
-    # Create phases.json that EXISTS but is INVALID JSON
-    # This satisfies the spec's existence requirement, but _phase_plan_complete
-    # will return False because it checks JSON validity + schema.
-    with open(os.path.join(tmpdir, "phases.json"), "w") as f:
-        f.write("this is not valid json {{{")
-
+    tmpdir = tempfile.mkdtemp(prefix="bug_probe_sup_outputs_")
     try:
-        actual = _setup_outputs_complete(tmpdir)
-    except Exception as e:
-        print(f"ERROR: {e}")
+        # Load the function via the public package entry point
+        from src.pipeline_setup import _setup_outputs_complete
+
+        work_dir = tmpdir
+
+        # Build a valid phases.json with one phase
+        phases_data = {
+            "phases": [
+                {
+                    "phase": 1,
+                    "name": "Test Phase",
+                    "modules": [
+                        {
+                            "name": "test_module",
+                            "source_files": ["test.py"],
+                            "description": "test module",
+                        }
+                    ],
+                    "depends_on_phases": [],
+                }
+            ]
+        }
+        with open(os.path.join(work_dir, "phases.json"), "w") as f:
+            json.dump(phases_data, f)
+
+        # Place files directly under work_dir (THE WRONG LOCATION per spec).
+        # Spec requires: work_dir/spec_prompts/domain_context/engine_overview.txt
+        #                work_dir/spec_prompts/domain_context/phase_01_types.txt
+        # Bug claim says code checks directly under work_dir, so these files
+        # would cause a True return when the spec expects False.
+        with open(os.path.join(work_dir, "engine_overview.txt"), "w") as f:
+            f.write("test engine overview\n")
+        with open(os.path.join(work_dir, "phase_01_types.txt"), "w") as f:
+            f.write("test phase types\n")
+
+        # DELIBERATELY do NOT create spec_prompts/domain_context/ subdirectory.
+
+        # _phase_plan_complete(work_dir) will return True (valid phases.json exists).
+        # _domain_context_complete(work_dir) checks:
+        #   work_dir/spec_prompts/domain_context/engine_overview.txt  -> does NOT exist
+        #   work_dir/spec_prompts/domain_context/phase_01_types.txt   -> does NOT exist
+        # So if code is correct, it returns False.
+        # If bug exists (code checks directly under work_dir), it returns True.
+
+        result = _setup_outputs_complete(work_dir)
+
+        # Spec says: files at spec_prompts/domain_context/ -> True; else False
+        expected = False
+        actual = result
+
+        if actual == expected:
+            print(
+                f"NOT CONFIRMED — actual: {actual!r} | expected: {expected!r} "
+                f"(code correctly rejected files at wrong path)"
+            )
+        else:
+            print(
+                f"CONFIRMED — actual: {actual!r} | expected: {expected!r} "
+                f"(bug reproduced: code accepted files at wrong path)"
+            )
+
+    except Exception as exc:
+        print(f"ERROR: {exc}")
+        traceback.print_exc()
         sys.exit(1)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
-    # Spec says: "Returns True when phases.json, engine_overview.txt, and at least
-    # one file matching phase_NN_types.txt all exist as regular files under work_dir."
-    # All three exist, so expected = True.
-    expected = True
 
-    # The bug is that the code returns False when phases.json is invalid JSON,
-    # even though all files exist. So the bug is confirmed if actual != expected.
-    passed = actual != expected
-
-    if passed:
-        print(f"CONFIRMED -- actual: {actual!r} | expected: {expected!r}")
-    else:
-        print(f"NOT CONFIRMED -- actual matched expected: {actual!r}")
+if __name__ == "__main__":
+    main()
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED -- actual: False | expected: True
+NOT CONFIRMED — actual: False | expected: False (code correctly rejected files at wrong path)
 ```

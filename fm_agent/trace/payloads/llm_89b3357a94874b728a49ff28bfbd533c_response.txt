@@ -1,3 +1,0 @@
-{
-  "post_condition": "If the input 'seconds' is None, the function returns the string '—'. If 'seconds' is a non-negative numeric value, let s = int(seconds) (truncation toward zero), h = s // 3600, m = (s % 3600) // 60, sec = s % 60. Then the return value is: if h > 0, return f'{h}h {m:02d}m {sec:02d}s'; if h == 0 and m > 0, return f'{m}m {sec:02d}s'; otherwise (h == 0 and m == 0) return f'{sec}s'. The function always returns a string and does not raise exceptions for inputs satisfying the pre-condition."
-}

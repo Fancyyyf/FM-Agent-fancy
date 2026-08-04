@@ -1,11 +1,11 @@
 {
   "id": "src--languages--erlang-py--ElpClient::initialize",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::initialize.py",
-  "function_name": "initialize",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::initialize.py",
+  "function_name": "ElpClient::initialize",
   "confirmation_status": "confirmed",
-  "attempts": "1",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::initialize.py",
   "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::initialize.md",
-  "probe_stdout": "CONFIRMED — actual deadline: 6546.858 > expected: 6546.257 (delta: 0.601s, spec requires deadline from call entry)",
-  "trigger_summary": "Deadline computed after request() instead of at call entry; request delay extends effective timeout window beyond spec limit."
+  "probe_stdout": "CONFIRMED — bug confirmed: RuntimeError raised for JSON-RPC error response: ELP request failed: {'code': -32601, 'message': 'Method not found'}",
+  "trigger_summary": "A JSON-RPC error response from the ELP server (e.g. 'Method not found') causes RuntimeError, but the spec only allows exceptions for server unreachable, timeout, or malformed server messages."
 }

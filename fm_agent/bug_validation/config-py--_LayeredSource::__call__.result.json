@@ -1,1 +1,11 @@
-{"id": "config-py--_LayeredSource::__call__", "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/config-py/_LayeredSource::__call__.py", "function_name": "_LayeredSource::__call__", "confirmation_status": "not_confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_config-py--_LayeredSource::__call__.py", "detail_file": "fm_agent/bug_validation/config-py--_LayeredSource::__call__.md", "probe_stdout": "NOT CONFIRMED — no model defaults leaked; only TOML values present\n  Result: {'nested': {'count': 99}, 'llm': {'api_key': 'sk-88694ac2d6d84bef9b903056966b9d56', 'base_url': 'https://api.deepseek.com', 'backend': 'opencode', 'name': 'deepseek-v4-pro', 'effort': '', 'provider': 'deepseek'}, 'erlang': {'command': 'elp', 'timeout_s': '180'}}", "trigger_summary": "_LayeredSource.__call__ returns self._data directly without filtering model defaults, but self._data is populated only from TOML + env vars, so no model defaults ever appear in the output."}
+{
+  "id": "config-py--_LayeredSource::__call__",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/config-py/_LayeredSource::__call__.py",
+  "function_name": "_LayeredSource::__call__",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_config-py--_LayeredSource::__call__.py",
+  "detail_file": "fm_agent/bug_validation/config-py--_LayeredSource::__call__.md",
+  "probe_stdout": "CONFIRMED — extra non-field keys leaked through: ['erlang', 'unexpected_section'] (valid fields: ['llm']) | actual extra data: {'erlang': {'command': 'elp', 'timeout_s': '180'}, 'unexpected_section': {'foo': 'bar', 'baz': 42}}",
+  "trigger_summary": "When the settings model accepts extra fields (extra='allow'), _LayeredSource.__call__() returns self._data unfiltered, leaking non-field TOML sections and env-injected keys into the result."
+}

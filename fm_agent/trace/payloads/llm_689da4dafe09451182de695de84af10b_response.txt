@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a tuple (result, cr_total, in_total) such that cr_total = sum(cr for (cr, _) in rows) and in_total = sum(t for (_, t) in rows), both non‑negative. If in_total == 0 then result is None; otherwise result = cr_total / in_total. No exceptions are raised. Formally: ∀ rows where rows is a sequence of pairs (cr, t) with cr ≥ 0 and t ≥ 0, let S_cr = Σ_{ (cr, t) ∈ rows } cr and S_t = Σ_{ (cr, t) ∈ rows } t. The return value r satisfies: r = (None, S_cr, S_t) if S_t = 0, else r = (S_cr / S_t, S_cr, S_t)."
-}

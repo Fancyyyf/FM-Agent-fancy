@@ -1,3 +1,0 @@
-{
-  "post_condition": "Returns a string of equal length to `text`.  For each position `i`, if `i` falls within a comment (according to `LANG_CONFIG[lang_key]`, defaulting to `//` line–comments, and with correct handling of block comments if defined) and is not part of a string literal, then `result[i]` is `' '`; otherwise `result[i] == text[i]`.  String literals are recognised by single‑quote, double‑quote, or triple‑quote delimiters, with backslash–escaping properly handled inside them, so that comment sequences inside strings are not misinterpreted.  The original arguments `text` and `lang_key` are not modified."
-}

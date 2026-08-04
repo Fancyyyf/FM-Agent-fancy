@@ -1,6 +1,6 @@
 # Bug Report: _get_phase_files
 
-**Source file:** `src/file_utils-py/_get_phase_files.py`
+**Source file:** `fm_agent/extracted_functions/src/file_utils-py/_get_phase_files.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,109 +12,75 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a list of relative path strings, each being the path from input_dir to a
-    regular file located under an extracted-function subdirectory.
-  - Each returned path originates from a source file declared in the modules of the
-    phase identified by phase_num; the mapping from a source file path to its
-    extracted-function subdirectory follows the engine convention: the last "." in the
-    source file's basename is replaced by "-", and the resulting name is used as a
-    subdirectory under input_dir joined with the source file's directory portion.
-  - Source files whose corresponding extracted-function subdirectory does not exist
-    under input_dir contribute no entries to the result (they are silently skipped).
-  - Within each extracted-function subdirectory, contained regular files appear in
-    lexicographically sorted order by filename.
-  - The overall order of paths in the result preserves: the iteration order of
-    phases_data["phases"], the iteration order of modules within the matched phase,
-    and the iteration order of source_files within each module.
-  - The returned list may be empty when the matched phase has no modules, no source
-    files, or none of its source files have an existing extracted-function directory.
+Returns a list of file identifiers (relative paths from input_dir) for all extracted function files belonging to the specified phase. Each identifier is a relative path to a regular file that is not a metadata sidecar file. No file identifier appears more than once in the returned list. Files within each extracted directory are returned in lexicographically ascending order of their names. Source files whose derived extracted directory does not exist on disk are skipped without raising an error.
 
 ---
 
 ### Actual Behavior
 
-If a phase dict with `phase == phase_num` exists, the function returns a list of relative file paths (strings) from `input_dir` for all regular files found inside the extracted directories that exist. Otherwise, `StopIteration` is raised; other exceptions (e.g., `OSError`) may propagate if filesystem operations fail. Formally:
-
- p  phases_data["phases"] : p["phase"] = phase_num 
-  let M = {p | p  phases_data["phases"]  p["phase"] = phase_num} (singleton by pre-condition).
-  For each module  M["modules"], for each src_file  module["source_files"]:
-    let base = basename(src_file), ext_idx = base.rfind("."),
-        subdir = (base[:ext_idx] + "-" + base[ext_idx+1:]) if ext_idx  0 else base,
-        extracted_dir = join(input_dir, dirname(src_file), subdir).
-    If is_dir(extracted_dir), then for every (root, dirs, files) in os.walk(extracted_dir) (top-down, arbitrary order),
-    for every fname  sorted(files):
-      let fpath = join(root, fname).
-      If is_file(fpath), then append relpath(fpath, input_dir) to result list.
-  Return the final list (deterministic for a given filesystem state).
-
-Otherwise (no matching phase), `StopIteration` is raised.
+If the pre-condition holds and phases_data is well-formed, the function returns a list of relative file paths (relative to input_dir) of regular non-metadata files found within extracted directories corresponding to source files of the chosen phase. For each module in the phase and each source file in the module, build extracted_dir = os.path.join(input_dir, os.path.dirname(src_file), subdir) where subdir is the base name with the last dot replaced by '-' if present, else unchanged. If that directory exists, recursively walk it via os.walk, collecting paths of regular files (excluding those where _is_metadata_sidecar returns True) in alphabetical filename order; append their relative paths to the result. The order preserves module/source-file iteration and, within each directory, alphabetical filenames. Violations of structural assumptions (missing keys, non-iterable values, wrong types) result in a KeyError, TypeError, AttributeError, or StopIteration. The returned list may contain duplicate relative paths if the same file is encountered in multiple directories. Formal logic: R = concatenation_{m in modules} concatenation_{s in m['source_files']} [ os.path.relpath(os.path.join(root, fname), input_dir) for (root, _, fnames) in sorted(os.walk(extracted_dir(s))) for fname in sorted(fnames) if os.path.isfile(os.path.join(root, fname)) and not _is_metadata_sidecar(fname) ] where extracted_dir(s) is defined as above.
 
 ---
 
 ## Code Evidence
 
-Line 20: for root, _dirs, fnames in os.walk(extracted_dir):
-Line 21: for fname in sorted(fnames):
-Line 22: fpath = os.path.join(root, fname)
-Line 23: if os.path.isfile(fpath):
 Line 24: phase_files.append(os.path.relpath(fpath, input_dir))
 
 ---
 
 ## Trigger Condition
 
-Specification requires that all regular files contained within an extracted-function subdirectory appear sorted by filename. The code uses os.walk and sorts files per-directory, so when subdirectories exist the overall list is not globally sorted. In the counterexample, the code returns ['dir/file-cpp/z.txt', 'dir/file-cpp/sub/a.txt'] but the specification demands ['dir/file-cpp/sub/a.txt', 'dir/file-cpp/z.txt'].
+The code never removes duplicates. If the same extracted directory is visited multiple times (e.g., because source_files contains duplicate entries), the same relative path is appended multiple times. The specification forbids any duplicate file identifiers.
 
 ---
 
 ## How to trigger the bug
 
-When an extracted-function subdirectory (e.g., `src/file-cpp/`) contains both root-level files and a nested subdirectory with files, `os.walk` traverses top-down — root-level files are yielded before child-directory files. Since sorting is per-directory, the overall result is not globally sorted by filename, violating the spec requirement.
+The function iterates through modules and their source_files, building extracted directories for each source file. When source_files contains a duplicate entry (e.g., `["foo.py", "foo.py"]`), the same extracted directory (`input_dir/foo-py/`) is walked multiple times. Each walk appends the same relative path to the result list. The function never deduplicates the list before returning it.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `phases_data` | `{"phases": [{"phase": 1, "modules": [{"source_files": ["src/file.cpp"]}]}]}` |
-| `phase_num` | `1` |
-| `input_dir` | path to directory containing `src/file-cpp/z.txt` and `src/file-cpp/sub/a.txt` |
+| phases_data | `{"phases": [{"phase": 1, "modules": [{"source_files": ["foo.py", "foo.py"]}]}]}` |
+| phase_num | `1` |
+| input_dir | temp directory containing `foo-py/some_func.py` |
 
 ### Expected (spec-correct) Output
 
-`["src/file-cpp/sub/a.txt", "src/file-cpp/z.txt"]` — all regular files sorted by filename globally (a.txt < z.txt)
+`['foo-py/some_func.py']` — each file identifier appears exactly once, in sorted order.
 
 ### Actual (buggy) Output
 
-`["src/file-cpp/z.txt", "src/file-cpp/sub/a.txt"]` — os.walk top-down order (root first, then subdirectory)
+`['foo-py/some_func.py', 'foo-py/some_func.py']` — the same relative path appears twice because the extracted directory was visited twice.
 
 ### How to Reproduce
 
 Step-by-step instructions to trigger the bug manually:
 
-1.  Navigate to the repo root.
-2.  Create a directory structure:
-    ```
-    /tmp/test/input_dir/src/file-cpp/
-        z.txt
-        sub/
-            a.txt
-    ```
-3.  Run the following snippet (uses the package entry point):
+1. Navigate to the repo root.
+2. Run the following snippet (uses the package entry point):
 
 ```python
-import os, sys
-sys.path.insert(0, "/path/to/repo")
+import tempfile, os, shutil
 from src.file_utils import _get_phase_files
 
-phases_data = {
-    "phases": [
-        {"phase": 1, "modules": [{"source_files": ["src/file.cpp"]}]}
-    ]
-}
-result = _get_phase_files(phases_data, 1, "/tmp/test/input_dir")
+tmpdir = tempfile.mkdtemp()
+input_dir = os.path.join(tmpdir, 'extracted')
+os.makedirs(input_dir)
+extracted_dir = os.path.join(input_dir, 'foo-py')
+os.makedirs(extracted_dir)
+with open(os.path.join(extracted_dir, 'some_func.py'), 'w') as f:
+    f.write('def some_func(): pass')
+
+phases_data = {"phases": [{"phase": 1, "modules": [{"source_files": ["foo.py", "foo.py"]}]}]}
+result = _get_phase_files(phases_data, 1, input_dir)
+
 print(result)
-# actual (buggy) output: ['src/file-cpp/z.txt', 'src/file-cpp/sub/a.txt']
-# expected (correct) output: ['src/file-cpp/sub/a.txt', 'src/file-cpp/z.txt']
+# actual (buggy) output: ['foo-py/some_func.py', 'foo-py/some_func.py']
+# expected (correct) output: ['foo-py/some_func.py']
+
+shutil.rmtree(tmpdir)
 ```
 
 ---
@@ -122,94 +88,78 @@ print(result)
 ## Probe Script
 
 ```python
-"""Probe script for _get_phase_files bug: os.walk order vs spec-required sort order."""
 import sys
 import os
-import json
 import tempfile
-
-# ---------- create a reproducible trigger scenario ----------
-#
-# The spec says: "Within each extracted-function subdirectory, contained
-# regular files appear in lexicographically sorted order by filename."
-# When a subdirectory exists under the extracted-function directory, os.walk
-# visits files in the parent before files in the child (top-down).  This
-# violates the global-sort requirement.
-#
-# Trigger: create an extracted-dir that contains both a root-level file
-# ("z.txt") and a child-directory file ("sub/a.txt").  The spec demands
-# [".../sub/a.txt", ".../z.txt"] (alphabetical by filename), but os.walk
-# returns [".../z.txt", ".../sub/a.txt"].
-# ----------------------------------------------------------------
-
-# Project root – needed so that `import src` resolves this project
-PROJ_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, PROJ_ROOT)
+import shutil
 
 try:
-    from src.file_utils import _get_phase_files
-except ImportError as e:
-    print(f"ERROR: cannot import _get_phase_files: {e}")
+    from src.file_utils import _get_phase_files, _is_metadata_sidecar
+except Exception as e:
+    print(f'ERROR: {e}')
     sys.exit(1)
 
-# Build the fixture inside a fresh temporary directory (self-contained).
-tmp_dir = tempfile.mkdtemp(prefix="probe_get_phase_files_")
+# Create a temporary input_dir that mimics extracted function structure
+tmpdir = tempfile.mkdtemp(prefix='probe_get_phase_files_')
+input_dir = os.path.join(tmpdir, 'extracted')
+os.makedirs(input_dir)
+
+# Create an extracted directory "foo-py" with one extracted function file inside
+extracted_dir = os.path.join(input_dir, 'foo-py')
+os.makedirs(extracted_dir)
+func_file = os.path.join(extracted_dir, 'some_func.py')
+with open(func_file, 'w') as f:
+    f.write('def some_func(): pass')
+
+# Also create a metadata sidecar that should be excluded
+meta_file = os.path.join(extracted_dir, 'some_func.py.spec.json')
+with open(meta_file, 'w') as f:
+    f.write('{}')
+
+# Build phases_data where source_files contains a duplicate entry for "foo.py"
+phases_data = {
+    "phases": [
+        {
+            "phase": 1,
+            "modules": [
+                {
+                    "source_files": ["foo.py", "foo.py"]  # duplicate!
+                }
+            ]
+        }
+    ]
+}
 
 try:
-    input_dir = os.path.join(tmp_dir, "input_dir")
-    os.makedirs(input_dir)
-
-    # extracted-function subdirectory: src/file-cpp (file.cpp → file-cpp convention)
-    extract_subdir = os.path.join(input_dir, "src", "file-cpp")
-    child_dir = os.path.join(extract_subdir, "sub")
-    os.makedirs(child_dir)
-
-    # Root-level file inside extracted_dir (lexicographically "z.txt" > "a.txt")
-    root_z = os.path.join(extract_subdir, "z.txt")
-    with open(root_z, "w") as f:
-        f.write("z")
-
-    # Nested file inside sub/ (lexicographically "a.txt" < "z.txt")
-    child_a = os.path.join(child_dir, "a.txt")
-    with open(child_a, "w") as f:
-        f.write("a")
-
-    phases_data = {
-        "phases": [
-            {
-                "phase": 1,
-                "modules": [
-                    {
-                        "source_files": ["src/file.cpp"]
-                    }
-                ]
-            }
-        ]
-    }
-
-    actual = _get_phase_files(phases_data, 1, input_dir)
-
-    # Expected (spec-correct): all regular files sorted by filename globally
-    expected = sorted(actual, key=lambda p: os.path.basename(p))
-
-    passed = actual != expected  # True → bug reproduced
-
-    if passed:
-        print(
-            f"CONFIRMED — actual (os.walk order): {actual!r} | "
-            f"expected (spec order): {expected!r}"
-        )
-    else:
-        print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
-
+    result = _get_phase_files(phases_data, 1, input_dir)
+except Exception as e:
+    print(f'ERROR: _get_phase_files raised: {e}')
+    sys.exit(1)
 finally:
-    # Clean up the temporary fixture
-    import shutil
-    shutil.rmtree(tmp_dir, ignore_errors=True)
+    shutil.rmtree(tmpdir)
+
+# Check that metadata sidecar files are excluded
+for path in result:
+    if _is_metadata_sidecar(path):
+        print(f'ERROR: metadata sidecar file found in result: {path}')
+        sys.exit(1)
+
+# Spec claim: "No file identifier appears more than once in the returned list."
+# Bug claim: duplicates occur when source_files has duplicate entries
+has_duplicates = len(result) != len(set(result))
+unique_count = len(set(result))
+total_count = len(result)
+
+if has_duplicates:
+    print(f'CONFIRMED — actual: {result!r} | expected: non-duplicate list of length 1')
+    print(f'  total entries={total_count}, unique={unique_count}, duplicates={total_count - unique_count}')
+else:
+    print(f'NOT CONFIRMED — no duplicates found (length={total_count}, unique={unique_count})')
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual (os.walk order): ['src/file-cpp/z.txt', 'src/file-cpp/sub/a.txt'] | expected (spec order): ['src/file-cpp/sub/a.txt', 'src/file-cpp/z.txt']
+CONFIRMED — actual: ['foo-py/some_func.py', 'foo-py/some_func.py'] | expected: non-duplicate list of length 1
+  total entries=2, unique=1, duplicates=1
 ```

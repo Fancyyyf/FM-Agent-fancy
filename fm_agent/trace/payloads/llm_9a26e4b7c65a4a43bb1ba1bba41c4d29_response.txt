@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A file at phases_path containing a single byte 0x80 when the locale encoding is UTF-8. The operation json.load(f) triggers a UnicodeDecodeError during decoding, which is not caught, causing the function to raise an exception instead of returning a list.",
-  "offending_statements": "Line 3:     try:\nLine 4:         with open(phases_path, \"r\") as f:\nLine 5:             data = json.load(f)\nLine 6:     except OSError as exc:\nLine 7:         return [f\"phases.json could not be read: {exc}\"]\nLine 8:     except json.JSONDecodeError as exc:\nLine 9:         return [f\"phases.json is not valid JSON: {exc}\"]",
-  "reason": "The specification requires that the function always returns within finite time regardless of inputs, but the code only catches OSError and JSONDecodeError. A file that cannot be decoded from text (e.g., invalid UTF-8) causes a UnicodeDecodeError, which is not handled, so the function raises an exception and never returns a list, violating the specification."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/proj'; modified_functions={'/tmp/proj/.hidden': {'added': ['func1']}}; classes=('added',). Code returns {'.hidden::func1': '/tmp/proj/fm_agent/extracted_functions/.hidden/func1'} but specification requires {'-hidden::func1': '/tmp/proj/fm_agent/extracted_functions/-hidden/func1.hidden'}",
-  "offending_statements": "Line 23: if last_dot > 0:",
-  "reason": "The specification says that if the source file basename contains any dot, the final dot is replaced by a hyphen to form the directory name. The code only does this when the final dot is not at position 0 (last_dot > 0). For a file like '.hidden', the dot is at index 0, so the code treats it as having no dot, leaving the basename unchanged and setting ext=''. The specification's exception 'When a source file's basename contains no dot' does not apply because '.hidden' contains a dot, so the rule should be applied, resulting in dir_name='-hidden' and ext='hidden'. Thus the code produces an incorrect FQN and file path."
-}

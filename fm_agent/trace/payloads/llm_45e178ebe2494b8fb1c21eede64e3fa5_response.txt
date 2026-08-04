@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Assume self.timeout is 10 seconds. The call to self.request('initialize', ...) takes 8 seconds to complete. Then self.open_document is instant. At line 26, deadline = time.monotonic() + 10, which is 18 seconds after the call entry. The server sends an 'elp/status' notification with params.status='Running' 3 seconds after open_document (11 seconds total from call entry). The while loop exits when self._status becomes 'running' at that point, and the method returns server_info. According to the specification, a TimeoutError should be raised because the running state was not reached within self.timeout (10 seconds) measured from the call entry.",
-  "offending_statements": "Line 26: deadline = time.monotonic() + self.timeout",
-  "reason": "The specification requires that the timeout deadline be measured from the call entry, but the code sets it after the initialize request and open_document, potentially allowing the method to succeed when it should time out."
-}

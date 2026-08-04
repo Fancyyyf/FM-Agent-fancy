@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Concrete input: lang_key = \"rust\", lines = [\"fn foo() {\", \"}\"], i = 0, has_test_attr = False, and the fn regex matches on line 0. The pre-condition from the preceding block (Path B2) is satisfied. The code will execute lines 121–126, find the opening brace on line 0, set sig_end = 0, compute i = _find_brace_end(lines, 0) + 1 = 2, and continue the outer loop. The function list remains empty. The specification requires detecting top-level function definitions; for this input the correct result is [(\"foo\", 0, 1)].",
-  "offending_statements": "Line 121: for look in range(i, min(i + 10, len(lines))):\nLine 122: if '{' in lines[look]:\nLine 123: sig_end = look\nLine 124: break\nLine 125: i = _find_brace_end(lines, sig_end) + 1\nLine 126: continue",
-  "reason": "The code unconditionally executes lines 121–126 for every Rust function definition that reaches this block, skipping the entire function body without adding it to the functions list. This omits valid top-level Rust functions from the output, violating the specification that requires a tuple for each detected function definition."
-}

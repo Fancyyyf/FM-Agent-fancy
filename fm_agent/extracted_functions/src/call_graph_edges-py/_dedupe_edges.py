@@ -1,20 +1,3 @@
-# [SPEC]
-# Unit: src/call_graph_edges-py/_dedupe_edges.py
-#
-# _dedupe_edges(edges: Iterable[CallEdge]) -> list[CallEdge]
-#
-# Pre-condition:
-#   - edges is an iterable of CallEdge objects
-#
-# Post-condition:
-#   - Returns a list containing exactly one occurrence of each distinct CallEdge present in
-#     edges, preserving the relative order of first occurrences
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _dedupe_edges(edges: Iterable[CallEdge]) -> list[CallEdge]:
     merged = {}
     for edge in edges:

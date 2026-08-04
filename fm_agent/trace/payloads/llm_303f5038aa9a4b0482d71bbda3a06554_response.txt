@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "{\"code\": -32600, \"message\": \"Invalid Request\"}",
-  "offending_statements": "Line 2: super().__init__(str(error))",
-  "reason": "The code sets the exception message to str(error), which renders the Python literal representation of the entire error dict (e.g., \"{'code': -32600, 'message': 'Invalid Request'}\"). Specification B requires a string representation derived from the error dict that is suitable as an exception message. In the context of JSON-RPC errors, this means using the human-readable 'message' field (e.g., 'Invalid Request'). The generic dict string is not suitable and violates the specification."
-}

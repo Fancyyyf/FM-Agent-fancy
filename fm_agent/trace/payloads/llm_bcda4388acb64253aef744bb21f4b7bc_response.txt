@@ -1,1 +1,0 @@
-{"post_condition": "The function returns True if and only if the file formed by joining work_dir with 'phases.json' exists, is a regular file, and its contents are valid JSON. Otherwise, it returns False. The function has no side effects."}

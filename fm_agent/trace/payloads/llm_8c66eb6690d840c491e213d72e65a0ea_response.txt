@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "work_dir contains a valid phases.json with content {\"phases\": [{\"phase\": \"abc\"}]} and the file spec_prompts/domain_context/engine_overview.txt exists. The code raises a ValueError when evaluating f\"phase_{phase_num:02d}_types.txt\", whereas the specification requires returning False.",
-  "offending_statements": "Line 18: types_path = os.path.join(domain_dir, f\"phase_{phase_num:02d}_types.txt\")",
-  "reason": "The code assumes phase_num is numeric, but phase_num may be a non-numeric string that is not None. The specification requires returning False when a phase key is non-numeric, not raising an exception."
-}

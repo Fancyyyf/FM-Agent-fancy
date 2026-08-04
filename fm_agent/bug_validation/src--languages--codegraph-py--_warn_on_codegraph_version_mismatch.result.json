@@ -1,11 +1,11 @@
 {
   "id": "src--languages--codegraph-py--_warn_on_codegraph_version_mismatch",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_warn_on_codegraph_version_mismatch.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/_warn_on_codegraph_version_mismatch.py",
   "function_name": "_warn_on_codegraph_version_mismatch",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_warn_on_codegraph_version_mismatch.py",
   "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_warn_on_codegraph_version_mismatch.md",
-  "probe_stdout": "CONFIRMED — WARNING emitted despite versions matching after normalization: \"codegraph 'v1.0' does not match the pinned '1.0' (fm-agent.toml [codegraph].version); re-run install.sh to update.\"\n",
-  "trigger_summary": "The code removes leading 'v' only from the configured version but not from the command output, causing a false WARNING when both versions are semantically identical (e.g., configured 'v1.0' and output 'v1.0')."
+  "probe_stdout": "CONFIRMED — bug reproduced: no warning logged when executable reports empty version string, but spec requires warning when versions differ\n  want: '1.0.0' (from CODEGRAPH_VERSION=v1.0.0)\n  got:  '' (empty, from mocked subprocess.run stdout='\\n')\n  Root cause: 'if got and got != want' short-circuits on falsy got before checking inequality\n",
+  "trigger_summary": "When the codegraph executable reports an empty version string (got=''), the condition 'if got and got != want' short-circuits on falsy got, skipping the spec-required warning for version mismatch."
 }

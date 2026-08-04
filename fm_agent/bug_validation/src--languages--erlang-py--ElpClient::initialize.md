@@ -1,6 +1,6 @@
 # Bug Report: ElpClient::initialize
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::initialize.py`
+**Source file:** `src/languages/erlang-py/ElpClient::initialize.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,63 +12,47 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Completes the LSP initialization handshake: sends the "initialize"
-    request with client capabilities, then sends the "initialized"
-    notification
-  - Opens the document at bootstrap_path on the server with the text content
-    matching bootstrap_source (or the file contents of bootstrap_path when
-    bootstrap_source is None)
-  - Blocks until the server's reported status indicates it has reached a
-    running state, or raises TimeoutError when that does not occur within
-    self.timeout seconds measured from the call entry
-  - Returns the "serverInfo" sub-dict from the server's "initialize"
-    response, or None when the response is missing, is not a dict, or does
-    not contain a "serverInfo" key
-  - Raises RuntimeError when the ELP subprocess is not running (stdin
-    unavailable) or the JSON-RPC channel encounters an unrecoverable error
-  - Raises TimeoutError when the server fails to reach the running state
-    within the deadline or the subprocess stops producing messages
+The ELP server has received the LSP initialize request conveying: the workspace root URI, the workspace folder list (containing a single folder at self.root_uri named after the project directory), client identity 'fm-agent' version '0.1.0', and requested capabilities (server status notifications, workspace configuration, hierarchical document symbols with no dynamic registration). The ELP server has received the 'initialized' notification. The text document at bootstrap_path has been opened on the server  when bootstrap_source is not None, the server uses the provided source text; when bootstrap_source is None, the server reads the file from disk. The ELP server has reached the 'running' status after processing all server messages up to and including the status transition. When the initialize response is a dict, returns the value associated with the key 'serverInfo' from that dict, or None if the key is absent. When the initialize response is not a dict, returns None. Raises an exception when the server is unreachable, when the server does not reach running status before the message-processing deadline, or when a malformed server message is received.
 
 ---
 
 ### Actual Behavior
 
-If the method returns normally, then the return value is (R.get('serverInfo') if type(R) == dict else None) where R is the 'result' field of the JSON-RPC 'initialize' response; the 'initialize' request, the 'initialized' notification, and the 'textDocument/didOpen' notification for bootstrap_path were all successfully sent; the while loop processed server messages until str(self._status).lower() == 'running', so self._status indicates 'running'; all server requests received before that status were appropriately responded to, and any 'elp/status' notifications updated self._status. The deadline for message reception was fixed at loop entry (time.monotonic() + self.timeout). If the method raises an exception, it is either TimeoutError (from request or _next_message exceeding self.timeout), RuntimeError (from request error, retry exhaustion, notify failure, or reader thread exception), or IOError (from open_document when bootstrap_source is None and the file cannot be read), and the client state may be partially modified (e.g., 'initialize' sent but status not 'running'). Formal: (return(server_info)  exception)  (R: R = request('initialize',...).result  server_info = (R.get('serverInfo') if dict(R) else None)  sent('initialized')  sent(didOpen(bootstrap_path,...))  (str(self._status).lower() = 'running')  m  received_before('running'): handled(m)). If exception e raised, then e  {TimeoutError, RuntimeError, IOError}  (some_side_effects  none).
+If the method completes without raising an exception, it returns a value `server_info` equal to `(result.get('serverInfo') if isinstance(result, dict) else None)`, where `result` is the parsed JSON-RPC response of the 'initialize' request. The server connection remains active, the 'initialized' notification has been sent, the document at `bootstrap_path` has been opened (using `bootstrap_source` if not None, otherwise referencing the file on disk), and `str(self._status).lower() == 'running'` holds, meaning the server has reached the running state. The polling loop was bounded by a deadline of `time.monotonic() + self.timeout`. If any step fails (server unreachable, JSON-RPC error response, connection loss, message timeout, or malformed server message), an exception is raised and the method does not return; the state of the client and server may be inconsistent. Formally: Pre(self, bootstrap_path, bootstrap_source)  ((NormalReturn  ( server_info: return_value = server_info  server_info = (resp['serverInfo'] if isinstance(resp, dict) else None)  self.connection_active  str(self._status).lower() = 'running'  notified('initialized')  doc_opened(bootstrap_path, bootstrap_source)))  (Exception  )).
 
 ---
 
 ## Code Evidence
 
-Line 26: deadline = time.monotonic() + self.timeout
+Line 2:         result = self.request(
 
 ---
 
 ## Trigger Condition
 
-The specification requires that the timeout deadline be measured from the call entry, but the code sets it after the initialize request and open_document, potentially allowing the method to succeed when it should time out.
+The specification lists only three specific conditions under which an exception is raised: server unreachable, server does not reach running status before deadline, or malformed server message. The code raises an exception when the server returns a JSON-RPC error response (e.g., 'Method not found') which does not fall under any of those conditions. According to the specification, the method should return server_info in all other cases, so a JSON-RPC error leads to a mismatch.
 
 ---
 
 ## How to trigger the bug
 
-The `deadline` variable on line 239 of `src/languages/erlang.py` (line 26 in the extracted function) is computed after `self.request("initialize", ...)` (which can block for up to `self.timeout` seconds), `self.notify("initialized")`, and `self.open_document()`. The specification requires the timeout to be measured from the `initialize` method's call entry, so the effective timeout window is `self.timeout + time_spent_in_request_and_handshake` instead of just `self.timeout`.
+When the ELP server returns a JSON-RPC error response (e.g. `{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found"}}`) in reply to the `initialize` request, `ElpClient._wait_for_response()` raises `RuntimeError(f"ELP request failed: {error}")` at line 189 of `src/languages/erlang.py`. The specification enumerates three exception-raising conditions — server unreachable, timeout, and malformed server messages — and a JSON-RPC error response does not match any of them. The spec therefore implies the method should return a normal value (e.g. `None`) in this case, but the code raises an exception instead.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `self.timeout` | `1.0` |
-| Injected delay in `request()` | `0.6s` |
-| `bootstrap_path` | `"/tmp/bootstrap.erl"` |
-| `bootstrap_source` | `"-module(bootstrap)."` |
+| `bootstrap_path` | `"/tmp/test.erl"` |
+| `bootstrap_source` | `"-module(test)."` |
+| Simulated server response | `{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found"}}` |
 
 ### Expected (spec-correct) Output
 
-`deadline = entry_time + self.timeout` (timeout measured from call entry)
+`None` — the spec does not list JSON-RPC error response as an exception-raising condition, so the method should return normally.
 
 ### Actual (buggy) Output
 
-`deadline ≈ entry_time + request_delay + self.timeout` (timeout measured after handshake completes)
+`RuntimeError("ELP request failed: {'code': -32601, 'message': 'Method not found'}")` — the code raises an exception on any non-`_ContentModifiedError` JSON-RPC error response.
 
 ### How to Reproduce
 
@@ -78,40 +62,28 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-from src.languages.erlang import ElpClient
-import time
+import queue
+from unittest.mock import MagicMock
+import src.languages.erlang as erlang
 
-client = ElpClient.__new__(ElpClient)
+error_msg = {"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found"}}
+
+client = erlang.ElpClient.__new__(erlang.ElpClient)
 client.proj_dir = "/tmp/test"
 client.root_uri = "file:///tmp/test"
-client.timeout = 1.0
-client._messages = ...
-# Set up all required attributes manually or via __init__ with a temp dir
+client.timeout = 60
+client._messages = queue.Queue()
+client._next_id = 1
+client._status = None
+client._write_lock = MagicMock()
+client._proc = MagicMock()
+client._proc.stdin = MagicMock()
+client._reader = MagicMock()
 
-entry_time = time.monotonic()
-
-# Override request to simulate a slow handshake
-def fake_request(method, params=None):
-    time.sleep(0.6)
-    return {"serverInfo": {"name": "elp", "version": "1.0"}}
-
-client.request = fake_request
-client.notify = lambda *a, **kw: None
-client.open_document = lambda *a, **kw: None
-client._handle_server_message = lambda msg: None
-
-captured = []
-def capture_next_message(deadline):
-    captured.append(deadline)
-    client._status = "running"
-    return {}
-
-client._next_message = capture_next_message
-
-client.initialize("/tmp/bootstrap.erl", "-module(bootstrap).")
-
-# actual (buggy) output: captured[0] ≈ entry_time + 0.6 + 1.0
-# expected (correct) output: captured[0] = entry_time + 1.0
+client._messages.put(error_msg)
+client.initialize("/tmp/test.erl", "-module(test).")
+# actual (buggy) output: RuntimeError("ELP request failed: {'code': -32601, 'message': 'Method not found'}")
+# expected (correct) output: None (no exception)
 ```
 
 ---
@@ -119,101 +91,70 @@ client.initialize("/tmp/bootstrap.erl", "-module(bootstrap).")
 ## Probe Script
 
 ```python
-"""Probe for ElpClient.initialize bug: deadline computed after request(), not from call entry."""
+"""Probe for bug src--languages--erlang-py--ElpClient::initialize.
+
+Bug: initialize() raises RuntimeError when ELP returns a JSON-RPC error response
+(e.g. "Method not found"), but the spec says exceptions are only raised for:
+server unreachable, timeout, or malformed server messages.
+"""
 
 import os
 import sys
+import queue
 import tempfile
-import time
+from unittest.mock import MagicMock
 
-bug_id = "src--languages--erlang-py--ElpClient::initialize"
+# Ensure the repo root is on sys.path so that config.py resolves.
+_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
-# Ensure the repo root is on sys.path so we can import the package.
-repo_root = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../..")
-if repo_root not in sys.path:
-    sys.path.insert(0, repo_root)
+import src.languages.erlang as erlang  # public entry point
 
-# Create a fresh temporary workspace for all fixtures and artifacts.
-workspace = tempfile.mkdtemp(prefix="bug_probe_", dir="/tmp")
-os.chdir(workspace)
+# FM-Agent self-validation guard: work in a fresh temp directory.
+_original_cwd = os.getcwd()
+_temp_dir = tempfile.mkdtemp(prefix="probe_erlang_init_")
+os.chdir(_temp_dir)
 
 try:
-    from src.languages.erlang import ElpClient
+    # Simulated JSON-RPC error response from ELP (e.g. "Method not found").
+    error_msg = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "error": {"code": -32601, "message": "Method not found"},
+    }
 
-    client = ElpClient(workspace)
-    client.timeout = 1.0  # known short timeout for deterministic test
+    # Construct ElpClient without spawning a real subprocess.
+    client = erlang.ElpClient.__new__(erlang.ElpClient)
+    client.proj_dir = _temp_dir
+    client.root_uri = "file://" + _temp_dir
+    client.timeout = 60
+    client._messages = queue.Queue()
+    client._next_id = 1
+    client._status = None
+    client._write_lock = MagicMock()
+    client._proc = MagicMock()
+    client._proc.stdin = MagicMock()
+    client._reader = MagicMock()
 
-    # Override request(): simulate a slow LSP initialize handshake that
-    # consumes most of the timeout budget before the deadline is even set.
-    def fake_request(method, params=None):
-        time.sleep(0.6)  # 60% of the 1s timeout wasted before deadline is computed
-        return {"serverInfo": {"name": "elp", "version": "1.0"}}
+    # Pre-seed the message queue so _wait_for_response sees the error.
+    client._messages.put(error_msg)
 
-    client.request = fake_request
-
-    # Remaining methods must be no-ops so we don't hit real I/O.
-    client.notify = lambda method, params=None: None
-    client.open_document = lambda path, source=None: None
-
-    # _handle_server_message is a no-op; we control status directly in _next_message.
-    client._handle_server_message = lambda msg: None
-
-    # Override _next_message to capture the deadline and transition status to "running".
-    captured_deadlines = []
-
-    def capture_next_message(deadline):
-        captured_deadlines.append(deadline)
-        # Simulate an elp/status notification that makes the while-loop exit.
-        client._status = "running"
-        return {"method": "elp/status", "params": {"status": "running"}}
-
-    client._next_message = capture_next_message
-
-    entry_time = time.monotonic()
-    client.initialize("/tmp/bootstrap.erl", "-module(bootstrap).")
-
-    if len(captured_deadlines) == 0:
-        print("NOT CONFIRMED — _next_message was never called")
-        sys.exit(0)
-
-    actual_deadline = captured_deadlines[0]
-    expected_deadline = entry_time + client.timeout
-
-    # The spec requires the deadline to be measured from call entry.
-    # The buggy code measures it after request(), so actual_deadline is
-    # entry_time + request_delay + timeout instead of entry_time + timeout.
-    tolerance = 0.2  # allow for slight timing jitter
-    if actual_deadline > expected_deadline + tolerance:
-        delta = actual_deadline - expected_deadline
-        print(
-            f"CONFIRMED — actual deadline: {actual_deadline:.3f}"
-            f" > expected: {expected_deadline:.3f}"
-            f" (delta: {delta:.3f}s, spec requires deadline from call entry)"
-        )
-    else:
-        print(
-            f"NOT CONFIRMED — actual deadline {actual_deadline:.3f}"
-            f" <= expected {expected_deadline:.3f} (+{tolerance}s tolerance)"
-        )
-
-except ImportError as e:
-    print(f"ERROR: Failed to import ElpClient: {e}")
-    sys.exit(1)
-except Exception as e:
-    print(f"ERROR: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    # Call the public initialize() — this must raise RuntimeError.
+    result = client.initialize("/tmp/test.erl", "-module(test).")
+    print(f"NOT CONFIRMED — no exception raised, returned: {result!r}")
+except RuntimeError as exc:
+    print(f"CONFIRMED — bug confirmed: RuntimeError raised for JSON-RPC error response: {exc}")
+except Exception as exc:
+    print(f"CONFIRMED — exception raised: {type(exc).__name__}: {exc}")
 finally:
+    os.chdir(_original_cwd)
     import shutil
-    try:
-        shutil.rmtree(workspace, ignore_errors=True)
-    except Exception:
-        pass
+    shutil.rmtree(_temp_dir, ignore_errors=True)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual deadline: 6546.858 > expected: 6546.257 (delta: 0.601s, spec requires deadline from call entry)
+CONFIRMED — bug confirmed: RuntimeError raised for JSON-RPC error response: ELP request failed: {'code': -32601, 'message': 'Method not found'}
 ```

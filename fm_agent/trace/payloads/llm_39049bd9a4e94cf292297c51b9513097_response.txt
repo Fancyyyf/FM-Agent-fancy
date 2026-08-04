@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string `fqn` defined as follows:\n\nLet `norm = file_path.replace(os.sep, '/')`\nLet `d = os.path.dirname(norm)`\nLet `base = os.path.basename(norm)`\nLet `last_dot = base.rfind('.')`\nIf `last_dot > 0`:\n    `dashed = base[:last_dot] + '-' + base[last_dot+1:]`\nElse:\n    `dashed = base`\nLet `parts = [p for p in d.split('/') if p] + [dashed, name]`\nThen `fqn = '::'.join(parts)`.\n\nNo side effects; the function always returns this value for given valid inputs (assuming `os.sep` and `os.path` functions behave standardly)."
-}

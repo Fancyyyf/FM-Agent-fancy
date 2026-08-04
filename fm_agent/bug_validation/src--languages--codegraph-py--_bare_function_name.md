@@ -1,6 +1,6 @@
-# Bug Report: _bare_function_name
+# Bug Report: `_bare_function_name`
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_bare_function_name.py`
+**Source file:** `src/languages/codegraph.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,87 +12,46 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a string containing the bare function identifier extracted from name,
-    following these rules in order:
-
-  1. Strips leading/trailing whitespace. If the result is empty, returns "".
-
-  2. Determines a "tail" string:
-     - Initially tail = name (after stripping).
-     - If tail contains "::", tail is set to the substring after the last "::",
-       with leading whitespace removed.
-     - Else if tail contains ".", tail is set to the substring after the last ".",
-       with leading whitespace removed.
-
-  3. Operator overload detection (applied to tail):
-     If tail starts with "operator":
-       - Let rest = tail[len("operator"):].lstrip()
-       - If rest starts with "[]", returns "operator[]".
-       - If rest starts with "()", returns "operator()".
-       - If rest matches the pattern "new" optionally followed by whitespace
-         and "[" whitespace "]", returns "operator new[]" if brackets are present,
-         otherwise "operator new".
-       - If rest matches the pattern "delete" optionally followed by whitespace
-         and "[" whitespace "]", returns "operator delete[]" if brackets are present,
-         otherwise "operator delete".
-       - Otherwise, collects consecutive characters from rest that are in the set
-         + - * / % & | ^ ~ ! = < > , and returns "operator" + the collected symbols.
-
-  4. If no operator result was produced, attempts the following regex matches on
-     the original stripped name (before tail modification):
-       a. `(?:^|::|\.)(\w+)$`  returns the rightmost identifier component
-          (sequence of word characters) preceded by start-of-string, "::", or ".".
-       b. `\(\s*\*\s*(\w+)\s*\)`  returns the identifier inside a
-          function-pointer expression like "(*func)(...)".
-       c. `\*\s*(\w+)`  returns the identifier after a leading "*" (pointer
-          return syntax).
-       d. `^(\w+)`  returns the leading sequence of word characters.
-
-  5. If none of the above matches, returns the stripped name unchanged.
-
-  - Because the extraction patterns use \w+, template parameter brackets (<...>)
-    and parenthesized parameter/argument lists are implicitly excluded from the
-    returned identifier, except for operator names where they are explicitly
-    included as part of the operator representation.
+Returns the bare unqualified function or method name with all tree-sitter decorations removed. The result is empty exactly when the input is empty or whitespace-only. For names containing the 'operator' keyword, the result is the complete operator specifier: the keyword 'operator' followed by the operator symbol or keyword suffix, with any separating whitespace collapsed. For all other names, the result is the first alphabetic or alphanumeric identifier token extracted after stripping prefix decorations and before any trailing parameter lists, template bodies, or type annotations. The returned string contains no '::' or '.' qualifier separators. If no identifier token can be extracted from a non-empty input, the stripped input is returned unchanged.
 
 ---
 
 ### Actual Behavior
 
-The function returns a string r that is the bare function identifier extracted from the input name. Let s = name.strip(). If s is empty, r = ''. Otherwise, define tail = s if neither '::' nor '.' appear in s; else tail = (s.rsplit('::', 1)[1] if '::' in s else s.rsplit('.', 1)[1]).lstrip(). If tail starts with 'operator', then: let rest = tail[8:].lstrip(); if rest starts with '[]' then r = 'operator[]'; else if rest starts with '()' then r = 'operator()'; else if re.fullmatch(r'new(?:\s*\[\s*\])?', rest) then r = 'operator new[]' if '[' in rest else 'operator new'; else if re.fullmatch(r'delete(?:\s*\[\s*\])?', rest) then r = 'operator delete[]' if '[' in rest else 'operator delete'; else let sym be the longest prefix of rest consisting only of characters from the set "+-*/%&|^~!=<>,"; if sym is nonempty then r = 'operator' + sym; else fall through. If no return yet, then if re.search(r'(?:^|::|\.)(\w+)$', s) then r = the captured word; else if re.match(r'\(\s*\*\s*(\w+)\s*\)', s) then r = the captured identifier; else if re.match(r'\*\s*(\w+)', s) then r = the captured identifier; else if re.match(r'^(\w+)', s) then r = the captured word; else r = s. The result is always a string without leading/trailing whitespace, representing either a simple identifier or an operator name (e.g., 'operator==', 'operator new[]'). In all cases, the function terminates without raising exceptions.
+The function returns a string r. Let s = name.strip(). If s is empty, r = ''. Otherwise, define tail = (s.rsplit('::', 1)[1].lstrip() if '::' in s else s.rsplit('.', 1)[1].lstrip()) if '.' in s else s. If tail.startswith('operator'): let rest = tail[8:].lstrip(); if rest.startswith('[]'): r = 'operator[]'; elif rest.startswith('()'): r = 'operator()'; elif rest is either exactly 'new' or consists of 'new' followed by optional whitespace, then '[', optional whitespace, ']' with nothing else, then r = 'operator new[]' if '[' in rest else 'operator new'; elif rest is either exactly 'delete' or consists of 'delete' followed by optional whitespace, then '[', optional whitespace, ']' with nothing else, then r = 'operator delete[]' if '[' in rest else 'operator delete'; else: let prefix be the longest initial substring of rest containing only characters from {+, -, *, /, %, &, |, ^, ~, !, =, <, >, ,}; if prefix is not empty, r = 'operator' + prefix. If r is still unassigned, then examine s: if s ends with a sequence of word characters (alphanumeric or underscore) that is immediately preceded by either the start of the string, '::', or '.', r is that word sequence; else if s matches the pattern '(' followed by optional whitespace, '*', optional whitespace, a word, optional whitespace, ')', r is that word; else if s matches the pattern '*' followed by optional whitespace, a word, r is that word; else if s starts with a word, r is that word; else r = s.
 
 ---
 
 ## Code Evidence
 
-Line 41: if symbol:
-Line 42: return "operator" + "".join(symbol)
+Line 43: m = re.search(r'(?:^|::|\\.)(\\w+)$', name)
+Line 45: return m.group(1)
 
 ---
 
 ## Trigger Condition
 
-When tail starts with 'operator' but rest contains no consecutive operator symbols (e.g., 'Foo'), the specification requires returning 'operator' (the result of collecting zero symbols and concatenating). The code only returns if symbol is non-empty; otherwise it falls through to the regex patterns on the original name, which return 'operatorFoo' instead of 'operator'.
+For input `foo::bar -> int`, the qualifier `::` is correctly stripped in `tail = 'bar -> int'`, but the regex on line 49 searches the **original** `name` (not the stripped `tail`): `re.search(r'(?:^|::|\.)(\w+)$', 'foo::bar -> int')`. The last word `int` is preceded by a space, which does not satisfy `(?:^|::|\.)`, so the regex fails to match. The fallback at line 50 (`re.match(r'^(\w+)', name)`) then returns `'foo'` — the first word of the original string — instead of `'bar'`, which is the actual component after qualifier stripping.
 
 ---
 
 ## How to trigger the bug
 
-The function `_bare_function_name` (in `src/languages/codegraph.py`) is called with the name `"operatorFoo"`. After stripping and tail extraction, `tail` is `"operatorFoo"`. Since it starts with `"operator"`, the code processes `rest = "Foo"`. The loop collects zero operator symbols (none of F, o, o are in `+-*/%&|^~!=<>,`), so `symbol = []`. The guard `if symbol:` evaluates to `False`, so the operator block produces no return value. The code then falls through to the regex patterns on the original stripped name. The `^(\w+)` pattern on line 150 matches `"operatorFoo"` and returns it — instead of returning `"operator"` as the specification requires.
+Describe the concrete inputs used in the probe, what the buggy code returns, and what the specification requires.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| name | `"operatorFoo"` |
+| `name` | `'foo::bar -> int'` |
 
 ### Expected (spec-correct) Output
 
-`"operator"`
+`'bar'`
 
 ### Actual (buggy) Output
 
-`"operatorFoo"`
+`'foo'`
 
 ### How to Reproduce
 
@@ -104,9 +63,9 @@ Step-by-step instructions to trigger the bug manually:
 ```python
 from src.languages.codegraph import _bare_function_name
 
-result = _bare_function_name("operatorFoo")
-# actual (buggy) output: 'operatorFoo'
-# expected (correct) output: 'operator'
+result = _bare_function_name('foo::bar -> int')
+# actual (buggy) output: 'foo'
+# expected (correct) output: 'bar'
 ```
 
 ---
@@ -117,21 +76,23 @@ result = _bare_function_name("operatorFoo")
 import sys
 import os
 
-repo_root = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
-sys.path.insert(0, repo_root)
+# Ensure the repo root is on the path so that 'src.languages.codegraph' resolves
+repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
 
 try:
     from src.languages.codegraph import _bare_function_name
 
-    # When tail starts with 'operator' but rest contains no consecutive operator
-    # symbols (e.g. 'operatorFoo'), the spec requires returning 'operator' (the
-    # result of collecting zero symbols and concatenating). The code only returns
-    # if symbol is non-empty; otherwise it falls through to the regex patterns on
-    # the original name, which return 'operatorFoo' instead of 'operator'.
-    actual = _bare_function_name("operatorFoo")
-    expected = "operator"
-
-    passed = actual != expected
+    # The bug: line 49 searches on `name` (original decorated name), not `tail`
+    # (qualifier-stripped). For 'foo::bar -> int', the '::' qualifier is stripped
+    # to get 'bar' as the relevant component, but the regex on `name` fails to
+    # match 'int' (space before it doesn't satisfy (?:^|::|\.)), so the fallback
+    # at line 58 re.match(r'^(\w+)', 'foo::bar -> int') returns 'foo' which is the
+    # WRONG word — the spec requires 'bar' (the last qualifier component).
+    actual = _bare_function_name('foo::bar -> int')
+    expected = 'bar'
+    passed = actual != expected  # True means bug reproduced (actual != spec-correct)
 except Exception as e:
     print(f'ERROR: {e}')
     sys.exit(1)
@@ -145,5 +106,5 @@ else:
 ### Probe Output
 
 ```
-CONFIRMED — actual: 'operatorFoo' | expected: 'operator'
+CONFIRMED — actual: 'foo' | expected: 'bar'
 ```

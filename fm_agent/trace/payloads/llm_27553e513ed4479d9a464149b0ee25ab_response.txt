@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a set of distinct non-None phase numbers (integers, as per the pre‑condition) collected from two sources. 1) Every key k in ensure_changes[\"augmented\"] (if the key exists and the value is a mapping) for which k is not None is included. 2) For every change set c in *change_sets, and for every module m in c.get(\"modified_modules\", []), the value m.get(\"phase\") is included if it is not None. Formally, if we denote A = ensure_changes.get(\"augmented\", {}) and for each c ∈ change_sets, M(c) = c.get(\"modified_modules\", []), then the returned set is: {k | k ∈ A.keys() ∧ k ≠ None} ∪ {m.get(\"phase\") | c ∈ change_sets, m ∈ M(c) ∧ m.get(\"phase\") ≠ None}."
-}

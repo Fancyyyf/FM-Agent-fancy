@@ -1,37 +1,3 @@
-# [SPEC]
-# Unit: fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_extracted_file_to_source_rel.py
-#
-# _extracted_file_to_source_rel(extracted_rel) -> str
-#
-# Pre-condition:
-#   - extracted_rel is a relative path string whose last path component is a
-#     function file name, and the path contains at least one directory component
-#     that was derived from a source filename by replacing the last dot with a
-#     hyphen followed by a known language extension (the "extraction directory
-#     component"). The extraction layout is such that the extraction directory
-#     component's suffix after its last hyphen matches a key in EXT_TO_LANG.
-#
-# Post-condition:
-#   - Returns the source-file relative path obtained by scanning the path
-#     components from right to left (skipping the filename) to find the
-#     extraction directory component. Once found, the component's last hyphen
-#     and its following extension are replaced by a dot and the extension
-#     (e.g., "loader-cpp" -> "loader.cpp"). The resulting filename is
-#     prepended with any leading directory prefix (components before the
-#     extraction directory component), and the function file component is
-#     dropped. If no extraction directory component is found (i.e., no
-#     component whose hyphen-suffix is in EXT_TO_LANG), falls back to using
-#     the immediate parent directory: its last hyphen is replaced with a dot
-#     (if a hyphen exists after the first character), and the result is
-#     prefixed with the parent directory of that parent, or used as is if no
-#     grandparent exists.
-#   - The returned path uses the OS-native path separator (os.sep).
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _extracted_file_to_source_rel(extracted_rel):
     """Map an extracted-function file path back to its source file (relative).
 

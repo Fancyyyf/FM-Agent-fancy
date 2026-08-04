@@ -1,11 +1,11 @@
 {
   "id": "src--languages--erlang-py--ElpClient::_wait_for_response",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::_wait_for_response.py",
-  "function_name": "_wait_for_response",
+  "source_file": "src/languages/erlang-py/ElpClient::_wait_for_response.py",
+  "function_name": "ElpClient::_wait_for_response",
   "confirmation_status": "confirmed",
-  "attempts": "1",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::_wait_for_response.py",
   "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::_wait_for_response.md",
-  "probe_stdout": "CONFIRMED — actual returned: 'some_value' | expected: RuntimeError (per spec)",
-  "trigger_summary": "Response with error=null causes truthiness check to fail, returning result instead of raising RuntimeError"
+  "probe_stdout": "CONFIRMED — actual: None | expected: RuntimeError for any non-content-modified error object",
+  "trigger_summary": "An empty error dict {} in a matching JSON-RPC response is falsy in Python, causing the code to skip error handling and return None instead of raising RuntimeError."
 }

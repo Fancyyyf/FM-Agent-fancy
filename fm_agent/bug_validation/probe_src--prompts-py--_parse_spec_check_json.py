@@ -1,40 +1,42 @@
-"""Probe for bug: _nonempty_string treats whitespace-only strings as empty,
-violating the _parse_spec_check_json spec for MATCH verdict."""
+#!/usr/bin/env python3
+"""Probe script for bug: _parse_spec_check_json rejects MATCH verdict with non-empty counterexample."""
 
-import json
 import sys
+import os
 
-# Add repo root to path so src.prompts import resolves
-sys.path.insert(0, ".")
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, _REPO_ROOT)
 
 try:
     from src.prompts import _parse_spec_check_json
-except ImportError as e:
-    print(f"ERROR: Could not import _parse_spec_check_json: {e}")
-    sys.exit(1)
 
-# Build a MATCH-verdict JSON where counterexample is a whitespace-only string.
-# Per the spec, any non-empty string (length > 0) should trigger ValueError.
-# The code's _nonempty_string uses bool(value.strip()), which treats
-# whitespace-only as empty and does NOT raise.
-match_with_whitespace_counterexample = json.dumps({
-    "verdict": "MATCH",
-    "counterexample": "   ",
-    "offending_statements": "   ",
-    "reason": "The code behaves correctly.",
-})
+    # -----------------------------------------------------------------------
+    # Test 1: MATCH verdict with non-empty counterexample (offending_statements is null)
+    # Spec: does NOT list this as a ValueError case → should be accepted
+    # Code: line 87-90 raises ValueError
+    # -----------------------------------------------------------------------
+    response1 = (
+        '{"verdict": "MATCH",'
+        ' "counterexample": "a concrete counterexample",'
+        ' "offending_statements": null,'
+        ' "reason": "all good"}'
+    )
 
-try:
-    result = _parse_spec_check_json(match_with_whitespace_counterexample)
-    # No ValueError → bug reproduced.
-    actual = result
-    expected = "ValueError"
-    print(f"CONFIRMED — _nonempty_string treats whitespace-only as empty, "
-          f"but spec requires ValueError for any non-empty string. "
-          f"Actual: returned tuple {result[:3]!r} (no error) | Expected: {expected!r}")
-except ValueError:
-    # ValueError raised → spec-correct behavior.
-    print("NOT CONFIRMED — ValueError correctly raised for whitespace-only counterexample/offending_statements")
+    actual1 = None
+    error1 = None
+    try:
+        actual1 = _parse_spec_check_json(response1)
+    except ValueError as e:
+        error1 = str(e)
+
+    if error1 is not None:
+        print(f"CONFIRMED — bug reproduced: ValueError raised for valid MATCH verdict with non-empty counterexample")
+        print(f"  Expected: should return (False, None, None, data)")
+        print(f"  Actual error: {error1}")
+    else:
+        print(f"NOT CONFIRMED — function accepted MATCH with non-empty counterexample (spec-correct)")
+        print(f"  Returned: {actual1!r}")
+
 except Exception as e:
-    print(f"ERROR: Unexpected exception: {e}")
+    print(f"ERROR: {e}", file=sys.stderr)
     sys.exit(1)

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "nodes = [1, 2]; edges = {1: {2}}",
-  "offending_statements": "Line 50: result.append(scc)",
-  "reason": "The code appends SCCs in the order they are discovered (sinks first), producing a reverse topological order where for an edge from SCC at index i to SCC at index j, i > j. The specification requires that for any such edge i ≤ j (an order where edges go from earlier to later indices). The result is not reversed before returning, so any input with cross-SCC edges violates the specification. In the counterexample, the code returns [{2}, {1}], so the edge from 1 to 2 gives i=1, j=0, which fails i ≤ j."
-}

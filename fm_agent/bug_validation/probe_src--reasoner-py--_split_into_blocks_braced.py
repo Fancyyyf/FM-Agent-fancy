@@ -1,80 +1,59 @@
-"""Probe for bug src--reasoner-py--_split_into_blocks_braced.
-
-Bug: _split_into_blocks_braced computes entry_depth as first positive depth when
-depths[0]==0, but the first block starts at line 0 (depth 0) instead of at a line
-with depth==entry_depth. This violates the spec that each segment begins and ends
-at the same nesting depth as the function's entry depth.
-
-Repro: C function body with opening brace on the second line.
-"""
-import importlib
 import sys
-import os
-
-# All file I/O in a fresh temp directory (self-validation guard)
-TMP = os.environ.get("FM_AGENT_TMP", "/tmp/opencode")
-os.makedirs(TMP, exist_ok=True)
-os.chdir(TMP)
 
 try:
-    # Load _split_into_blocks_braced via the package's internal module.
-    # Per the FM-Agent self-validation guard, testing the smallest relevant
-    # pure-computation unit is allowed — this does not start an FM-Agent workflow.
-    import src.reasoner as reasoner
-
-    # Monkey-patch GRANULARITY to 1 so a small function body triggers the split logic
-    reasoner.GRANULARITY = 1
-
-    # C function body: opening brace on the second line
-    # depths: line0=0, line1=1, line2=1, line3=0
-    func = "int main()\n{\n    return 0;\n}"
-    language = "c"
-
-    # Compute depths for verification
-    stripped = func.strip().split("\n")
-    depths = reasoner._compute_brace_depth_per_line(stripped)
-
-    # entry_depth per the code: depths[0]=0 → next positive = 1
-    entry_depth = depths[0] if depths[0] > 0 else next((d for d in depths if d > 0), 0)
-
-    # Run the buggy function
-    blocks = reasoner._split_into_blocks_braced(func, language)
-
-    # Verify: per spec, the first block should begin at entry_depth.
-    # The buggy code produces a first block that includes line 0 (depth 0),
-    # which is below entry_depth. Check that the first block starts at a depth
-    # that is NOT equal to entry_depth.
-    first_block_lines = blocks[0].split("\n")
-    first_line_depth = depths[0]  # depth of the first line in the first block
-
-    # The spec requires: each segment begins at entry_depth.
-    # Bug reproduced if first block begins at depth != entry_depth.
-    starts_at_entry = (first_line_depth == entry_depth)
-
-    mid_line_depths = [depths[i] for i in range(len(first_block_lines))]
-    ends_at_entry = (mid_line_depths[-1] == entry_depth)
-
-    bug_reproduced = (not starts_at_entry) and ends_at_entry and len(blocks) >= 2
-
-    if bug_reproduced:
-        print(
-            f"CONFIRMED — first block starts at depth {first_line_depth}, "
-            f"not entry_depth {entry_depth}. "
-            f"Block: {blocks[0]!r} "
-            f"| all_blocks: {blocks} "
-            f"| depths: {depths}"
-        )
-    else:
-        print(
-            f"NOT CONFIRMED — first block starts at depth {first_line_depth}, "
-            f"entry_depth={entry_depth}. "
-            f"blocks: {blocks} "
-            f"| depths: {depths}"
-        )
-
-    # Restore GRANULARITY
-    importlib.reload(reasoner)
-
+    from src.reasoner import _split_into_blocks_braced
 except Exception as e:
-    print(f"ERROR: {e}")
+    print(f'ERROR: {e}')
     sys.exit(1)
+
+# The bug manifests when GRANULARITY is small enough that blocks split
+# inside a brace-delimited function body. Use GRANULARITY=2 to make the
+# split aggressive so the opening "{" and closing "}" end up in different
+# blocks.
+import src.reasoner as reasoner
+reasoner.GRANULARITY = 2
+
+# Function body of a C-like function. The opening brace is on the first
+# line so depths[0] == 1 (entry_depth = 1). With GRANULARITY=2 and N=8
+# lines, the first block captures lines [0:3] — "{", "int x=1", "int y=2" —
+# which contains an opening brace but no matching closing brace.
+func_body = """{
+    int x = 1;
+    int y = 2;
+    int z = 3;
+    int w = 4;
+    int v = 5;
+    return x + y;
+}"""
+
+language = "c"
+
+blocks = _split_into_blocks_braced(func_body, language)
+
+# Verify: concatenation reconstructs func.strip()
+reconstructed = "\n".join(blocks)
+concat_ok = reconstructed == func_body.strip()
+print(f'Concatenation check: {"PASS" if concat_ok else "FAIL"}')
+
+# Check each block for unclosed brace groupings
+confirmed = False
+for i, block in enumerate(blocks):
+    depth = 0
+    for ch in block:
+        if ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+    if depth != 0:
+        confirmed = True
+        print(f'Block {i} has unbalanced braces (net depth={depth}):')
+        lines = block.split('\n')
+        for li, l in enumerate(lines):
+            print(f'  line {li}: {repr(l)}')
+    else:
+        print(f'Block {i}: balanced, {len(block.split(chr(10)))} lines')
+
+if confirmed:
+    print('CONFIRMED — blocks contain unclosed brace groupings')
+else:
+    print('NOT CONFIRMED — all blocks have balanced braces')

@@ -1,26 +1,3 @@
-# [SPEC]
-# Unit: src/pipeline_setup.py
-#
-# _build_domain_context_regen_prompt(phase_source_files, phase_cleanup=None) -> str
-#
-# Pre-condition:
-#   - phase_source_files is a dict mapping integer phase numbers to non-empty lists of source file path strings
-#   - phase_cleanup, when provided, is a dict that may contain key "removed_phases" (a list of values, each either an integer phase number or None) and key "renumbered" (a dict mapping old phase numbers to new phase numbers, where either the old or new value may be None)
-#
-# Post-condition:
-#   - Returns a prompt string intended for consumption by an LLM agent
-#   - The prompt instructs the agent to regenerate, from scratch, the file phase_NN_types.txt under fm_agent/spec_prompts/domain_context/ for every integer phase number present in phase_source_files, deriving its content from the real types, structs, and invariants defined in the source files associated with that phase
-#   - For every phase in the prompt's regeneration list, the list of its source file paths is included; the list appears in sorted phase-number order
-#   - When phase_cleanup specifies removal of one or more non-None phase numbers (via the "removed_phases" key), the prompt instructs the agent to update engine_overview.txt so its phase-numbered references match the final phases.json after those removals
-#   - When phase_cleanup specifies renumbering of one or more phases (via non-None entries in the "renumbered" dict where the old and new phase numbers differ), the prompt instructs the agent to update engine_overview.txt so its phase-numbered references match the final phases.json after those renumberings
-#   - When neither removal nor renumbering applies, the prompt instructs the agent to leave engine_overview.txt unchanged unless it explicitly names a phase number that changed
-#   - The prompt constrains the agent to modify only files under fm_agent/spec_prompts/domain_context/ and prohibits modification of files under its user_knowledge/ subdirectory
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _build_domain_context_regen_prompt(phase_source_files, phase_cleanup=None):
     """Compose the instruction telling the agent to regenerate the per-phase
     domain-context types files for phases whose source-file list changed.

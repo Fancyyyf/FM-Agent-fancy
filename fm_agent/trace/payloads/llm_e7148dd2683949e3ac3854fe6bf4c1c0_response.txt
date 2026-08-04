@@ -1,1 +1,0 @@
-{"verdict": "MISMATCH", "counterexample": "_:", "offending_statements": "Line 4-7: the loop does not check for or avoid producing double underscore", "reason": "For input '_:' the code converts '_' to '_' and ':' to '_3a', resulting in '__3a' which contains the substring '__', violating the specification requirement that the returned string contains no occurrence of '__'."}

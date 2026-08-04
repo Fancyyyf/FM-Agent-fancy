@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: src/incremental_reasoner.py\n#\n# _StdoutTee.write(self, data) -> int\n#\n# Pre-condition:\n#   - self._console is an open, writable stream.\n#   - self._log_stream is a writable stream whose open/closed state is unknown.\n#   - data is a str or bytes object.\n#\n# Post-condition:\n#   - Writes data to self._console.\n#   - Writes data to self._log_stream if and only if self._log_stream is open (not closed).\n#   - Returns len(data).\n#   - Does not raise an exception when self._log_stream is closed; the write to self._console still succeeds.\n# [SPEC]\n",
-  "info_updated": false,
-  "new_info": "",
-  "updated_callees": []
-}

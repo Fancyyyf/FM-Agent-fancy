@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "block='x = 1', pre_condition='true', knowledge='', language='Python', trace_dir=None, trace_meta=None",
-  "offending_statements": "Line 28: return _llm_json_call(\n        _llm_provider_client,\n        REASONER_POST_CONDITION_MODEL,\n        messages,\n        _parse_post_condition_json,\n        '{\"post_condition\": \"non-empty string\"}',\n        trace_dir=trace_dir,\n        trace_meta=meta,\n    )",
-  "reason": "The specification requires returning None when the post-condition cannot be determined. The code does not handle failures in _llm_json_call or cases where the LLM cannot produce a post-condition; it either returns a value that may not be None (if parsing succeeds with an empty or unsuitable string) or raises an exception, never returning None. For example, if the LLM returns an unparseable response, the code will propagate an exception instead of returning None as required."
-}

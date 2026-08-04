@@ -1,34 +1,30 @@
+"""Probe script: confirm resolve_model_backend returns values outside the allowed set."""
 import sys
 import os
-from unittest.mock import patch
 
-# The probe is run from the repo root, so cwd is the import base.
-sys.path.insert(0, os.getcwd())
+# Ensure the repo root is importable
+_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
+ALLOWED_BACKENDS = {"codex-cli", "claude-cli", "opencode"}
 
-def main():
-    try:
-        import config
-        from src.cli_backend import resolve_model_backend
+try:
+    from config import settings
+    from src.cli_backend import resolve_model_backend
 
-        canonical = {"opencode", "codex-cli", "claude-cli"}
-        # Monkey-patch settings.llm.backend to a non-canonical value
-        with patch.object(config.settings.llm, "backend", "foobar"):
-            actual = resolve_model_backend()
-            # The spec requires a canonical identifier. The buggy code
-            # passes the unrecognized value straight through.
-            passed = actual not in canonical  # True = bug reproduced
+    # Inject an unrecognized backend value — per the spec, the function
+    # must return one of the allowed backends, but the code returns the
+    # normalized value unchanged for any unknown backend.
+    settings.llm.backend = "unknown_backend"
 
-        if passed:
-            expected_fmt = f"one of {sorted(canonical)}"
-            print(f"CONFIRMED — actual: {actual!r} | expected: {expected_fmt}")
-        else:
-            print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+    actual = resolve_model_backend()
+    bug_reproduced = actual not in ALLOWED_BACKENDS
+except Exception as e:
+    print(f"ERROR: {e}")
+    sys.exit(1)
 
-    except Exception as e:
-        print(f"ERROR: {e}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+if bug_reproduced:
+    print(f"CONFIRMED — actual: {actual!r} | allowed set: {ALLOWED_BACKENDS!r}")
+else:
+    print(f"NOT CONFIRMED — actual matched allowed set: {actual!r}")

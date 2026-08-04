@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Any source file containing at least one function, e.g., filepath = 'foo.py', src_path = Path('foo.py') pointing to a file with 'def bar(): pass'. Then _parse_file returns a non-empty funcs_info, the code prints the header and reaches the end of the block, returning None.",
-  "offending_statements": "After Line 40, the function lacks an explicit return statement, so it returns None implicitly.",
-  "reason": "The specification requires returning a list of dicts when there are parseable functions, but the code returns None for any input that produces a non‑empty funcs_info because no return is executed after printing."
-}

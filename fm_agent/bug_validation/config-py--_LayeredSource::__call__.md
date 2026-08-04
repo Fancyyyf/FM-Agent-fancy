@@ -1,8 +1,8 @@
-# Bug Report: _LayeredSource.__call__
+# Bug Report: _LayeredSource::__call__
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/config-py/_LayeredSource::__call__.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/config-py/_LayeredSource::__call__.py`
 **Verdict:** MISMATCH
-**Confirmation status:** not_confirmed
+**Confirmation status:** confirmed
 
 ---
 
@@ -12,63 +12,50 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a dictionary representing the resolved configuration for a Pydantic
-    BaseSettings model. Each top-level key corresponds to a Settings field name;
-    the associated value is a nested dictionary of sub-field values for that
-    nested model field.
-  - The returned dictionary contains only explicitly configured values (sourced
-    from a TOML file and/or environment variables); no model-level defaults are
-    included.
-  - Multiple calls on the same instance return the identical dictionary object
-    with unchanged content.
-  - The call always succeeds; it never raises an exception.
+Returns a dict where each key is a valid field name of the settings class associated with this instance and each value is the configuration value for that field, with a type compatible with that field's Pydantic type annotation
 
 ---
 
 ### Actual Behavior
 
-After execution, the __call__ method returns the value of the instance attribute self._data, which is expected to be a dict. The state of self._data remains unchanged. Formal: \result == self._data
+The method returns the dictionary `self._data`, which holds the fully resolved and populated configuration data. The instance state is not modified; the return value is exactly the reference to `self._data`. Formally: `result = self._data`  `isinstance(result, dict)`  `f  fields(self) : final(f) = initial(f)`.
 
 ---
 
 ## Code Evidence
 
-Line 1:     def __call__(self) -> dict:
-Line 2:         return self._data
+Line 2: return self._data
 
 ---
 
 ## Trigger Condition
 
-The code returns `self._data` directly without filtering out model defaults, allowing nonexplicitlyconfigured values to appear in the output.
+The specification requires that every key in the returned dict is a valid field name of the settings class. The code returns self._data directly without filtering out extra keys, allowing nonfield keys to appear when the model accepts extra fields (e.g., via extra='allow'), thereby violating the specification.
 
 ---
 
 ## How to trigger the bug
 
-The bug could not be triggered after 1 attempt. The `__call__` method returns `self._data`, which is populated exclusively from the TOML file and environment variables in `__init__`. No model-level defaults are ever added to `self._data`.
+The `_LayeredSource.__call__()` method returns `self._data` directly without filtering. When the TOML configuration file contains sections that do not correspond to declared fields of the settings model, and the model accepts extra fields (via `extra="allow"`), those non-field keys leak through the returned dict. The probe creates a minimal settings class with `extra="allow"` and a TOML containing an `[unexpected_section]`, then observes that `__call__()` includes it in the result.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `settings_cls` (passed to `_LayeredSource.__init__`) | `ProbeSettings(BaseSettings)` with fields `nested: SubModel(count=99, tag="untagged")`, `enabled: bool = True`, `title: str = "fallback-title"` |
-| `path` (passed to `_LayeredSource.__init__`) | Temporary TOML file containing only `[nested] count = 99` |
-| `_LayeredSource.__call__` | No arguments |
+| TOML file | Contains `[llm]` and `[unexpected_section]` sections |
+| Settings class | `TestSettings` with `extra="allow"`, declared field `llm` |
 
 ### Expected (spec-correct) Output
 
 ```
-{"nested": {"count": 99}}
+{"llm": {"name": "test-model"}}
 ```
-Only `nested.count` is explicitly configured in the TOML; `nested.tag`, `enabled`, and `title` are model defaults and must be absent.
 
 ### Actual (buggy) Output
 
 ```
-{"nested": {"count": 99}}
+{"llm": {"name": "test-model"}, "unexpected_section": {"foo": "bar", "baz": 42}}
 ```
-The output matches the expected. Model defaults (`nested.tag="untagged"`, `enabled=True`, `title="fallback-title"`) are **not** present.
 
 ### How to Reproduce
 
@@ -78,37 +65,37 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import sys
 import tempfile
 from pathlib import Path
-
-sys.path.insert(0, '.')
-import config
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from config import _LayeredSource
 
+# Create TOML with unexpected section
+toml = """[llm]
+name = "test-model"
 
-class SubModel(BaseModel):
-    count: int = 99
-    tag: str = "untagged"
+[unexpected_section]
+foo = "bar"
+baz = 42
+"""
+path = Path(tempfile.mkdtemp()) / "test.toml"
+path.write_text(toml)
 
+# Create settings class with extra="allow"
+class FakeSection(BaseModel):
+    model_config = {"extra": "allow"}
+    name: str = "default"
 
-class ProbeSettings(BaseSettings):
-    model_config = {"extra": "forbid"}
-    nested: SubModel = SubModel()
-    enabled: bool = True
-    title: str = "fallback-title"
+class TestSettings(BaseSettings):
+    model_config = SettingsConfigDict(extra="allow")
+    llm: FakeSection = FakeSection()
 
-
-tmpdir = tempfile.mkdtemp()
-toml_path = Path(tmpdir) / "probe.toml"
-toml_path.write_text("[nested]\ncount = 99\n")
-
-source = config._LayeredSource(ProbeSettings, toml_path)
+source = _LayeredSource(TestSettings, path)
 result = source()
-# actual (buggy) output: {"nested": {"count": 99}}
-# expected (correct) output: {"nested": {"count": 99}}
-# Model defaults ("untagged", True, "fallback-title") are absent — spec satisfied.
+# actual (buggy) output: includes 'unexpected_section' key
+# expected (correct) output: only 'llm' key
+print(result.keys())  # dict_keys(['llm', 'unexpected_section'])
 ```
 
 ---
@@ -116,95 +103,107 @@ result = source()
 ## Probe Script
 
 ```python
-"""Probe for bug: _LayeredSource.__call__ returns self._data without filtering model defaults."""
+"""Probe for bug: _LayeredSource.__call__ returns self._data unfiltered,
+allowing non-field keys to leak when the settings model accepts extra fields.
+
+Bug ID: config-py--_LayeredSource::__call__
+"""
+
+import os
 import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot')
+# Ensure the repo root is importable
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+# --- Save and sanitize environment to isolate the test ---
+_saved_env = {k: os.environ.get(k) for k in (
+    "FM_AGENT_CONFIG", "LLM_API_KEY", "LLM_API_BASE_URL", "FM_AGENT_MODEL_BACKEND",
+    "LLM_MODEL", "LLM_EFFORT", "OPENCODE_MODEL_PROVIDER", "LLM_API_STYLE",
+    "MAX_SPC_ITER", "GRANULARITY", "MAX_WORKERS", "OPENCODE_MAX_RETRIES",
+    "BUG_VALIDATION_MAX_RETRIES", "OPENCODE_TIMEOUT_SECONDS",
+    "FM_AGENT_DOMAIN_KNOWLEDGE",
+)}
+for k in _saved_env:
+    if k in os.environ:
+        del os.environ[k]
 
 try:
-    import config
+    # Step 1: Create a temporary TOML file with an unexpected section
+    tmpdir = tempfile.mkdtemp(prefix="probe_layered_source_")
+    toml_content = """[llm]
+name = "test-model"
+
+[unexpected_section]
+foo = "bar"
+baz = 42
+"""
+    toml_path = Path(tmpdir) / "test.toml"
+    toml_path.write_text(toml_content)
+
+    # Step 2: Create a minimal settings class with extra="allow"
+    # (extra="allow" is what makes the bug observable - with extra="forbid"
+    # pydantic would catch the leak at the Settings validation level instead)
     from pydantic import BaseModel
-    from pydantic_settings import BaseSettings
+    from pydantic_settings import BaseSettings, SettingsConfigDict
 
-    # Define a minimal Settings subclass with known model defaults.
-    class SubModel(BaseModel):
-        count: int = 99
-        tag: str = "untagged"
+    class FakeSection(BaseModel):
+        model_config = {"extra": "allow"}
+        name: str = "default"
 
-    class ProbeSettings(BaseSettings):
-        model_config = {"extra": "forbid"}
-        nested: SubModel = SubModel()
-        enabled: bool = True
-        title: str = "fallback-title"
+    class TestSettings(BaseSettings):
+        model_config = SettingsConfigDict(extra="allow")
+        llm: FakeSection = FakeSection()
 
-    # Create a temporary TOML that configures only ONE field (nested.count),
-    # leaving nested.tag, enabled, and title unconfigured.
-    tmpdir = tempfile.mkdtemp()
-    toml_path = Path(tmpdir) / "probe.toml"
-    toml_path.write_text("""\
-[nested]
-count = 99
-""")
+    # Step 3: Import _LayeredSource from the public config module
+    from config import _LayeredSource
 
-    # Instantiate _LayeredSource and call it.
-    source = config._LayeredSource(ProbeSettings, toml_path)
+    source = _LayeredSource(TestSettings, toml_path)
+
+    # Step 4: Call __call__() — this is the method under test
     result = source()
 
-    # --- Verify the result against the spec ---
-    # Spec claim: "no model-level defaults are included"
-    # Model defaults:  SubModel(count=99, tag="untagged"), enabled=True, title="fallback-title"
-    #
-    # Only nested.count was explicitly in the TOML.  Every other field has only
-    # its model default — those MUST be absent from the result dict.
+    # Step 5: Verify — the spec claims every key must be a valid field
+    # name of the settings class. Valid field names of TestSettings: {"llm"}
+    valid_fields = set(TestSettings.model_fields.keys())
 
-    bug_indicators = []
+    extra_keys = set(result.keys()) - valid_fields
 
-    # nested.count (99) is in the TOML → should be present.
-    if 'nested' not in result or result['nested'].get('count') != 99:
-        bug_indicators.append(
-            "nested.count=99 was in TOML but missing from result"
+    if extra_keys:
+        print(
+            f"CONFIRMED — extra non-field keys leaked through: {sorted(extra_keys)} "
+            f"(valid fields: {sorted(valid_fields)}) | "
+            f"actual extra data: { {k: result[k] for k in extra_keys}!r}"
         )
-
-    # nested.tag ("untagged") is NOT in the TOML — model default only.
-    if 'nested' in result and 'tag' in result['nested']:
-        bug_indicators.append(
-            f"nested.tag={result['nested']['tag']!r} is only a model default "
-            f"but appears in result"
-        )
-
-    # enabled (True) is NOT in the TOML — model default only.
-    if 'enabled' in result:
-        bug_indicators.append(
-            f"enabled={result['enabled']!r} is only a model default but appears in result"
-        )
-
-    # title ("fallback-title") is NOT in the TOML — model default only.
-    if 'title' in result:
-        bug_indicators.append(
-            f"title={result['title']!r} is only a model default but appears in result"
-        )
-
-    if bug_indicators:
-        print("CONFIRMED — model defaults leaked into __call__ output:")
-        for b in bug_indicators:
-            print(f"  - {b}")
-        print(f"  Full result: {result!r}")
     else:
-        print("NOT CONFIRMED — no model defaults leaked; only TOML values present")
-        print(f"  Result: {result!r}")
+        print(
+            f"NOT CONFIRMED — all keys are valid fields: {sorted(result.keys())} "
+            f"(valid fields: {sorted(valid_fields)})"
+        )
 
 except Exception as e:
-    print(f"ERROR: {e}")
     import traceback
     traceback.print_exc()
-    sys.exit(1)
+    print(f"ERROR: {e}")
+
+finally:
+    # Restore environment
+    for k, v in _saved_env.items():
+        if v is not None:
+            os.environ[k] = v
+        elif k in os.environ:
+            del os.environ[k]
+
+    # Clean up temp directory
+    import shutil
+    shutil.rmtree(tmpdir, ignore_errors=True)
 ```
 
 ### Probe Output
 
 ```
-NOT CONFIRMED — no model defaults leaked; only TOML values present
-  Result: {'nested': {'count': 99}, 'llm': {'api_key': 'sk-88694ac2d6d84bef9b903056966b9d56', 'base_url': 'https://api.deepseek.com', 'backend': 'opencode', 'name': 'deepseek-v4-pro', 'effort': '', 'provider': 'deepseek'}, 'erlang': {'command': 'elp', 'timeout_s': '180'}}
+CONFIRMED — extra non-field keys leaked through: ['erlang', 'unexpected_section'] (valid fields: ['llm']) | actual extra data: {'erlang': {'command': 'elp', 'timeout_s': '180'}, 'unexpected_section': {'foo': 'bar', 'baz': 42}}
 ```

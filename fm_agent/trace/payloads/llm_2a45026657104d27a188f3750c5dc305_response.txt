@@ -1,3 +1,0 @@
-{
-  "post_condition": "After executing the function definition, the name 'types_path' is bound to a function object in the current scope. The function captures the enclosing scope's variable 'domain_dir' at its current value. For any integer argument x, a call to types_path(x) returns the string obtained by os.path.join(domain_dir, f'phase_{x:02d}_types.txt'), where domain_dir is the captured directory path string. No other program state (other variables, global state) is changed by the definition. The definition itself raises no exceptions. Formal logic: types_path = (λ x. os.path.join(domain_dir_pre, f'phase_{x:02d}_types.txt')), where domain_dir_pre is the value of domain_dir before the block execution, and the binding of domain_dir is unaltered."
-}

@@ -1,137 +1,148 @@
-"""Probe script for bug: src--verification-py--streaming_reasoner"""
+"""Probe script for bug_id: src--verification-py--streaming_reasoner
+
+Bug: streaming_reasoner() computes `unready = (expected_files or set()) - processed`
+without checking `is_file_ready()`. A file whose .spec.json/.info.json sidecars
+are ready but hasn't yet been picked up by the scanning loop can be incorrectly
+marked as pending and skipped, causing premature loop exit.
+
+Strategy: Patch time.sleep and os.walk to orchestrate the race deterministically.
+We make os.walk NOT return the file on iteration 1 (simulating sidecars not ready
+at scan time), then return it on iteration 2. Since spec_procs are already done
+on iteration 1, the unready check fires and incorrectly marks the file as pending.
+"""
 
 import sys
 import os
-import tempfile
-import shutil
 import json
-import concurrent.futures
-from unittest.mock import patch, MagicMock
+import tempfile
+import types
+import time
+import threading
+from unittest.mock import patch
 
-# The streaming_reasoner and is_file_ready live in src.verification
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+# Avoid polluting the project directory with FM-Agent run artifacts.
+# Use a temp dir as the probe workspace.
+PROBE_TMP = tempfile.mkdtemp(prefix="streaming_reasoner_probe_")
+INPUT_DIR = os.path.join(PROBE_TMP, "input")
+OUTPUT_DIR = os.path.join(PROBE_TMP, "output")
+WORK_DIR = os.path.join(PROBE_TMP, "work")
+os.makedirs(INPUT_DIR)
+os.makedirs(OUTPUT_DIR)
+os.makedirs(WORK_DIR)
 
-# Simulate workspace path construction for the state files
-_path_file = os.path.join(tempfile.gettempdir(), "fm_agent_state", "version.log")
-os.makedirs(os.path.dirname(_path_file), exist_ok=True)
-with open(_path_file, 'w') as f:
-    f.write("dummy-commit-id")
-toplevel_path = os.path.join(tempfile.gettempdir(), "fm_agent_state", "state.json")
-with open(toplevel_path, 'w') as f:
-    json.dump({"entry_func": None}, f)
+# Create a Python source file in the input dir
+TEST_PY_NAME = "hello.py"
+test_py_path = os.path.join(INPUT_DIR, TEST_PY_NAME)
+with open(test_py_path, "w") as f:
+    f.write("def greet(name):\n    return 'Hello ' + name\n")
 
+# Create VALID sidecars — the file's spec/info ARE ready
+spec_json = {
+    "signature": "greet(name: str) -> str",
+    "pre_condition": "name is a non-empty string",
+    "post_condition": "returns 'Hello ' concatenated with name",
+}
+info_json = {"callees": []}
+with open(test_py_path + ".spec.json", "w") as f:
+    json.dump(spec_json, f)
+with open(test_py_path + ".info.json", "w") as f:
+    json.dump(info_json, f)
 
-def run_test():
-    """Drive the bug reproduction."""
-    from src.verification import streaming_reasoner
+# ── orchestrate the race ────────────────────────────────────────────
 
-    # Create fresh temp workspace (NOT under fm_agent/)
-    workspace = tempfile.mkdtemp(prefix="probe_workspace_")
-    input_dir = os.path.join(workspace, "input")
-    output_dir = os.path.join(workspace, "output")
-    proj_dir = os.path.join(workspace, "project")
-    os.makedirs(input_dir)
-    os.makedirs(output_dir)
-    os.makedirs(proj_dir)
+# Iteration gate: os.walk is called once per while-loop iteration.
+# On iteration 1 we want the scan to NOT see the file (so it isn't submitted).
+# Since spec_procs are already done and reasoning_futures is empty, the
+# unready check will fire and mark the file as pending → break.
+# On iteration 2 os.walk returns the file normally (should never be reached
+# if the bug is present, because iteration 1 already broke).
 
-    # Create a "ready" file — it has the required SPEC/SPEC/INFO/INFO markers
-    ready_content = """# [SPEC]
-# test spec
-# [SPEC]
-# [INFO]
-# test info
-# [INFO]
-def example():
-    pass
-"""
-    ready_path = os.path.join(input_dir, "ready_file.py")
-    with open(ready_path, "w") as f:
-        f.write(ready_content)
+_iteration = [0]  # mutable counter so the closure can increment it
 
-    # Create a second ready file
-    ready_path2 = os.path.join(input_dir, "ready_file2.py")
-    with open(ready_path2, "w") as f:
-        f.write(ready_content)
-
-    # file_list includes both files (relative paths from input_dir)
-    file_list = ["ready_file.py", "ready_file2.py"]
-
-    # spec_procs: already-finished futures so the early exit path triggers
-    ex = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-    done_future = ex.submit(lambda: 0)
-    done_future.result()  # ensure it is done
-
-    # Strategy:
-    # 1. The real is_file_ready returns True for the files (they have markers).
-    # 2. But if the scan loop finds them ready, they get submitted → no bug.
-    # 3. The bug is: if a file becomes ready BETWEEN the scan and the early-exit
-    #    check (or spec_procs finish), the early exit fires without re-checking.
-    #
-    # To trigger this deterministically: make is_file_ready return False on the
-    # first call (simulating "not ready yet"), then True on subsequent calls.
-    # The scan loop passes over the file as "not ready". The early exit fires.
-    # The next scan would have picked it up but never gets to run.
-
-    call_counts = {}
-
-    def controlled_is_file_ready(file_path):
-        count = call_counts.get(file_path, 0)
-        call_counts[file_path] = count + 1
-        if count == 0:
-            # First call: pretend file is NOT ready
-            return False
-        # Subsequent calls: file IS ready
-        return True
-
-    # Mock _verify_single_file so we don't invoke LLMs or OpenCode
-    def fake_verify(file_path, input_dir_arg, output_dir_arg, language, work_dir_arg, resume_arg):
-        rel = os.path.relpath(file_path, input_dir_arg)
-        out_path = os.path.join(output_dir_arg, os.path.splitext(rel)[0] + ".json")
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        with open(out_path, "w") as f:
-            json.dump({"function": file_path, "verdict": "MATCH", "gaps": None}, f)
-        return (file_path, "MATCH")
-
-    with patch("src.verification.is_file_ready", side_effect=controlled_is_file_ready), \
-         patch("src.verification._verify_single_file", side_effect=fake_verify), \
-         patch("src.verification._generate_validation_summary", return_value=None), \
-         patch("src.verification.MAX_WORKERS", 2):
-
-        result = streaming_reasoner(
-            input_dir=input_dir,
-            output_dir=output_dir,
-            file_list=file_list,
-            proj_dir=proj_dir,
-            work_dir=proj_dir,
-            poll_interval=0.01,
-            spec_procs=[done_future],
-            already_processed=None,
-            resume=False,
-        )
-
-    ex.shutdown(wait=False)
-
-    # ---------- Verdict ----------
-    # Check whether all expected files are in the returned processed set.
-    expected_files = {os.path.join(input_dir, rel) for rel in file_list}
-    missing = expected_files - result
-
-    if missing:
-        # Bug reproduced: some expected files were never processed.
-        rel_missing = [os.path.relpath(m, input_dir) for m in sorted(missing)]
-        print(f"CONFIRMED — missed ready file(s): {rel_missing} | processed: {[os.path.relpath(p, input_dir) for p in sorted(result)]}")
+def _walk_controlled(top, **kwargs):
+    """Controlled os.walk that hides the test file on the first call."""
+    _iteration[0] += 1
+    it = _orig_walk(top, **kwargs)
+    if _iteration[0] == 1:
+        # Filter out the test file on iteration 1 — it appears as if
+        # sidecars aren't ready at scan time.
+        for root, dirs, files in it:
+            filtered = [f for f in files if f != TEST_PY_NAME]
+            yield root, dirs, filtered
+            for sub in dirs:
+                # need to continue the walk
+                pass
     else:
-        print(f"NOT CONFIRMED — all {len(file_list)} files processed: {[os.path.relpath(p, input_dir) for p in sorted(result)]}")
+        yield from it
 
-    # Cleanup
-    shutil.rmtree(workspace, ignore_errors=True)
 
+# Controlled sleep: don't actually sleep, just yield control so the
+# iteration counter advances naturally.
+def _sleep_skip(duration):
+    """No-op sleep to speed up the test."""
+    pass
+
+
+# ── run the test ─────────────────────────────────────────────────────
+
+actual = None
+expected = True  # spec says: ready files should be processed, not skipped
+passed = False
+error_msg = None
 
 try:
-    run_test()
+    # Pre-load modules before patching
+    from src.verification import streaming_reasoner
+    import os as os_mod
+
+    _orig_walk = os_mod.walk
+
+    with (
+        patch("os.walk", side_effect=_walk_controlled),
+        patch("time.sleep", side_effect=_sleep_skip),
+    ):
+        # Create a spec_procs handle that reports "done"
+        class DoneHandle:
+            @staticmethod
+            def poll():
+                return 0
+
+            @staticmethod
+            def done():
+                return True
+
+        processed = streaming_reasoner(
+            input_dir=INPUT_DIR,
+            output_dir=OUTPUT_DIR,
+            file_list=[TEST_PY_NAME],
+            proj_dir=PROBE_TMP,
+            work_dir=WORK_DIR,
+            poll_interval=0.01,
+            spec_procs=[DoneHandle()],
+            already_processed=None,
+            resume=False,
+            bug_validator_path=None,
+        )
+
+        # SPEC says: file with ready sidecars should be processed.
+        # If the return set includes the file → correct behavior.
+        # If the file is missing → bug confirmed.
+        actual = test_py_path in processed
+        passed = not actual  # True if bug reproduced (file NOT processed)
 except Exception as e:
+    error_msg = str(e)
     print(f"ERROR: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
+
+if passed:
+    print(
+        f"CONFIRMED — file with ready sidecars was NOT in processed set: {actual!r} "
+        f"| expected: True"
+    )
+else:
+    print(
+        f"NOT CONFIRMED — file with ready sidecars IS in processed set: {actual!r} "
+        f"| expected: True"
+    )

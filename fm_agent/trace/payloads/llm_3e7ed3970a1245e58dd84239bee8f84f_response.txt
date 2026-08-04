@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "'>'",
-  "offending_statements": "Line 8: elif ch == '>':\nLine 9:     if depth > 0:\nLine 10:         depth -= 1",
-  "reason": "The specification requires that a '>' character with no preceding unmatched '<' (depth 0) appears in the result. However, the code does not append '>' when depth is 0; it drops the character entirely. A concrete input of a single '>' returns an empty string instead of the required '>'."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "lines = ['\"', '{', '}\"']",
-  "offending_statements": "Line 13:             if ch == '\"':\nLine 14:                 i += 1\nLine 15:                 while i < len(line):\nLine 16:                     if line[i] == '\\\\':\nLine 17:                         i += 2\nLine 18:                         continue\nLine 19:                     if line[i] == '\"':\nLine 20:                         i += 1\nLine 21:                         break\nLine 22:                     i += 1\nLine 23:                 continue",
-  "reason": "The specification requires that characters inside a double-quoted string literal be excluded regardless of line boundaries (a string literal is defined by unescaped double quotes without a line limit). The code's string-scanning loop (lines 13-23) only scans until the end of the current line; if no closing quote is found on that line, the string state is reset at the next line. This causes braces inside a multi-line string to be incorrectly counted, violating the specification. For the concrete input [\"\u201c\", \"{\", \"}\u201d\"], the code produces depths [0,1,0] while the specification requires [0,0,0]."
-}

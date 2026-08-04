@@ -1,6 +1,0 @@
- {
-  "verdict": "MISMATCH",
-  "counterexample": "trace_dir=None, max_retries=1, client and model can be any valid objects, messages=[{\"role\":\"user\",\"content\":\"test\"}], validator=any callable that raises ValueError, schema_description=\"dummy schema\"",
-  "offending_statements": "Line 33: record_llm_exchange(trace_dir, event_id, event, messages); Line 62: record_llm_exchange(trace_dir, event_id, event, messages, response)",
-  "reason": "Obě volání record_llm_exchange neprovádějí trvalý záznam, pokud je trace_dir=None. Specifikace vyžaduje, aby každý LLM pokus vyprodukoval trvalý záznam, ale při trace_dir=None se žádný záznam nevytvoří, čímž je specifikace porušena."
-}

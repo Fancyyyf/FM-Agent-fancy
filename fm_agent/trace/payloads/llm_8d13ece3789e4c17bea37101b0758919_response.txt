@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "rel_path = '././sub/file', submodules = ['sub']",
-  "offending_statements": "Line 6:     while norm.startswith(\"./\"):\nLine 7:         norm = norm[2:]",
-  "reason": "The specification strips any leading './' prefix exactly once, but the code strips all leading './' prefixes in a loop. For the counterexample, the code returns True because the path '././sub/file' after repeated stripping becomes 'sub/file', which starts with 'sub/'. However, according to the specification's one‑time strip, the normalized path is './sub/file', which does not match the submodule 'sub' and therefore should return False."
-}

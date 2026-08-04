@@ -1,6 +1,6 @@
-# Bug Report: CodeGraphExtractor.get_functions_by_file
+# Bug Report: CodeGraphExtractor::get_functions_by_file
 
-**Source file:** `src/languages/codegraph.py`
+**Source file:** `src/languages/codegraph.py` (line 299)
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,50 +12,13 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a dict whose keys are absolute filesystem paths (str) and whose
-    values are lists of (str, str) tuples
-  - Each tuple consists of a function identifier and the full source text of
-    the corresponding function body
-  - Each function body ends with a newline character ("\n")
-  - For a given file, tuples are ordered by ascending line number of the
-    function definition within the source file
-  - Function identifiers are class-qualified; when multiple functions in the
-    same file share the same identifier, the first occurrence retains the
-    bare name and every subsequent occurrence appends a numeric suffix
-    starting from 1
-  - When lang_key is not a recognized language identifier, the returned dict
-    is empty
-  - Source files that cannot be opened for reading are omitted from the
-    result; no error is raised
-  - When proj_dir is provided, file paths stored in the database are resolved
-    relative to proj_dir to produce absolute keys
+When lang_key is recognized by the code analysis backend: returns a dictionary mapping each absolute source file path (str) to a list of (function_name: str, body_text: str) tuples. Each tuple corresponds to one function or method definition in that file. function_name is a class-qualified identifier for methods or a bare function name for free functions; when multiple definitions share the same function_name within the same file, the first occurrence retains the bare name and all subsequent occurrences append a deterministic underscore-suffixed numeric index (beginning with _1) by source-order position. body_text is the complete source text of the function definition from its starting line through its ending line, with a trailing newline. Files present in the index but unreadable on disk are excluded from the returned dictionary. Returns an empty dictionary when lang_key is not recognized by the code analysis backend.
 
 ---
 
 ### Actual Behavior
 
-The function returns a dictionary `result` such that: if `_CG_LANG.get(lang_key)` is falsy (None or empty list), `result` is the empty dictionary. Otherwise, let `cg_langs = _CG_LANG[lang_key]`. The function opens a read-only connection to the database at `self._db`, queries the `nodes` table for rows where `kind` is 'function' or 'method' and `language` is in `cg_langs`, ordered by `file_path` then `start_line`. Each row is a tuple `(name, qualified_name, file_path, start_line, end_line)`. Rows are grouped by `file_path` preserving query order. For each distinct `file_path`:
-- Compute `abs_path = os.path.join(proj_dir, file_path)` if `proj_dir` is not None, else `file_path`.
-- If opening `abs_path` for reading raises `OSError`, that file is skipped (no entry in `result`).
-- Otherwise, read all lines from the file into `all_lines`.
-- For each function entry in that file, processed in order of `start_line`:
-  1. Compute `ident = _extraction_ident(name, qualified_name)`, a deterministic filesystem-safe string.
-  2. Count occurrences of `ident` within the file (starting at 0). The first occurrence keeps the bare `ident`; subsequent ones become `{ident}_{count}` where `count` is the number of previous occurrences.
-  3. Extract body lines: slice `all_lines[start_line-1 : end_line]` (1-indexed, inclusive). Join them into a single string. If the resulting string does not end with a newline character, append one.
-  4. Append the tuple `(deduped_ident, body)` to a list for the file.
-- `result[abs_path]` is set to that list, preserving extraction order.
-The function returns `result` after closing the database connection. No database modifications occur; the post-condition covers normal termination (no unhandled exceptions from the database or filesystem).
-
-Formally:
-```
-Let cg_langs = _CG_LANG.get(lang_key).
-If cg_langs is None or cg_langs == []:
-  result = {}
-Else:
-  conn = sqlite3.connect(self._db); cur = conn.cursor()
-  cur.execute(...)
-  ...
-```
+If _CG_LANG.get(lang_key) is falsy (None or empty), the method returns an empty dictionary and no database connection is opened. Otherwise, a SQLite connection to self._db is opened; if a sqlite3.Error or other unhandled exception occurs during the database operations (connect, cursor, execute, fetchall) or before the explicit close, the connection may not be closed, no return value is produced, and the exception propagates. If the database interaction completes without exception, the connection is closed after fetching all rows ordered by file_path, start_line. The rows are grouped by file_path into a mapping (by_file), preserving the row order, where each value is a list of tuples (ident, start_line, end_line) with ident = _extraction_ident(name, qualified_name) and start_line/end_line converted to int. Then an empty dictionary result is built. For each file_path in by_file, abs_path is computed as os.path.join(proj_dir, file_path) if proj_dir is not None, else file_path. An attempt is made to open abs_path in text mode with errors='replace'; if an OSError occurs, the file is skipped (continue), leaving the result unchanged for that path. If the file is opened successfully, its lines are read. Then for each function entry in the per-file list (ordered by start_line), a deduplicated identifier deduped is generated: if the identifier ident has appeared count times before in the same file (tracked per file), deduped = ident if count == 0 else f"{ident}_{count}". The body is extracted as the concatenation of lines[start_line - 1 : end_line]; if the resulting body does not end with '\n', a newline is appended. The pair (deduped, body) is appended to a list file_funcs in that order. After processing all functions for the file, result[abs_path] is set to file_funcs. Once all files are processed, the method returns result. If any other unexpected exception occurs during file processing after the database phase, it propagates and no return occurs.
 
 ---
 
@@ -63,148 +26,170 @@ Else:
 
 Line 299: `abs_path = os.path.join(proj_dir, file_path) if proj_dir else file_path`
 
+When `proj_dir` is `None`, `abs_path` becomes the raw relative `file_path` stored in codegraph's database. This relative path is then used as a key in the returned dictionary, violating the specification's requirement that all keys be absolute file paths.
+
 ---
 
 ## Trigger Condition
 
-Specification requires that when `proj_dir` is provided, the returned dict keys are absolute filesystem paths. The code uses `os.path.join(proj_dir, file_path)` but does not ensure the result is absolute; passing a relative `proj_dir` produces relative keys, violating the specification.
+The specification requires the returned dictionary to map absolute source file paths, but when proj_dir is None, the path used is the raw relative file_path, violating the absolute requirement.
 
 ---
 
 ## How to trigger the bug
 
-Call `CodeGraphExtractor.get_functions_by_file(lang_key="python", proj_dir="relative/path")` where `proj_dir` is a relative path. The returned dictionary's keys will be relative paths like `"relative/path/test_module.py"` instead of absolute paths like `"/cwd/relative/path/test_module.py"`.
+Call `get_functions_by_file` with a valid `lang_key` and `proj_dir=None`. When the codegraph database contains function entries, the resulting dictionary keys will be relative paths instead of absolute paths.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
 | `lang_key` | `"python"` |
-| `proj_dir` | `"relative/path"` (a relative filesystem path) |
+| `proj_dir` | `None` |
 
 ### Expected (spec-correct) Output
 
-`{"/cwd/relative/path/test_module.py": [("hello", "def hello():\n    return 'world'\n"), ...]}` — all dict keys are absolute filesystem paths.
+All dictionary keys are absolute file paths (e.g. `/tmp/abc123/test_module.py`).
 
 ### Actual (buggy) Output
 
-`{"relative/path/test_module.py": [("hello", "def hello():\n    return 'world'\n"), ...]}` — dict key is a relative path (not absolute).
+Dictionary keys are relative file paths (e.g. `test_module.py`).
 
 ### How to Reproduce
 
 1. Navigate to the repo root.
-2. Create a codegraph SQLite database with test data referencing source files.
-3. Run the following snippet (uses the public API):
+2. Run the following snippet (uses the package entry point):
 
 ```python
+import os
+import tempfile
+import sqlite3
 from src.languages.codegraph import CodeGraphExtractor
 
-extractor = CodeGraphExtractor("path/to/.codegraph/codegraph.db")
-result = extractor.get_functions_by_file("python", proj_dir="relative/path")
+tmpdir = tempfile.mkdtemp()
+with open(os.path.join(tmpdir, "test_module.py"), "w") as f:
+    f.write("def hello(name):\n    return f'Hello, {name}!'\n")
 
-# actual (buggy) output: keys are relative paths like "relative/path/test_module.py"
-# expected (correct) output: keys should be absolute paths like "/cwd/relative/path/test_module.py"
-print(result.keys())
+db_path = os.path.join(tmpdir, "codegraph.db")
+conn = sqlite3.connect(db_path)
+conn.execute("CREATE TABLE nodes (id INTEGER PRIMARY KEY, name TEXT, qualified_name TEXT, file_path TEXT, kind TEXT, language TEXT, start_line INTEGER, end_line INTEGER)")
+conn.execute("INSERT INTO nodes VALUES (1, 'hello', 'hello', 'test_module.py', 'function', 'python', 1, 2)")
+conn.commit()
+conn.close()
+
+extractor = CodeGraphExtractor(db_path)
+old = os.getcwd()
+os.chdir(tmpdir)
+result = extractor.get_functions_by_file("python", proj_dir=None)
+os.chdir(old)
+
+print(list(result.keys()))
+# actual (buggy) output: ['test_module.py']
+# expected (correct) output: ['/tmp/.../test_module.py'] (absolute path)
 ```
 
 ---
 
 ## Probe Script
 
-```python
-import os
+```py
+"""Probe script for bug: src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file
+
+The spec claims get_functions_by_file returns a dictionary mapping each absolute
+source file path (str) to a list of (function_name, body_text) tuples. The actual
+code uses ``os.path.join(proj_dir, file_path) if proj_dir else file_path``, so
+when proj_dir is None the dict keys are raw relative file_path values instead of
+absolute paths.
+
+Strategy: create a temp workspace with a test source file and a minimal codegraph
+SQLite database, call get_functions_by_file with proj_dir=None from that temp
+directory (so the relative path resolves), and check whether the returned dict
+keys are absolute paths.
+"""
 import sys
+import os
 import sqlite3
 import tempfile
-import shutil
+import traceback
 
-# Add repo root to Python path so `from src.languages.codegraph import ...` works
-repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, repo_root)
+# Probe is at <repo>/fm_agent/bug_validation/probe_*.py
+# Go up 3 levels to reach repo root
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, _REPO_ROOT)
 
 try:
     from src.languages.codegraph import CodeGraphExtractor
 
-    # --- Setup: create a temporary directory with test fixtures ---
-    tmpdir = tempfile.mkdtemp(prefix="probe_cg_")
-    cg_dir = os.path.join(tmpdir, ".codegraph")
-    os.makedirs(cg_dir, exist_ok=True)
-    db_path = os.path.join(cg_dir, "codegraph.db")
+    # Create a self-contained temporary directory for all file I/O
+    tmpdir = tempfile.mkdtemp()
 
-    # Create the codegraph SQLite database with the nodes table
+    # Create a test source file in the temp dir with a simple function
+    test_file = os.path.join(tmpdir, "test_module.py")
+    with open(test_file, "w") as f:
+        f.write("def hello(name):\n    return f'Hello, {name}!'\n")
+
+    # Create a minimal codegraph SQLite database
+    db_path = os.path.join(tmpdir, "codegraph.db")
     conn = sqlite3.connect(db_path)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS nodes (
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE nodes (
             id INTEGER PRIMARY KEY,
             name TEXT,
             qualified_name TEXT,
             file_path TEXT,
-            start_line INTEGER,
-            end_line INTEGER,
             kind TEXT,
-            language TEXT
+            language TEXT,
+            start_line INTEGER,
+            end_line INTEGER
         )
     """)
 
-    # Create a small Python source file as a test subject
-    test_src = os.path.join(tmpdir, "test_module.py")
-    with open(test_src, "w") as f:
-        f.write("def hello():\n    return 'world'\n\n")
-        f.write("def goodbye():\n    return 'farewell'\n")
-
-    # Insert function entries referencing the test source file
-    conn.execute(
-        "INSERT INTO nodes (name, qualified_name, file_path, start_line, end_line, kind, language) "
+    # Insert a function node with a relative file_path (as codegraph stores)
+    rel_file = "test_module.py"
+    cur.execute(
+        "INSERT INTO nodes (name, qualified_name, file_path, kind, language, start_line, end_line) "
         "VALUES (?, ?, ?, ?, ?, ?, ?)",
-        ("hello", "hello", "test_module.py", 1, 2, "function", "python"),
-    )
-    conn.execute(
-        "INSERT INTO nodes (name, qualified_name, file_path, start_line, end_line, kind, language) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
-        ("goodbye", "goodbye", "test_module.py", 4, 5, "function", "python"),
+        ("hello", "hello", rel_file, "function", "python", 1, 2),
     )
     conn.commit()
     conn.close()
 
-    # --- Test: call get_functions_by_file with a RELATIVE proj_dir ---
-    cwd = os.getcwd()
-    rel_proj_dir = os.path.relpath(tmpdir, cwd)
-
     extractor = CodeGraphExtractor(db_path)
-    result = extractor.get_functions_by_file("python", proj_dir=rel_proj_dir)
 
-    # --- Oracle: spec requires ALL keys to be absolute filesystem paths ---
-    bug_confirmed = False
-    non_absolute_keys = []
+    # Change into the temp dir so that the relative file_path resolves
+    # correctly when proj_dir=None (the abs_path becomes just file_path,
+    # which is valid relative to CWD).
+    old_cwd = os.getcwd()
+    os.chdir(tmpdir)
+    try:
+        result = extractor.get_functions_by_file("python", proj_dir=None)
+    finally:
+        os.chdir(old_cwd)
 
-    for key in result:
-        if not os.path.isabs(key):
-            non_absolute_keys.append(key)
-            bug_confirmed = True
-
-    expected = os.path.abspath(os.path.join(rel_proj_dir, "test_module.py"))
-
-    if bug_confirmed:
-        print(
-            f"CONFIRMED — spec requires absolute paths as dict keys, "
-            f"but passing a relative proj_dir={rel_proj_dir!r} produced "
-            f"relative key: {non_absolute_keys!r} instead of expected absolute key {expected!r}"
-        )
+    # The spec claims ALL keys MUST be absolute paths.
+    if not result:
+        print("NOT CONFIRMED — result was empty (no functions extracted)")
     else:
-        print(f"NOT CONFIRMED — all keys are absolute: {list(result.keys())!r}")
+        abs_keys = [k for k in result.keys() if os.path.isabs(k)]
+        rel_keys = [k for k in result.keys() if not os.path.isabs(k)]
+        if rel_keys:
+            print(
+                f"CONFIRMED — returned dict keys are not all absolute: "
+                f"relative keys={rel_keys!r}, "
+                f"absolute keys={abs_keys!r}"
+            )
+        else:
+            print(f"NOT CONFIRMED — all {len(result)} returned keys are absolute paths")
 
 except Exception as e:
-    import traceback
     print(f"ERROR: {e}")
     traceback.print_exc()
     sys.exit(1)
-finally:
-    if "tmpdir" in dir():
-        shutil.rmtree(tmpdir, ignore_errors=True)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — spec requires absolute paths as dict keys, but passing a relative proj_dir='../../probe_cg_bq8naau0' produced relative key: ['../../probe_cg_bq8naau0/test_module.py'] instead of expected absolute key '/tmp/probe_cg_bq8naau0/test_module.py'
+CONFIRMED — returned dict keys are not all absolute: relative keys=['test_module.py'], absolute keys=[]
 ```

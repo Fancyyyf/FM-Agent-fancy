@@ -1,3 +1,0 @@
-{
-  "post_condition": "If an OSError or UnicodeDecodeError is raised while opening or reading the file at file_path, the function returns False. Otherwise, the file is opened, read, and properly closed, and the return value is True if and only if the decoded text content contains at least two lines that include the substring '[SPEC]' and at least two lines that include the substring '[INFO]'. Formally: result = ((no OSError/UnicodeDecodeError) ⇒ (let lines = content.splitlines() in (|{line in lines | '[SPEC]' in line}| ≥ 2) ∧ (|{line in lines | '[INFO]' in line}| ≥ 2))) ∧ ((exception raised) ⇒ result = False)."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "paths = ['nonexistent_file.md'], base_dir='/tmp', fallback_base_dir=None, and the file /tmp/nonexistent_file.md does not exist. The specification expects the function to return [] (silently exclude the missing entry). The code raises ValueError('domain knowledge file does not exist: nonexistent_file.md').",
-  "offending_statements": "Line 23-24, Line 25-26, Line 28-32: The function raises ValueError for missing files, non-regular files, or invalid extensions, while the specification requires these entries to be excluded from the returned list without raising an error.",
-  "reason": "The specification states that entries whose resolved path does not exist, is not a regular file, or has an invalid extension should be excluded from the returned list. The code raises ValueError for each such entry, causing a mismatch for any input containing an invalid entry."
-}

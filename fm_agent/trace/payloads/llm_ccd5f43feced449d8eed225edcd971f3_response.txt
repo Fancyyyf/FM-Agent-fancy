@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "trace_dir = '/tmp/logs', event = {'new': 'entry'}, with pre-existing file '/tmp/logs/events.jsonl' containing '{\"old\":\"value\"}' (without a trailing newline). After calling append_event, the file content becomes '{\"old\":\"value\"}{\"new\":\"entry\"}\\n', placing two events on the same line.",
-  "offending_statements": "Line 6: with open(events_path, \"a\", encoding=\"utf-8\") as f:\nLine 7: f.write(line + \"\\n\")",
-  "reason": "The code unconditionally appends the serialized event and a newline after the existing content. If the existing content does not end with a newline, the new event is concatenated to the last (incomplete) line, causing two events to occupy a single line. This violates the specification requirement that each event occupies exactly one complete line."
-}

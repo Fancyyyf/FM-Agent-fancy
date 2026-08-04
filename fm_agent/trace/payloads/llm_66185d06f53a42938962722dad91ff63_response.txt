@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns `True` if the canonical backend identifier obtained from `resolve_model_backend()` is either `'codex-cli'` or `'claude-cli'`; otherwise it returns `False`. The state of the backend configuration and module-level state remains unchanged. Formally: `result ⇔ (resolve_model_backend() ∈ {'codex-cli', 'claude-cli'})`."
-}

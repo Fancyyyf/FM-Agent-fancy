@@ -1,11 +1,1 @@
-{
-  "id": "main-py--run_pipeline",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/main-py/run_pipeline.py",
-  "function_name": "run_pipeline",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
-  "probe_script": "fm_agent/bug_validation/probe_main-py--run_pipeline.py",
-  "detail_file": "fm_agent/bug_validation/main-py--run_pipeline.md",
-  "probe_stdout": "CONFIRMED — generate_topdown_layers lacks resume param (params=['proj_dir', 'phase_numbers', 'extra_call_edges']), is called without resume guard in run_pipeline (line 113 in source), violating spec: 'previously completed stages are not re-executed'. Contrast: _run_generate_phases HAS resume param (['proj_dir', 'work_dir', 'script_dir', 'is_incremental', 'resume', 'submodules']) and uses _resume_skip internally.\n",
-  "trigger_summary": "run_pipeline unconditionally calls generate_topdown_layers() which has no resume parameter, causing previously completed stages to be re-executed when resume=True and fm_agent/ exists."
-}
+{"id": "main-py--run_pipeline", "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/main-py/run_pipeline.py", "function_name": "run_pipeline", "confirmation_status": "not_confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_main-py--run_pipeline.py", "detail_file": "fm_agent/bug_validation/main-py--run_pipeline.md", "probe_stdout": "NOT CONFIRMED \u2014 all 5 required downstream calls are present in run_pipeline() (source: /home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/main-py/run_pipeline.py)\n  [FOUND] _run_generate_phases\n  [FOUND] _run_generate_domain_context\n  [FOUND] run_extraction(\n  [FOUND] generate_topdown_layers(\n  [FOUND] run_spec_generation_and_verification(", "trigger_summary": "The verification system incorrectly claimed run_pipeline() returns early after initial setup; static analysis shows the function body calls all five downstream pipeline stages."}

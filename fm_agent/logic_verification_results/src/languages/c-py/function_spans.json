@@ -1,10 +1,5 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/c-py/function_spans.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "- Returns None when a codegraph instance cannot be initialized from proj_dir\n  - Otherwise returns a list of (function_name, start_idx, end_idx) tuples for every\n    function defined in the C source file at filepath, where start_idx and end_idx\n    are 0-indexed inclusive line numbers",
-    "actual_behavior": "After execution, the function returns either `None` or a list of `(name, start_idx, end_idx)` tuples. Formally, let `cg = CodeGraphExtractor.from_proj_dir(proj_dir)`. If `cg is None`, the return value is `None`. Otherwise, the return value is `cg.get_function_spans(\"c\", filepath)`. Consequently, the overall return value is `None` if and only if the code graph is unavailable for `proj_dir` or the call to `get_function_spans` returns `None` (e.g., language key not recognized, file not indexed, no definitions, or path resolution failure). If the return value is not `None`, it is a Python list `L` where each element is a tuple `(name: str, start_idx: int, end_idx: int)` such that `0 <= start_idx <= end_idx`, the tuples represent all function/method definitions detected in the C source file pointed to by `filepath`, `name` is a class-qualified identifier, and `L` is sorted by ascending `start_idx`. No side effects are visible to the caller beyond the value returned.",
-    "code_evidence": "Line 8: return cg.get_function_spans(\"c\", filepath) if cg else None",
-    "trigger_condition": "The specification states that None is returned only when a codegraph instance cannot be initialized from proj_dir; otherwise a list (possibly empty) of function tuples must be returned. The code, however, also returns None when get_function_spans returns None for reasons other than initialization failure (e.g., the file has no definitions). This violates the specification because for valid proj_dir and a C file with no functions, the code returns None instead of an empty list."
-  }
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/c-py/function_spans.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

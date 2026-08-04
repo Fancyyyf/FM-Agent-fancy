@@ -1,28 +1,3 @@
-# [SPEC]
-# Unit: src/prompts-py/_generate_block_post_condition.py
-#
-# _generate_block_post_condition(block, pre_condition, knowledge, language, trace_dir=None, trace_meta=None)
-#
-# Pre-condition:
-#   - block is a non-empty string containing code statements, possibly with "Line N:" prefixes
-#   - pre_condition is a non-empty string describing the logical state assumed to hold before block begins execution
-#   - knowledge is an optional string providing additional contextual information that may be included in the prompt; may be empty, None, or otherwise falsy
-#   - language is a non-empty string identifying the source programming language of the code in block
-#   - trace_dir, when not None, is a directory path used for persisting trace records
-#   - trace_meta, when not None, is a dict of metadata for trace annotation
-#
-# Post-condition:
-#   - Returns a string describing the strongest post-condition that must hold after executing block from the given pre-condition, covering all execution paths through the block including normal flow-through, early returns, and exceptional exits
-#   - Returns None when the post-condition could not be determined from the given inputs
-#   - The returned post-condition is expressed in natural language suitable for subsequent logical implication checks against specification post-conditions
-# [SPEC]
-
-# [INFO]
-#
-# _llm_json_call(client, model, messages, parse_fn, default, trace_dir=None, trace_meta=None) -> str | None
-#   Sends messages to the LLM JSON API using the given client and model, parses the LLM response with parse_fn, and returns the extracted post-condition string or None on failure.
-# [INFO]
-
 def _generate_block_post_condition(block, pre_condition, knowledge, language,
                                    trace_dir=None, trace_meta=None):
     info_str = f"\nAdditional context:\n{knowledge}" if knowledge else ""

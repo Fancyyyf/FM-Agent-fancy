@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "_git('status', capture_output=True)",
-  "offending_statements": "Line 2:         return subprocess.run(\nLine 3:             [\"git\", \"-C\", proj_dir, *args],\nLine 4:             check=True, capture_output=True, text=True, **kwargs,\nLine 5:         ).stdout.strip()",
-  "reason": "The code hardcodes check=True, capture_output=True, text=True but also passes **kwargs to subprocess.run. If kwargs contains any of 'check', 'capture_output', or 'text', the call to subprocess.run raises TypeError due to duplicate keyword argument, violating the specification which requires executing the git command for any valid positional args and env keyword argument. For instance, _git('status', capture_output=True) raises TypeError, whereas spec demands it to capture output and return stripped stdout or raise CalledProcessError on failure."
-}

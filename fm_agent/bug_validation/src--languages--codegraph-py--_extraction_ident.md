@@ -1,6 +1,6 @@
 # Bug Report: _extraction_ident
 
-**Source file:** `src/languages/codegraph.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/_extraction_ident.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,80 +12,67 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a string composed of one or more components joined by the literal "::"
-  - When qualified_name is non-empty and its suffix equals name, the leading components of the returned string (all except the last) correspond, in order, to the scope qualifiers extracted from the prefix of qualified_name that precedes name
-  - When qualified_name is empty or its suffix does not equal name, the returned string consists of exactly one component
-  - The final component of the returned string is derived from name
-  - No component of the returned string contains any character that would be a directory separator in any filesystem
-  - No component of the returned string contains signature syntax, pointer syntax, or template syntax that may have been present in the raw database column values
-  - The same (name, qualified_name) pair always produces the same returned string
-  - The separator character ("." vs "::") used in qualified_name does not affect the set or order of scope components in the returned string
+Returns a canonicalized fully-qualified function identifier using '::' as the component separator. Each component of the qualified name is first stripped of tree-sitter decorations (type signatures, template bodies, and parameter lists) to yield the bare identifier, then transformed for filesystem and FQN safety by replacing every '/' character with '_'. The number of components equals the number of identifier segments after splitting qualified_name on '::' and '.' boundaries, preserving left-to-right order.
 
 ---
 
 ### Actual Behavior
 
-The function returns a string r computed as r = '::'.join(canonicalize(_bare_function_name(p)) for p in _qualified_parts(name, qualified_name)). Let Q = _qualified_parts(name, qualified_name); then Q is a list of at least one non-empty string, with the last element equal to name. For each element q in Q, define s = canonicalize(_bare_function_name(q)). Each s is a string containing no characters that are invalid in filesystem path components; s may be empty if _bare_function_name returns an empty string (e.g., when q consists entirely of whitespace). The returned string r is the concatenation of the resulting strings s1, s2, ..., sn interleaved with '::'. Thus r has the form s0 + '::' + s1 + '::' + ... + s_{n-1}. When qualified_name is non-empty and has name as a suffix, the scope qualifier components from qualified_name's prefix are included as the first elements of Q; otherwise Q = [name]. The return value is deterministic and depends only on name and qualified_name.
+The function returns a string R that satisfies: Let C = _qualified_parts(name, qualified_name), a list of component strings obtained by splitting qualified_name on '::' and '.' boundaries, defaulting to [name] if no components arise. Then R = '::'.join(canonicalize(_bare_function_name(p)) for p in C). For each p, _bare_function_name(p) strips tree-sitter decorations, leaving the bare identifier, and canonicalize(s) replaces every '/' with '_'. Hence R is a class-qualified identifier with '::' separators, free of slashes and tree-sitter artifacts, and safe for filesystem use.
 
 ---
 
 ## Code Evidence
 
 Line 15: return "::".join(
-Line 16:         canonicalize(_bare_function_name(p))
-Line 17:         for p in _qualified_parts(name, qualified_name)
-Line 18:     )
+Line 16:     canonicalize(_bare_function_name(p))
+Line 17:     for p in _qualified_parts(name, qualified_name)
+Line 18: )
 
 ---
 
 ## Trigger Condition
 
-The code does not filter out empty strings that can result from `_bare_function_name`. For the input where `qualified_name` has a whitespace-only scope qualifier ('  ::MyClass::func'), `_bare_function_name` returns an empty string for that qualifier, causing the final joined string to be '::MyClass::func'. The specification requires the returned string to be composed of one or more (nonempty) components joined by '::', but the result starts with '::' due to the empty leading component, violating that requirement.
+When qualified_name starts with '::' (e.g., '::foo'), _qualified_parts splits on '::' boundaries yielding an empty first component. The code includes this empty component in the joined result, producing '::foo'. The specification requires the number of components to equal the number of identifier segments (i.e., non-empty parts), so the expected result is 'foo'.
 
 ---
 
 ## How to trigger the bug
 
-The bug occurs when `_qualified_parts` returns a list containing whitespace-only strings. `_qualified_parts` splits the scope prefix by `::` or `.`, and its filter `if p` only rejects falsy values — but whitespace-only strings like `" "` are truthy and pass through. `_bare_function_name` then strips them to `""`, `canonicalize` passes `""` through, and `"::".join(...)` produces consecutive separators (`::::`) that represent empty components.
+The bug occurs when `_qualified_parts` produces a component that `_bare_function_name` transforms to an empty string, which then becomes a leading `"::"` separator in the joined result. The simplest reproducing case uses `qualified_name = ":: foo"` — the space after `::` survives `rstrip(":.")` in `_qualified_parts`, becomes a whitespace component, and `_bare_function_name(" ")` returns `""`. The `"::".join(["", "foo"])` then produces `"::foo"` instead of the expected `"foo"`.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| name | `"func"` |
-| qualified_name | `"foo:: ::func"` |
+| name | `"foo"` |
+| qualified_name | `":: foo"` |
 
 ### Expected (spec-correct) Output
 
-`"foo::func"` (whitespace-only qualifier component should be filtered out)
+`"foo"`
 
 ### Actual (buggy) Output
 
-`"foo::::func"` (split by `"::"` gives `["foo", "", "func"]` — contains an empty component)
+`"::foo"`
 
 ### How to Reproduce
-
-Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
 ```python
 import sys
-sys.path.insert(0, ".")
-from src.languages.codegraph import _extraction_ident
+sys.path.insert(0, '.')
+sys.path.insert(0, 'src')
 
-# Buggy: produces "foo::::func" with empty component
-result = _extraction_ident("func", "foo:: ::func")
-print(repr(result))
-# actual (buggy) output: 'foo::::func'
-# expected (correct) output: 'foo::func'
+from languages.codegraph import _extraction_ident
 
-# Also: whitespace+tab qualifier
-result2 = _extraction_ident("baz", "X:: ::\tbaz")
-print(repr(result2))
-# actual (buggy) output: 'X::::::baz'
-# expected (correct) output: 'X::baz'
+# The bug: qualified_name ":: foo" produces a whitespace component
+# that _bare_function_name reduces to "", then join produces a leading "::"
+result = _extraction_ident('foo', ':: foo')
+# actual (buggy) output: '::foo'
+# expected (correct) output: 'foo'
 ```
 
 ---
@@ -93,92 +80,50 @@ print(repr(result2))
 ## Probe Script
 
 ```python
-#!/usr/bin/env python3
-"""Probe script for bug: src--languages--codegraph-py--_extraction_ident
-
-Tests whether _extraction_ident produces empty components when
-_bare_function_name returns "" for whitespace-only qualifier parts,
-violating the spec that the returned string must be composed of
-non-empty components joined by "::".
-"""
 import sys
 import os
-import tempfile
 
-# ── Use a fresh temp directory as probe workspace ──
-os.chdir(tempfile.mkdtemp())
+# Add repo root (for config module) and src/ (for languages package) to path
+_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, _repo_root)
+sys.path.insert(0, os.path.join(_repo_root, 'src'))
 
-# Ensure the repo root is on sys.path so the public module can be imported.
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-if repo_root not in sys.path:
-    sys.path.insert(0, repo_root)
+try:
+    from languages.codegraph import _extraction_ident, _qualified_parts
 
-# Import via the package entry point
-from src.languages.codegraph import _extraction_ident
+    # Bug trigger: qualified_name starting with "::" where _qualified_parts
+    # produces a component that _bare_function_name reduces to empty string,
+    # which then produces a leading "::" in the joined result.
+    #
+    # The spec says: "Returns a canonicalized fully-qualified function identifier
+    # using '::' as the component separator." The number of components should
+    # equal the number of identifier segments (non-empty parts).
+    #
+    # Test case: ":: foo" - the space after :: creates a whitespace component
+    # that _bare_function_name() turns into "", which then joins to produce "::foo"
+    # instead of "foo".
+    name = 'foo'
+    qualified_name = ':: foo'
 
-
-def check(name, qualified_name):
-    """Call _extraction_ident and check for empty components in result."""
     actual = _extraction_ident(name, qualified_name)
-    components = actual.split("::")
-    has_empty = any(c == "" for c in components)
-    return actual, has_empty, components
+    expected = 'foo'  # spec-correct: only one identifier segment -> just 'foo'
 
+    passed = (actual != expected)  # True -> bug reproduced
 
-def main():
-    # The bug: _qualified_parts returns ["foo", " ", "func"] because
-    # _qualified_parts' filter "if p" doesn't catch whitespace-only
-    # strings. _bare_function_name(" ") returns "" and canonicalize("")
-    # returns "", so "::".join(["foo", "", "func"]) = "foo::::func",
-    # which has an empty component — violating the spec.
+except Exception as e:
+    print(f'ERROR: {e}')
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
 
-    bugs_found = []
-    no_bugs = []
-
-    test_cases = [
-        ("func", "foo:: ::func",  "whitespace-only middle qualifier"),
-        ("func", " ::func",        "leading space before ::name"),
-        ("bar",  " ::A::bar",      "leading space, nested qualifier"),
-        ("baz",  "X:: ::\tbaz",    "space+tab qualifier"),
-    ]
-
-    for name, qname, desc in test_cases:
-        actual, has_empty, components = check(name, qname)
-        if has_empty:
-            bugs_found.append((name, qname, desc, actual, components))
-        else:
-            no_bugs.append((name, qname, desc, actual))
-
-    if bugs_found:
-        print("CONFIRMED — Empty components found in _extraction_ident output")
-        for name, qname, desc, actual, components in bugs_found:
-            print(f"  [{desc}] name={name!r}, qualified_name={qname!r}")
-            print(f"    actual:   {actual!r}")
-            print(f"    split by '::': {components!r} (contains empty!)")
-    else:
-        print("NOT CONFIRMED — No empty components found in any test case")
-        for name, qname, desc, actual in no_bugs:
-            print(f"  [{desc}] actual={actual!r}")
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+if passed:
+    print(f'CONFIRMED — actual: {actual!r} | expected: {expected!r}')
+else:
+    print(f'NOT CONFIRMED — actual matched expected: {actual!r}')
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — Empty components found in _extraction_ident output
-  [whitespace-only middle qualifier] name='func', qualified_name='foo:: ::func'
-    actual:   'foo::::func'
-    split by '::': ['foo', '', 'func'] (contains empty!)
-  [space+tab qualifier] name='baz', qualified_name='X:: ::\tbaz'
-    actual:   'X::::::baz'
-    split by '::': ['X', '', '', 'baz'] (contains empty!)
+CONFIRMED — actual: '::foo' | expected: 'foo'
 ```

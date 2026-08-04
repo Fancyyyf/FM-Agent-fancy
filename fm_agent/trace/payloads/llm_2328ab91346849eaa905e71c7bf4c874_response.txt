@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "caller_fqn = 'pkg.mod.func'; file_map = {'pkg.mod.func': 'mod_func.py'}; 'mod_func.py' exists as a regular file with a valid leading spec/info block, extension .py maps to Python; updates = [('other_func', 'new spec')]; base_idx = 0; LLM returns {'info_updated': True, 'new_info': 'Updated contract'} for that update.",
-  "offending_statements": "Line 10:         cpath = file_map.get(caller_fqn)\nLine 45:         return cpath if changed else None",
-  "reason": "The specification requires returning the absolute path to the caller file, but the code returns cpath as retrieved from file_map without converting to absolute. If file_map provides a relative path and the file is modified, the function returns a non-absolute path, violating the spec."
-}

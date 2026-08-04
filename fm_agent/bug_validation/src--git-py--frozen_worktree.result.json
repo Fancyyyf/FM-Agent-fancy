@@ -1,11 +1,11 @@
 {
   "id": "src--git-py--frozen_worktree",
-  "source_file": "src/git-py/frozen_worktree.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/git-py/frozen_worktree.py",
   "function_name": "frozen_worktree",
   "confirmation_status": "confirmed",
-  "attempts": "1",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--git-py--frozen_worktree.py",
   "detail_file": "fm_agent/bug_validation/src--git-py--frozen_worktree.md",
-  "probe_stdout": "[Pipeline] Snapshot created at: /tmp/fm_agent_wt_testrepo_vqrce874/snapshot\n[Pipeline] Snapshot is kept after the run. Remove with: git -C /tmp/bug_probe_nuyn9g__/testrepo worktree remove --force /tmp/fm_agent_wt_testrepo_vqrce874/snapshot\nCONFIRMED — gitignored untracked file 'test.secret' is missing from snapshot. present=False, normal_untracked_present=True, tracked_present=True\n",
-  "trigger_summary": "git add -A skips untracked files matching .gitignore patterns, so gitignored untracked files are omitted from the snapshot despite the spec requiring all untracked files to be captured."
+  "probe_stdout": "[Pipeline] Snapshot created at: /tmp/fm_agent_wt_repo_54som_02/snapshot\n[Pipeline] Snapshot is kept after the run. Remove with: git -C /tmp/probe_fwt_frax15ct/repo worktree remove --force /tmp/fm_agent_wt_repo_54som_02/snapshot\nCONFIRMED — nested fm_agent/ present in snapshot at /tmp/fm_agent_wt_repo_54som_02/snapshot/testdata/fm_agent (contains: ['nested.txt']) — spec requires exclusion at all depths",
+  "trigger_summary": "frozen_worktree() uses git rm --cached with only top-level exclude names, so nested directories with the same name (e.g. testdata/fm_agent/) remain in the commit and leak into the snapshot."
 }

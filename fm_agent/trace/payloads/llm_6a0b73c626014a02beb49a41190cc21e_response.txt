@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "messages = [{'role': 'user', 'content': [{'text': 123}]}]",
-  "offending_statements": "Line 7: content = \"\\n\".join( block.get(\"text\", \"\") for block in content if isinstance(block, dict) )",
-  "reason": "When a content block's 'text' field is a non-string (e.g., an integer), the code attempts to join it with newline characters, which raises TypeError because str.join requires all elements to be strings. The specification expects the function to output a string for any input conforming to the described structure (including non‑string text values), possibly by treating the value as its text representation. The resulting exception violates the specification."
-}

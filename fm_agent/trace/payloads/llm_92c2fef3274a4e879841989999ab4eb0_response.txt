@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "'' (empty string)",
-  "offending_statements": "Line 2: lines = source.splitlines(keepends=True)\nLine 3: line_offsets = []",
-  "reason": "When source is the empty string, splitlines returns an empty list, so line_offsets remains an empty list. The resulting instance cannot convert a (0, 0) position to a 0-based offset because line_offsets[0] would raise an IndexError, violating the specification's requirement to support position-to-offset conversion for valid positions."
-}

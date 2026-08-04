@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "request('test', [1])",
-  "offending_statements": "Line 2:         actual_params = {} if params is None else params",
-  "reason": "The specification requires that the request contains a params object (a dictionary) or, when params is None, an empty dict. The code does not enforce this; if a list (e.g., [1]) is passed as the params argument, the code sends that list as the JSON-RPC params array, violating the specification that a params object must be sent."
-}

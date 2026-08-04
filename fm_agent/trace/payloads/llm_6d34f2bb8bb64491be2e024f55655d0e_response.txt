@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/proj', modified_functions={}, phases.json contains {'phases':[{'modules':[{'source_files':['a/foo.py','a/bar.py']}]}]}. Source files a/foo.py and a/bar.py are absent, so expected extracted files are empty. extracted_functions/ initially has a/foo/f.py and a/bar/f.py. After _remove_stale_extracted, _reconcile_extracted_dir deletes f.py inside foo/ and bar/ but does not prune the now-empty shared parent directory a/. The specification requires pruning any empty parent directories, so a/ remains, violating the spec.",
-  "offending_statements": "Line 23: for abs_src in srcs:\nLine 24:     _reconcile_extracted_dir(proj_dir, abs_src)",
-  "reason": "The code only calls _reconcile_extracted_dir for each individual source file. This may leave empty parent directories (like a/) that are shared by multiple source-specific directories when all children are removed. The specification explicitly requires pruning any empty parent directories, which the code does not guarantee."
-}

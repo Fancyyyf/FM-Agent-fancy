@@ -1,117 +1,75 @@
-"""Probe for bug src--incremental_reasoner-py--_reconcile_extracted_dir.
+"""Probe: _reconcile_extracted_dir does not remove func_dir when abs_src is deleted.
 
-Bug: _reconcile_extracted_dir uses plain os.remove() without exception handling.
-When os.remove raises PermissionError on one file, the function terminates
-immediately, leaving the filesystem in a partially modified state — some
-non-expected files already deleted, others still present.
+Spec claim: "When abs_src does not exist on disk, removes the entire corresponding
+extracted-function directory and all files within it."
+
+Actual behavior: The function empties func_dir (removes files and prunes subdirs)
+but leaves func_dir itself on disk.
+
+This probe creates a temp workspace with a populated extracted-functions directory,
+calls _reconcile_extracted_dir with a non-existent abs_src, and verifies that
+func_dir is NOT removed (confirming the bug).
 """
 
-import sys
 import os
-import stat
-import shutil
+import sys
 import tempfile
+import shutil
 
-# Ensure the repository root is on sys.path so we can import the package.
-_REPO_ROOT = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
-_TMP = None
-_RESTRICTED_SUBDIR = None
-_ORIGINAL_SRC_REL = None
+# Ensure repo root is on sys.path so 'src' is importable
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, repo_root)
 
 try:
-    import src.incremental_reasoner as _incr
-
-    _ORIGINAL_SRC_REL = _incr._src_rel_to_func_dir
-
-    # --- Set up temp workspace ---
-    _TMP = tempfile.mkdtemp()
-    _PROJ_DIR = os.path.join(_TMP, "proj")
-    os.makedirs(_PROJ_DIR)
-
-    _FUNC_DIR = os.path.join(_TMP, "func_dir")
-    os.makedirs(_FUNC_DIR)
-
-    # Deletable file in writable func_dir root.
-    _STALE_DEL = os.path.join(_FUNC_DIR, "stale_deletable.txt")
-    with open(_STALE_DEL, "w") as f:
-        f.write("deletable content\n")
-
-    # Restricted subdirectory → os.remove on files inside raises PermissionError.
-    _RESTRICTED_SUBDIR = os.path.join(_FUNC_DIR, "restricted")
-    os.makedirs(_RESTRICTED_SUBDIR)
-    _STALE_UNDEL = os.path.join(_RESTRICTED_SUBDIR, "stale_undeletable.txt")
-    with open(_STALE_UNDEL, "w") as f:
-        f.write("must not be deleted\n")
-
-    # Remove write permission: stat gives read + execute only.
-    os.chmod(_RESTRICTED_SUBDIR, stat.S_IRUSR | stat.S_IXUSR)
-
-    # Mock _src_rel_to_func_dir to return our controlled paths.
-    _incr._src_rel_to_func_dir = lambda _pd, _src: (_FUNC_DIR, "txt")
-
-    # Dummy source file.  "txt" is not in EXT_TO_LANG, so valid stays empty
-    # and EVERY file under func_dir is a deletion target.
-    _ABS_SRC = os.path.join(_PROJ_DIR, "dummy.txt")
-    with open(_ABS_SRC, "w") as f:
-        f.write("dummy\n")
-
-    # --- Trigger the bug ---
-    _raised = False
-    try:
-        _incr._reconcile_extracted_dir(_PROJ_DIR, _ABS_SRC)
-    except PermissionError:
-        _raised = True
-
-    # --- Verify ---
-    _undeletable_exists = os.path.exists(_STALE_UNDEL)
-    _deletable_gone = not os.path.exists(_STALE_DEL)
-
-    if _raised and _undeletable_exists and _deletable_gone:
-        print(
-            "CONFIRMED — PermissionError raised; stale_undeletable.txt remains "
-            "on disk while stale_deletable.txt was already removed.  "
-            "Filesystem left in partial state (deletion incomplete)."
-        )
-    elif _raised and not _undeletable_exists:
-        print(
-            "NOT CONFIRMED — PermissionError raised but stale_undeletable.txt "
-            "was still deleted (unexpected)."
-        )
-    elif not _raised and _deletable_gone:
-        print(
-            "NOT CONFIRMED — function completed normally; all orphaned files "
-            "were deleted."
-        )
-    else:
-        print(
-            "NOT CONFIRMED — unexpected state: raised=%s, "
-            "undeletable_exists=%s, deletable_gone=%s"
-            % (_raised, _undeletable_exists, _deletable_gone)
-        )
-
-except Exception as _exc:
-    print("ERROR: %s" % _exc)
+    from src.incremental_reasoner import _reconcile_extracted_dir
+except Exception as e:
+    print(f"ERROR: Failed to import _reconcile_extracted_dir: {e}")
     sys.exit(1)
 
-finally:
-    # Restore mock.
-    if _ORIGINAL_SRC_REL is not None:
-        try:
-            import src.incremental_reasoner as _incr2
+def main():
+    # Create a fresh temp directory as the probe workspace (per FM-Agent self-validation guard)
+    tmp = tempfile.mkdtemp(prefix="probe_reconcile_")
+    proj_dir = os.path.join(tmp, "mock_proj")
 
-            _incr2._src_rel_to_func_dir = _ORIGINAL_SRC_REL
-        except Exception:
-            pass
+    # Create the extracted-functions directory structure for a source file "src/foo.py"
+    func_dir = os.path.join(proj_dir, "fm_agent", "extracted_functions", "src", "foo-py")
+    sub_dir = os.path.join(func_dir, "nested")
 
-    # Restore write permission on the restricted subdir for cleanup.
-    if _RESTRICTED_SUBDIR is not None and os.path.exists(_RESTRICTED_SUBDIR):
-        os.chmod(_RESTRICTED_SUBDIR, stat.S_IRWXU)
+    os.makedirs(sub_dir, exist_ok=True)
 
-    # Remove temp tree.
-    if _TMP is not None and os.path.exists(_TMP):
-        shutil.rmtree(_TMP, ignore_errors=True)
+    # Create some dummy extracted files to be cleaned up
+    with open(os.path.join(func_dir, "bar.py"), "w") as f:
+        f.write("# extracted function bar")
+    with open(os.path.join(func_dir, "bar.py.spec.json"), "w") as f:
+        f.write('{"spec": "bar"}')
+    with open(os.path.join(func_dir, "bar.py.info.json"), "w") as f:
+        f.write('{"info": "bar"}')
+    with open(os.path.join(sub_dir, "baz.py"), "w") as f:
+        f.write("# extracted function baz")
+    with open(os.path.join(sub_dir, "baz.py.spec.json"), "w") as f:
+        f.write('{"spec": "baz"}')
+
+    # abs_src points to a source file that does NOT exist (simulating deletion)
+    abs_src = os.path.join(proj_dir, "src", "foo.py")  # deliberately not created
+
+    try:
+        _reconcile_extracted_dir(proj_dir, abs_src)
+    except Exception as e:
+        print(f"ERROR: _reconcile_extracted_dir raised: {e}")
+        shutil.rmtree(tmp, ignore_errors=True)
+        sys.exit(1)
+
+    # Now check: per the spec, func_dir SHOULD be removed (and therefore not exist).
+    # The bug is that the code does NOT remove func_dir.
+    func_dir_exists = os.path.isdir(func_dir)
+
+    # Cleanup
+    shutil.rmtree(tmp, ignore_errors=True)
+
+    if func_dir_exists:
+        print("CONFIRMED — func_dir still exists after reconcile (spec requires removal)")
+    else:
+        print("NOT CONFIRMED — func_dir was removed as expected by spec")
+
+if __name__ == "__main__":
+    main()

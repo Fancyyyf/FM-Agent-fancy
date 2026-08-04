@@ -1,5 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/generate_topdown_layers-py/_find_call_sites.py",
-  "verdict": "MATCH",
-  "gaps": null
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_topdown_layers-py/_find_call_sites.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a set of strings, each being a member of known_stems that appears in a syntactic calling position in text for the language identified by lang_key, excluding any member that also belongs to keywords. A syntactic calling position is one where a bare-name identifier is grammatically recognized as the callee of a call expression in that language. The returned set is a subset of known_stems and is disjoint from keywords.",
+    "actual_behavior": "The function returns a set `found` containing every string `ident` such that `ident  known_stems`, `ident  keywords`, and there exists at least one match `m` obtained by iterating over `regex.finditer(cleaned)`  where `cleaned = _strip_comments_from_source(text, lang_key)` and `regex = _get_call_regex(lang_key)`  for which `m.group(1) == ident`. No other elements are present in the returned set. No side effects occur. Formalized: `found = { ident  known_stems | ident  keywords   m  regex.finditer(cleaned) [ m.group(1) = ident ] }`.",
+    "code_evidence": "Line 4: regex = _get_call_regex(lang_key)\nLine 6: for m in regex.finditer(cleaned):",
+    "trigger_condition": "The regex matches identifiers inside string literals because only comments are stripped, leading to false positives. In this input, 'my_function' appears only within a string literal, not a syntactic calling position, yet the code returns it, violating the specification that only syntactic call-site identifiers are included."
+  }
 }

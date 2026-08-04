@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "info_block = '//[SPLIT]foo\\n//[SPLIT]bar', callee_fqn = 'foo', aliases = None. Assume _callee_match_names returns ['foo'] and _info_line_mentions_name returns True when the name is a substring of the line.",
-  "offending_statements": "Line 25: split_tag = f\"{prefix} [SPLIT]\" if prefix else \"[SPLIT]\"",
-  "reason": "The specification requires that the delimiter used to split entries be exactly the comment prefix followed directly by '[SPLIT]' (the prefix is the text preceding the first '[SPLIT]' marker in the info_block). The code unconditionally inserts a space between the prefix and '[SPLIT]' on line 25. When the actual info_block has no such space (e.g., '//[SPLIT]'), the code uses '// [SPLIT]' as the delimiter, which does not appear in the string. As a result, splitting yields the whole block as a single entry, and the function returns the entire block instead of the first matching entry, violating the specification."
-}

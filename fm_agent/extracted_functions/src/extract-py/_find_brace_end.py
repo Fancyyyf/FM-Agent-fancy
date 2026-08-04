@@ -1,31 +1,3 @@
-# [SPEC]
-# Unit: src/extract.py
-#
-# _find_brace_end(lines, start_idx) -> int
-#
-# Pre-condition:
-#   - lines is a list of strings representing source code lines with line endings stripped
-#   - start_idx is a 0-based index into lines satisfying 0 <= start_idx < len(lines)
-#
-# Post-condition:
-#   - Returns the 0-based line index of the closing brace '}' that balances the first
-#     unmatched opening brace '{' encountered at or after start_idx
-#   - Only structural braces contribute to the brace-depth count: braces that appear
-#     inside string literals (delimited by '"'), character literals (delimited by "'"),
-#     line comments (from '//' to end of line), and block comments (delimited by '/*'
-#     and '*/') are excluded
-#   - Braces belonging to Go anonymous composite type expressions ('interface{...}' and
-#     'struct{...}') are tracked as self-contained balanced pairs and do not affect the
-#     outer structural brace depth
-#   - If the structural depth never returns to zero after the first opening brace is
-#     found, returns len(lines) - 1
-#   - The returned index satisfies start_idx <= result < len(lines)
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _find_brace_end(lines, start_idx):
     """Find the line index of the closing '}' that matches the first '{' at or after start_idx.
 

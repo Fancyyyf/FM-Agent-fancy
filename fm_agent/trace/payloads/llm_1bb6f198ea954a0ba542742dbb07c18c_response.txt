@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input source file content: \"class Foo:\\n    def bar(self):\\n        pass\"",
-  "offending_statements": "Line 11: for node in ast.walk(tree):\nLine 12:     if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):\nLine 13:         continue",
-  "reason": "The code uses ast.walk which visits all nodes, including nested function/class definitions. This causes method definitions inside a class (e.g., bar) to be collected into the funcs list. The specification requires funcs_info to contain only functions defined at module scope. Therefore, for a file with a class containing a method and no top-level functions, the code incorrectly returns a non-empty funcs list, whereas the specification expects an empty one."
-}

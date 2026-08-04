@@ -1,63 +1,3 @@
-# [SPEC]
-# Unit: src/generate_batch_prompts-py/build_prompt.py
-#
-# build_prompt(phase, layer_idx, is_cycle, functions, func_to_layer, all_funcs, work_dir, fm_agent_prefix, ext_to_lang) -> str
-#
-# Pre-condition:
-#   - functions is a non-empty list of function entry dicts, each with at minimum a "name" key (FQN string) and a "file" key (relative path from fm_agent/)
-#   - all_funcs maps every FQN that appears as a caller among functions to its full function entry dict
-#   - fm_agent_prefix is a non-empty string ending with "/"
-#   - work_dir is an existing Path to the fm_agent/ workspace directory
-#   - ext_to_lang maps file extension strings (with leading dot) to language name strings
-#   - phase and layer_idx are non-negative integers
-#   - is_cycle is a boolean
-#   - func_to_layer maps FQN strings to integer layer indices; every caller FQN referenced in functions is a key in func_to_layer
-#
-# Post-condition:
-#   - Returns a string that constitutes the complete batch prompt for the given set of functions
-#   - The prompt begins with a header line identifying the phase number and layer index
-#   - The language name and comment prefix in the header are derived from the first function's file extension via ext_to_lang; when functions is empty, "unknown" and "//" are used
-#   - The prompt references exactly these required reading files (each prepended with fm_agent_prefix): spec_prompts/system_prompt.md, spec_prompts/domain_context/engine_overview.txt, and spec_prompts/domain_context/phase_NN_types.txt where NN is the phase number zero-padded to two digits
-#   - If any staged user-provided domain knowledge files exist under fm_agent/spec_prompts/domain_context/user_knowledge/, the prompt lists each one with its fm_agent_prefix-prefixed path
-#   - The "KEY RULES" section contains exactly four behavioral-spec rules and one file-location directive
-#   - If any function in the batch has an in-phase caller assigned to a strictly lower layer index than layer_idx, the prompt includes an "EARLIER-LAYER CALLER SPECS" section with each such caller's FQN followed by its full [SPEC] block; each caller appears at most once
-#   - If any earlier-layer caller's [INFO] block contains an expectation for a function being specced, the prompt includes a "CALLEE EXPECTATIONS FROM CALLERS" section that groups those expectations by target function FQN, with each expectation preceded by its caller's FQN as an attribution header
-#   - When is_cycle is true, the prompt includes a "CYCLE LAYER GUIDANCE" section describing the mutual-recursion invariant approach and the dispatch-function test
-#   - The prompt lists every function in the batch with its fm_agent_prefix-prefixed file path, numbered sequentially starting at 1, and each listing shows its earlier-layer callers or "(none)" when there are none
-#   - The prompt appends the mandatory [SPEC]/[INFO] format template using the detected language's comment prefix, including the "(no callees)" instruction, followed by numbered processing instructions (read, read callers, write spec, write file)
-#   - The returned string ends with exactly one newline character and contains no trailing whitespace on any line
-# [SPEC]
-
-# [INFO]
-# detect_lang_and_comment(file_path, ext_to_lang) -> (str, str)
-#   Pre-condition: file_path is a string with a file extension; ext_to_lang maps extension strings (with leading dot) to language name strings
-#   Post-condition: returns a tuple (language_name, comment_prefix) where language_name is the language string corresponding to file_path's extension in ext_to_lang (or "unknown" if not found), and comment_prefix is the single-line comment marker for that language ("#" for Python, "//" for C-family/Java/Go/Rust/JS/TS, "%" for Erlang)
-# [SPLIT]
-# list_staged_domain_knowledge_relpaths(work_dir, prefix) -> list[str]
-#   Pre-condition: work_dir is a Path to the fm_agent/ workspace; prefix is a string whose concatenation with the domain-knowledge directory path relative to work_dir yields a valid reference path
-#   Post-condition: returns a list of relative path strings from the workspace root to each staged user-provided domain knowledge file under the subdirectory spec_prompts/domain_context/user_knowledge/; returns an empty list when no such files are staged
-# [SPLIT]
-# phase_callers_key(fn, phase) -> str
-#   Pre-condition: fn is a function entry dict; phase is a non-negative integer
-#   Post-condition: returns the dictionary key string that accesses the set of in-phase caller FQNs within fn; the key incorporates the phase number such that it is unique to that phase
-# [SPLIT]
-# phase_callee_info_names_key(fn, phase) -> str
-#   Pre-condition: fn is a function entry dict; phase is a non-negative integer
-#   Post-condition: returns the dictionary key string that accesses the per-caller info-name aliases within fn; the key incorporates the phase number and describes names used by callers to reference this function
-# [SPLIT]
-# extract_spec_block(filepath) -> Optional[str]
-#   Pre-condition: filepath is a Path to an existing file containing extracted function source code
-#   Post-condition: returns the full content between the first "[SPEC]" marker and the closing "[SPEC]" marker (inclusive of both markers) as a string, or None if no such markers are present in the file
-# [SPLIT]
-# extract_info_block(filepath) -> Optional[str]
-#   Pre-condition: filepath is a Path to an existing file containing extracted function source code
-#   Post-condition: returns the content between the "[INFO]" start marker and "[INFO]" end marker (inclusive of both markers) as a string, or None if no such markers are present in the file
-# [SPLIT]
-# extract_callee_spec_from_info(info_block, callee_fqn, aliases) -> Optional[str]
-#   Pre-condition: info_block is a string containing [SPLIT]-delimited callee entries; callee_fqn is a fully qualified function name string; aliases is a list of alternative name strings that callers may use for this callee
-#   Post-condition: returns the complete [SPLIT]-delimited entry (both Pre-condition and Post-condition lines) for the callee whose name line matches callee_fqn or any of the aliases, or None if no matching entry is found
-# [INFO]
-
 def build_prompt(
     phase: int,
     layer_idx: int,
@@ -71,14 +11,14 @@ def build_prompt(
 ) -> str:
     lines: List[str] = []
     sample_lang = "unknown"
-    sample_comment = "//"
     if functions:
-        sample_lang, sample_comment = detect_lang_and_comment(functions[0]["file"], ext_to_lang)
+        sample_lang, _ = detect_lang_and_comment(functions[0]["file"], ext_to_lang)
 
     lines.append(f"You are generating behavioral specifications for Phase {phase}, Layer {layer_idx}.")
     lines.append("")
     lines.append(
-        f"Language: {sample_lang}. Spec comment style: `{sample_comment} [SPEC]`."
+        f"Language: {sample_lang}. "
+        "Write specifications to adjacent .spec.json and .info.json files."
     )
     lines.append("")
     lines.append(f"Read {fm_agent_prefix}spec_prompts/system_prompt.md FIRST for the mandatory spec format rules.")
@@ -119,14 +59,21 @@ def build_prompt(
             spec_block = extract_spec_block(caller_file)
             if spec_block and (caller_name, spec_block) not in caller_specs:
                 caller_specs.append((caller_name, spec_block))
-            info_block = extract_info_block(caller_file)
-            if not info_block:
+            info_dict = extract_info_block(caller_file)
+            if not info_dict:
                 continue
             entry = extract_callee_spec_from_info(
-                info_block, fn_name, info_names_by_caller.get(caller_name, [])
+                info_dict, fn_name, info_names_by_caller.get(caller_name, [])
             )
             if entry:
-                caller_expectations.setdefault(fn_name, []).append((caller_name, entry.strip()))
+                entry_text = (
+                    f"{entry.get('signature', '')}\n"
+                    f"  Pre-condition: {entry.get('pre_condition', '')}\n"
+                    f"  Post-condition: {entry.get('post_condition', '')}"
+                )
+                caller_expectations.setdefault(fn_name, []).append(
+                    (caller_name, entry_text)
+                )
 
     if caller_specs:
         lines.append("")
@@ -176,39 +123,39 @@ def build_prompt(
             lines.append("  Earlier-layer callers: (none)")
 
     lines.append("")
-    lines.append("## SPEC FORMAT (prepend to file, preserving source code below)")
+    lines.append("## SPEC FORMAT (write JSON files; do NOT modify source files)")
     lines.append("")
-    lines.append("The exact format every specced file must start with:")
+    lines.append(
+        "For each function file `<function-file>`, "
+        "write TWO JSON files in the SAME directory:"
+    )
     lines.append("")
-    lines.append(f"{sample_comment} [SPEC]")
-    lines.append(f"{sample_comment} Unit: <file path relative to repo root>")
-    lines.append(f"{sample_comment}")
-    lines.append(f"{sample_comment} <FunctionName>(<params>) -> <ReturnType>")
-    lines.append(f"{sample_comment}")
-    lines.append(f"{sample_comment} Pre-condition:")
-    lines.append(f"{sample_comment}   - ...")
-    lines.append(f"{sample_comment}")
-    lines.append(f"{sample_comment} Post-condition:")
-    lines.append(f"{sample_comment}   - ...")
-    lines.append(f"{sample_comment} [SPEC]")
+    lines.append("`<function-file>.spec.json`:")
+    lines.append("```json")
+    lines.append(
+        '{"signature": "<FunctionName>(<params>) -> <ReturnType>", '
+        '"pre_condition": "...", "post_condition": "..."}'
+    )
+    lines.append("```")
     lines.append("")
-    lines.append(f"{sample_comment} [INFO]")
-    lines.append(f"{sample_comment} <callee_name>(<params>) -> <ReturnType>")
-    lines.append(f"{sample_comment}   Pre-condition: ...")
-    lines.append(f"{sample_comment}   Post-condition: ...")
-    lines.append(f"{sample_comment} [SPLIT]")
-    lines.append(f"{sample_comment} <another_callee>(<params>) -> <ReturnType>")
-    lines.append(f"{sample_comment}   Pre-condition: ...")
-    lines.append(f"{sample_comment}   Post-condition: ...")
-    lines.append(f"{sample_comment} [INFO]")
+    lines.append("`<function-file>.info.json`:")
+    lines.append("```json")
+    lines.append(
+        '{"callees": [{"name": "<callee_name>", "signature": "...", '
+        '"pre_condition": "...", "post_condition": "..."}]}'
+    )
+    lines.append("```")
     lines.append("")
-    lines.append("If the function has no callees: '<comment> (no callees)' between the [INFO] markers.")
+    lines.append('If the function has no callees: write `{"callees": []}` to the .info.json file.')
     lines.append("")
     lines.append("## PROCESS")
     lines.append("For each function:")
     lines.append("1. Read the extracted file")
     lines.append("2. Read caller expectations above - what do callers NEED from this function?")
     lines.append("3. Write a behavioral spec describing WHAT it guarantees (not HOW)")
-    lines.append("4. Write the COMPLETE file with [SPEC] and [INFO] blocks prepended, then UNCHANGED source")
-    lines.append("5. Use the Write tool to save the complete file")
+    lines.append(
+        "4. Write the COMPLETE .spec.json and .info.json objects next to the "
+        "UNCHANGED source file"
+    )
+    lines.append("5. Use the Write tool to save both JSON files")
     return "\n".join(lines).rstrip() + "\n"

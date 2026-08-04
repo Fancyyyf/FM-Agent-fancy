@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function always returns a dict. Let R be the result of batch_extract(proj_dir). R is {} if codegraph cannot be initialized (i.e., CodeGraphExtractor.from_proj_dir(proj_dir) returns a falsy value). Otherwise, R is a dict mapping str (absolute file paths) to list of tuple[str, str] (function_name, body) for top-level functions parsed from all files with extensions .cpp, .cc, .cxx under proj_dir that could be opened and read. The dict omits any files that raise an IOError during opening. The returned dictionary may be empty if no such functions are found or if no matching C++ source files exist."
-}

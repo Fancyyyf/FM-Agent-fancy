@@ -1,18 +1,3 @@
-# [SPEC]
-# Unit: src/languages/codegraph.py
-#
-# _codegraph_cmd() -> str
-#
-# Pre-condition:
-#   - settings.codegraph.bin_dir is a string specifying a directory path, potentially beginning with a tilde (~) representing the current user's home directory.
-#
-# Post-condition:
-#   - Returns a string suitable for use as an executable command name.
-#   - When a file named "codegraph" exists within the directory obtained by expanding any leading tilde in the configured bin_dir to the user's home directory and that file has the execute permission bit set for the effective user of the current process, returns the absolute filesystem path to that file.
-#   - When that file does not exist or lacks the execute permission bit, returns the bare string "codegraph", deferring resolution to the directories named by the PATH environment variable of the calling process.
-#   - Never raises an exception.
-# [SPEC]
-
 def _codegraph_cmd() -> str:
     """Return the codegraph executable to invoke.
 

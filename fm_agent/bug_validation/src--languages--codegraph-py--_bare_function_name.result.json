@@ -1,11 +1,11 @@
 {
   "id": "src--languages--codegraph-py--_bare_function_name",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_bare_function_name.py",
+  "source_file": "src/languages/codegraph.py",
   "function_name": "_bare_function_name",
   "confirmation_status": "confirmed",
-  "attempts": 1,
+  "attempts": 2,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_bare_function_name.py",
   "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_bare_function_name.md",
-  "probe_stdout": "CONFIRMED — actual: 'operatorFoo' | expected: 'operator'\n",
-  "trigger_summary": "When tail starts with 'operator' but rest contains no consecutive operator symbols (e.g. 'operatorFoo'), the code falls through to regex matching and returns 'operatorFoo' instead of the spec-required 'operator'."
+  "probe_stdout": "CONFIRMED — actual: 'foo' | expected: 'bar'\n",
+  "trigger_summary": "Input 'foo::bar -> int': qualifier '::' is stripped to get 'bar', but the regex on line 49 searches the original name and fails, so the fallback incorrectly returns 'foo'."
 }

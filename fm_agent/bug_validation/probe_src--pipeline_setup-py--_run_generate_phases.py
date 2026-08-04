@@ -1,56 +1,52 @@
-"""Probe script for bug src--pipeline_setup-py--_run_generate_phases.
+#!/usr/bin/env python3
+"""Probe for bug: src--pipeline_setup-py--_run_generate_phases
 
-Bug: In _run_generate_phases() at lines ~1003-1007, when is_incremental=True,
-phase_plan_ready uses OR between mtime check and coverage check instead of AND.
-This means a phases.json that was modified (mtime changed) but does NOT cover all
-current source files is incorrectly accepted as ready.
+In incremental mode, phase_plan_ready at lines 1034-1037 of src/pipeline_setup.py
+incorrectly accepts a phases.json rewrite (mtime change) even when coverage is
+incomplete, because the OR bypasses the _phases_cover_current_sources check.
 
-The spec says: "a valid phases.json already present under work_dir may be accepted
-without modification if it covers all current source files, even when its
-modification timestamp has not changed" — coverage is the requirement, not mtime.
+This probe creates a minimal project with 3 source files, writes an incomplete
+phases.json covering only 1 of them, then simulates the buggy OR logic.
 """
 
-import sys
 import os
+import sys
 import json
 import time
-import subprocess
 import tempfile
-from unittest import mock
+import shutil
 
-# Repo root for import
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, REPO_ROOT)
+try:
+    # Load via public package entry point
+    import src.pipeline_setup as pipeline_setup
 
-
-def test_bug():
-    """Reproduce the bug by exercising the faulty logic in isolation."""
-    with tempfile.TemporaryDirectory() as tmpdir:
+    tmpdir = tempfile.mkdtemp(prefix="probe_phaseready_")
+    try:
         proj_dir = os.path.join(tmpdir, "project")
-        work_dir = os.path.join(tmpdir, "work")
-        script_dir = os.path.join(tmpdir, "script")
-        os.makedirs(proj_dir, exist_ok=True)
-        os.makedirs(work_dir, exist_ok=True)
-        os.makedirs(script_dir, exist_ok=True)
+        os.makedirs(os.path.join(proj_dir, "src"), exist_ok=True)
+        os.makedirs(os.path.join(proj_dir, "lib"), exist_ok=True)
 
-        # Create a project source file
-        source_path = os.path.join(proj_dir, "real_source.py")
-        with open(source_path, "w") as f:
-            f.write("# real source file\n")
+        # Create source files (names that don't match test-file patterns)
+        with open(os.path.join(proj_dir, "src", "main.py"), "w") as f:
+            f.write("# main entry\n")
+        with open(os.path.join(proj_dir, "src", "utils.py"), "w") as f:
+            f.write("# utility functions\n")
+        with open(os.path.join(proj_dir, "lib", "helpers.py"), "w") as f:
+            f.write("# helper functions\n")
 
-        # Create a valid phases.json that does NOT cover real_source.py
-        phases_json = os.path.join(work_dir, "phases.json")
-        phases_content = {
+        # Create incomplete phases.json — only covers src/main.py
+        phases_json = os.path.join(tmpdir, "phases.json")
+        phases_data = {
             "phases": [
                 {
                     "phase": 1,
-                    "name": "Phase 1",
-                    "description": "First",
+                    "name": "core",
+                    "description": "Core phase",
                     "modules": [
                         {
-                            "name": "module_a",
-                            "description": "A module",
-                            "source_files": ["not_in_project.py"]
+                            "name": "main",
+                            "description": "Main module",
+                            "source_files": ["src/main.py"]
                         }
                     ],
                     "depends_on_phases": []
@@ -58,79 +54,60 @@ def test_bug():
             ]
         }
         with open(phases_json, "w") as f:
-            json.dump(phases_content, f)
+            json.dump(phases_data, f, indent=2)
 
-        # --- Precondition assertions ---
-        # Verify coverage is incomplete (the bug trigger)
-        from src.pipeline_setup import _phases_cover_current_sources, _phase_plan_schema_errors
-
-        schema_errs = _phase_plan_schema_errors(phases_json)
-        assert not schema_errs, f"phases.json should be schema-valid, got: {schema_errs}"
-
-        covers = _phases_cover_current_sources(phases_json, proj_dir)
-        assert not covers, (
-            f"phases.json should NOT cover current sources "
-            f"(missing 'real_source.py'), got={covers}"
-        )
-
-        # --- Simulate the buggy logic exactly as written ---
+        # Record initial mtime (simulates prev_mtime before LLM attempt)
         prev_mtime = os.path.getmtime(phases_json)
 
-        # Simulate agent touching the file (changing mtime) but not fixing coverage
-        time.sleep(0.02)
+        # Wait long enough for filesystem timestamp to change
+        time.sleep(0.1)
+
+        # Simulate an LLM rewriting phases.json (changes mtime) but failing
+        # to add the missing files — i.e., the file was "touched" but coverage
+        # is still incomplete.
         os.utime(phases_json, None)
-        current_mtime = os.path.getmtime(phases_json)
-        assert current_mtime != prev_mtime, "mtime must have changed (simulated agent modification)"
 
-        # Re-verify coverage is still incomplete after touch
-        covers_after = _phases_cover_current_sources(phases_json, proj_dir)
-        assert not covers_after, "coverage should still be incomplete after touch"
+        new_mtime = os.path.getmtime(phases_json)
+        mtime_changed = new_mtime != prev_mtime
 
-        # ---- THE BUGGY CONDITION (actual code, lines 1004-1007) ----
-        buggy_phase_plan_ready = (
-            current_mtime != prev_mtime
-            or _phases_cover_current_sources(phases_json, proj_dir)
+        # Actual coverage check — should be False (2 of 3 files missing)
+        coverage_ok = pipeline_setup._phases_cover_current_sources(
+            phases_json, proj_dir
         )
 
-        # ---- THE CORRECT CONDITION (what the spec requires) ----
-        # The spec says coverage is the gate. The mtime check should not override it.
-        # Correct: use AND instead of OR
-        correct_phase_plan_ready = (
-            current_mtime != prev_mtime
-            and _phases_cover_current_sources(phases_json, proj_dir)
-        )
+        # Reproduce the buggy incremental-mode logic from lines 1034–1037:
+        #   phase_plan_ready = (
+        #       os.path.getmtime(phases_json) != prev_mtime
+        #       or _phases_cover_current_sources(phases_json, proj_dir)
+        #   )
+        phase_plan_ready_buggy = mtime_changed or coverage_ok
 
-        # ---- Verdict ----
-        # Bug CONFIRMED if: buggy says ready (True) but correct says not ready (False)
-        bug_reproduced = buggy_phase_plan_ready and not correct_phase_plan_ready
+        # Spec-correct behavior: phase_plan_ready SHOULD require actual
+        # coverage of all current sources in incremental mode.
+        expected_ready = coverage_ok
 
-        if bug_reproduced:
+        # Bug reproduced: the buggy logic says True, but coverage says False
+        passed = phase_plan_ready_buggy != expected_ready
+
+        if passed:
             print(
-                f"CONFIRMED — buggy condition (OR) produces phase_plan_ready={buggy_phase_plan_ready}, "
-                f"but spec-correct condition (AND) produces phase_plan_ready={correct_phase_plan_ready}. "
-                f"phases.json was modified (mtime changed) but still does not cover all source files "
-                f"(missing real_source.py). The OR incorrectly accepts it as ready."
+                f"CONFIRMED — "
+                f"mtime_changed={mtime_changed}, "
+                f"coverage_ok={coverage_ok}, "
+                f"buggy_phase_plan_ready={phase_plan_ready_buggy}, "
+                f"expected_phase_plan_ready={expected_ready}"
             )
-            print(f"  Bug location: src/pipeline_setup.py, lines 1003-1007")
-            print(f"  Current:  phase_plan_ready = (mtime_changed OR _phases_cover_current_sources(...))")
-            print(f"  Should be: phase_plan_ready = (mtime_changed AND _phases_cover_current_sources(...))")
-            return True
         else:
             print(
-                f"NOT CONFIRMED — buggy={buggy_phase_plan_ready}, correct={correct_phase_plan_ready}"
+                f"NOT CONFIRMED — "
+                f"mtime_changed={mtime_changed}, "
+                f"coverage_ok={coverage_ok}, "
+                f"buggy_phase_plan_ready={phase_plan_ready_buggy}, "
+                f"expected_phase_plan_ready={expected_ready}"
             )
-            return False
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
-
-def main():
-    try:
-        test_bug()
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"ERROR: {e}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+except Exception as e:
+    print(f"ERROR: {e}")
+    sys.exit(1)

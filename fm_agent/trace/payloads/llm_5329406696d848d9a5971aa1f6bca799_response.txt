@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir = '/path/to/erlang/project/with/incomplete/analysis' where _callgraph_project_root returns the same path and _analysis_or_empty returns an object with .edges = {'app::caller': ['app::nonexistent']}",
-  "offending_statements": "Line 3: return _analysis_or_empty(_callgraph_project_root(proj_dir)).edges",
-  "reason": "The specification requires the returned mapping to use sets of callee FQNs and that every callee exists within the project. The code returns raw analysis results without any validation, so if the analysis produces a list instead of a set or includes a non-existent callee, the output violates the specification."
-}

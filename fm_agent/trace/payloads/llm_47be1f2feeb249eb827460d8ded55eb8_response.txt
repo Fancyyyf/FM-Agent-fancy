@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/home/user/project' (a valid project directory where CodeGraphExtractor.from_proj_dir returns a non-None backend), filepath='/home/user/project/empty.ts' (a TypeScript file containing only a comment '// no functions', and the codegraph backend treats this file as indexed but it contains no function definitions)",
-  "offending_statements": "Line 8: return cg.get_function_spans(\"typescript\", filepath) if cg else None",
-  "reason": "The specification requires that when the backend initializes successfully AND indexes the file, the return value is a non‑empty list. However, if the file contains no functions, cg.get_function_spans may return an empty list ([]). The code passes this empty list directly to the caller, violating the non‑empty requirement."
-}

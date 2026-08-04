@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input where the subprocess writes a valid JSON object to the result file that is missing one or more of the required keys (e.g., {\"spec_updated\": false}) and exits with status 0.",
-  "offending_statements": "Line 92: return _opencode_select_json(\n        proj_dir,\n        work_dir,\n        prompt_relpath,\n        prompt_content,\n        result_relpath,\n        stage=\"generate_function_spec\",\n        input_files=[\n            prompt_relpath,\n            \"fm_agent/spec_prompts/system_prompt.md\",\n            *user_knowledge_paths,\n        ],\n    )",
-  "reason": "The specification requires returning None when the result file cannot be parsed as a JSON object containing the expected keys. The code delegates to _opencode_select_json, which only returns None for non‑zero exit or unparseable JSON. If the subprocess writes valid JSON without the required keys, the code returns that malformed dictionary instead of None, violating the specification."
-}

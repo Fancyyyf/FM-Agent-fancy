@@ -1,37 +1,3 @@
-# [SPEC]
-# Unit: src/pipeline_setup.py
-#
-# _clean_domain_context_files(work_dir, removed_phase_nums, renumbered) -> None
-#
-# Pre-condition:
-#   - work_dir is a string path to a writable fm_agent workspace directory.
-#   - removed_phase_nums is an iterable of integers (may contain None elements,
-#     which are ignored).
-#   - renumbered is a dict mapping int (old phase number) to int (new phase
-#     number).
-#
-# Post-condition:
-#   - If work_dir/spec_prompts/domain_context/ does not exist as a
-#     directory, returns immediately with no side effects.
-#   - For each non-None integer n in removed_phase_nums, the file
-#     phase_{n:02d}_types.txt within the domain context directory is
-#     deleted if it exists; non-existent files are silently skipped.
-#   - For each (old, new) pair in renumbered where old != new, if
-#     phase_{old:02d}_types.txt exists within the domain context
-#     directory, it is renamed to phase_{new:02d}_types.txt.
-#     The renaming is collision-safe: when two or more renumberings
-#     form a chain or cycle (e.g., 3→2 and 2→1), an intermediate
-#     temporary name is used to prevent overwriting a file that has
-#     not yet been moved.
-#   - Returns None. All file operations are confined to
-#     work_dir/spec_prompts/domain_context/; no files outside that
-#     directory are modified.
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _clean_domain_context_files(work_dir, removed_phase_nums, renumbered):
     """Delete removed phases' types files and rename renumbered ones to match.
 

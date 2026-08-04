@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "[{\"role\": \"system\", \"content\": \" hello \"}]",
-  "offending_statements": "Line 13: system_text = (system_text + \"\\n\\n\" + content).strip() if system_text else content",
-  "reason": "The specification requires leading/trailing whitespace removal for system_text even when there is exactly one system message. The code does not strip the content when there is only one system message (line 13 else branch), so an input with a single system message containing surrounding whitespace yields a wrong system_text."
-}

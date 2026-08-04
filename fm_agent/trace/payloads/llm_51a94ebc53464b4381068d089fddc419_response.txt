@@ -1,3 +1,0 @@
-{
-  "post_condition": "Returns: a dictionary object `result`. Post-condition: `isinstance(result, dict) and ('metadata' in result) and (len(result) == 1) and isinstance(result['metadata'], dict) and ('user_id' in result['metadata']) and (len(result['metadata']) == 1) and isinstance(result['metadata']['user_id'], str) and (len(result['metadata']['user_id']) > 0)`. Natural language: The function always returns a dictionary with the exact structure `{\"metadata\": {\"user_id\": s}}`, where `s` is a non-empty string (the result of calling `_stable_user_id()`)."
-}

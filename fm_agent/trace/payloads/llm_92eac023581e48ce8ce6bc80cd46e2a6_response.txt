@@ -1,4 +1,0 @@
-{
-  "info_updated": true,
-  "new_info": "# [INFO]\n# CodeGraphExtractor.from_proj_dir(proj_dir: str) -> object | None\n#   Pre-condition: proj_dir is a filesystem path to a project root.\n#   Post-condition: Returns a CodeGraphExtractor instance configured for the given project, or a falsy value when the backend is unavailable or the project cannot be indexed.\n# [SPLIT]\n# cg.get_functions_by_file(language: str, proj_dir: str) -> dict\n#   Pre-condition: language is a valid language key string (e.g., \"python\").\n#   Post-condition: Returns a dict mapping absolute file paths to lists of (function_name, function_body) tuples for source files of the given language under proj_dir; files that cannot be opened for reading are omitted.\n# [INFO]"
-}

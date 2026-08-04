@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir contains a single source file 'foo.py' with function 'foo'; entry_func='bar' (not present in any extracted function). According to the specification, this should raise ValueError, but the code does not raise it and instead continues execution (potentially producing an empty result or a different exception).",
-  "offending_statements": "Line 1: def _select_functions_by_source(...) does not implement the required ValueError checks for entry_func not found or end_funcs unreachable; only the absence of source files is checked (Line 25-26).",
-  "reason": "The specification requires raising ValueError when entry_func is not among the extracted functions, when end_funcs is non-empty but no member is reachable, and when no extractable functions exist. The code's described behavior (Condition A) only raises ValueError for missing source files, leaving these conditions unhandled. A direct counterexample is an input with existing source files but an entry_func name that does not match any extracted function — the code will not raise ValueError, violating the spec."
-}

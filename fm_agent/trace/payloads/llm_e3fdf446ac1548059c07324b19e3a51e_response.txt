@@ -1,3 +1,0 @@
-{
-  "post_condition": "validation_futures = (V0 ∪ S) \\ Done, where S = {(vf, (fpath, rel_path, result_json_rel, completed_count))} if and only if verdict = \"MISMATCH\" and the assignment validation_futures[vf] = ... succeeded before any exception, otherwise S = ∅. Done = { f | f ∈ dom(V0 ∪ S) ∧ f.done() }. All other variables (processed, submitted, reasoning_futures, completed_count, num_functions, executor, work_dir, proj_dir, resume, expected_files, poll_interval, spec_procs, …) retain their pre‑block values. No exception propagates out of the block; logs, file I/O, and print output may have occurred but do not affect the abstract state."
-}

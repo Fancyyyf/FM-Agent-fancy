@@ -1,61 +1,81 @@
-"""Probe: Test whether _phase_plan_schema_errors handles invalid UTF-8 files.
+"""Probe script for bug: src--pipeline_setup-py--_phase_plan_schema_errors
 
-The bug claim: The function catches OSError and JSONDecodeError but NOT
-UnicodeDecodeError. A file with invalid UTF-8 bytes causes open() to raise
-UnicodeDecodeError, which propagates unhandled, violating the spec's requirement
-that the function "always returns within finite time regardless of inputs."
+Bug: The try-except block only handles OSError and json.JSONDecodeError, but does
+not handle UnicodeDecodeError that may be raised when a file contains invalid
+UTF-8 bytes. The spec requires the function to always return a list of
+human-readable error strings, but the code allows UnicodeDecodeError to
+propagate uncaught.
+
+Test: Create a temp file with invalid UTF-8 bytes, call _phase_plan_schema_errors,
+and check whether an uncaught UnicodeDecodeError propagates (bug confirmed) or
+a list of error strings is returned (bug not confirmed / already fixed).
 """
-
-import os
 import sys
+import os
 import tempfile
-import traceback
-
-# Add repo root to sys.path so the 'src' package is importable.
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
-from src.pipeline_setup import _phase_plan_schema_errors
-
-
-def _invalid_utf8_bytes():
-    """Return bytes that are NOT valid UTF-8."""
-    # 0xFF is never valid in UTF-8 (all bytes >= 0x80 in single-byte position
-    # must be part of a multi-byte sequence; 0xFF is a continuation byte that
-    # can never start a sequence and is invalid on its own).
-    return b'\xff\xfe\xfd'
+import shutil
 
 
 def main():
-    # Operate entirely from a fresh temp directory.
-    with tempfile.TemporaryDirectory(prefix="probe_phase_plan_schema_") as tmpdir:
-        invalid_path = os.path.join(tmpdir, "bad_utf8.json")
+    # Ensure the repo root is on sys.path so that 'src' is importable.
+    # The probe lives at fm_agent/bug_validation/probe_*.py under repo root.
+    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
 
-        # Write raw bytes that are NOT valid UTF-8.
-        with open(invalid_path, "wb") as f:
-            f.write(_invalid_utf8_bytes())
+    tmpdir = tempfile.mkdtemp(prefix="bug_probe_schema_errors_")
+    try:
+        from src.pipeline_setup import _phase_plan_schema_errors
 
+        # Create a file with invalid UTF-8 bytes.
+        # 0xFF is never valid in UTF-8 (it's not a valid start byte, not a valid
+        # continuation byte). When Python's text-mode reader encounters it with
+        # strict UTF-8 decoding, a UnicodeDecodeError is raised.
+        bad_path = os.path.join(tmpdir, "bad_phases.json")
+        with open(bad_path, "wb") as f:
+            f.write(b'\xff\xfe\x00\x00{"phases": "invalid utf-8 prefix"}')
+
+        # Per spec: function should always return a list of error strings.
+        # If UnicodeDecodeError propagates uncaught, the bug is confirmed.
+        exception_raised = False
+        exception_type = None
+        actual = None
         try:
-            result = _phase_plan_schema_errors(invalid_path)
-        except UnicodeDecodeError:
-            # Bug confirmed: the function raises UnicodeDecodeError instead of
-            # returning a list of error strings.
-            print(
-                "CONFIRMED — _phase_plan_schema_errors raised UnicodeDecodeError "
-                "instead of returning a list (spec requires 'always returns within "
-                "finite time regardless of inputs')"
-            )
-            return
-        except Exception as exc:
-            print(f"ERROR: unexpected exception type: {type(exc).__name__}: {exc}")
-            traceback.print_exc()
-            sys.exit(1)
+            actual = _phase_plan_schema_errors(bad_path)
+        except UnicodeDecodeError as e:
+            exception_raised = True
+            exception_type = "UnicodeDecodeError"
+        except Exception as e:
+            exception_raised = True
+            exception_type = type(e).__name__
 
-        # If we get here, the function returned a list — bug is NOT confirmed.
-        print(
-            f"NOT CONFIRMED — _phase_plan_schema_errors returned a list: {result!r}"
-        )
+        if exception_raised:
+            # Bug confirmed: uncaught exception instead of returning a list.
+            expected_desc = "a list of error strings (per spec)"
+            print(
+                f"CONFIRMED — actual: {exception_type} propagated uncaught "
+                f"| expected: {expected_desc}"
+            )
+        elif isinstance(actual, list):
+            # Function returned a list — bug is either not present or already fixed.
+            print(
+                f"NOT CONFIRMED — actual: returned list of {len(actual)} error(s): "
+                f"{actual!r} | expected: should always return a list"
+            )
+        else:
+            # Unexpected return type.
+            print(
+                f"NOT CONFIRMED — actual: returned {type(actual).__name__}: "
+                f"{actual!r} | expected: a list per spec"
+            )
+
+    except Exception as exc:
+        print(f"ERROR: {exc}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 if __name__ == "__main__":

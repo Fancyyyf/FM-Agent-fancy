@@ -1,10 +1,5 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/llm_client-py/_metadata_body.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "- Returns a dictionary with exactly one top-level key \"metadata\", whose value is a nested dictionary containing a \"user_id\" key\n  - The value associated with \"user_id\" is a stable, consistent string that identifies the current environment across calls within the same installation",
-    "actual_behavior": "Returns: a dictionary object `result`. Post-condition: `isinstance(result, dict) and ('metadata' in result) and (len(result) == 1) and isinstance(result['metadata'], dict) and ('user_id' in result['metadata']) and (len(result['metadata']) == 1) and isinstance(result['metadata']['user_id'], str) and (len(result['metadata']['user_id']) > 0)`. Natural language: The function always returns a dictionary with the exact structure `{\"metadata\": {\"user_id\": s}}`, where `s` is a non-empty string (the result of calling `_stable_user_id()`).",
-    "code_evidence": "Line 2: return {\"metadata\": {\"user_id\": _stable_user_id()}}",
-    "trigger_condition": "The function relies on `_stable_user_id()`, which returns `settings.inject.id` when truthy. Because that setting can mutate between calls, the output user_id is not guaranteed to be stable, conflicting with the specification."
-  }
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_metadata_body.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "{\"start\": {\"line\": 0}, \"end\": {\"line\": 2, \"character\": 0.5}}",
-  "offending_statements": "Line 6: if end > start and int(end_position.get(\"character\", 0)) == 0:",
-  "reason": "The specification distinguishes between zero and non-zero character. The code casts the character to int, which truncates non-integer values like 0.5 to 0. For the input above, start=0, end_line=2, character=0.5. The code sees int(0.5)==0, so it subtracts 1 from end, returning (0,1). The spec treats 0.5 as non-zero, so end should be 2 (the end line), returning (0,2). The cast breaks the intended behavior for non-integer non-zero character values."
-}

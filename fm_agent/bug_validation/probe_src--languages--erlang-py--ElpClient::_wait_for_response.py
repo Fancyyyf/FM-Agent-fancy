@@ -1,70 +1,53 @@
-"""Probe script for ElpClient._wait_for_response bug.
+"""Probe script for bug: ElpClient._wait_for_response - empty error dict bypasses error handling.
 
-Bug: When a JSON-RPC response carries "error": null, the code checks
-truthiness with `if error:` (line 186 of src/languages/erlang.py) and
-fall through to `return message.get("result")` instead of raising
-RuntimeError as the specification requires.
+Bug ID: src--languages--erlang-py--ElpClient::_wait_for_response
+Source: src/languages/erlang.py, line 186: `if error:` treats empty dict {} as falsy.
+Spec: Any error object other than ContentModifiedError must raise RuntimeError.
+Bug: Empty error dict {} is falsy, so error handling is skipped and message.get("result") is returned.
 """
-
 import sys
-import os
-
-# Ensure the repo root is on the path so the package entry point resolves.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
-import tempfile
-import queue
 import time
 
 try:
     from src.languages.erlang import ElpClient
+
+    # Create an ElpClient instance without starting a subprocess.
+    # We avoid __enter__ to not require ELP to be installed.
+    client = ElpClient("/tmp/fake_proj_dir")
+
+    # Craft a JSON-RPC response message that matches request_id=1,
+    # has no "method" key, and contains an empty error dict {}.
+    # An empty dict is falsy in Python, which triggers the bug.
+    crafted_response = {"jsonrpc": "2.0", "id": 1, "error": {}, "result": None}
+
+    # Monkey-patch _next_message to return the crafted response
+    # so we can exercise _wait_for_response without a real ELP server.
+    original_next_message = client._next_message
+    client._next_message = lambda deadline: crafted_response
+
+    try:
+        actual = client._wait_for_response(1, time.monotonic() + 10)
+        # If we reach here, no exception was raised — the bug is confirmed.
+        # The spec demands RuntimeError for any error that isn't _ContentModifiedError.
+        passed = True  # Bug reproduced: empty error dict bypassed error handling
+    except RuntimeError as e:
+        # The code correctly raised a RuntimeError (bug NOT confirmed / already fixed)
+        actual = f"RuntimeError: {e}"
+        passed = False
+    except Exception as e:
+        print(f"ERROR: unexpected exception: {type(e).__name__}: {e}")
+        sys.exit(1)
+    finally:
+        # Restore original method
+        client._next_message = original_next_message
+
+    expected = "RuntimeError for any non-content-modified error object"
+
+    if passed:
+        print(f"CONFIRMED — actual: {actual!r} | expected: {expected}")
+    else:
+        print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+
 except Exception as e:
-    print(f"ERROR: Failed to import ElpClient: {e}")
+    print(f"ERROR: {e}")
     sys.exit(1)
-
-# ── Construct a minimal ElpClient without launching ELP ──────────────────
-client = ElpClient(tempfile.mkdtemp(prefix="fm-agent-probe-"))
-
-# Seed the message queue with a matching JSON-RPC response whose "error"
-# field is explicitly null (Python None).  The spec requires this to raise
-# RuntimeError; the buggy code will return the "result" value instead.
-request_id = 42
-deadline = time.monotonic() + 10.0
-
-client._messages.put({
-    "jsonrpc": "2.0",
-    "id": request_id,
-    "error": None,          # ← null in JSON-RPC → None in Python
-    "result": "some_value",
-})
-# No "method" key → the response is recognised as a server response.
-
-# ── Exercise the buggy code path ────────────────────────────────────────
-actual = None
-raised = None
-
-try:
-    actual = client._wait_for_response(request_id, deadline)
-except RuntimeError as exc:
-    raised = exc
-except Exception as exc:
-    print(f"ERROR: Unexpected exception: {exc}")
-    sys.exit(1)
-
-# ── Oracle ──────────────────────────────────────────────────────────────
-# Specification: "When the matching response contains an 'error' field …
-#   Otherwise: raises RuntimeError whose message includes a description of
-#               the error"
-# Bug: the code returns result when error is None (falsy).
-#
-# If `_wait_for_response` returned a value (actual is not None and no
-# exception) → the bug is **CONFIRMED** because the spec requires a raise.
-#
-# If it raised RuntimeError → NOT CONFIRMED (the code behaves correctly
-# for this input).
-
-if raised is None and actual is not None:
-    # Bug reproduced: code returned result instead of raising.
-    print(f"CONFIRMED — actual returned: {actual!r} | expected: RuntimeError (per spec)")
-else:
-    print(f"NOT CONFIRMED — actual raised: {raised!r}")

@@ -1,6 +1,6 @@
 # Bug Report: _git
 
-**Source file:** `src/git-py/frozen_worktree::_git.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/git-py/frozen_worktree::_git.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,92 +12,60 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Executes a git command rooted at proj_dir (equivalent to "git -C proj_dir"
-    followed by each positional argument in order) as a child process.
-  - Neither stdout nor stderr of the child process appears on the parent's
-    standard output or standard error streams.
-  - If the child process terminates with a non-zero exit code, raises
-    subprocess.CalledProcessError whose attributes record the invoked command,
-    the return code, and the captured stdout and stderr strings.
-  - If the child process terminates with exit code zero, returns the captured
-    stdout with every leading and trailing whitespace character (space, tab,
-    newline, carriage return) removed.
-  - The child process inherits the parent process's environment, subject to
-    modification by any env keyword argument passed in **kwargs.
+Executes git -C proj_dir with the arguments provided in args as a subprocess and returns the captured stdout with surrounding whitespace removed. By default, raises subprocess.CalledProcessError when the git subprocess exits with a non-zero status; this error behavior is overridable via kwargs. By default, stdout and stderr are captured and decoded as text; both defaults are overridable via kwargs.
 
 ---
 
 ### Actual Behavior
 
-After the call to `_git` with arguments `*args` and `**kwargs`, and given `proj_dir` a directory path in the enclosing scope:
-
-- If `**kwargs` contains any key among `'check'`, `'capture_output'`, or `'text'`, the function call raises a `TypeError` because of repeated keyword arguments in the `subprocess.run` call; otherwise,
-- The function constructs the command list `['git', '-C', proj_dir] + list(args)` and invokes `subprocess.run(cmd, check=True, capture_output=True, text=True, **kwargs)`. 
-  - If this call raises a `CalledProcessError` (because the git command exited nonzero), that exception propagates unmodified.
-  - If it raises any other exception (e.g., `FileNotFoundError` if `git` is not found), that exception also propagates.
-  - If the call completes normally, it returns a `CompletedProcess` object `cp` whose `stdout` is a string (because `capture_output=True` and `text=True`). The function then returns `cp.stdout.strip()`, a string with leading/trailing whitespace removed.
-
-Formally:
-Let `cmd = ['git', '-C', proj_dir] + list(args)`.
-Let `conflict = {'check', 'capture_output', 'text'} ∩ keys(kwargs)`. 
-Then:
-- If `conflict ≠ ∅`: the invocation raises `TypeError`.
-- If `conflict = ∅`:
-  - If `subprocess.run(cmd, check=True, capture_output=True, text=True, **kwargs)` raises exception `E` (where `E` may be `CalledProcessError` or any other), then `_git` raises `E`.
-  - Otherwise, let `cp` be the returned `CompletedProcess` (`cp` must have `cp.returncode == 0` because `check=True` would have raised otherwise). Then `_git` returns `cp.stdout.strip()`.
+If the system git executable is available in the PATH and the subprocess command `git -C <proj_dir> <args>` executes successfully (exit code 0), the function returns a string containing the stripped standard output of that command. If the command executes but exits with a non-zero code, a `subprocess.CalledProcessError` is raised. If the git executable cannot be found or executed (e.g., not installed), an `OSError` (specifically `FileNotFoundError` on POSIX) is raised. The function performs no other side effects on the calling program's state. Formal logic: Let `cmd = ["git", "-C", proj_dir] + list(args)` and `env` denote the execution environment. The post-condition is: ( out: subprocess.CompletedProcess such that out.returncode = 0  return = out.stdout.strip())  ( exc: CalledProcessError such that exc.returncode  0  exc.cmd = cmd  raised(exc))  ( exc: FileNotFoundError (or OSError) such that raised(exc)).
 
 ---
 
 ## Code Evidence
 
-```
-Line 2:         return subprocess.run(
-Line 3:             ["git", "-C", proj_dir, *args],
-Line 4:             check=True, capture_output=True, text=True, **kwargs,
-Line 5:         ).stdout.strip()
-```
+Line 2-5: subprocess.run(...).stdout.strip()
 
 ---
 
 ## Trigger Condition
 
-The code hardcodes check=True, capture_output=True, text=True but also passes **kwargs to subprocess.run. If kwargs contains any of 'check', 'capture_output', or 'text', the call to subprocess.run raises TypeError due to duplicate keyword argument, violating the specification which requires executing the git command for any valid positional args and env keyword argument. For instance, _git('status', capture_output=True) raises TypeError, whereas spec demands it to capture output and return stripped stdout or raise CalledProcessError on failure.
+The specification states that the default for capturing stdout is overridable via kwargs. If a caller overrides capture_output=False, the function attempts to access .stdout.strip() on the returned CompletedProcess, but .stdout is None, raising an AttributeError. This violates the specification because the function does not properly handle the overridden default.
 
 ---
 
 ## How to trigger the bug
 
-The `_git` function in `src/git.py` (lines 75–79, defined as a closure inside `frozen_worktree()`) hardcodes `check=True`, `capture_output=True`, and `text=True` as explicit keyword arguments to `subprocess.run`, while simultaneously forwarding `**kwargs`. If a caller passes any of `check`, `capture_output`, or `text` in `**kwargs`, Python raises `TypeError: got multiple values for keyword argument`.
+The `capture_output=True` default is hardcoded as a positional keyword argument in the `subprocess.run()` call. When a caller passes `capture_output=False` (or any kwarg that conflicts with the hardcoded defaults) via `**kwargs`, Python raises `TypeError: subprocess.run() got multiple values for keyword argument 'capture_output'` because the same keyword argument is specified twice. The specification promises that both `capture_output` and `text` defaults are overridable via `kwargs`, but the code prevents any override by hardcoding these values.
 
-Although the current call-sites within `frozen_worktree()` only pass `env=env` (which does not conflict), the function signature promises to accept arbitrary kwargs for `subprocess.run`. Any consumer relying on that contract — for example, passing `capture_output=False` to send output to the parent terminal — will hit the TypeError.
+**Note on the trigger condition:** The original trigger condition describes an `AttributeError` (`.stdout` being `None` after overriding `capture_output=False`). In practice, the code fails earlier with a `TypeError` for duplicate keyword arguments, never reaching `.stdout.strip()`. Both errors confirm the same root cause: the hardcoded defaults prevent legitimate override attempts that the specification explicitly allows.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `*args` | `("status",)` |
-| `**kwargs` | `{"capture_output": True}` |
+| `*args` | `("rev-parse", "--verify", "HEAD")` (valid git command) |
+| `**kwargs` | `{"capture_output": False}` (attempt to override the default) |
 
 ### Expected (spec-correct) Output
 
-The git command should execute, capture its output, and return the stripped stdout string. The `capture_output=True` kwarg should be silently accepted (it's already being set by the hardcoded defaults, so it's redundant but harmless under the spec). Alternatively, the spec could require that conflicting kwargs be rejected with a clear error — but the spec explicitly says `**kwargs` are "forwarded to the subprocess invocation" without restriction.
+The function should accept `capture_output=False` as an override, execute the git command without capturing stdout (output goes to parent process), and return the stripped stdout. The specification says "both defaults are overridable via kwargs."
 
 ### Actual (buggy) Output
 
-`TypeError: subprocess.run() got multiple values for keyword argument 'capture_output'`
+`TypeError: subprocess.run() got multiple values for keyword argument 'capture_output'` — the hardcoded `capture_output=True` clashes with the caller's `capture_output=False` override.
 
 ### How to Reproduce
 
 Step-by-step instructions to trigger the bug manually:
 
-1. Navigate to the repo root.
-2. Run the following snippet (uses the package entry point):
+1. Navigate to a directory with a valid git repository.
+2. Reconstruct the `_git` function pattern (same as `src/git.py` lines 75-79):
 
 ```python
 import subprocess
 
-# Exact replica of the _git closure body from src/git.py:75-79
-proj_dir = "/tmp/test"
+proj_dir = "/path/to/your/repo"
 
 def _git(*args, **kwargs):
     return subprocess.run(
@@ -105,9 +73,9 @@ def _git(*args, **kwargs):
         check=True, capture_output=True, text=True, **kwargs,
     ).stdout.strip()
 
-# This raises TypeError:
-_git("status", capture_output=True)
-# TypeError: subprocess.run() got multiple values for keyword argument 'capture_output'
+_git("rev-parse", "--verify", "HEAD", capture_output=False)
+# actual (buggy) output: TypeError: subprocess.run() got multiple values for keyword argument 'capture_output'
+# expected (correct) output: the captured stdout string (or None if not captured)
 ```
 
 ---
@@ -117,95 +85,121 @@ _git("status", capture_output=True)
 ```python
 """Probe script for bug: src--git-py--frozen_worktree::_git
 
-Bug: _git() hardcodes check=True, capture_output=True, text=True but also passes
-**kwargs to subprocess.run. If kwargs contains any of 'check', 'capture_output',
-or 'text', Python raises TypeError due to duplicate keyword arguments.
+The bug claim: _git() hardcodes capture_output=True in the subprocess.run()
+call, but the specification states that this default is overridable via kwargs.
+Passing capture_output=False (or any kwarg that conflicts with the hardcoded
+capture_output=True) should be supported but fails.
 
-Since _git is a closure defined inside frozen_worktree() and cannot be imported
-directly, this probe reconstructs the exact code pattern to demonstrate the
-latent bug. The replica is byte-for-byte identical to the _git function body
-except for the variable name (proj_dir is defined in the enclosing scope).
+This script reconstructs the exact _git function pattern (same as
+src/git.py lines 75-79) inside a temporary git repo and verifies that
+overriding the capture_output default via kwargs is impossible.
 """
 
 import os
 import sys
-from unittest.mock import patch, MagicMock
+import shutil
+import subprocess
+import tempfile
 
-# Resolve repo root: probe is at fm_agent/bug_validation/probe_*.py, 3 levels deep.
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _repo_root)
+# ---------------------------------------------------------------------------
+# Build a fresh temporary git repo so _git has a valid repo to operate on
+# ---------------------------------------------------------------------------
+tmpdir = tempfile.mkdtemp(prefix="probe_git_")
+repo_path = os.path.join(tmpdir, "repo")
+os.makedirs(repo_path)
 
-# Import the package via its public entry point (src.git.frozen_worktree)
-try:
-    from src.git import frozen_worktree
-except Exception as e:
-    print(f"ERROR: Failed to import frozen_worktree from src.git: {e}")
-    sys.exit(1)
+subprocess.run(["git", "-C", repo_path, "init"],
+               check=True, capture_output=True, text=True)
+subprocess.run(["git", "-C", repo_path, "config", "user.name", "probe"],
+               check=True, capture_output=True, text=True)
+subprocess.run(["git", "-C", repo_path, "config", "user.email", "p@p.com"],
+               check=True, capture_output=True, text=True)
 
-import subprocess as _sp
+# Create a file and commit so there's a HEAD
+with open(os.path.join(repo_path, "hello.txt"), "w") as f:
+    f.write("hello")
+subprocess.run(["git", "-C", repo_path, "add", "hello.txt"],
+               check=True, capture_output=True, text=True)
+subprocess.run(["git", "-C", repo_path, "commit", "-m", "initial"],
+               check=True, capture_output=True, text=True)
 
+# ---------------------------------------------------------------------------
+# Reconstruct the exact _git function pattern (identical to src/git.py:75-79)
+# ---------------------------------------------------------------------------
+proj_dir = repo_path
 
-def _git_replica(proj_dir, *args, **kwargs):
-    """Exact replica of the _git closure body from src/git.py:75-79.
-
-    The original _git is defined as a closure inside frozen_worktree() with
-    proj_dir captured from the enclosing scope. This replica makes proj_dir
-    an explicit parameter to allow standalone testing.
-    """
-    return _sp.run(
+def _git(*args, **kwargs):
+    return subprocess.run(
         ["git", "-C", proj_dir, *args],
         check=True, capture_output=True, text=True, **kwargs,
     ).stdout.strip()
 
+# ---------------------------------------------------------------------------
+# Test 1: Normal operation (no conflicting kwargs) — should work fine
+# ---------------------------------------------------------------------------
+result = "ERROR"
+detail = ""
 
-def main():
-    confirmed = False
-    error_detail = ""
+try:
+    # Sanity check: _git works normally without conflicting kwargs
+    head = _git("rev-parse", "--verify", "HEAD")
+    assert head, "Expected non-empty HEAD commit hash"
 
-    try:
-        with patch.object(_sp, "run") as mock_run:
-            mock_result = MagicMock()
-            mock_result.stdout = "test output"
-            mock_run.return_value = mock_result
+    # Now test the trigger condition: override capture_output via kwargs.
+    # The spec says "both defaults are overridable via kwargs", but
+    # capture_output=True is hardcoded. Passing capture_output=False
+    # should either:
+    #   (a) raise TypeError for duplicate keyword argument, OR
+    #   (b) raise AttributeError because .stdout is None
+    # Either outcome confirms the bug because the spec promises overridability.
+    _git("rev-parse", "--verify", "HEAD", capture_output=False)
 
-            # Test 1: Normal invocation without conflicting kwargs — must succeed.
-            result = _git_replica("/tmp/test", "status")
-            if result != "test output":
-                print(f"ERROR: Normal call returned unexpected value: {result!r}")
-                sys.exit(1)
+    # If we reach here, somehow no error occurred — bug not confirmed
+    result = "NOT CONFIRMED"
+    detail = "capture_output=False was accepted without error (unexpected)"
 
-            # Test 2: Invocation with 'capture_output=True' in kwargs.
-            # The spec says the function should accept env (and other valid
-            # subprocess.run kwargs) without error. But because check=True,
-            # capture_output=True, and text=True are already hardcoded as
-            # positional keyword arguments, passing any of them again via
-            # **kwargs causes a duplicate-keyword TypeError.
-            try:
-                _git_replica("/tmp/test", "status", capture_output=True)
-                # If we get here, the bug is NOT present.
-            except TypeError as e:
-                confirmed = True
-                error_detail = str(e)
-            except Exception as e:
-                print(f"ERROR: Unexpected exception: {type(e).__name__}: {e}")
-                sys.exit(1)
+except TypeError as e:
+    # Duplicate keyword: capture_output=True (hardcoded) AND
+    # capture_output=False (from kwargs). Python forbids this.
+    # This confirms the bug: the spec says the default is overridable,
+    # but the code hardcodes it and prevents any override.
+    result = "CONFIRMED"
+    detail = (
+        f"TypeError raised when passing capture_output=False via kwargs: {e} "
+        "— spec says capture_output default is overridable, but the "
+        "hardcoded capture_output=True prevents any override"
+    )
 
-    except Exception as e:
-        print(f"ERROR: {type(e).__name__}: {e}")
-        sys.exit(1)
+except AttributeError as e:
+    # .stdout.strip() on None — this confirms the bug from a different
+    # angle: even if the subprocess ran without capturing, the function
+    # blindly calls .strip() on potentially-None stdout.
+    result = "CONFIRMED"
+    detail = (
+        f"AttributeError raised when .stdout was None: {e} "
+        "— spec says capture_output default is overridable, but the "
+        "function always calls .stdout.strip() without checking"
+    )
 
-    if confirmed:
-        print(f"CONFIRMED — TypeError raised with duplicate 'capture_output': {error_detail}")
-    else:
-        print("NOT CONFIRMED — conflicting kwargs did NOT raise TypeError (bug may be fixed)")
+except Exception as e:
+    # Any other error (e.g., subprocess.CalledProcessError from git) is
+    # an unexpected failure in the probe itself, not a reproduction.
+    result = "ERROR"
+    detail = f"Unexpected exception: {type(e).__name__}: {e}"
 
+# ---------------------------------------------------------------------------
+# Cleanup
+# ---------------------------------------------------------------------------
+shutil.rmtree(tmpdir, ignore_errors=True)
 
-if __name__ == "__main__":
-    main()
+# ---------------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------------
+print(f"{result} — {detail}")
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — TypeError raised with duplicate 'capture_output': <MagicMock name='run' id='136370205191552'> got multiple values for keyword argument 'capture_output'
+CONFIRMED — TypeError raised when passing capture_output=False via kwargs: subprocess.run() got multiple values for keyword argument 'capture_output' — spec says capture_output default is overridable, but the hardcoded capture_output=True prevents any override
 ```

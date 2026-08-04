@@ -1,10 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py",
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py",
   "verdict": "MISMATCH",
   "gaps": {
-    "spec_claim": "- Returns the value of `settings.inject.id` when that value is truthy\n  - Returns the predefined static default `_DEFAULT_INJECT_USER_ID` when `settings.inject.id` is falsy (empty or None)\n  - The returned string is non-empty in all cases",
-    "actual_behavior": "The function returns the value of settings.inject.id if it is truthy (as per Python bool conversion), otherwise returns _DEFAULT_INJECT_USER_ID. No external state is modified. Formally: let ret be the return value. Then ret = settings.inject.id if bool(settings.inject.id) else _DEFAULT_INJECT_USER_ID, and all module-level objects remain unchanged.",
-    "code_evidence": "Line 2: return settings.inject.id or _DEFAULT_INJECT_USER_ID",
-    "trigger_condition": "The specification states that the returned string is non-empty in all cases, implying the function must always return a string. However, when settings.inject.id is a truthy non-string (e.g., an integer 5), the code returns that non-string value, violating the requirement that the return value be a string."
+    "spec_claim": "Returns a non-empty string that identifies the current user. The returned value is stable: repeated calls within the same execution environment yield the same string. The value is the configured user identifier when set, or a built-in default identifier otherwise. The returned string is suitable for injection into LLM API request metadata for prompt-cache affinity.",
+    "actual_behavior": "The function `_stable_user_id` is defined in the current namespace. It takes no arguments. When called, its return value is the result of evaluating `settings.inject.id or _DEFAULT_INJECT_USER_ID`.",
+    "code_evidence": "Line 2:     return settings.inject.id or _DEFAULT_INJECT_USER_ID",
+    "trigger_condition": "The function does not store the initial user ID; it reevaluates the setting on each call. Therefore, if settings.inject.id changes between calls, the returned string is not stable, violating the specification."
   }
 }

@@ -1,1 +1,11 @@
-{"id": "src--cli_backend-py--cli_effort", "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/cli_backend-py/cli_effort.py", "function_name": "cli_effort", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--cli_effort.py", "detail_file": "fm_agent/bug_validation/src--cli_backend-py--cli_effort.md", "probe_stdout": "CONFIRMED — actual: b'hello' (type: bytes) | expected str: 'hello'\n", "trigger_summary": "settings.llm.effort is a bytes object (b'  hello  '); .strip() returns bytes (b'hello') instead of str, violating the spec's return-type guarantee."}
+{
+  "id": "src--cli_backend-py--cli_effort",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/cli_effort.py",
+  "function_name": "cli_effort",
+  "confirmation_status": "confirmed",
+  "attempts": "2",
+  "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--cli_effort.py",
+  "detail_file": "fm_agent/bug_validation/src--cli_backend-py--cli_effort.md",
+  "probe_stdout": "CONFIRMED — actual: '' (empty string) | expected per spec: non-empty string\n",
+  "trigger_summary": "When settings.llm.effort is a whitespace-only string like '   ', cli_effort() returns an empty string '' after stripping, violating the specification that requires a non-empty return value."
+}

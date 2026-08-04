@@ -1,6 +1,0 @@
-{
-  "verdict": "MATCH",
-  "counterexample": null,
-  "offending_statements": null,
-  "reason": "The code's logic exactly implements the specification: it returns None when cache_window is empty or the sum of second elements is zero, and otherwise returns the ratio of the sum of first elements to the sum of second elements as a float. Both conditions are mirrored in A and B with no additional or missing cases."
-}

@@ -1,10 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/cli_backend-py/cli_effort.py",
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/cli_effort.py",
   "verdict": "MISMATCH",
   "gaps": {
-    "spec_claim": "- Returns the value of `settings.llm.effort` with leading and trailing\n    whitespace removed\n  - If the value is empty or consists only of whitespace, returns an empty\n    string",
-    "actual_behavior": "The function returns a string that is the result of stripping leading and trailing whitespace from the original `settings.llm.effort`. The original `settings.llm.effort` is unchanged. Formal: let `old = settings.llm.effort` at function entry. Then the return value `r` satisfies `r = old.strip()`  `isinstance(r, str)`  `settings.llm.effort = old`.",
-    "code_evidence": "Line 2: return settings.llm.effort.strip()",
-    "trigger_condition": "The code returns the result of .strip() on the current value of settings.llm.effort. If that value is a bytes object (e.g., b' hello '), .strip() returns a bytes object (b'hello'), which is not a string. The specification requires that the function return a string (e.g., an empty string for whitespace-only input), so returning a bytes value violates the type expectation."
+    "spec_claim": "Returns a string equal to the value of settings.llm.effort with leading and trailing whitespace removed. The returned string is non-empty.",
+    "actual_behavior": "The function returns a string that is the result of stripping leading and trailing whitespace from `settings.llm.effort`. The value of `settings.llm.effort` is unchanged and remains a non-empty string. The function raises no exceptions. Formally: `result = settings.llm.effort.strip()  settings.llm.effort = old(settings.llm.effort)  settings.llm.effort  \"\"`.",
+    "code_evidence": "Line 2:     return settings.llm.effort.strip()",
+    "trigger_condition": "For input '   ', code returns '' (empty string) after stripping, violating the specification requirement that the returned string is non-empty."
   }
 }

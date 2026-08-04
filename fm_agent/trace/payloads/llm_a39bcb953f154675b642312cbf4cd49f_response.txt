@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "funcs_info = [{\"name\": \"foo\"}], source_lines = [\"def foo(): pass\"], filepath = \"test.py\", issue = \"fix bug\", top_k = 1. The LLM returns a valid JSON array [\"baz\"] which parses to a list of non-empty strings. The code returns [\"baz\"] without checking membership in funcs_info, violating the specification that names must be drawn from funcs_info.",
-  "offending_statements": "Line 29: names = _parse_json_response(text)\nLine 30: if not isinstance(names, list) or not all(\nLine 31:     isinstance(name, str) and name.strip() for name in names\nLine 32: ):\nLine 33:     raise ValueError(\"LLM rerank response must be a JSON array of non-empty function names\")\nLine 34: return [name.strip() for name in names]",
-  "reason": "The code only validates that the response is a JSON array of non-empty strings, but the specification requires that all returned names belong to funcs_info, have no duplicates, and the list length is at most top_k. A response like ['baz'] for funcs_info containing only 'foo' would be accepted by the code, violating the spec."
-}

@@ -1,29 +1,3 @@
-# [SPEC]
-# Unit: src/prompts-py/_check_post_implies_spec.py
-#
-# _check_post_implies_spec(block, post_condition, spec_post_condition, knowledge, language, trace_dir=None, trace_meta=None)
-#
-# Pre-condition:
-#   - block is a non-empty string containing code statements, possibly with "Line N:" prefixes
-#   - post_condition is a non-empty string describing the state guaranteed after executing block under some prior pre-condition
-#   - spec_post_condition is a non-empty string describing the post-condition required by the specification
-#   - knowledge is a mapping from callee function names to their behavioral specifications; may be empty or falsy
-#   - language is a non-empty string identifying the source programming language of the code in block
-#   - trace_dir, when not None, is a directory path used for persisting trace records
-#   - trace_meta, when not None, is a dict of metadata for trace annotation
-#
-# Post-condition:
-#   - Returns a tuple (passed: bool, offending_stmts: str|None, computed_post_cond: str|None, violation_reason: str|None)
-#   - When the set of program states described by post_condition is a subset of the set described by spec_post_condition (i.e., post_condition logically implies spec_post_condition for all valid inputs), returns (True, None, None, None)
-#   - When there exists a concrete valid input for which post_condition does not guarantee spec_post_condition, returns (False, offending_stmts, post_condition, violation_reason) where offending_stmts and violation_reason are non-empty strings
-#   - offending_stmts preserves "Line N:" prefixes from block when present, identifying the specific statements responsible for the violation
-#   - When no definitive MATCH or MISMATCH verdict can be reached after exhausting retry attempts, raises ValueError
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _check_post_implies_spec(block, post_condition, spec_post_condition, knowledge, language,
                              trace_dir=None, trace_meta=None):
     info_str = f"\nAdditional context:\n{knowledge}" if knowledge else ""

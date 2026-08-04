@@ -1,3 +1,0 @@
-{
-  "post_condition": "If the function returns normally, it returns either None (when no compatible codegraph backend exists for proj_dir) or a dictionary mapping each caller identity tuple (caller_stem, caller_module) to the set of callee stem strings for all call relationships detected in the TypeScript source files of proj_dir. If an exception is raised by CodeGraphExtractor.from_proj_dir or CodeGraphExtractor.get_call_edges, the function does not return normally and propagates the exception."
-}

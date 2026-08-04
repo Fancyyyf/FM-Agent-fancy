@@ -1,32 +1,3 @@
-# [SPEC]
-# Unit: src/prompts-py/_parse_spec_check_json.py
-#
-# _parse_spec_check_json(response)
-#
-# Pre-condition:
-#   - response is a non-empty string
-#
-# Post-condition:
-#   - Raises ValueError if response is not valid JSON text
-#   - Raises ValueError if the parsed JSON value is not a mapping (dict)
-#   - Raises ValueError if the parsed mapping does not contain all of the required keys: "verdict", "counterexample", "offending_statements", "reason"
-#   - Raises ValueError if the "verdict" value, after conversion to uppercase, is neither "MATCH" nor "MISMATCH"
-#   - Raises ValueError if "counterexample" is present and not null-valued but is not a string
-#   - Raises ValueError if "offending_statements" is present and not null-valued but is not a string
-#   - Raises ValueError if "reason" is not a string value
-#   - For "MISMATCH" verdict: raises ValueError if any of counterexample, offending_statements, or reason is empty or consists only of whitespace; otherwise returns a tuple (True, offending_statements_with_leading_trailing_whitespace_removed, reason_with_whitespace_removed, data) where data is the parsed dict with verdict uppercased, counterexample set to the stripped value, offending_statements set to the stripped value, and reason set to the stripped value
-#   - For "MATCH" verdict: raises ValueError if counterexample or offending_statements is a non-empty string; otherwise returns a tuple (False, None, None, data) where data is the parsed dict with verdict uppercased, counterexample set to None, offending_statements set to None, and reason set to its stripped value
-# [SPEC]
-
-# [INFO]
-# _nonempty_string(value) -> bool
-#   Pre-condition: (no requirements)
-#   Post-condition: Returns True when value is a string and, after removing all leading and trailing whitespace characters, the resulting string is non-empty; returns False otherwise, including when value is not a string or when it is a string that consists solely of whitespace characters or is empty
-# _load_spec_check_json(response)
-#   Pre-condition: response is a string
-#   Post-condition: Returns the Python value produced by deserializing response as JSON text; raises json.JSONDecodeError if response is not valid JSON
-# [INFO]
-
 def _parse_spec_check_json(response):
     """Parse and validate the spec-check model structured JSON verdict."""
     try:

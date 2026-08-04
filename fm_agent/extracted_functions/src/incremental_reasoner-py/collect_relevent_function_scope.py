@@ -1,67 +1,3 @@
-# [SPEC]
-# Unit: fm_agent/extracted_functions/src/incremental_reasoner-py/collect_relevent_function_scope.py
-#
-# collect_relevent_function_scope(proj_dir, developer_intent, changed_functions, range=None) -> list[str]
-#
-# Pre-condition:
-#   - proj_dir is a path to a project directory whose fm_agent/ subdirectory contains phases.json
-#     (with a "phases" list of phase objects, each containing a "modules" list) and extracted_functions/
-#   - developer_intent is a non-empty string describing the modification goal
-#   - changed_functions is a dict mapping absolute source file paths to dicts with string-list values
-#     under at least the keys "added", "modified", and "removed"
-#   - range is None or a non-negative integer
-#
-# Post-condition:
-#   - Returns a list of paths, each relative to the extracted_functions/ directory, ordered by
-#     descending relevance to developer_intent; paths with equal relevance are ordered lexicographically
-#   - Every returned path refers to an existing regular file under extracted_functions/
-#   - When range is not None, the returned list has length ≤ range
-#   - Returns an empty list when phases.json defines no modules, or when no module is selected
-#     by the relevance assessment
-#   - A module is selected when EITHER its natural-language description (as recorded in phases.json)
-#     is assessed as relevant to the developer intent, OR the module contains at least one source file
-#     whose path, relativized against proj_dir, matches a key in changed_functions
-#   - Within each selected module, a source file is included only when its content is assessed as
-#     relevant to the developer intent, EXCEPT that every source file present in changed_functions
-#     is included unconditionally
-#   - When the per-module file-relevance assessment cannot be obtained, every source file in that
-#     module is included
-#   - Within each included source file, the set of extracted functions whose relevance scores
-#     (computed from heuristic signals derived from developer_intent) rank within the top of that file
-#     are included
-#   - When per-file function ranking is unavailable for an included source file, every extracted
-#     function from that file is included
-#   - Multiple extracted-function files mapping to the same source-level function are deduplicated,
-#     keeping only the occurrence with the highest relevance score
-# [SPEC]
-
-# [INFO]
-# rank_functions_in_file(filepath, src_path, issue, signals, top_k, llm_client=None,
-#                        llm_model='', llm_trigger=LLM_TRIGGER_FUNCS, llm_top_k=LLM_TOP_K,
-#                        llm_confidence_threshold=LLM_CONFIDENCE_THRESHOLD, proj_dir=None)
-#                        -> list[dict]
-#   Pre-condition: src_path is a Path to an existing source file; filepath is a relative-path
-#     label; issue is a non-empty string; signals is a dict structured as the output of
-#     _parse_issue_signals with keys 'traceback_funcs', 'backtick_idents', 'dotted_refs',
-#     'dotted_classes', 'plain_idents', 'exception_types', 'all_words'; top_k, llm_trigger,
-#     and llm_top_k are positive integers; llm_confidence_threshold is a positive float
-#   Post-condition: Returns a list of dicts sorted in descending order by 'score' (float, rounded
-#     to 3 decimal places), each containing keys 'file', 'name', 'lineno', 'end_lineno', 'score',
-#     and 'reason'. Length ≤ top_k. Returns an empty list when the source file has no parseable
-#     functions. Every 'name' is unique within the result and names a function defined in src_path.
-# _extracted_files_by_method(func_dir) -> dict-like
-#   Pre-condition: func_dir is a filesystem path (may or may not be an existing directory)
-#   Post-condition: Returns a mutable dict-like mapping from string keys (function names) to
-#     lists of absolute filesystem paths, each list containing one or more entries. When
-#     func_dir is not an existing directory, returns an empty mapping. When func_dir is an
-#     existing directory, every regular file reachable by recursive descent is indexed under
-#     one or two keys using the file's basename stem (name without final extension): always
-#     the full stem, and if the stem contains "::", also the substring after the last "::"
-#     (the bare method name). The order of paths within each list reflects the order they
-#     were encountered during traversal. Accessing a missing key returns an empty list
-#     without modifying the mapping.
-# [INFO]
-
 def collect_relevent_function_scope(proj_dir, developer_intent, changed_functions, range=None):
     """
     Select the functions relevant to developer_intent and return the most relevant ones.
@@ -297,7 +233,7 @@ def collect_relevent_function_scope(proj_dir, developer_intent, changed_function
                 for root, _dirs, fnames in os.walk(func_dir):
                     for fname in fnames:
                         cand = os.path.join(root, fname)
-                        if os.path.isfile(cand):
+                        if os.path.isfile(cand) and not _is_metadata_sidecar(fname):
                             _record(os.path.relpath(cand, extracted_dir), 0.0)
 
     # Order by descending relevance score (path as a deterministic tie-breaker), then keep

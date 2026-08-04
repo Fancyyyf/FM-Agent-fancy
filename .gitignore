@@ -221,3 +221,21 @@ docs/superpowers/
 .codegraph/
 CLAUDE.md
 AGENTS.md
+
+# Generated FM-Agent workspace
+/fm_agent/
+
+# Local FM-Agent audit and bug-summary reports
+/bug_list.md
+/bug_list_v7_28.md
+/bug_list_v7_28_spec_errors.md
+/bug_list_v7_28_reasoning_misjudgments.md
+/bug_list_v7_28_zh.md
+/bug_list_v7_28_spec_errors_zh.md
+/bug_list_v7_28_reasoning_misjudgments_zh.md
+/.bug_report_translation/
+/bug_incremental_list.md
+/bug_incremental_list.pdf
+/bug_incremental_list_zh.md
+/bug_incremental_list_zh.pdf
+/github_issue_drafts_path_split_braces_spec_race.md

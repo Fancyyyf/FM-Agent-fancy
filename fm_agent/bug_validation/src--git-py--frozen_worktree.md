@@ -1,6 +1,6 @@
 # Bug Report: frozen_worktree
 
-**Source file:** `src/git.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/git-py/frozen_worktree.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,131 +12,103 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- A new, unique temporary directory is created under the system tempdir. Its name
-    begins with "fm_agent_wt_" followed by the basename of proj_dir.
-  - When proj_dir is a git repository with a reachable HEAD commit:
-      - A private git index (GIT_INDEX_FILE) is used so that proj_dir's real index
-        and working tree are never modified.
-      - The snapshot commit captures the full state of proj_dir at entry time:
-        HEAD tree + all tracked modifications + all untracked files, with every
-        path in exclude removed from the snapshot commit tree.
-      - That commit becomes a detached git worktree checked out inside the tempdir
-        at a "snapshot" subdirectory. The yielded path is this snapshot subdirectory.
-      - If copy_excluded is truthy: for each name in exclude, if the corresponding
-        subdirectory exists in proj_dir and does not already exist at the same
-        relative path in the snapshot worktree, that subdirectory is recursively
-        copied (with symlinks preserved) into the snapshot worktree.
-  - When proj_dir is NOT a git repository or has no reachable HEAD:
-      - A plain recursive directory copy is performed from proj_dir into the
-        snapshot subdirectory, using copytree with each name in exclude passed as
-        an ignore pattern and with symlinks preserved. The yielded path is the
-        snapshot subdirectory.
-      - If copy_excluded is truthy: excluded subdirectories are copied into the
-        snapshot worktree under the same conditions as the git-path case.
-  - The absolute path of the snapshot worktree is printed to stdout along with
-    platform-appropriate removal instructions referencing either "git worktree
-    remove" (git path) or "rm -rf" (non-git path).
-  - The snapshot worktree and its parent temporary directory persist after the
-    context manager exits; automatic cleanup is not performed.
-  - If any git or filesystem operation fails (e.g. git ... (line truncated to 2000 chars)
+Yields the absolute path wt to a directory whose contents at yield time are a faithful snapshot of the proj_dir filesystem tree at the moment frozen_worktree was entered. Subsequent modifications to proj_dir are not reflected in the snapshot at wt. The snapshot construction never modifies the original proj_dir tree, index, or git state. If proj_dir is a git repository with at least one commit, the snapshot is a detached git worktree comprising HEAD, all uncommitted tracked edits, and all untracked files present in proj_dir at entry time, with entries matching names in exclude omitted from the git commit. If proj_dir is not a git repository with a valid HEAD, the snapshot is a recursive directory copy of proj_dir, with entries matching names in exclude omitted. When copy_excluded is true, each directory named in exclude that exists in proj_dir is recursively copied into the snapshot at wt after the git worktree or directory copy is constructed. The snapshot at wt persists after the context manager exits and is not automatically removed.
 
 ---
 
 ### Actual Behavior
 
-After the function body has executed up to and including the yield statement (suspending the generator), the following holds:
+On normal execution, the generator yields `wt`, a directory at `<temp_dir>/snapshot` where `<temp_dir> = tempfile.mkdtemp(prefix="fm_agent_wt_<repo_name>_")` and `<repo_name>` is derived from `proj_dir`. If `proj_dir` was a git repo with a HEAD commit (`is_git` true), then `wt` is a detached worktree for a new commit that captures the working tree (tracked edits + untracked files) at the time `git add -A` ran, with directories in `exclude` removed from the commit via `git rm --cached`. The original git state (`HEAD`, index, working tree) is unchanged. If `copy_excluded` is true, each excluded directory that existed in `proj_dir` and is absent from `wt` is recursively copied into `wt` as an untracked directory. If `proj_dir` was not a valid git repo with HEAD (`is_git` false), `wt` is a plain copy of `proj_dir` (directories in `exclude` skipped via `shutil.ignore_patterns`), and if `copy_excluded`, those directories are subsequently copied into `wt`. `<temp_dir>` persists after the yield (no automatic deletion). `proj_dir` is unmodified. Messages containing `wt` and cleanup instructions are printed to stdout. On exceptional execution (exception before the yield), `proj_dir` is unchanged, `<temp_dir>` exists but may contain partial artifacts, and `wt` may not exist or be incomplete.
 
-- A unique temporary directory base was created via tempfile.mkdtemp inside the system temporary directory; its absolute path is stored in variable `base`.
-- The variable `wt` holds the absolute path `os.path.join(base, 'snapshot')`, which is a directory that now exists.
-
-**If `proj_dir` is a git repository with at least one commit** (i.e., `git -C proj_dir rev-parse --verify HEAD` succeeded):
-  * A private git index file was created at `os.path.join(base, 'index')`.
-  * The HEAD tree was read into that index (`git read-tree HEAD`).
-  * All workingtree changes (tracked edits and untracked files, respecting `.gitignore`) were staged via `git add -A`.
-  * For every name in `exclude`, `git rm -r --cached --quiet --ignore-unmatch -- <name>` was executed, removing those entries from the private index if present.
-  * A tree object was written from the index (`git write-tree`).
-  * A new commit object was created with that tree, parent HEAD, and message `'fm_agent snapshot'` (`git commit-tree`).
-  * A detached worktree was added at `wt` referencing that commit (`git worktree add --detach <wt> <snap>`).
-  * `wt` is a valid git checkout containing the committed state plus uncommitted edits and untracked files, **excluding** any paths that are gitignored **or** whose names are listed in `exclude`.
-
-**Otherwise** (`proj_dir` is not a git repo or has no commit):
-  * `shutil.copytree(proj_dir, wt, ignore=shutil.ignore_patterns(*exclude), symlinks=True)` executed successfully.
-  * `wt` is a plain directory copy of `proj_dir`, preserving symlinks, but omitting any files or subdirectories whose names match the patterns in `exclude`.
-  * An INFOlevel log message was emitted stating that a copy was performed.
-
-**If `copy_excluded` is True:**
-  * For each name in `exclude`, if `os.path.join(proj_dir, name)` exists a... (line truncated to 2000 chars)
+Formally:
+Let P = os.path.abspath(proj_dir), R = os.path.basename(P.rstrip(os.sep)) or "repo", B = tempfile.mkdtemp(prefix="fm_agent_wt_" + R + "_"), W = os.path.join(B, "snapshot"), G = (subprocess.run(["git", "-C", P, "rev-parse", "--verify", "HEAD"], check=True, capture_output=True, text=True) did not raise CalledProcessError). Then the outcome satisfies:
+  (Normal yield W)  (Exception raised  no yield).
+  If normal yield:
+    G  
+      (  I = os.path.join(B, "index") that is a valid git index 
+         tree = output of _git("write-tree", env=env) 
+         snap = output of _git("commit-tree", tree, "-p", "HEAD", "-m", "... 
 
 ---
 
 ## Code Evidence
 
-Line 45: _git("add", "-A", env=env)
+Line 47:             _git("rm", "-r", "--cached", "--quiet", "--ignore-unmatch", "--",
+Line 48:                  *exclude, env=env)
 
 ---
 
 ## Trigger Condition
 
-The code's use of `git add -A` skips files that match .gitignore patterns, so untracked gitignored files are not included in the snapshot. The specification requires capturing all untracked files without exception for .gitignore.
+The code uses 'git rm --cached' with only the top-level exclude names, so nested directories/files with the same name remain in the commit. The specification says 'entries matching names in exclude omitted', which requires omission of all such entries at any depth.
 
 ---
 
 ## How to trigger the bug
 
-The bug is triggered when a git repository contains untracked files that match `.gitignore` patterns. The `git add -A` command used to stage files in the private index silently skips gitignored paths, so those files are never included in the snapshot commit. The specification explicitly states that the snapshot should capture "all untracked files" — with no carve-out for `.gitignore`-matched files.
+When `frozen_worktree` is called with `exclude=("fm_agent",)` on a git repository that contains both a top-level `fm_agent/` directory and a nested directory with the same name (e.g., `testdata/fm_agent/`), the `git rm --cached fm_agent` command only removes the top-level `fm_agent/` from the private index. The nested `testdata/fm_agent/` — whose path does not match the bare name `fm_agent` — remains in the index and is included in the snapshot commit, violating the specification that **all** entries matching names in exclude must be omitted.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `proj_dir` | A git repository with at least one commit, containing a `.gitignore` that matches `*.secret` and an untracked file `test.secret` |
-| `exclude` | `()` (empty tuple — no additional exclusions) |
+| `proj_dir` | Temporary git repo with a top-level `fm_agent/` and a nested `testdata/fm_agent/` |
+| `exclude` | `("fm_agent",)` |
 | `copy_excluded` | `False` |
 
 ### Expected (spec-correct) Output
 
-The snapshot worktree at the yielded path should contain `test.secret` (the gitignored untracked file), alongside all other files.
+The snapshot at `wt` should contain `testdata/` with NO `fm_agent/` subdirectory — the nested `fm_agent/` should be excluded at all depths.
 
 ### Actual (buggy) Output
 
-The snapshot worktree does NOT contain `test.secret` — the file is missing because `git add -A` respects `.gitignore` and silently skipped it.
+The snapshot at `wt` contains `testdata/fm_agent/` with all its files (e.g., `nested.txt`). The nested directory was not removed by `git rm --cached fm_agent`.
 
 ### How to Reproduce
+
+Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import os, subprocess, tempfile, shutil
-import sys
-sys.path.insert(0, ".")
+import os, sys, shutil, tempfile, subprocess
+sys.path.insert(0, os.path.abspath("."))
+
 from src.git import frozen_worktree
 
-# Create a test git repo
-tmp = tempfile.mkdtemp()
-proj_dir = os.path.join(tmp, "repo")
-os.makedirs(proj_dir)
-subprocess.run(["git", "init"], cwd=proj_dir, check=True, capture_output=True, text=True)
-subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=proj_dir, check=True, capture_output=True, text=True)
-subprocess.run(["git", "config", "user.name", "Test"], cwd=proj_dir, check=True, capture_output=True, text=True)
+tmpdir = tempfile.mkdtemp(prefix="probe_fwt_")
+repo_path = os.path.join(tmpdir, "repo")
+os.makedirs(repo_path)
 
-# Create .gitignore that ignores *.secret
-with open(os.path.join(proj_dir, ".gitignore"), "w") as f:
-    f.write("*.secret\n")
-with open(os.path.join(proj_dir, "tracked.txt"), "w") as f:
-    f.write("hello\n")
-subprocess.run(["git", "add", ".gitignore", "tracked.txt"], cwd=proj_dir, check=True, capture_output=True, text=True)
-subprocess.run(["git", "commit", "-m", "init"], cwd=proj_dir, check=True, capture_output=True, text=True)
+def git(*args):
+    subprocess.run(["git", "-C", repo_path, *args], check=True,
+                   capture_output=True, text=True)
 
-# Create a gitignored untracked file
-with open(os.path.join(proj_dir, "test.secret"), "w") as f:
-    f.write("secret\n")
+git("init")
+git("config", "user.name", "test")
+git("config", "user.email", "test@example.com")
 
-# Trigger the bug
-with frozen_worktree(proj_dir, exclude=(), copy_excluded=False) as wt:
-    # actual (buggy) output: test.secret is NOT present
-    print("test.secret present:", os.path.isfile(os.path.join(wt, "test.secret")))
-    # expected (correct) output: True
+# top-level exclude dir
+os.makedirs(os.path.join(repo_path, "fm_agent"))
+with open(os.path.join(repo_path, "fm_agent", "top.txt"), "w") as f:
+    f.write("x")
+# NESTED exclude dir — this should be excluded but LEAKS
+os.makedirs(os.path.join(repo_path, "testdata", "fm_agent"))
+with open(os.path.join(repo_path, "testdata", "fm_agent", "nested.txt"), "w") as f:
+    f.write("x")
+
+with open(os.path.join(repo_path, "regular.txt"), "w") as f:
+    f.write("x")
+
+git("add", ".")
+git("commit", "-m", "init")
+
+with frozen_worktree(repo_path, exclude=("fm_agent",), copy_excluded=False) as wt:
+    leak = os.path.isdir(os.path.join(wt, "testdata", "fm_agent"))
+    print("LEAK DETECTED" if leak else "NO LEAK")
+    # actual (buggy) output: "LEAK DETECTED"
+    # expected (correct) output: "NO LEAK"
 ```
 
 ---
@@ -146,120 +118,112 @@ with frozen_worktree(proj_dir, exclude=(), copy_excluded=False) as wt:
 ```python
 """Probe script for bug: src--git-py--frozen_worktree
 
-Bug: git add -A skips gitignored untracked files, so they are omitted from the
-snapshot worktree. The spec requires capturing ALL untracked files.
+The bug claim: frozen_worktree() uses `git rm --cached` with only top-level
+exclude names (e.g. "fm_agent"), so nested directories/files with the same
+name are NOT removed from the commit and leak into the snapshot.
+
+This script creates a temporary git repo with:
+  - A top-level fm_agent/ dir (should be excluded)
+  - A nested testdata/fm_agent/ dir (should ALSO be excluded per spec)
+then calls frozen_worktree() and checks whether the nested fm_agent/ leaks.
 """
 
 import os
-import subprocess
+import sys
 import shutil
 import tempfile
-import sys
+import subprocess
 
-# The probe is at fm_agent/bug_validation/probe_*.py, three levels deep.
-# Go up three levels to reach the repo root.
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _repo_root)
+# ---------------------------------------------------------------------------
+# Must import from the public entry point
+# ---------------------------------------------------------------------------
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from src.git import frozen_worktree
+
+# ---------------------------------------------------------------------------
+# Build a fresh temporary git repo with the trigger structure
+# ---------------------------------------------------------------------------
+tmpdir = tempfile.mkdtemp(prefix="probe_fwt_")
+repo_path = os.path.join(tmpdir, "repo")
+os.makedirs(repo_path)
+
+def git(*args):
+    subprocess.run(["git", "-C", repo_path, *args], check=True,
+                   capture_output=True, text=True)
+
+git("init")
+git("config", "user.name", "test")
+git("config", "user.email", "test@example.com")
+
+# Create the top-level excluded directory (fm_agent/)
+os.makedirs(os.path.join(repo_path, "fm_agent"))
+with open(os.path.join(repo_path, "fm_agent", "top_level.txt"), "w") as f:
+    f.write("should be excluded")
+
+# Create a NESTED directory with the same name (testdata/fm_agent/)
+os.makedirs(os.path.join(repo_path, "testdata", "fm_agent"))
+with open(os.path.join(repo_path, "testdata", "fm_agent", "nested.txt"), "w") as f:
+    f.write("should ALSO be excluded but may leak")
+
+# Create a regular file that should be present regardless
+with open(os.path.join(repo_path, "regular.txt"), "w") as f:
+    f.write("should be in snapshot")
+
+# Initial commit so we have a HEAD
+git("add", "testdata/")
+git("add", "regular.txt")
+git("add", "fm_agent/")
+git("commit", "-m", "initial")
+
+# ---------------------------------------------------------------------------
+# Call frozen_worktree (set copy_excluded=False so excluded dirs are NOT
+# copied back — we only care about what the git worktree commit contains)
+# ---------------------------------------------------------------------------
+result = "ERROR"
+actual_detail = ""
 
 try:
-    from src.git import frozen_worktree
-except Exception as e:
-    print(f"ERROR: Failed to import frozen_worktree: {e}")
-    sys.exit(1)
+    with frozen_worktree(repo_path, exclude=("fm_agent",), copy_excluded=False) as wt:
+        # Check: is the nested fm_agent/ present in the snapshot?
+        nested_path = os.path.join(wt, "testdata", "fm_agent")
+        top_level_path = os.path.join(wt, "fm_agent")
+        regular_path = os.path.join(wt, "regular.txt")
 
+        nested_exists = os.path.isdir(nested_path)
 
-def main():
-    # Create a temporary git repo outside the FM-Agent workspace
-    tmp_root = tempfile.mkdtemp(prefix="bug_probe_")
-    proj_dir = os.path.join(tmp_root, "testrepo")
-    os.makedirs(proj_dir)
-
-    try:
-        # Initialize a git repo
-        subprocess.run(["git", "init"], cwd=proj_dir, check=True,
-                       capture_output=True, text=True)
-
-        # Configure git user (required for commits)
-        subprocess.run(["git", "config", "user.email", "test@test.com"],
-                       cwd=proj_dir, check=True, capture_output=True, text=True)
-        subprocess.run(["git", "config", "user.name", "Test"],
-                       cwd=proj_dir, check=True, capture_output=True, text=True)
-
-        # Create .gitignore that ignores *.secret files
-        gitignore_path = os.path.join(proj_dir, ".gitignore")
-        with open(gitignore_path, "w") as f:
-            f.write("*.secret\n")
-
-        # Create a tracked file
-        tracked_path = os.path.join(proj_dir, "tracked.txt")
-        with open(tracked_path, "w") as f:
-            f.write("hello\n")
-
-        # Stage and commit the tracked file + .gitignore
-        subprocess.run(["git", "add", ".gitignore", "tracked.txt"],
-                       cwd=proj_dir, check=True, capture_output=True, text=True)
-        subprocess.run(["git", "commit", "-m", "initial"],
-                       cwd=proj_dir, check=True, capture_output=True, text=True)
-
-        # Create an untracked file that matches .gitignore
-        secret_path = os.path.join(proj_dir, "test.secret")
-        with open(secret_path, "w") as f:
-            f.write("secret content\n")
-
-        # Also create an untracked file that does NOT match .gitignore
-        normal_path = os.path.join(proj_dir, "normal.txt")
-        with open(normal_path, "w") as f:
-            f.write("normal content\n")
-
-        # Call frozen_worktree through the public entry point.
-        # Use empty exclude and copy_excluded=False to keep the test simple.
-        snapshot_dir = None
-        with frozen_worktree(proj_dir, exclude=(), copy_excluded=False) as wt:
-            snapshot_dir = wt
-
-            # Check: does the gitignored untracked file exist in the snapshot?
-            snapshot_secret = os.path.join(wt, "test.secret")
-            secret_present = os.path.isfile(snapshot_secret)
-
-            # Check: does the normal untracked file exist?
-            snapshot_normal = os.path.join(wt, "normal.txt")
-            normal_present = os.path.isfile(snapshot_normal)
-
-            # Check: tracked file exists?
-            snapshot_tracked = os.path.join(wt, "tracked.txt")
-            tracked_present = os.path.isfile(snapshot_tracked)
-
-        # The spec claims: "HEAD tree + all tracked modifications + all untracked files"
-        # If the gitignored file is missing, the bug is CONFIRMED.
-        expected = True    # spec says it SHOULD be present
-        actual = secret_present
-
-        if actual != expected:
-            print(f"CONFIRMED — gitignored untracked file 'test.secret' is missing from snapshot. "
-                  f"present={secret_present}, normal_untracked_present={normal_present}, "
-                  f"tracked_present={tracked_present}")
+        if nested_exists:
+            # BUG CONFIRMED: nested fm_agent/ leaked into snapshot
+            result = "CONFIRMED"
+            nested_files = os.listdir(nested_path)
+            actual_detail = (
+                f"nested fm_agent/ present in snapshot at {nested_path} "
+                f"(contains: {nested_files}) — spec requires exclusion at all depths"
+            )
         else:
-            print(f"NOT CONFIRMED — gitignored untracked file 'test.secret' was present in snapshot. "
-                  f"secret_present={secret_present}, normal_untracked_present={normal_present}, "
-                  f"tracked_present={tracked_present}")
+            result = "NOT CONFIRMED"
+            actual_detail = (
+                "nested fm_agent/ was correctly excluded from snapshot"
+            )
 
-    finally:
-        # Clean up: remove the snapshot worktree and the temp repo
-        if snapshot_dir and os.path.exists(snapshot_dir):
-            parent = os.path.dirname(snapshot_dir)
-            if os.path.exists(parent):
-                shutil.rmtree(parent, ignore_errors=True)
-        shutil.rmtree(tmp_root, ignore_errors=True)
+except Exception as e:
+    result = "ERROR"
+    actual_detail = str(e)
 
+# ---------------------------------------------------------------------------
+# Cleanup
+# ---------------------------------------------------------------------------
+shutil.rmtree(tmpdir, ignore_errors=True)
 
-if __name__ == "__main__":
-    main()
+# ---------------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------------
+print(f"{result} — {actual_detail}")
 ```
 
 ### Probe Output
 
 ```
-[Pipeline] Snapshot created at: /tmp/fm_agent_wt_testrepo_vqrce874/snapshot
-[Pipeline] Snapshot is kept after the run. Remove with: git -C /tmp/bug_probe_nuyn9g__/testrepo worktree remove --force /tmp/fm_agent_wt_testrepo_vqrce874/snapshot
-CONFIRMED — gitignored untracked file 'test.secret' is missing from snapshot. present=False, normal_untracked_present=True, tracked_present=True
+[Pipeline] Snapshot created at: /tmp/fm_agent_wt_repo_54som_02/snapshot
+[Pipeline] Snapshot is kept after the run. Remove with: git -C /tmp/probe_fwt_frax15ct/repo worktree remove --force /tmp/fm_agent_wt_repo_54som_02/snapshot
+CONFIRMED — nested fm_agent/ present in snapshot at /tmp/fm_agent_wt_repo_54som_02/snapshot/testdata/fm_agent (contains: ['nested.txt']) — spec requires exclusion at all depths
 ```

@@ -1,3 +1,0 @@
-{
-  "post_condition": "If a CodeGraphExtractor instance cg is successfully created from proj_dir (i.e., cg is not None), the function returns the result of cg.get_functions_by_file(\"javascript\", proj_dir), which is a dictionary mapping each absolute file path (string) of a JavaScript (.js/.jsx) file within proj_dir that contains any function definition to a list of (func_name: str, func_body: str) tuples for all function definitions found in that file. If cg is None (backend initialization fails), the function returns an empty dictionary {}. The returned dictionary maps exactly the JavaScript files that have function definitions; files with no functions are omitted. No other program state is modified."
-}

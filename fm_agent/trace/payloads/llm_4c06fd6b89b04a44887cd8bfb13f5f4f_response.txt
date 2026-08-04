@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp', work_dir='/tmp', event_id='ev1', command=AgentCommand(stdin_text=None), trace_log_path='/tmp/out.log'",
-  "offending_statements": "Line 7: stdin=subprocess.PIPE if stdin_text is not None else None,",
-  "reason": "When stdin_text is None, the code sets stdin=None, which causes the subprocess to inherit the parent's stdin file descriptor instead of closing or disconnecting it. This violates the specification's requirement that 'otherwise stdin is not connected to the subprocess'."
-}

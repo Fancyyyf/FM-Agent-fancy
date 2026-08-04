@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "ts = FalsyDatetime() where class FalsyDatetime:\n    def __bool__(self): return False\n    def strftime(self, fmt): return '10:20:30'\nstage = 'stage1'\nstatus = 'ok'\nsummary = 'test'",
-  "offending_statements": "Line 2:         when = ts.strftime(\"%H:%M:%S\") if ts else \"\"",
-  "reason": "The specification requires that when_str be the formatted string if ts is not None, regardless of its truth value. The code uses 'if ts', which treats any falsy non‑None object as None and produces an empty string, violating the spec for ts values that are not None but evaluate to False."
-}

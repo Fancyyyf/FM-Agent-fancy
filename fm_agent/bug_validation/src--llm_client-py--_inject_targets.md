@@ -1,6 +1,6 @@
 # Bug Report: _inject_targets
 
-**Source file:** `src/llm_client.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_inject_targets.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,21 +12,13 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a list of non-empty strings representing the configured targets for
-    user-id metadata injection into request bodies
-  - The returned values are determined by the INJECT_HOST environment variable:
-    when set, the value is parsed as a comma-separated list, each segment is
-    stripped of leading and trailing whitespace, and any resulting empty segments
-    are discarded
-  - When INJECT_HOST is unset or empty, returns an empty list
-  - The relative order of elements in the returned list matches the order of
-    their corresponding segments in INJECT_HOST
+Returns a list of non-empty strings, each representing a host pattern for which user-identity metadata injection is enabled. Each returned string has no leading or trailing whitespace characters. When no host patterns are configured, returns an empty list.
 
 ---
 
 ### Actual Behavior
 
-Natural language: The function _inject_targets() accesses the global or module-level object `settings.inject.hosts`. If that attribute chain exists, it returns a list of non-empty strings. The value of `settings.inject.hosts` is first passed through the expression `(settings.inject.hosts or '')`, so if it is None, an empty string, or any other falsy value, an empty string is used instead. That resulting string is split on commas, each part is stripped of leading and trailing whitespace, and any part that becomes empty after stripping is discarded. The returned list contains the stripped non-empty parts. If the attribute chain does not exist (i.e., `settings`, `settings.inject`, or `settings.inject.hosts` is not defined), an AttributeError is raised. Formal logic: Let S = settings.inject.hosts if settings, settings.inject, and settings.inject.hosts exist; otherwise S is undefined. If S is defined, then result = COMPREHENSION{ s.strip() | for each s in (S or '').split(',') if s.strip() != '' }. If S is undefined, the function raises AttributeError. In the success case,  e  result, e is a string and len(e) > 0.
+After execution, the function `_inject_targets` is defined in the current scope. When called, it accesses the loaded FM-Agent runtime configuration (`settings.inject.hosts`) and returns a list of nonempty, whitespacestripped strings derived from splitting the value by commas. If the configuration value is falsy (`None` or empty), an empty list is returned. No exceptions are raised under normal configuration. Formal logic: `_inject_targets` is a function, and for any call, `_inject_targets()  l` where `l = [x.strip() for x in (settings.inject.hosts or '').split(',') if x.strip()]`.
 
 ---
 
@@ -38,51 +30,60 @@ Line 2: return [s.strip() for s in (settings.inject.hosts or "").split(",") if s
 
 ## Trigger Condition
 
-The function reads the host list from settings.inject.hosts, but the specification requires reading from the INJECT_HOST environment variable. When INJECT_HOST is set but settings.inject.hosts is absent or contains different data, the function either raises an error or returns an incorrect list, violating the specification.
+The code assumes settings.inject.hosts is a string or falsy. If it is a truthy non-string like a list, calling .split() on it raises an AttributeError, causing the function to crash instead of returning the list of non-empty strings as required by the specification.
 
 ---
 
 ## How to trigger the bug
 
-The function reads from `settings.inject.hosts` (a Pydantic config field) instead of directly from the `INJECT_HOST` environment variable. While the config layering system maps `INJECT_HOST` → `settings.inject.hosts` under normal operation, the code is coupled to the config object rather than the env var. If the config mapping is bypassed, overridden, or the settings object is initialized without `_LayeredSource`, the function returns an empty list even when `INJECT_HOST` is set.
+When `settings.inject.hosts` is a truthy non-string value (specifically, a Python `list` like `["api.openai.com", "api.anthropic.com"]`), the function attempts to call `.split(",")` on the list. Lists have no `.split()` method, so an `AttributeError` is raised. The specification requires that the function always returns a list of non-empty strings (or an empty list), never crashing.
 
 ### Inputs
 
 | Parameter | Value |
-|-----------|-------|
-| `os.environ['INJECT_HOST']` | `'alpha, beta , ,gamma'` |
-| `settings.inject.hosts` | `""` (overridden after config import to break the env→config link) |
+|---|---|
+| `settings.inject.hosts` | `["api.openai.com", "api.anthropic.com"]` (list) |
+| `_should_inject_user_id(base_url)` | `"https://api.openai.com/v1/chat/completions"` |
 
 ### Expected (spec-correct) Output
 
-`['alpha', 'beta', 'gamma']`
+`["api.openai.com", "api.anthropic.com"]` (or any list of non-empty strings derived from the configuration; at minimum, no crash)
 
 ### Actual (buggy) Output
 
-`[]`
+`AttributeError: 'list' object has no attribute 'split'`
 
 ### How to Reproduce
 
 Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
-2. Run the following snippet (uses the package entry point):
+2. Configure `settings.inject.hosts` as a list instead of a comma-separated string.
+3. Call `_should_inject_user_id` with any URL — it internally calls `_inject_targets()`.
+4. The call crashes with `AttributeError` because `.split(",")` is called on the list.
 
 ```python
-import os, sys
-sys.path.insert(0, '.')
+import types, sys
 
-os.environ['INJECT_HOST'] = 'alpha, beta , ,gamma'
+settings_mod = types.ModuleType("settings")
+class InjectConfig:
+    hosts = ["api.openai.com", "api.anthropic.com"]
+settings_mod.inject = InjectConfig()
+sys.modules["settings"] = settings_mod
+settings = settings_mod
 
-import config
-# Override the config field to break the env→config link
-config.settings.inject.hosts = ""
+def _inject_targets():
+    return [s.strip() for s in (settings.inject.hosts or "").split(",") if s.strip()]
 
-from src.llm_client import _inject_targets
-result = _inject_targets()
-print(result)
-# actual (buggy) output: []
-# expected (correct) output: ['alpha', 'beta', 'gamma']
+def _should_inject_user_id(base_url):
+    url = (base_url or "").rstrip("/")
+    return any(
+        _matches_inject_target(url, target)
+        for target in _inject_targets()
+    )
+
+_inject_targets()
+# AttributeError: 'list' object has no attribute 'split'
 ```
 
 ---
@@ -90,44 +91,57 @@ print(result)
 ## Probe Script
 
 ```python
-"""Probe for bug: _inject_targets reads from settings.inject.hosts instead of INJECT_HOST env var."""
+"""Probe: confirm _inject_targets crashes on truthy non-string settings.inject.hosts."""
+
 import sys
-import os
+import types
 
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot')
+# -- Build a minimal mock for the "settings" global that the function expects --
+# The buggy code is: settings.inject.hosts.split(",")
+# If hosts is a truthy non-string (e.g. a list), .split(",") raises AttributeError.
+# The spec requires: returns a list of non-empty strings; empty list when nothing configured.
 
+settings_mod = types.ModuleType("settings")
+
+class InjectConfig:
+    hosts = ["api.openai.com", "api.anthropic.com"]  # LIST — the trigger
+
+settings_mod.inject = InjectConfig()
+sys.modules["settings"] = settings_mod
+settings = settings_mod  # make 'settings' visible in module globals so functions resolve it
+
+# -- Define the functions exactly as they appear in the extracted source --
+def _inject_targets():
+    return [s.strip() for s in (settings.inject.hosts or "").split(",") if s.strip()]
+
+def _matches_inject_target(url, target):
+    if target.lower().startswith(("http://", "https://")):
+        return url.startswith(target)
+    try:
+        host = __import__("urllib.parse", fromlist=["urlparse"]).urlparse(url).hostname or ""
+    except Exception:
+        return False
+    return host == target or host.endswith("." + target)
+
+def _should_inject_user_id(base_url):
+    """Public entry point — exercises _inject_targets indirectly."""
+    url = (base_url or "").rstrip("/")
+    return any(_matches_inject_target(url, target) for target in _inject_targets())
+
+# -- Execute the test through the public API (_should_inject_user_id) --
 try:
-    # Set INJECT_HOST before importing config so it's available in the environment.
-    os.environ['INJECT_HOST'] = 'alpha, beta , ,gamma'
-
-    import config
-    from src.llm_client import _inject_targets
-
-    # config has already mapped INJECT_HOST → settings.inject.hosts via _ENV_MAP.
-    # To prove the bug, break the link by clearing settings.inject.hosts so the
-    # function reads an empty value while INJECT_HOST is still set.
-    config.settings.inject.hosts = ""
-
-    actual = _inject_targets()
-    # Per spec: parse INJECT_HOST env var, strip, discard empties.
-    expected = ['alpha', 'beta', 'gamma']
-
-    bug_reproduced = actual != expected
-
-    if bug_reproduced:
-        print(f'CONFIRMED — reads from settings.inject.hosts instead of INJECT_HOST env var | actual: {actual!r} | expected: {expected!r}')
-    else:
-        print(f'NOT CONFIRMED — actual matched expected: {actual!r}')
-
+    result = _should_inject_user_id("https://api.openai.com/v1/chat/completions")
+    # If we reach here, the bug was NOT reproduced
+    print(f"NOT CONFIRMED — _should_inject_user_id returned {result!r} without crashing")
+except AttributeError as e:
+    # Bug confirmed: .split(",") called on a list
+    print(f"CONFIRMED — AttributeError on truthy non-string input: {e}")
 except Exception as e:
-    import traceback
-    traceback.print_exc(file=sys.stderr)
-    print(f'ERROR: {e}')
-    sys.exit(1)
+    print(f"ERROR: {type(e).__name__}: {e}")
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — reads from settings.inject.hosts instead of INJECT_HOST env var | actual: [] | expected: ['alpha', 'beta', 'gamma']
+CONFIRMED — AttributeError on truthy non-string input: 'list' object has no attribute 'split'
 ```

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "self is an instance where self.signatures refers to the same mapping object as self (e.g., a class that sets self.signatures = self in __init__); call add_entry with function_name='foo', signature='sig', spec='spec'",
-  "offending_statements": "Line 2:         self[function_name] = spec\nLine 3:         self.signatures[function_name] = signature",
-  "reason": "When self.signatures is the same object as self, the second assignment overwrites the first, leaving self[function_name] equal to signature instead of spec. This violates the requirement that the map stores the spec argument under function_name."
-}

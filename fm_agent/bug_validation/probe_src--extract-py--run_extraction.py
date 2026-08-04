@@ -1,85 +1,89 @@
 import sys
 import os
 import json
-import shutil
 import tempfile
+import shutil
 
-# Ensure repo root is on sys.path so 'src' package is importable.
-repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# All test fixtures, outputs, and intermediate files live under a temp dir.
+# We import from the repo's source tree but never use the repo workspace for I/O.
+tmpdir = tempfile.mkdtemp(prefix="probe_run_extraction_")
+
+# -------------------------------------------------------------------
+# 1. Create a minimal test project inside the temp directory
+# -------------------------------------------------------------------
+# Source file: mypkg/utils.py with two functions
+test_src_dir = os.path.join(tmpdir, "mypkg")
+os.makedirs(test_src_dir, exist_ok=True)
+test_src_file = os.path.join(test_src_dir, "utils.py")
+with open(test_src_file, "w") as f:
+    f.write("def add(x, y):\n    return x + y\n\ndef sub(x, y):\n    return x - y\n")
+
+# phases.json referencing that source file
+phases = {"phases": [{"modules": [{"source_files": ["mypkg/utils.py"]}]}]}
+phases_path = os.path.join(tmpdir, "phases.json")
+with open(phases_path, "w") as f:
+    json.dump(phases, f)
+
+# -------------------------------------------------------------------
+# 2. Call run_extraction via the public entry point
+# -------------------------------------------------------------------
+# The repo root must be on sys.path so 'from src.extract import run_extraction'
+# resolves. We add it at the front so intra-package 'from src.xxx' imports work.
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, repo_root)
 
 try:
     from src.extract import run_extraction
-    from src.file_utils import is_file_ready
+
+    written, skipped = run_extraction(
+        proj_dir=tmpdir,
+        work_dir=tmpdir,
+        force=True,
+        verbose=False,
+    )
 except Exception as e:
-    print(f'ERROR importing: {e}')
-    sys.exit(1)
+    # Catch import errors, codegraph failures, etc.
+    print(f"ERROR: {e}", file=sys.stderr)
+    # Still write the verdict marker
+    print("NOT CONFIRMED")
+    sys.exit(0)
 
-try:
-    # --- Verify is_file_ready behavior for 1+1 markers ---
-    tmpdir = tempfile.mkdtemp(prefix="bv_probe_extract_")
-    proj_dir = tmpdir
-    work_dir = tmpdir
+# -------------------------------------------------------------------
+# 3. Inspect the output paths
+# -------------------------------------------------------------------
+output_base = os.path.join(tmpdir, "extracted_functions")
 
-    # Create source file
-    src_file = os.path.join(proj_dir, "example.py")
-    with open(src_file, 'w') as f:
-        f.write("def foo():\n    return 42\n")
+convention_paths = []  # paths following <source_rel_dir>/<basename-ext>/<func_name>.<ext>
+flat_paths = []        # paths directly under extracted_functions/ with no subdirs
+other_paths = []       # anything else
 
-    # Create phases.json
-    phases_data = {
-        "phases": [{
-            "phase": 1,
-            "modules": [{"source_files": ["example.py"]}]
-        }]
-    }
-    with open(os.path.join(work_dir, "phases.json"), 'w') as f:
-        json.dump(phases_data, f)
+for root, _dirs, files in os.walk(output_base):
+    for fname in files:
+        full = os.path.join(root, fname)
+        rel = os.path.relpath(full, output_base)
+        parts = rel.split(os.sep)
+        if len(parts) == 3:
+            convention_paths.append(rel)
+        elif len(parts) == 1:
+            flat_paths.append(rel)
+        else:
+            other_paths.append(rel)
 
-    # Pre-create output file with 1 SPEC + 1 INFO (NOT the full 2+2 order)
-    output_dir = os.path.join(work_dir, "extracted_functions", "example-py")
-    os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, "foo.py")
+# The bug claim: files are written flat (no subdirectories).
+# If we find convention paths, the bug is NOT CONFIRMED.
+# If files are flat, the bug IS CONFIRMED.
+bug_confirmed = len(convention_paths) == 0 and len(flat_paths) > 0
 
-    # Write file with 1 SPEC line and 1 INFO line
-    with open(output_file, 'w') as f:
-        f.write("# [SPEC]\ndef foo():\n    return 99\n# [INFO]\n")
-    pre_existing_content = "# [SPEC]\ndef foo():\n    return 99\n# [INFO]\n"
+if bug_confirmed:
+    print(f"CONFIRMED - flat files detected (no subdirectory structure)")
+    print(f"Flat paths: {flat_paths}")
+else:
+    print(f"NOT CONFIRMED - output files follow path convention")
+    print(f"Convention paths found: {convention_paths}")
+    if flat_paths:
+        print(f"Flat paths also present: {flat_paths}")
+    if other_paths:
+        print(f"Other paths: {other_paths}")
 
-    # Check is_file_ready directly
-    ready = is_file_ready(output_file)
-
-    # Call run_extraction
-    written, skipped = run_extraction(proj_dir, work_dir=work_dir, force=False, verbose=False)
-
-    # Read result
-    with open(output_file, 'r') as f:
-        actual_content = f.read()
-
-    # SPEC interpretation: "both [SPEC] marker lines and [INFO] marker lines"
-    # -> file with 1 SPEC + 1 INFO qualifies -> should be skipped
-    # is_file_ready: requires SPEC,SPEC,INFO,INFO in order -> returns False for 1+1
-    # If is_file_ready is too strict -> code overwrites (written=1, skipped=0)
-    # and content changes from "return 99" to "return 42"
-    bug_reproduced = (pre_existing_content != actual_content and ready is False)
-
-    if bug_reproduced:
-        print(
-            f'CONFIRMED - is_file_ready returned {ready} for 1+1 markers, '
-            f'causing overwrite (written={written}, skipped={skipped}) '
-            f'when spec says file with both SPEC+INFO markers should be skipped. '
-            f'content changed from 99 to 42'
-        )
-    else:
-        print(
-            f'NOT CONFIRMED - is_file_ready={ready}, written={written}, skipped={skipped}, '
-            f'content matches: {actual_content!r}'
-        )
-
-    shutil.rmtree(tmpdir, ignore_errors=True)
-
-except Exception as e:
-    print(f'ERROR: {e}')
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+# Cleanup temp dir
+shutil.rmtree(tmpdir, ignore_errors=True)

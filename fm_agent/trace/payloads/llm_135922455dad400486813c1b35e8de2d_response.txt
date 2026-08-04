@@ -1,3 +1,0 @@
-{
-  "post_condition": "After execution of `_record(rel_path, score)`, the mutable mapping `scored` contains the key `rel_path`. Its value is set to `score` if `rel_path` was previously absent from `scored`, otherwise it is updated to `score` only if `score` is greater than the existing value; otherwise the existing value remains unchanged. All other key-value pairs in `scored` are left unmodified. Formally: let `old_scored` be the value of `scored` before the call. Then `rel_path in scored` and `scored[rel_path] == (score if rel_path not in old_scored else max(old_scored[rel_path], score))`, and for every key `k != rel_path`, `scored[k] == old_scored[k]`."
-}

@@ -1,67 +1,49 @@
-"""Probe script for bug ID: src--languages--rust-py--batch_extract
-Tests whether batch_extract filters out empty-list values from get_functions_by_file.
-Spec requires non-empty lists; code passes through whatever get_functions_by_file returns.
+"""Probe script for bug: src--languages--rust-py--batch_extract
+
+The spec claims batch_extract returns a dict (empty on init failure, full mapping
+on success). The actual code propagates exceptions from get_functions_by_file
+instead of catching them and returning a dict.
+
+Strategy: create a mock codegraph DB that exists on disk but is invalid SQLite,
+causing get_functions_by_file to raise an exception.
 """
 import sys
 import os
+import tempfile
+import traceback
 
-# The probe workspace is a temp dir; add snapshot to path to import the package.
-sys.path.insert(0, "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot")
+# Probe is at <repo>/fm_agent/bug_validation/probe_*.py
+# Go up 3 levels to reach repo root
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, _REPO_ROOT)
 
+try:
+    from src.languages.rust import batch_extract
 
-def main():
-    from unittest.mock import MagicMock, patch
+    # Create a temp directory with an invalid .codegraph/codegraph.db
+    with tempfile.TemporaryDirectory() as tmpdir:
+        codegraph_dir = os.path.join(tmpdir, ".codegraph")
+        os.makedirs(codegraph_dir)
+        db_path = os.path.join(codegraph_dir, "codegraph.db")
+        # Write something that is NOT a valid SQLite database
+        with open(db_path, "w") as f:
+            f.write("this is not a valid sqlite database file\n")
 
-    # Mock CodeGraphExtractor so from_proj_dir returns a mock with
-    # get_functions_by_file returning a dict containing an empty-list entry.
-    mock_extractor = MagicMock()
-    mock_extractor.get_functions_by_file.return_value = {
-        "/fake/proj/src/main.rs": [
-            ("main", "fn main() {\n    println!(\"hello\");\n}\n"),
-        ],
-        "/fake/proj/src/empty_mod.rs": [],   # <-- spec violation: non-empty required
-    }
+        raised = False
+        try:
+            actual = batch_extract(tmpdir)
+        except Exception as e:
+            raised = True
+            print(f"CONFIRMED — batch_extract raised exception instead of returning a dict: {type(e).__name__}: {e}")
 
-    with patch(
-        "src.languages.rust.CodeGraphExtractor"
-    ) as mock_cls:
-        mock_cls.from_proj_dir.return_value = mock_extractor
+        if not raised:
+            expected = {}
+            if actual == expected:
+                print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+            else:
+                print(f"NOT CONFIRMED — actual: {actual!r} | expected: {expected!r} (different, but no exception)")
 
-        from src.languages.rust import batch_extract
-
-        result = batch_extract("/fake/proj")
-
-    # Check: does the result contain the empty-list entry?
-    empty_key = "/fake/proj/src/empty_mod.rs"
-    spec_nonempty = "Each value must be a non-empty list of (function_name, function_body) tuples"
-
-    if empty_key in result and result[empty_key] == []:
-        confirmed = True
-        print(
-            f"CONFIRMED — batch_extract does not filter empty-list values."
-            f" File '{empty_key}' maps to [] but spec requires {spec_nonempty}"
-        )
-    else:
-        confirmed = False
-        if empty_key not in result:
-            print(
-                f"NOT CONFIRMED — empty-list entry was filtered out"
-                f" (key '{empty_key}' not in result)"
-            )
-        else:
-            print(
-                f"NOT CONFIRMED — empty-list entry was not empty:"
-                f" result[{empty_key!r}] = {result[empty_key]!r}"
-            )
-
-    sys.exit(0 if confirmed else 0)  # always exit 0; verdict is in stdout
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+except Exception as e:
+    print(f"ERROR: {e}")
+    traceback.print_exc()
+    sys.exit(1)

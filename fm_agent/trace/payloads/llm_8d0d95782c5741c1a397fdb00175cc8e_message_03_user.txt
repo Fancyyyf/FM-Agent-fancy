@@ -1,1 +1,0 @@
-Your previous response was invalid: LLM response is not valid JSON: Invalid \escape: line 2 column 751 (char 752). Return only valid JSON matching this schema: {"post_condition": "non-empty string"}. Do not include Markdown, tags, or prose.

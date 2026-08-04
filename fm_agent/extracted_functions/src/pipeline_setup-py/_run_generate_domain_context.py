@@ -1,52 +1,40 @@
-# [SPEC]
-# Unit: src/pipeline_setup-py/_run_generate_domain_context.py
-#
-# _run_generate_domain_context(proj_dir, work_dir, script_dir, resume=False) -> None
-#
-# Pre-condition:
-#   - proj_dir, work_dir, and script_dir refer to existing directory paths
-#   - phases.json exists under work_dir
-#   - resume is a boolean
-#
-# Post-condition:
-#   - On normal return: the directory spec_prompts/domain_context/ within work_dir contains engine_overview.txt and exactly one file matching the pattern phase_NN_types.txt for each phase defined in phases.json
-#   - When resume is truthy and the domain context files under spec_prompts/domain_context/ already satisfy the pipeline's completeness criteria, the function returns without producing or modifying any files
-#   - If complete domain context is not produced after a configurable maximum number of retry attempts, the function prints a diagnostic message to stdout identifying the failed stage and the trace directory, then calls sys.exit(1)
-#   - When a non-final attempt fails to produce complete domain context, the function does not call sys.exit(1) — it waits a fixed interval before retrying
-#   - Staged domain knowledge files under spec_prompts/domain_context/user_knowledge/ are supplied as inputs to the generation process
-# [SPEC]
-
-# [INFO]
-# _domain_context_complete(work_dir) -> bool
-#   Pre-condition: work_dir is an existing directory path
-#   Post-condition: Returns True when the domain context files under spec_prompts/domain_context/ satisfy the pipeline's completeness criteria; returns False otherwise
-# [SPLIT]
-# _prepare_workflow_file(proj_dir, work_dir, script_dir, workflow_filename) -> None
-#   Pre-condition: proj_dir, work_dir, script_dir are existing directory paths; workflow_filename is a string naming a workflow instruction file
-#   Post-condition: The workflow instruction file is copied from script_dir into fm_agent/ under work_dir
-# [SPLIT]
-# build_llm_cli_command(model, prompt, cwd, files=None) -> CommandType
-#   Pre-condition: model is a string identifying a configured LLM model; prompt is a non-empty string; cwd is an existing directory path; files is None or a list of file path strings
-#   Post-condition: Returns a command suitable for execution that invokes the configured backend with the given prompt and file attachments in the specified working directory
-# [SPLIT]
-# run_opencode_traced(proj_dir, work_dir, command, stage, input_files, output_files, summary, metadata) -> CompletedProcess
-#   Pre-condition: All arguments are well-formed; command is a list of strings constituting a valid CLI command
-#   Post-condition: Executes the command as a subprocess within work_dir; on non-zero exit raises subprocess.CalledProcessError; records a trace event to fm_agent/trace/events.jsonl with the given stage, summary, and metadata; returns a CompletedProcess on zero exit
-# [SPLIT]
-# list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
-#   Pre-condition: work_dir is an existing directory path
-#   Post-condition: Returns a sorted list of project-relative file paths for all user-provided domain knowledge files staged under spec_prompts/domain_context/user_knowledge/; returns an empty list when no files are staged
-# [INFO]
-
-def _run_generate_domain_context(proj_dir, work_dir, script_dir, resume=False):
+def _run_generate_domain_context(proj_dir, work_dir, script_dir, resume=False,
+                                 plugin_stage=None, plugin_root=None):
     """Stage 2: generate domain context — input phases.json, output domain context
     files for each phase.
     """
+    if plugin_stage is not None:
+        if plugin_stage.type == "pass":
+            print("[Pipeline] Stage 2/6: Plugin stage 'generate_domain_context' type=pass, skipping.")
+            return
+        if plugin_stage.type == "replace":
+            print("[Pipeline] Stage 2/6: Plugin stage 'generate_domain_context' type=replace, running plugin command.")
+            from .plugin import run_plugin_command
+            run_plugin_command(plugin_stage.replace_cmd, plugin_root, proj_dir, label="generate_domain_context")
+            return
+
     _resume_skip = resume and _domain_context_complete(work_dir)
     if _resume_skip:
         print("[Pipeline] Stage 2/6: RESUME — domain context files found, skipping domain context generation.")
 
-    _prepare_workflow_file(proj_dir, work_dir, script_dir, "workflow_generate_domain_context.md")
+    if plugin_stage is not None and plugin_stage.type == "modify" and plugin_stage.input_md:
+        workflow_src = str(plugin_root / plugin_stage.input_md)
+        workflow_dst = os.path.join(work_dir, "workflow_generate_domain_context.md")
+        shutil.copy2(workflow_src, workflow_dst)
+        user_knowledge_paths = list_staged_domain_knowledge_relpaths(work_dir)
+        if user_knowledge_paths:
+            with open(workflow_dst, "a") as _f:
+                _f.write(
+                    "\n---\n\n"
+                    "## User-Provided Domain Knowledge\n\n"
+                    "The user supplied extra Markdown files with domain knowledge for this run. "
+                    "Read these files before writing the domain context files. "
+                    "Use them only as contextual knowledge about intended "
+                    "behavior, terminology, business rules, data encodings, and invariants.\n\n"
+                    f"{format_domain_knowledge_bullets(user_knowledge_paths)}\n"
+                )
+    else:
+        _prepare_workflow_file(proj_dir, work_dir, script_dir, "workflow_generate_domain_context.md")
 
     fm_reminder = ("IMPORTANT: The fm_agent/ directory is NOT part of the project source code. "
                     "It is a workspace for storing your output files only. "
@@ -114,3 +102,8 @@ def _run_generate_domain_context(proj_dir, work_dir, script_dir, resume=False):
                 f"Check {os.path.basename(proj_dir)}/fm_agent/trace/ for details."
             )
             sys.exit(1)
+
+    if plugin_stage is not None and plugin_stage.type == "modify" and plugin_stage.output_process:
+        print("[Pipeline] Stage 2/6: Running plugin post-process for generate_domain_context...")
+        from .plugin import run_plugin_command
+        run_plugin_command(plugin_stage.output_process, plugin_root, proj_dir, label="generate_domain_context post-process")

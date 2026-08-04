@@ -1,79 +1,112 @@
 {
   "phase": 3,
-  "phase_name": "Scope Analysis & Layer Organization",
-  "total_functions": 48,
-  "total_layers": 4,
+  "phase_name": "Pipeline Planning & Domain Knowledge",
+  "total_functions": 43,
+  "total_layers": 5,
   "layers": [
     {
       "layer": 0,
       "functions": [
         {
-          "name": "src::generate_batch_prompts-py::main",
-          "file": "extracted_functions/src/generate_batch_prompts-py/main.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::domain_knowledge-py::collect_domain_knowledge_paths",
+          "file": "extracted_functions/src/domain_knowledge-py/collect_domain_knowledge_paths.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [],
           "phase3_callees": [
-            "src::generate_batch_prompts-py::build_prompt",
-            "src::generate_batch_prompts-py::chunked",
-            "src::generate_batch_prompts-py::parse_args",
-            "src::generate_batch_prompts-py::parse_layers_spec",
-            "src::generate_batch_prompts-py::read_json"
+            "src::domain_knowledge-py::_flatten_paths",
+            "src::domain_knowledge-py::_split_env_paths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
           ],
           "all_callees": [
-            "src::file_utils-py::is_file_ready",
-            "src::generate_batch_prompts-py::build_prompt",
-            "src::generate_batch_prompts-py::chunked",
-            "src::generate_batch_prompts-py::parse_args",
-            "src::generate_batch_prompts-py::parse_layers_spec",
-            "src::generate_batch_prompts-py::read_json"
+            "src::domain_knowledge-py::_flatten_paths",
+            "src::domain_knowledge-py::_split_env_paths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
           ]
         },
         {
-          "name": "src::generate_topdown_layers-py::generate_topdown_layers",
-          "file": "extracted_functions/src/generate_topdown_layers-py/generate_topdown_layers.py",
-          "unit": "generate_topdown_layers",
+          "name": "src::domain_knowledge-py::load_staged_domain_knowledge_text",
+          "file": "extracted_functions/src/domain_knowledge-py/load_staged_domain_knowledge_text.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [],
           "phase3_callees": [
-            "src::generate_topdown_layers-py::_build_call_graph",
-            "src::generate_topdown_layers-py::_collect_phase_files",
-            "src::generate_topdown_layers-py::_compute_layers",
-            "src::generate_topdown_layers-py::_file_to_fqn",
-            "src::generate_topdown_layers-py::_load_phases"
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths"
           ],
           "all_callees": [
-            "src::generate_topdown_layers-py::_build_call_graph",
-            "src::generate_topdown_layers-py::_collect_phase_files",
-            "src::generate_topdown_layers-py::_compute_layers",
-            "src::generate_topdown_layers-py::_file_to_fqn",
-            "src::generate_topdown_layers-py::_load_phases"
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths"
           ]
         },
         {
-          "name": "src::scope-py::_parse_issue_signals",
-          "file": "extracted_functions/src/scope-py/_parse_issue_signals.py",
-          "unit": "scope",
+          "name": "src::domain_knowledge-py::stage_domain_knowledge_files",
+          "file": "extracted_functions/src/domain_knowledge-py/stage_domain_knowledge_files.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [],
           "phase3_callees": [
-            "src::scope-py::_extract_backtick_idents"
+            "src::domain_knowledge-py::_safe_staged_name",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
           ],
           "all_callees": [
-            "src::scope-py::_extract_backtick_idents"
+            "src::domain_knowledge-py::_safe_staged_name",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
           ]
         },
         {
-          "name": "src::scope-py::rank_functions_in_file",
-          "file": "extracted_functions/src/scope-py/rank_functions_in_file.py",
-          "unit": "scope",
+          "name": "src::pipeline_setup-py::_collect_changed_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_collect_changed_phases.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_run_setup_extract",
+          "file": "extracted_functions/src/pipeline_setup-py/_run_setup_extract.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [],
           "phase3_callees": [
-            "src::scope-py::_llm_rerank",
-            "src::scope-py::_parse_file",
-            "src::scope-py::_rank_functions"
+            "src::pipeline_setup-py::_post_process_phases",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::pipeline_setup-py::_setup_outputs_complete",
+            "src::plugin-py::PluginConfig::get_stage"
           ],
           "all_callees": [
-            "src::scope-py::_llm_rerank",
-            "src::scope-py::_parse_file",
-            "src::scope-py::_rank_functions"
+            "src::pipeline_setup-py::_post_process_phases",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::pipeline_setup-py::_setup_outputs_complete",
+            "src::plugin-py::PluginConfig::get_stage"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_sync_domain_context",
+          "file": "extracted_functions/src/pipeline_setup-py/_sync_domain_context.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::pipeline_setup-py::_build_domain_context_regen_prompt",
+            "src::pipeline_setup-py::_phase_source_files"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::pipeline_setup-py::_build_domain_context_regen_prompt",
+            "src::pipeline_setup-py::_phase_source_files"
+          ]
+        },
+        {
+          "name": "src::plugin-py::load_plugins",
+          "file": "extracted_functions/src/plugin-py/load_plugins.py",
+          "unit": "plugins",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::plugin-py::validate_plugin"
+          ],
+          "all_callees": [
+            "src::plugin-py::validate_plugin"
           ]
         }
       ]
@@ -82,189 +115,176 @@
       "layer": 1,
       "functions": [
         {
-          "name": "src::generate_batch_prompts-py::build_prompt",
-          "file": "extracted_functions/src/generate_batch_prompts-py/build_prompt.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::domain_knowledge-py::_safe_staged_name",
+          "file": "extracted_functions/src/domain_knowledge-py/_safe_staged_name.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::main"
-          ],
-          "phase3_callees": [
-            "src::generate_batch_prompts-py::detect_lang_and_comment",
-            "src::generate_batch_prompts-py::extract_callee_spec_from_info",
-            "src::generate_batch_prompts-py::extract_info_block",
-            "src::generate_batch_prompts-py::extract_spec_block",
-            "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
-            "src::generate_batch_prompts-py::phase_callee_info_names_key",
-            "src::generate_batch_prompts-py::phase_callers_key"
-          ],
-          "all_callees": [
-            "src::generate_batch_prompts-py::detect_lang_and_comment",
-            "src::generate_batch_prompts-py::extract_callee_spec_from_info",
-            "src::generate_batch_prompts-py::extract_info_block",
-            "src::generate_batch_prompts-py::extract_spec_block",
-            "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
-            "src::generate_batch_prompts-py::phase_callee_info_names_key",
-            "src::generate_batch_prompts-py::phase_callers_key"
-          ]
-        },
-        {
-          "name": "src::generate_batch_prompts-py::chunked",
-          "file": "extracted_functions/src/generate_batch_prompts-py/chunked.py",
-          "unit": "generate_batch_prompts",
-          "phase3_callers": [
-            "src::generate_batch_prompts-py::main"
+            "src::domain_knowledge-py::stage_domain_knowledge_files"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_batch_prompts-py::parse_args",
-          "file": "extracted_functions/src/generate_batch_prompts-py/parse_args.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::domain_knowledge-py::_split_env_paths",
+          "file": "extracted_functions/src/domain_knowledge-py/_split_env_paths.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::main"
+            "src::domain_knowledge-py::collect_domain_knowledge_paths"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_batch_prompts-py::parse_layers_spec",
-          "file": "extracted_functions/src/generate_batch_prompts-py/parse_layers_spec.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::domain_knowledge-py::resolve_domain_knowledge_paths",
+          "file": "extracted_functions/src/domain_knowledge-py/resolve_domain_knowledge_paths.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::main"
+            "src::domain_knowledge-py::collect_domain_knowledge_paths",
+            "src::domain_knowledge-py::stage_domain_knowledge_files"
+          ],
+          "phase3_callees": [
+            "src::domain_knowledge-py::_flatten_paths"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::_flatten_paths"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_build_domain_context_regen_prompt",
+          "file": "extracted_functions/src/pipeline_setup-py/_build_domain_context_regen_prompt.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_sync_domain_context"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_batch_prompts-py::read_json",
-          "file": "extracted_functions/src/generate_batch_prompts-py/read_json.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::pipeline_setup-py::_phase_source_files",
+          "file": "extracted_functions/src/pipeline_setup-py/_phase_source_files.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::main"
+            "src::pipeline_setup-py::_sync_domain_context"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_topdown_layers-py::_build_call_graph",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_build_call_graph.py",
-          "unit": "generate_topdown_layers",
+          "name": "src::pipeline_setup-py::_post_process_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_post_process_phases.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_topdown_layers-py::generate_topdown_layers"
+            "src::pipeline_setup-py::_run_setup_extract"
           ],
           "phase3_callees": [
-            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
-            "src::generate_topdown_layers-py::_detect_lang_from_ext",
-            "src::generate_topdown_layers-py::_file_to_fqn",
-            "src::generate_topdown_layers-py::_find_call_sites",
-            "src::generate_topdown_layers-py::_get_keywords_for_lang",
-            "src::generate_topdown_layers-py::_resolve_extra_call_edges"
+            "src::pipeline_setup-py::_clean_empty_phase_module",
+            "src::pipeline_setup-py::_collapse_phases_to_one",
+            "src::pipeline_setup-py::_collect_changed_modules",
+            "src::pipeline_setup-py::_deduplicate_phases",
+            "src::pipeline_setup-py::_ensure_source_files_in_phases",
+            "src::pipeline_setup-py::_filter_phases_to_submodules",
+            "src::pipeline_setup-py::_update_module_description"
           ],
           "all_callees": [
-            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
-            "src::generate_topdown_layers-py::_detect_lang_from_ext",
-            "src::generate_topdown_layers-py::_file_to_fqn",
-            "src::generate_topdown_layers-py::_find_call_sites",
-            "src::generate_topdown_layers-py::_get_keywords_for_lang",
-            "src::generate_topdown_layers-py::_resolve_extra_call_edges",
-            "src::languages::registry-py::call_edges_all"
+            "src::pipeline_setup-py::_clean_empty_phase_module",
+            "src::pipeline_setup-py::_collapse_phases_to_one",
+            "src::pipeline_setup-py::_collect_changed_modules",
+            "src::pipeline_setup-py::_deduplicate_phases",
+            "src::pipeline_setup-py::_ensure_source_files_in_phases",
+            "src::pipeline_setup-py::_filter_phases_to_submodules",
+            "src::pipeline_setup-py::_update_module_description"
           ]
         },
         {
-          "name": "src::generate_topdown_layers-py::_collect_phase_files",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py",
-          "unit": "generate_topdown_layers",
+          "name": "src::pipeline_setup-py::_run_generate_domain_context",
+          "file": "extracted_functions/src/pipeline_setup-py/_run_generate_domain_context.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_topdown_layers-py::generate_topdown_layers"
+            "src::pipeline_setup-py::_run_setup_extract"
+          ],
+          "phase3_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::pipeline_setup-py::_domain_context_complete",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::plugin-py::run_plugin_command"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::pipeline_setup-py::_domain_context_complete",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::plugin-py::run_plugin_command"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_run_generate_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_run_generate_phases.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_setup_extract"
+          ],
+          "phase3_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_phase_plan_schema_errors",
+            "src::pipeline_setup-py::_phases_cover_current_sources",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::plugin-py::run_plugin_command"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_phase_plan_schema_errors",
+            "src::pipeline_setup-py::_phases_cover_current_sources",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::plugin-py::run_plugin_command"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_setup_outputs_complete",
+          "file": "extracted_functions/src/pipeline_setup-py/_setup_outputs_complete.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_setup_extract"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_domain_context_complete",
+            "src::pipeline_setup-py::_phase_plan_complete"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_domain_context_complete",
+            "src::pipeline_setup-py::_phase_plan_complete"
+          ]
+        },
+        {
+          "name": "src::plugin-py::PluginConfig::get_stage",
+          "file": "extracted_functions/src/plugin-py/PluginConfig::get_stage.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_setup_extract"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_topdown_layers-py::_compute_layers",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_compute_layers.py",
-          "unit": "generate_topdown_layers",
+          "name": "src::plugin-py::validate_plugin",
+          "file": "extracted_functions/src/plugin-py/validate_plugin.py",
+          "unit": "plugins",
           "phase3_callers": [
-            "src::generate_topdown_layers-py::generate_topdown_layers"
+            "src::plugin-py::load_plugins"
           ],
           "phase3_callees": [
-            "src::generate_topdown_layers-py::_tarjan_scc"
+            "src::plugin-py::_validate_plugin_json_content"
           ],
           "all_callees": [
-            "src::generate_topdown_layers-py::_tarjan_scc"
-          ]
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_load_phases",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_load_phases.py",
-          "unit": "generate_topdown_layers",
-          "phase3_callers": [
-            "src::generate_topdown_layers-py::generate_topdown_layers"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_extract_backtick_idents",
-          "file": "extracted_functions/src/scope-py/_extract_backtick_idents.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::_parse_issue_signals"
-          ],
-          "phase3_callees": [
-            "src::scope-py::_extract_backtick_idents::_add"
-          ],
-          "all_callees": [
-            "src::scope-py::_extract_backtick_idents::_add"
-          ]
-        },
-        {
-          "name": "src::scope-py::_llm_rerank",
-          "file": "extracted_functions/src/scope-py/_llm_rerank.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::rank_functions_in_file"
-          ],
-          "phase3_callees": [
-            "src::scope-py::_build_func_list_text"
-          ],
-          "all_callees": [
-            "src::llm_client-py::_parse_json_response",
-            "src::scope-py::_build_func_list_text"
-          ]
-        },
-        {
-          "name": "src::scope-py::_parse_file",
-          "file": "extracted_functions/src/scope-py/_parse_file.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::rank_functions_in_file"
-          ],
-          "phase3_callees": [
-            "src::scope-py::_parse_generic_file",
-            "src::scope-py::_parse_python_file"
-          ],
-          "all_callees": [
-            "src::scope-py::_parse_generic_file",
-            "src::scope-py::_parse_python_file"
-          ]
-        },
-        {
-          "name": "src::scope-py::_rank_functions",
-          "file": "extracted_functions/src/scope-py/_rank_functions.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::rank_functions_in_file"
-          ],
-          "phase3_callees": [
-            "src::scope-py::_base_score",
-            "src::scope-py::_score_class"
-          ],
-          "all_callees": [
-            "src::scope-py::_base_score",
-            "src::scope-py::_score_class"
+            "src::plugin-py::_validate_plugin_json_content"
           ]
         }
       ]
@@ -273,247 +293,192 @@
       "layer": 2,
       "functions": [
         {
-          "name": "src::generate_batch_prompts-py::detect_lang_and_comment",
-          "file": "extracted_functions/src/generate_batch_prompts-py/detect_lang_and_comment.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::domain_knowledge-py::_flatten_paths",
+          "file": "extracted_functions/src/domain_knowledge-py/_flatten_paths.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::build_prompt"
+            "src::domain_knowledge-py::collect_domain_knowledge_paths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_batch_prompts-py::extract_callee_spec_from_info",
-          "file": "extracted_functions/src/generate_batch_prompts-py/extract_callee_spec_from_info.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::pipeline_setup-py::_clean_empty_phase_module",
+          "file": "extracted_functions/src/pipeline_setup-py/_clean_empty_phase_module.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::build_prompt"
+            "src::pipeline_setup-py::_post_process_phases"
           ],
           "phase3_callees": [
-            "src::generate_batch_prompts-py::_callee_match_names",
-            "src::generate_batch_prompts-py::_info_line_mentions_name"
+            "src::pipeline_setup-py::_clean_domain_context_files"
           ],
           "all_callees": [
-            "src::generate_batch_prompts-py::_callee_match_names",
-            "src::generate_batch_prompts-py::_info_line_mentions_name"
+            "src::pipeline_setup-py::_clean_domain_context_files"
           ]
         },
         {
-          "name": "src::generate_batch_prompts-py::extract_info_block",
-          "file": "extracted_functions/src/generate_batch_prompts-py/extract_info_block.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::pipeline_setup-py::_collapse_phases_to_one",
+          "file": "extracted_functions/src/pipeline_setup-py/_collapse_phases_to_one.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::build_prompt"
+            "src::pipeline_setup-py::_post_process_phases"
           ],
-          "phase3_callees": [
-            "src::generate_batch_prompts-py::_detect_comment_prefix"
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_collect_changed_modules",
+          "file": "extracted_functions/src/pipeline_setup-py/_collect_changed_modules.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
           ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_deduplicate_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_deduplicate_phases.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_domain_context_complete",
+          "file": "extracted_functions/src/pipeline_setup-py/_domain_context_complete.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_setup_outputs_complete"
+          ],
+          "phase3_callees": [],
           "all_callees": [
-            "src::generate_batch_prompts-py::_detect_comment_prefix"
+            "src::file_utils-py::_json_file_is_valid"
           ]
         },
         {
-          "name": "src::generate_batch_prompts-py::extract_spec_block",
-          "file": "extracted_functions/src/generate_batch_prompts-py/extract_spec_block.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::pipeline_setup-py::_ensure_source_files_in_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_ensure_source_files_in_phases.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::build_prompt"
+            "src::pipeline_setup-py::_post_process_phases"
           ],
           "phase3_callees": [
-            "src::generate_batch_prompts-py::_detect_comment_prefix"
+            "src::pipeline_setup-py::_merge_descriptions"
           ],
           "all_callees": [
-            "src::generate_batch_prompts-py::_detect_comment_prefix"
+            "src::pipeline_setup-py::_merge_descriptions"
           ]
         },
         {
-          "name": "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
-          "file": "extracted_functions/src/generate_batch_prompts-py/list_staged_domain_knowledge_relpaths.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::pipeline_setup-py::_filter_phases_to_submodules",
+          "file": "extracted_functions/src/pipeline_setup-py/_filter_phases_to_submodules.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::build_prompt"
+            "src::pipeline_setup-py::_post_process_phases"
           ],
           "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::generate_batch_prompts-py::phase_callee_info_names_key",
-          "file": "extracted_functions/src/generate_batch_prompts-py/phase_callee_info_names_key.py",
-          "unit": "generate_batch_prompts",
-          "phase3_callers": [
-            "src::generate_batch_prompts-py::build_prompt"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::generate_batch_prompts-py::phase_callers_key",
-          "file": "extracted_functions/src/generate_batch_prompts-py/phase_callers_key.py",
-          "unit": "generate_batch_prompts",
-          "phase3_callers": [
-            "src::generate_batch_prompts-py::build_prompt"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_add_resolved_extra_edge",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_add_resolved_extra_edge.py",
-          "unit": "generate_topdown_layers",
-          "phase3_callers": [
-            "src::generate_topdown_layers-py::_build_call_graph"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_detect_lang_from_ext",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_detect_lang_from_ext.py",
-          "unit": "generate_topdown_layers",
-          "phase3_callers": [
-            "src::generate_topdown_layers-py::_build_call_graph"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_file_to_fqn",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_file_to_fqn.py",
-          "unit": "generate_topdown_layers",
-          "phase3_callers": [
-            "src::generate_topdown_layers-py::_build_call_graph",
-            "src::generate_topdown_layers-py::generate_topdown_layers"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_find_call_sites",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_find_call_sites.py",
-          "unit": "generate_topdown_layers",
-          "phase3_callers": [
-            "src::generate_topdown_layers-py::_build_call_graph"
-          ],
-          "phase3_callees": [
-            "src::generate_topdown_layers-py::_get_call_regex",
-            "src::generate_topdown_layers-py::_strip_comments_from_source"
-          ],
           "all_callees": [
-            "src::generate_topdown_layers-py::_get_call_regex",
-            "src::generate_topdown_layers-py::_strip_comments_from_source"
+            "src::file_utils-py::_is_under_submodules"
           ]
         },
         {
-          "name": "src::generate_topdown_layers-py::_get_keywords_for_lang",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_get_keywords_for_lang.py",
-          "unit": "generate_topdown_layers",
+          "name": "src::pipeline_setup-py::_phase_plan_complete",
+          "file": "extracted_functions/src/pipeline_setup-py/_phase_plan_complete.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_topdown_layers-py::_build_call_graph"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_resolve_extra_call_edges",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_resolve_extra_call_edges.py",
-          "unit": "generate_topdown_layers",
-          "phase3_callers": [
-            "src::generate_topdown_layers-py::_build_call_graph"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_tarjan_scc",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_tarjan_scc.py",
-          "unit": "generate_topdown_layers",
-          "phase3_callers": [
-            "src::generate_topdown_layers-py::_compute_layers"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_base_score",
-          "file": "extracted_functions/src/scope-py/_base_score.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::_rank_functions"
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::pipeline_setup-py::_setup_outputs_complete"
           ],
           "phase3_callees": [
-            "src::scope-py::_fuzzy_name_score",
-            "src::scope-py::_name_parts"
+            "src::pipeline_setup-py::_phase_plan_schema_errors"
           ],
           "all_callees": [
-            "src::scope-py::_fuzzy_name_score",
-            "src::scope-py::_name_parts"
+            "src::pipeline_setup-py::_phase_plan_schema_errors"
           ]
         },
         {
-          "name": "src::scope-py::_build_func_list_text",
-          "file": "extracted_functions/src/scope-py/_build_func_list_text.py",
-          "unit": "scope",
+          "name": "src::pipeline_setup-py::_phases_cover_current_sources",
+          "file": "extracted_functions/src/pipeline_setup-py/_phases_cover_current_sources.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::scope-py::_llm_rerank"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_extract_backtick_idents::_add",
-          "file": "extracted_functions/src/scope-py/_extract_backtick_idents::_add.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::_extract_backtick_idents"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_parse_generic_file",
-          "file": "extracted_functions/src/scope-py/_parse_generic_file.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::_parse_file"
+            "src::pipeline_setup-py::_run_generate_phases"
           ],
           "phase3_callees": [
-            "src::scope-py::_generic_func_info"
+            "src::pipeline_setup-py::_collect_project_source_files"
           ],
           "all_callees": [
-            "src::extract-py::_function_spans",
-            "src::scope-py::_generic_func_info"
+            "src::file_utils-py::_is_under_submodules",
+            "src::pipeline_setup-py::_collect_project_source_files"
           ]
         },
         {
-          "name": "src::scope-py::_parse_python_file",
-          "file": "extracted_functions/src/scope-py/_parse_python_file.py",
-          "unit": "scope",
+          "name": "src::pipeline_setup-py::_prepare_workflow_file",
+          "file": "extracted_functions/src/pipeline_setup-py/_prepare_workflow_file.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::scope-py::_parse_file"
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases"
           ],
           "phase3_callees": [
-            "src::scope-py::_collect_calls",
-            "src::scope-py::_collect_func_idents",
-            "src::scope-py::_extract_classes"
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths"
           ],
           "all_callees": [
-            "src::scope-py::_collect_calls",
-            "src::scope-py::_collect_func_idents",
-            "src::scope-py::_extract_classes"
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths"
           ]
         },
         {
-          "name": "src::scope-py::_score_class",
-          "file": "extracted_functions/src/scope-py/_score_class.py",
-          "unit": "scope",
+          "name": "src::pipeline_setup-py::_update_module_description",
+          "file": "extracted_functions/src/pipeline_setup-py/_update_module_description.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::scope-py::_rank_functions"
+            "src::pipeline_setup-py::_post_process_phases"
           ],
           "phase3_callees": [
-            "src::scope-py::_name_parts"
+            "src::pipeline_setup-py::_build_module_description_prompt"
           ],
           "all_callees": [
-            "src::scope-py::_name_parts"
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::pipeline_setup-py::_build_module_description_prompt"
+          ]
+        },
+        {
+          "name": "src::plugin-py::_validate_plugin_json_content",
+          "file": "extracted_functions/src/plugin-py/_validate_plugin_json_content.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::plugin-py::validate_plugin"
+          ],
+          "phase3_callees": [
+            "src::plugin-py::PluginStageConfig::from_dict",
+            "src::plugin-py::PluginStageConfig::validated"
+          ],
+          "all_callees": [
+            "src::plugin-py::PluginStageConfig::from_dict",
+            "src::plugin-py::PluginStageConfig::validated"
+          ]
+        },
+        {
+          "name": "src::plugin-py::run_plugin_command",
+          "file": "extracted_functions/src/plugin-py/run_plugin_command.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases"
+          ],
+          "phase3_callees": [
+            "src::plugin-py::_resolve_command"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run",
+            "src::plugin-py::_resolve_command"
           ]
         }
       ]
@@ -522,113 +487,131 @@
       "layer": 3,
       "functions": [
         {
-          "name": "src::generate_batch_prompts-py::_callee_match_names",
-          "file": "extracted_functions/src/generate_batch_prompts-py/_callee_match_names.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::domain_knowledge-py::format_domain_knowledge_bullets",
+          "file": "extracted_functions/src/domain_knowledge-py/format_domain_knowledge_bullets.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::extract_callee_spec_from_info"
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_batch_prompts-py::_detect_comment_prefix",
-          "file": "extracted_functions/src/generate_batch_prompts-py/_detect_comment_prefix.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+          "file": "extracted_functions/src/domain_knowledge-py/list_staged_domain_knowledge_relpaths.py",
+          "unit": "domain_knowledge",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::extract_info_block",
-            "src::generate_batch_prompts-py::extract_spec_block"
+            "src::domain_knowledge-py::load_staged_domain_knowledge_text",
+            "src::domain_knowledge-py::stage_domain_knowledge_files",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::pipeline_setup-py::_sync_domain_context"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_batch_prompts-py::_info_line_mentions_name",
-          "file": "extracted_functions/src/generate_batch_prompts-py/_info_line_mentions_name.py",
-          "unit": "generate_batch_prompts",
+          "name": "src::pipeline_setup-py::_build_module_description_prompt",
+          "file": "extracted_functions/src/pipeline_setup-py/_build_module_description_prompt.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_batch_prompts-py::extract_callee_spec_from_info"
+            "src::pipeline_setup-py::_update_module_description"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_topdown_layers-py::_get_call_regex",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_get_call_regex.py",
-          "unit": "generate_topdown_layers",
+          "name": "src::pipeline_setup-py::_clean_domain_context_files",
+          "file": "extracted_functions/src/pipeline_setup-py/_clean_domain_context_files.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_topdown_layers-py::_find_call_sites"
+            "src::pipeline_setup-py::_clean_empty_phase_module"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_clean_domain_context_files::types_path"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_clean_domain_context_files::types_path"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_collect_project_source_files",
+          "file": "extracted_functions/src/pipeline_setup-py/_collect_project_source_files.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_phases_cover_current_sources"
+          ],
+          "phase3_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_test_file",
+            "src::file_utils-py::_iter_project_source_files"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_merge_descriptions",
+          "file": "extracted_functions/src/pipeline_setup-py/_merge_descriptions.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_ensure_source_files_in_phases"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::generate_topdown_layers-py::_strip_comments_from_source",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_strip_comments_from_source.py",
-          "unit": "generate_topdown_layers",
+          "name": "src::pipeline_setup-py::_phase_plan_schema_errors",
+          "file": "extracted_functions/src/pipeline_setup-py/_phase_plan_schema_errors.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::generate_topdown_layers-py::_find_call_sites"
+            "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_run_generate_phases"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::scope-py::_collect_calls",
-          "file": "extracted_functions/src/scope-py/_collect_calls.py",
-          "unit": "scope",
+          "name": "src::plugin-py::PluginStageConfig::from_dict",
+          "file": "extracted_functions/src/plugin-py/PluginStageConfig::from_dict.py",
+          "unit": "plugins",
           "phase3_callers": [
-            "src::scope-py::_parse_python_file"
+            "src::plugin-py::_validate_plugin_json_content"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::scope-py::_collect_func_idents",
-          "file": "extracted_functions/src/scope-py/_collect_func_idents.py",
-          "unit": "scope",
+          "name": "src::plugin-py::PluginStageConfig::validated",
+          "file": "extracted_functions/src/plugin-py/PluginStageConfig::validated.py",
+          "unit": "plugins",
           "phase3_callers": [
-            "src::scope-py::_parse_python_file"
+            "src::plugin-py::_validate_plugin_json_content"
           ],
           "phase3_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::scope-py::_extract_classes",
-          "file": "extracted_functions/src/scope-py/_extract_classes.py",
-          "unit": "scope",
+          "name": "src::plugin-py::_resolve_command",
+          "file": "extracted_functions/src/plugin-py/_resolve_command.py",
+          "unit": "plugins",
           "phase3_callers": [
-            "src::scope-py::_parse_python_file"
+            "src::plugin-py::run_plugin_command"
           ],
           "phase3_callees": [],
           "all_callees": []
-        },
+        }
+      ]
+    },
+    {
+      "layer": 4,
+      "functions": [
         {
-          "name": "src::scope-py::_fuzzy_name_score",
-          "file": "extracted_functions/src/scope-py/_fuzzy_name_score.py",
-          "unit": "scope",
+          "name": "src::pipeline_setup-py::_clean_domain_context_files::types_path",
+          "file": "extracted_functions/src/pipeline_setup-py/_clean_domain_context_files::types_path.py",
+          "unit": "pipeline_setup",
           "phase3_callers": [
-            "src::scope-py::_base_score"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_generic_func_info",
-          "file": "extracted_functions/src/scope-py/_generic_func_info.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::_parse_generic_file"
-          ],
-          "phase3_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_name_parts",
-          "file": "extracted_functions/src/scope-py/_name_parts.py",
-          "unit": "scope",
-          "phase3_callers": [
-            "src::scope-py::_base_score",
-            "src::scope-py::_score_class"
+            "src::pipeline_setup-py::_clean_domain_context_files"
           ],
           "phase3_callees": [],
           "all_callees": []

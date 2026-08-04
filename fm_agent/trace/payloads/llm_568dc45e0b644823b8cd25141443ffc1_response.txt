@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir = '/non_existent_path_12345'",
-  "offending_statements": "Line 3: cg = CodeGraphExtractor.from_proj_dir(proj_dir)\nLine 4: return cg.get_functions_by_file(\"cpp\", proj_dir) if cg else {}",
-  "reason": "When proj_dir is a path that does not exist, CodeGraphExtractor.from_proj_dir may raise an exception (e.g., FileNotFoundError) instead of returning a falsy value. The code propagates the exception and does not return a dictionary. However, the specification requires the function to return an empty dictionary if codegraph is not available. Since an exception does not satisfy the return-type clause, the code violates the specification."
-}

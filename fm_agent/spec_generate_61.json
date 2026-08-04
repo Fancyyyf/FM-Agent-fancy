@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: config.py\n#\n# _LayeredSource.__init__(self, settings_cls, path) -> None\n#\n# Pre-condition:\n#   - settings_cls is a subclass of BaseSettings with typed fields declared via pydantic Field annotations\n#   - path is a pathlib.Path\n#\n# Post-condition:\n#   - Invoking the instance as a callable returns a dict whose top-level keys are str section names and whose values are dicts mapping str field names to their values\n#   - When path refers to an existing regular file containing valid TOML, every key-value pair parsed from the file is present in the returned dict\n#   - When path does not refer to an existing regular file, no file-sourced entries appear in the returned dict and a diagnostic message identifying the file name and absolute path is written to stderr\n#   - For each supported process environment variable that is set, the returned dict contains the corresponding (section, field) entry; an environment-sourced entry replaces any file-sourced entry for the same field\n#   - A field for which no entry exists in the returned dict — neither from the file nor from any matching environment variable — is absent from the returned dict, and pydantic resolves it to the Field default declared on the settings model\n# [SPEC]",
-  "info_updated": false,
-  "new_info": "",
-  "updated_callees": []
-}

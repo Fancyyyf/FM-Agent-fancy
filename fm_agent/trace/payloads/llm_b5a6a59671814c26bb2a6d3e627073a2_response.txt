@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir = '/tmp/test', modified_functions = {'src/m.py': {'removed': ['fn1', 'fn2']}}",
-  "offending_statements": "Line 8-10: removed = _modified_function_targets(proj_dir, modified_functions, classes=('removed',))",
-  "reason": "The code only removes the extracted file for the first removed function per source file (because _modified_function_targets returns a single path per source file). The specification requires all removed functions' files to be deleted. With two removed functions in the same source file, the second function's file is never deleted, violating the spec."
-}

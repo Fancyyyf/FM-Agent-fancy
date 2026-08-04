@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "d = {42: 'test'}",
-  "offending_statements": "Line 5: return {(k[1:] if k.startswith(\"*\") else k): v for k, v in d.items()}",
-  "reason": "The code calls k.startswith('*') directly on the key, which fails for non-string keys like integers. The specification requires checking the string representation of the key (e.g., str(k).startswith('*')), so it should handle non-string keys gracefully. For d = {42: 'test'}, the code raises AttributeError, while the spec expects it to return {42: 'test'} unchanged."
-}

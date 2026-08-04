@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: src/parser-py/_strip_section_comment_prefix.py\n#\n# _strip_section_comment_prefix(line: str) -> str\n#\n# Pre-condition:\n#   - line is a string\n#\n# Post-condition:\n#   - Returns a string where any leading comment prefix at the start of the line\n#     (after optional leading whitespace) has been removed\n#   - A recognized comment prefix is one of:\n#       * two or more consecutive `/` characters,\n#       * two or more consecutive `-` characters,\n#       * one or more consecutive `#` characters, or\n#       * one or more consecutive `%` characters\n#     optionally followed by a single whitespace character.\n#   - Leading whitespace characters that precede the comment prefix are preserved\n#     unchanged in the returned string\n#   - When the line does not begin with (optional leading whitespace followed by)\n#     a recognized comment prefix, the line is returned unchanged\n# [SPEC]",
-  "info_updated": false,
-  "new_info": "",
-  "updated_callees": []
-}

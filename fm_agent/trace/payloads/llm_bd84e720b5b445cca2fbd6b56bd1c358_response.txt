@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: src/pipeline_setup-py/_phases_cover_current_sources.py\n#\n# _phases_cover_current_sources(phases_json, proj_dir, submodules=None) -> bool\n#\n# Pre-condition:\n#   - phases_json is a string path\n#   - proj_dir is an existing directory\n#   - submodules is None or an iterable of subdirectory name strings\n#\n# Post-condition:\n#   - Returns True when all of the following hold: (a) phases_json is a readable file\n#     whose content parses as valid JSON, (b) the JSON contains at least one source file\n#     entry across all phases and modules, (c) every source file path listed in the JSON\n#     resolves to an existing file under proj_dir, (d) when submodules is neither None\n#     nor an empty iterable, every listed source file path falls under at least one of\n#     the specified submodule directories (as determined by _is_under_submodules),\n#     and (e) every source file under the project directories scoped by submodules\n#     (or under all of proj_dir when submodules is None) appears in the JSON\n#   - Returns False when any of (a)-(e) fails\n#   - Backslash separators in source file paths within the JSON are treated as forward\n#     slashes for path comparison and file existence resolution\n#   - The function does not create, modify, delete, or rename any file or directory\n# [SPEC]",
-  "info_updated": false,
-  "new_info": "",
-  "updated_callees": []
-}

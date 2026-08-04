@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "phase_fqns = ['A', 'B']; callees_map = {'A': ['B'], 'B': []}; callers_map = {'B': ['A']}",
-  "offending_statements": "Line 46:                 scc_i = fqn_to_scc[fqn]\nLine 47:                 for caller_fqn in callers_map.get(fqn, set()) & remaining:\nLine 48:                     scc_j = fqn_to_scc[caller_fqn]\nLine 49:                     if scc_i != scc_j:\nLine 50:                         scc_callers[scc_i].add(scc_j)\nLine 56:                 for scc_idx in scc_remaining:\nLine 57:                     unassigned_scc_callers = scc_callers.get(scc_idx, set()) - set(scc_assigned.keys())\nLine 58:                     if not unassigned_scc_callers:\nLine 59:                         scc_ready.add(scc_idx)",
-  "reason": "The code assigns layer indices in reverse topological order, yielding layer(caller) < layer(callee) for any call edge. The specification requires callee's layer <= caller's layer. With A calling B, the code produces layers [{layer:0, functions:['A']}, {layer:1, functions:['B']}]; the specification demands callee B at layer 0 and caller A at layer 1. The topological sort using callers_map puts top-level callers first, violating the required order."
-}

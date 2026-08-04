@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir = '/home/test/project' containing a TypeScript file 'src/main.ts' with content:\nfunction topFunc() {\n    function nestedFunc() {\n        console.log(\"nested\");\n    }\n    nestedFunc();\n}\nIf CodeGraphExtractor.get_functions_by_file returns all function definitions (including nested ones), batch_extract will return a list with both ('topFunc', ...) and ('nestedFunc', ...). The specification requires only top-level functions, so the presence of nestedFunc violates B.",
-  "offending_statements": "Line 4: return cg.get_functions_by_file(\"typescript\", proj_dir) if cg else {}",
-  "reason": "The specification (B) states values must contain only top‑level function definitions. The implementation delegates to `get_functions_by_file`, whose documented post‑condition does not restrict results to top‑level functions. Consequently, a project directory with a file containing nested functions will produce an output that includes those nested declarations, failing requirement B."
-}

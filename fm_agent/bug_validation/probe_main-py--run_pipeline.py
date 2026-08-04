@@ -1,118 +1,119 @@
-"""Probe for bug main-py--run_pipeline: run_pipeline does not skip pipeline stages when resume=True.
+#!/usr/bin/env python3
+"""Probe: statically verify that run_pipeline() calls all required downstream stages.
 
-This probe verifies through code inspection of the public entry point that:
-1. generate_topdown_layers() has no resume parameter
-2. run_pipeline() calls generate_topdown_layers() unconditionally (no guard)
-3. The resume handling block only controls cleanup, not stage skipping
+The code evidence claims run_pipeline() returns after line 40 without calling
+_run_generate_phases, _run_generate_domain_context, run_extraction,
+generate_topdown_layers, and run_spec_generation_and_verification.
 
-Per the spec: "If resume is truthy and fm_agent/ exists, previously completed 
-stages are not re-executed." The actual code re-executes stages regardless.
+This probe checks the actual source (extracted function file) to see whether
+those calls are present in the function body.
 """
-
 import sys
 import os
-import inspect
+import re
 
-# Load the package through the public entry point
-repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, repo_root)
 
-try:
-    import main as pkg
-    
-    # --- Test 1: generate_topdown_layers lacks resume parameter ---
-    sig_tdl = inspect.signature(pkg.generate_topdown_layers)
-    params_tdl = list(sig_tdl.parameters.keys())
-    tdl_missing_resume = 'resume' not in params_tdl
-    
-    # --- Test 2: _run_generate_phases HAS resume parameter (proving the pattern exists) ---
-    sig_rgp = inspect.signature(pkg._run_generate_phases)
-    params_rgp = list(sig_rgp.parameters.keys())
-    rgp_has_resume = 'resume' in params_rgp
-    
-    # --- Test 3: generate_topdown_layers is called WITHOUT resume guard in run_pipeline ---
-    source = inspect.getsource(pkg.run_pipeline)
-    source_lines = source.split('\n')
-    
-    # Find the generate_topdown_layers call site
-    tdl_call_line = -1
-    for i, line in enumerate(source_lines):
-        stripped = line.strip()
-        if stripped.startswith('generate_topdown_layers('):
-            tdl_call_line = i
-            break
-    
-    # Check if there's a resume-related guard within 5 lines before the call
-    has_resume_guard = False
-    if tdl_call_line > 0:
-        for j in range(max(0, tdl_call_line - 8), tdl_call_line):
-            line_lower = source_lines[j].lower()
-            if 'if resume' in line_lower or ('if ' in line_lower and 'resume' in line_lower):
-                has_resume_guard = True
+REQUIRED_CALLS = [
+    '_run_generate_phases',
+    '_run_generate_domain_context',
+    'run_extraction(',
+    'generate_topdown_layers(',
+    'run_spec_generation_and_verification(',
+]
+
+
+def find_source_file():
+    """Locate the extracted function file or fall back to main.py."""
+    # Try the extracted function file referenced by the verification result
+    candidates = []
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(os.path.dirname(script_dir))
+
+    # Primary: the extracted function file
+    extracted = os.path.join(
+        repo_root, 'fm_agent', 'extracted_functions',
+        'main-py', 'run_pipeline.py'
+    )
+    candidates.append(extracted)
+
+    # Fallback: main.py at repo root
+    candidates.append(os.path.join(repo_root, 'main.py'))
+
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+
+    raise FileNotFoundError(
+        f'Could not find source file. Tried: {candidates}'
+    )
+
+
+def find_function_body(source, func_name='run_pipeline'):
+    """Extract the body of a named function from Python source text."""
+    pattern = re.compile(rf'^def {re.escape(func_name)}\b', re.MULTILINE)
+    match = pattern.search(source)
+    if not match:
+        raise ValueError(f'Function {func_name} not found in source')
+
+    # Extract from function definition to end of file
+    body = source[match.start():]
+
+    # Try to trim at next top-level definition (same indent as 'def')
+    lines = body.split('\n')
+    result_lines = [lines[0]]
+    for line in lines[1:]:
+        # Top-level def or top-level if/class — function has ended
+        stripped = line.lstrip()
+        if stripped and not line[0].isspace():
+            if (stripped.startswith('def ') or stripped.startswith('class ') or
+                    stripped.startswith('if __name__')):
                 break
-    
-    # --- Test 4: Verify resume handling block does not guard any stages ---
-    # Find the resume block
-    resume_block_start = -1
-    resume_block_end = -1
-    in_resume_block = False
-    
-    for i, line in enumerate(source_lines):
-        stripped = line.strip()
-        if 'if resume:' in stripped and '# Clean files' in source_lines[i-1] if i > 0 else False:
-            resume_block_start = i
-            in_resume_block = True
-        elif 'if resume:' in stripped and resume_block_start < 0:
-            resume_block_start = i
-            in_resume_block = True
-        
-        if in_resume_block:
-            # Check if we've exited the resume handling and entered stage execution
-            if stripped.startswith('print("[Pipeline] Stage') and '1/6' in stripped:
-                resume_block_end = i
-                break
-    
-    # Check: at resume_block_end, is there any guard like "if not resume" before stages?
-    has_stage_guard = False
-    if resume_block_end > 0:
-        for j in range(resume_block_start, resume_block_end):
-            if 'if not resume' in source_lines[j].lower() or 'skip' in source_lines[j].lower():
-                has_stage_guard = True
-                break
-    
-    # --- Evaluate results ---
-    # Bug is CONFIRMED if:
-    # A) generate_topdown_layers lacks resume parameter (can't skip even if asked)
-    # B) The call in run_pipeline has no resume guard
-    # C) The resume handling block doesn't guard stages
-    
-    bug_A = tdl_missing_resume
-    bug_B = not has_resume_guard and tdl_call_line > 0
-    bug_C = not has_stage_guard and resume_block_start > 0
-    
-    # Main verdict: bug confirmed if generate_topdown_layers specifically re-executes
-    bug_confirmed = bug_A and bug_B
-    
-    if bug_confirmed:
-        print(
-            f"CONFIRMED — generate_topdown_layers lacks resume param "
-            f"(params={params_tdl}), is called without resume guard in run_pipeline "
-            f"(line {tdl_call_line+1} in source), violating spec: 'previously "
-            f"completed stages are not re-executed'. "
-            f"Contrast: _run_generate_phases HAS resume param ({params_rgp}) "
-            f"and uses _resume_skip internally."
-        )
-    else:
-        print(
-            f"NOT CONFIRMED — tdl_missing_resume={tdl_missing_resume}, "
-            f"no_resume_guard={not has_resume_guard}, "
-            f"tdl_call_line={tdl_call_line}, "
-            f"resume_block_start={resume_block_start}, "
-            f"has_stage_guard={has_stage_guard}"
-        )
-    
-except Exception as e:
-    import traceback
-    print(f'ERROR: {e}')
-    traceback.print_exc()
-    sys.exit(1)
+        result_lines.append(line)
+
+    return '\n'.join(result_lines)
+
+
+def check_calls(function_body):
+    """Return (all_present, found, missing) for required calls."""
+    results = {}
+    for call_name in REQUIRED_CALLS:
+        results[call_name] = call_name in function_body
+
+    all_present = all(results.values())
+    missing = [name for name, found in results.items() if not found]
+    return all_present, results, missing
+
+
+def main():
+    try:
+        source_path = find_source_file()
+
+        with open(source_path, 'r') as f:
+            source = f.read()
+
+        func_body = find_function_body(source, 'run_pipeline')
+        all_present, results, missing = check_calls(func_body)
+
+        if all_present:
+            print(
+                f'NOT CONFIRMED — all {len(REQUIRED_CALLS)} required downstream '
+                f'calls are present in run_pipeline() (source: {source_path})'
+            )
+        else:
+            print(
+                f'CONFIRMED — missing {len(missing)} downstream calls in '
+                f'run_pipeline(): {missing} (source: {source_path})'
+            )
+
+        # Print detailed call status
+        for call_name, found in results.items():
+            status = 'FOUND' if found else 'MISSING'
+            print(f'  [{status}] {call_name}')
+
+    except Exception as e:
+        print(f'ERROR: {e}')
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

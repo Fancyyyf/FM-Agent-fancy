@@ -1,3 +1,0 @@
-{
-  "post_condition": "The code block never executes due to a compilation-time SyntaxError. The program state remains completely unmodified: for every variable v in any enclosing scope, its value after the attempt is equal to its value before (v′ = v). The function `_find_brace_end` is not defined, and no side effects (I/O, mutations, etc.) occur."
-}

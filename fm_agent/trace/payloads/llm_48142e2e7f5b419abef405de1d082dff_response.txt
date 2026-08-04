@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "spec = \"Pre-condition:\\n  x > 0\\nNote:\\n  test\\nPost-condition:\\n  z > 0\"",
-  "offending_statements": "Line 2: pre_match = re.search(r'Pre-condition:\\s*\\n(.*?)(?=\\nPost-condition:|\\Z)', spec, re.DOTALL)",
-  "reason": "The specification requires pre_condition to be the text between the 'Pre-condition:' header line and the next section boundary. The code's pre regex (Line 2) only treats '\\nPost-condition:' or end-of-string as a boundary, so any other section header (such as 'Note:') is incorrectly included in the pre_condition. For the input spec above, the code returns pre = 'x > 0\\nNote:\\n  test' instead of the correct 'x > 0'."
-}

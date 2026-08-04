@@ -1,30 +1,3 @@
-# [SPEC]
-# Unit: fm_agent/extracted_functions/src/incremental_reasoner-py/_extracted_func_dir.py
-#
-# _extracted_func_dir(extracted_base, src_rel) -> str
-#
-# Pre-condition:
-#   - extracted_base is a non-empty string path to the extracted_functions directory
-#   - src_rel is a non-empty string representing a source file path relative to the
-#     project root, using forward slash separators, following the phases.json convention
-#
-# Post-condition:
-#   - Returns the absolute directory path where extracted-function files for the source
-#     file identified by src_rel are (or would be) stored, following the naming convention
-#     that mirrors the extraction mapping
-#   - The returned path is formed by joining extracted_base, the directory portion of
-#     src_rel (if any), and a directory name derived from the basename of src_rel
-#   - The directory name derivation rule: the last dot in the source file basename is
-#     replaced with a hyphen; if the basename contains no dot, it is used as-is
-#   - Example: for src_rel = "src/engine/loader.cpp" and extracted_base pointing to
-#     extracted_functions/, the returned path ends with "src/engine/loader-cpp"
-#   - The returned path uses the platform-native path separator
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _extracted_func_dir(extracted_base, src_rel):
     """
     Map a source file (relative path, phases.json convention) to the directory holding its

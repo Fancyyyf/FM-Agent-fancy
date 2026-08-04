@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/repo' is a git repo with a commit. It contains .gitignore with content '*.log' and an untracked file 'data.log'. Call: frozen_worktree('/tmp/repo', exclude=())",
-  "offending_statements": "Line 45",
-  "reason": "Specification B requires that the snapshot capture 'all untracked files'. The code runs `git add -A`, which respects .gitignore and skips 'data.log'. Consequently, the snapshot does not contain the untracked gitignored file, violating the specification."
-}

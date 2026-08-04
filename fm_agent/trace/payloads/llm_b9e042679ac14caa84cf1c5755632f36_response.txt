@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a value R satisfying: if CodeGraphExtractor.from_proj_dir(proj_dir) is None, then R is None; otherwise, let cg be the returned instance. If cg.get_function_spans('typescript', filepath) returns a list L of (name, start_idx, end_idx) tuples (where name is a string, start_idx and end_idx are non‑negative integers giving 0‑indexed inclusive line indices), then R = L; else (when the file is not indexed by the backend) R = None. No exceptions are raised; the inputs proj_dir and filepath remain unchanged."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "../dir/file.py::someFunc",
-  "offending_statements": "Line 5: path = path.lstrip(\"./\")",
-  "reason": "The specification requires stripping only the leading \"./\" sequence, but the code uses lstrip(\"./\"), which removes all leading occurrences of '.' and '/' individually. For a path starting with \"../\", this incorrectly removes the parent-directory component \"..\", leading to a missing \"..\" in the output, thus violating the specification."
-}

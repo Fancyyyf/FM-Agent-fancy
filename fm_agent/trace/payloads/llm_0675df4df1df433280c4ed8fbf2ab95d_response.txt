@@ -1,1 +1,0 @@
-{"post_condition": "self is an empty dictionary (len(self) == 0) and has an attribute `signatures` that is a separate empty dictionary (len(self.signatures) == 0). No exceptions were raised."}

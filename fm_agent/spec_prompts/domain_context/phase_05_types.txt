@@ -1,145 +1,191 @@
-# Phase 5: Bug Diagnosis & Verification — Types and Invariants
+# Phase 05 — Specification & Verification Utilities
 
-## Overview
+## Core Types
 
-Phase 5 orchestrates streaming reasoning across extracted functions, validates
-specification mismatches, generates and executes probe scripts to reproduce bugs,
-and produces structured bug reports with summary aggregation.
+### File Utilities (`file_utils.py`)
 
-## Key Types
+**Metadata Sidecar Schemas:**
 
-### Extended `EXT_TO_LANG` (verification.py)
-
-Broader than extract.py's version:
-```
-.rs→Rust  .c/.h→C  .cpp/.cc/.cxx/.hpp→C++  .py→Python
-.cu/.cuh→CUDA  .erl→Erlang  .java→Java  .go→Go
-.cs→C#  .kt/.kts→Kotlin  .swift→Swift  .php→PHP
-.rb→Ruby  .scala/.sc→Scala  .dart→Dart
-.js/.mjs/.cjs/.jsx→JavaScript  .ts/.mts/.cts/.tsx→TypeScript
-.ets→ArkTS
+**`.spec.json`** — Function behavioral specification:
+```python
+_SPEC_FIELDS = {"signature", "pre_condition", "post_condition"}
+# All three must be present and be strings.
 ```
 
-### Streaming Reasoner State
+**`.info.json`** — Callee knowledge for reasoning:
+```python
+_CALLEE_FIELDS = {"name", "signature", "pre_condition", "post_condition"}
+# Top-level: {"callees": [{name, signature, pre_condition, post_condition}]}
+# Each callee dict must have exactly _CALLEE_FIELDS, all string-typed.
+```
 
-**`streaming_reasoner(input_dir, output_dir, file_list, proj_dir, work_dir,
-poll_interval=2, spec_procs=None, already_processed=None, resume=False)`:**
+**File Readiness:** `is_file_ready(file_path) → bool`
+A function is "ready" when BOTH sidecar files exist and pass schema validation.
 
-Uses `ThreadPoolExecutor(max_workers=MAX_WORKERS)`. Maintains:
-- `processed: set[str]` — completed file paths
-- `expected_files: set[str]|None` — target files from file_list
-- `submitted: set[str]` — in-flight files
-- `reasoning_futures: dict[Future, str]` — in-flight reasoning
-- `validation_futures: dict[Future, tuple]` — in-flight validation
+**Test File Detection:** `_is_test_file(file_path) → bool`
+Checks directory names (`test`, `tests`, `spec`, `t`, `__tests__`, etc.) and
+file name patterns (`test_*`, `*_test.*`, `*_spec.*`, `*Test.*`, `*Tests.*`).
 
-**Algorithm:**
-1. Scan input_dir for files with recognized extensions.
-2. Skip: not in expected_files, already processed, already submitted,
-   not `is_file_ready()`.
-3. Submit ready files via `executor.submit(_verify_single_file, ...)`.
-4. Non-blocking collection of completed reasoning futures:
-   - MATCH/SKIPPED: mark processed.
-   - MISMATCH: submit bug validation.
-5. Detect spec process exit: if all spec processes exited before all
-   files ready, log and break.
-6. After all work: generate `summary.json`.
+**Project Source File Iteration:** `_iter_project_source_files(proj_dir, submodules=None)`
+Yields `(abs_path, rel_path)` pairs for all source files in the project,
+filtering out test files and respecting `--submodule` boundaries.
 
-**Invariants:**
-- Files only processed when `is_file_ready()` returns True.
-- Resume skips files with existing parseable result JSON.
-- Bug validation only when `proj_dir` is not None.
+**Submodule Filtering:** `_is_under_submodules(rel_path, submodules) → bool`
+Returns True when `rel_path` is under one of the submodule directories.
 
-### Verification Result
+**File Name Collection:**
+```python
+def collect_file_names(input_dir, output_path="file_list.json") → list[str]:
+    """Collect and write sorted, deduplicated relative file names to JSON."""
 
-**`_verify_single_file(file_path, input_dir, output_dir, language, work_dir, resume) → (str, str)`:**
-Returns `(file_path, verdict)` where verdict ∈ `{"MATCH", "MISMATCH", "SKIPPED", "ERROR"}`.
+def _write_file_names(file_names, output_path) → list[str]:
+    """Write sorted, deduplicated file names atomically (tmp+rename)."""
 
-**Output JSON** at `output_dir/<relative>.json`:
-```json
-{
-  "function": "<path>",
-  "verdict": "MATCH"|"MISMATCH"|"ERROR",
-  "gaps": {
-    "spec_claim": "<spec post-condition>",
-    "actual_behavior": "<code's actual post-condition>",
-    "code_evidence": "<offending statements>",
-    "trigger_condition": "<reason>"
-  }
+def _get_all_phase_files(proj_dir, phases_data) → list[str]:
+    """Collect all extracted function files across all phases."""
+
+def _get_phase_files(proj_dir, phases_data, phase_num, layer_idx) → list[tuple]:
+    """Collect files for one phase/layer. Returns [(file_path, module_name)]."""
+
+def _get_incomplete_verification_files(input_dir, file_list) -> list[str]:
+    """Return files pending verification (reasoning output not yet produced)."""
+```
+
+### Spec Parser (`parser.py`)
+
+**`FunctionSpecMap` (dict subclass):**
+```python
+class FunctionSpecMap(dict):
+    def __init__(self):
+        super().__init__()
+        self.signatures: dict = {}  # function_name → signature string
+
+    def add_entry(self, function_name, signature, spec) → None:
+        """Store function_name → spec_text, and its signature."""
+        self[function_name] = spec
+        self.signatures[function_name] = signature
+
+    def __str__(self) → str:
+        """Format as newline-separated entries: '<signature>\n<spec>'"""
+```
+
+**Spec Formatting:**
+```python
+def format_spec_for_reasoner(spec: dict) → str:
+    """Rebuild reasoner-facing spec text from .spec.json object.
+    Output format:
+        <signature>
+        
+        Pre-condition:
+        <pre_condition_text>
+        
+        Post-condition:
+        <post_condition_text>
+    """
+
+def format_info_for_reasoner(info: dict) → FunctionSpecMap:
+    """Rebuild callee specs from .info.json object.
+    Each callee formatted as:
+        Pre-condition: <callee_pre_condition>
+        Post-condition: <callee_post_condition>
+    """
+
+def parse_input_function(file_path) → tuple:
+    """Parse function source file for reasoning.
+    Returns (code_text, spec_dict, info_dict, function_name).
+    Uses _load_sidecar_json and _remove_func_comments."""
+```
+
+**Sidecar Loading:**
+```python
+def _load_sidecar_json(file_path, suffix) → dict | None:
+    """Load .spec.json or .info.json adjacent to file_path."""
+
+def _remove_func_comments(code) → str:
+    """Remove C-style block comments and single-line comments from code text.
+    Respects string literals — does not strip comments inside strings."""
+```
+
+### Batch Prompt Generation (`generate_batch_prompts.py`)
+
+**Layer Metadata Structure:**
+The topdown layer generator produces per-layer directories containing metadata
+for batch prompt generation.
+
+**Key Functions:**
+```python
+def parse_args() → Namespace:
+    """CLI: --phase N --layers 0-5 --batch-size 2 --output-dir ... --resume"""
+
+def parse_layers_spec(layers_spec: str) → tuple[int, int]:
+    """Parse "0" → (0, 0), "0-5" → (0, 5). Raises if start > end."""
+
+def extract_spec_block(filepath: Path) → str | None:
+    """Read .spec.json and rebuild spec text for batch prompt."""
+
+def extract_info_block(filepath: Path) → str | None:
+    """Read .info.json and extract callee specs for batch prompt."""
+
+def extract_callee_spec_from_info(info: dict) -> str:
+    """Extract callee pre/post-conditions from .info.json for prompt injection."""
+
+def generate_batch_prompts(proj_dir, phase_num, layers_range, batch_size,
+                           output_dir, resume=False) -> list:
+    """Generate per-layer batch prompt JSON files.
+    Each batch file lists functions with their code, signatures, and callee specs."""
+```
+
+**Comment Prefix by Language:**
+```python
+COMMENT_PREFIX_BY_LANG = {
+    "c": "//", "cpp": "//", "java": "//", "go": "//", "rust": "//",
+    "javascript": "//", "typescript": "//",
+    "python": "#", "ruby": "#", "shell": "#", "bash": "#",
+    "sql": "--", "erlang": "%", "prolog": "%",
 }
 ```
 
-MISMATCH gaps populated from reasoner output via regex:
-- `actual_behavior`: `Post-condition:\n(.*?)\n\nReason for violation:`
-- `code_evidence`: `Statements triggering the violation:\n(.*?)\n\nPost-condition:`
-- `trigger_condition`: `Reason for violation:\n(.*)`
+## Invariants
 
-All string values sanitized via `_sanitize_strings`.
+1. **Sidecar validation**: `.spec.json` must have exactly `{"signature", "pre_condition", "post_condition"}`;
+   `.info.json` must have exactly `{"callees": [...]}`, each callee with exactly
+   `{"name", "signature", "pre_condition", "post_condition"}`.
+2. **All values in spec/info JSON are strings** — no nested objects, no arrays as field values.
+3. **`is_file_ready` is the single gate for reasoning** — if it returns False, the function
+   is skipped by both spec generation and verification.
+4. **`FunctionSpecMap.__str__()`** is used to feed callee knowledge to the reasoner prompt —
+   its formatting MUST match the reasoner's expected input format.
+5. **Batch prompts preserve dependency ordering** — callee specs are included before
+   the caller function's prompt text, ensuring the LLM has callee knowledge available.
+6. **`_remove_func_comments` respects string literals** — it must not strip content inside
+   `"..."` or `'...'` strings, even if they resemble comment syntax.
+7. **File name collections are always sorted and deduplicated** before writing.
 
-### Bug Validation
+## Entry Point Function Signatures
 
-**`_validate_single_bug(result_json_rel, proj_dir, work_dir, resume)`:**
-1. Derive `bug_id`: path components joined with `"--"`.
-2. Read `md/bug_validator.md`, prepend target file + bug ID header.
-3. Write per-bug prompt: `fm_agent/bug_validation/bug_validator_<bug_id>.md`.
-4. Build CLI command, run via `run_opencode_traced`.
-5. Resume: skip if `<bug_id>.result.json` exists and is valid JSON.
-6. Retry up to `BUG_VALIDATION_MAX_RETRIES` (default 1).
+```python
+def is_file_ready(file_path) → bool:
+    """Return whether both .spec.json and .info.json exist with valid schemas."""
 
-**Expected output:** `<bug_id>.md` (structured bug report) and
-`<bug_id>.result.json`.
+def collect_file_names(input_dir, output_path="file_list.json") → list[str]:
 
-### Bug Result Format
+def _has_source_code(proj_dir, submodules=None) → bool:
 
-**`<bug_id>.result.json`:**
-```json
-{
-  "id": "<bug_id>",
-  "confirmation_status": "confirmed" | "not_confirmed" | "error",
-  ...
-}
+def _get_all_phase_files(proj_dir, phases_data) → list[str]:
+
+def _get_phase_files(proj_dir, phases_data, phase_num, layer_idx) → list[tuple]:
+
+def _is_test_file(file_path) → bool:
+
+def _is_under_submodules(rel_path, submodules) → bool:
+
+def format_spec_for_reasoner(spec: dict) → str:
+
+def format_info_for_reasoner(info: dict) → FunctionSpecMap:
+
+def parse_input_function(file_path) → tuple:
+    # Returns (code, spec_dict, info_dict, function_name)
+
+def generate_batch_prompts(proj_dir, phase_num, layers_range, batch_size,
+                           output_dir, resume=False) → list:
 ```
-
-**`<bug_id>.md`** (structured bug report sections):
-- Specification Claim
-- Actual Behavior
-- Code Evidence (with line numbers)
-- Trigger Condition
-- How to Trigger (input params, expected vs actual output)
-- Probe Script (full test script)
-- Probe Output (raw stdout)
-
-### Summary Aggregation
-
-**`_generate_validation_summary(proj_dir)`:**
-Scans `bug_validation/*.result.json`, writes atomically to `summary.json`:
-```json
-{
-  "total_reported": N,
-  "total_confirmed": N,
-  "total_not_confirmed": N,
-  "total_error": N,
-  "bugs": [
-    {"id": "...", "confirmation_status": "...", ...}
-  ]
-}
-```
-Sorts by: status order (confirmed→not_confirmed→error), then alphabetical by ID.
-
-### `_spec_task_done(handle)` / `_spec_task_exit_code(handle)`
-
-Abstraction over `subprocess.Popen` and `concurrent.futures.Future` for
-normalizing spec generation subprocess exit status.
-
-## Entry Points
-
-### `streaming_reasoner(input_dir, output_dir, ...) → set[str]`
-Main streaming reasoner. Returns set of processed file paths.
-
-### `_verify_single_file(file_path, ...) → (str, str)`
-Verifies one function file. Returns `(file_path, verdict)`.
-
-### `_validate_single_bug(result_json_rel, proj_dir, ...)`
-Validates a MISMATCH result via OpenCode bug validation agent.
-
-### `_generate_validation_summary(proj_dir)`
-Generates `bug_validation/summary.json`.

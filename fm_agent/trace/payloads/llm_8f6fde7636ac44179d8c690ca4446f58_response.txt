@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "On Linux, file_path = 'a\\\\b\\\\c.txt', name = 'f' => code yields 'a\\\\b\\\\c-txt::f' instead of 'a::b::c-txt::f'.",
-  "offending_statements": "Line 10: norm = file_path.replace(os.sep, \"/\")",
-  "reason": "The specification requires directory components to be extracted independently of OS path separator convention, meaning both '/' and '\\' should be treated as separators. The code only normalizes the platform-specific separator (os.sep). On Linux, os.sep is '/', so backslashes remain in the normalized path and are not split, causing them to appear inside component names instead of acting as separators."
-}

@@ -1,68 +1,3 @@
-# [SPEC]
-# Unit: src/extract.py
-#
-# run_extraction(proj_dir, work_dir=None, force=False, verbose=False) -> (int, int)
-#
-# Pre-condition:
-#   - proj_dir is a path to an existing directory
-#   - work_dir (or proj_dir if work_dir is None) contains a phases.json file whose
-#     structure includes a list of phases, each with modules containing source_files
-#     entries that are relative paths from proj_dir
-#
-# Post-condition:
-#   - A function is extracted from every source file listed in phases.json that
-#     (a) has a file extension recognized as a supported language, and (b) does not
-#     match test-file heuristics
-#   - Each extracted function is written as a separate file under
-#     work_dir/extracted_functions/; the output path is constructed by replacing
-#     the last dot in the source filename with a hyphen to form a directory, then
-#     placing the canonicalized function name with the original extension inside
-#   - An output file that already exists and contains both [SPEC] marker lines and
-#     [INFO] marker lines is left unchanged and counted as skipped, unless force
-#     is True
-#   - After all extractions complete, every function file in the output tree
-#     contains exactly one function body (validated)
-#   - Returns (written_count, skipped_count): the number of function files newly
-#     written and the number of already-specced files skipped, both non-negative
-# [SPEC]
-
-# [INFO]
-# batch_extract_all(proj_dir) -> (dict, set)
-#   Pre-condition: proj_dir is an existing directory
-#   Post-condition: Returns a tuple where the first element is a dict mapping
-#     normalized absolute file paths to lists of (func_name, func_body) extracted
-#     by language-specific codegraph backends, and the second element is the set of
-#     language keys for which data was returned
-# [SPLIT]
-# extract_functions_from_file(filepath, lang_key) -> [(func_name, source_text)]
-#   Pre-condition: filepath is a path to an existing regular file; lang_key is a
-#     valid language identifier
-#   Post-condition: Returns a list of (function_name, function_source_text) pairs
-#     for every top-level function found in the file using regex-based extraction;
-#     returns [] when no top-level functions are found
-# [SPLIT]
-# is_file_ready(filepath) -> bool
-#   Pre-condition: filepath is a path to an existing regular file
-#   Post-condition: Returns True when the file contains at least two [SPEC] marker
-#     lines and at least two [INFO] marker lines; returns False otherwise
-# [SPLIT]
-# _is_test_file(relative_path) -> bool
-#   Pre-condition: relative_path is a relative file path string
-#   Post-condition: Returns True when the path matches heuristics for test files;
-#     returns False otherwise
-# [SPLIT]
-# _safe_filename(func_name, ext) -> str
-#   Pre-condition: func_name is a non-empty string; ext is a file extension
-#   Post-condition: Returns a filename-safe canonical form of func_name with the
-#     given extension; duplicate names receive disambiguating numeric suffixes
-# [SPLIT]
-# _validate_extraction(output_base, registry_langs) -> [(path, count)]
-#   Pre-condition: output_base is a directory containing extracted function files
-#   Post-condition: Returns a list of (filepath, function_body_count) for every
-#     file under output_base that does not contain exactly one function; returns []
-#     when every file is valid
-# [INFO]
-
 def run_extraction(proj_dir, work_dir=None, force=False, verbose=False):
     """Run function extraction on a project directory.
 
@@ -152,7 +87,8 @@ def run_extraction(proj_dir, work_dir=None, force=False, verbose=False):
             # maps "/" -> "_", and falls back to "_function" for empty names.
             out_file = os.path.join(out_dir, _safe_filename(func_name, ext))
 
-            # Skip only when the file already has both [SPEC] and [INFO] blocks
+            # Skip only when the extracted file already has valid .spec.json and
+            # .info.json sidecars.
             if not force and os.path.exists(out_file) and is_file_ready(out_file):
                 if verbose:
                     print(f"  SKIP (specced): {os.path.relpath(out_file, proj_dir)}")

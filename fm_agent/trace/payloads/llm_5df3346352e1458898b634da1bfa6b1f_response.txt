@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/nonexistent_cg', filepath='foo.go'",
-  "offending_statements": "Line 7: cg = CodeGraphExtractor.from_proj_dir(proj_dir)\nLine 8: return cg.get_function_spans(\"go\", filepath) if cg else None",
-  "reason": "The specification requires that the function returns None when the codegraph backend is unavailable. However, if CodeGraphExtractor.from_proj_dir(proj_dir) raises an exception (e.g., because no backend can be initialized from the given directory), the code propagates that exception instead of returning None, violating the specification."
-}

@@ -1,11 +1,11 @@
 {
   "id": "src--languages--erlang-py--ElpClient::_handle_server_message",
-  "source_file": "src/languages/erlang.py",
-  "function_name": "ElpClient::_handle_server_message",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/src/languages/erlang-py/ElpClient::_handle_server_message.py",
+  "function_name": "_handle_server_message",
   "confirmation_status": "confirmed",
-  "attempts": "1",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::_handle_server_message.py",
   "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::_handle_server_message.md",
-  "probe_stdout": "CONFIRMED — actual: None | expected: 'INITIAL_VALUE'\n",
-  "trigger_summary": "params.get('status') returns None when 'status' key is absent, overwriting _status instead of leaving it unchanged"
+  "probe_stdout": "CONFIRMED — _status was overwritten to None from 'INITIAL_SENTINEL' despite the message lacking a 'params' key. The specification requires _status to be updated ONLY when the message contains a 'params' key.\n",
+  "trigger_summary": "Send a server message with method='elp/status' but without a 'params' key — self._status is overwritten to None instead of being left unchanged."
 }

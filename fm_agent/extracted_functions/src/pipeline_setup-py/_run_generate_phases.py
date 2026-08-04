@@ -1,60 +1,17 @@
-# [SPEC]
-# Unit: src/pipeline_setup-py/_run_generate_phases.py
-#
-# _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False, resume=False, submodules=None) -> None
-#
-# Pre-condition:
-#   - proj_dir, work_dir, and script_dir refer to existing directory paths
-#   - is_incremental is a boolean; when truthy, a pre-existing phases.json under work_dir is updated in place rather than regenerated from scratch
-#   - resume is a boolean
-#   - submodules is None or a non-empty iterable of subdirectory name strings relative to proj_dir
-#
-# Post-condition:
-#   - On normal return: phases.json exists under work_dir and conforms to the phases.json schema
-#   - When resume is truthy and phases.json already satisfies the pipeline's completeness criteria, the function returns without producing or modifying any file
-#   - When submodules is provided: phases.json covers all source files under the specified subdirectories of proj_dir; source files outside those subdirectories are neither added nor required to be present
-#   - When is_incremental is truthy: a valid phases.json already present under work_dir may be accepted without modification if it covers all current source files, even when its modification timestamp has not changed
-#   - If valid phases.json is not produced or confirmed after a configurable maximum number of retry attempts, the function prints a diagnostic message to stdout identifying the failed stage and the trace directory, then calls sys.exit(1)
-#   - When a non-final attempt fails to produce valid phases.json, the function does not call sys.exit(1) — it waits a fixed interval before retrying
-# [SPEC]
-
-# [INFO]
-# _phase_plan_complete(work_dir) -> bool
-#   Pre-condition: work_dir is an existing directory path
-#   Post-condition: Returns True when phases.json exists under work_dir and satisfies the pipeline's completeness criteria; returns False otherwise
-# [SPLIT]
-# _prepare_workflow_file(proj_dir, work_dir, script_dir, workflow_filename) -> None
-#   Pre-condition: proj_dir, work_dir, script_dir are existing directory paths; workflow_filename is a string naming a workflow instruction file
-#   Post-condition: The workflow instruction file is copied from script_dir into fm_agent/ under work_dir
-# [SPLIT]
-# build_llm_cli_command(model, prompt, cwd, files=None) -> CommandType
-#   Pre-condition: model is a string identifying a configured LLM model; prompt is a non-empty string; cwd is an existing directory path; files is None or a list of file path strings
-#   Post-condition: Returns a command suitable for execution that invokes the configured backend with the given prompt and file attachments in the specified working directory
-# [SPLIT]
-# run_opencode_traced(proj_dir, work_dir, command, stage, input_files, output_files, summary, metadata) -> CompletedProcess
-#   Pre-condition: All arguments are well-formed; command is a list of strings constituting a valid CLI command
-#   Post-condition: Executes the command as a subprocess within work_dir; on non-zero exit raises subprocess.CalledProcessError; records a trace event to fm_agent/trace/events.jsonl with the given stage, summary, and metadata; returns a CompletedProcess on zero exit
-# [SPLIT]
-# list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
-#   Pre-condition: work_dir is an existing directory path
-#   Post-condition: Returns a sorted list of project-relative file paths for all user-provided domain knowledge files staged under spec_prompts/domain_context/user_knowledge/; returns an empty list when no files are staged
-# [SPLIT]
-# _phases_cover_current_sources(phases_json, proj_dir, submodules=None) -> bool
-#   Pre-condition: phases_json is a path to an existing JSON file; proj_dir is an existing directory path; submodules is None or an iterable of subdirectory name strings
-#   Post-condition: Returns True when phases_json is a readable, valid JSON file with at least one source file entry, every listed source file exists under proj_dir (and under a submodule if submodules is given), and every source file under the relevant directories is listed; returns False when any condition fails. Backslash separators in paths are treated as forward slashes.
-# [SPLIT]
-# _json_file_is_valid(phases_json) -> bool
-#   Pre-condition: phases_json is a file path string
-#   Post-condition: Returns True when the path refers to an existing regular file whose content is valid JSON; returns False otherwise
-# [SPLIT]
-# _phase_plan_schema_errors(phases_path) -> list[str]
-#   Pre-condition: phases_path is a string.
-#   Post-condition: Returns a list of human-readable error message strings; empty list indicates the file is valid JSON conforming to the required phases schema; non-empty list indicates an error such as missing file, invalid JSON, or schema violation.
-# [INFO]
-
 def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
-                         resume=False, submodules=None):
+                         resume=False, submodules=None, plugin_stage=None,
+                         plugin_root=None):
     """Stage 1: generate phase.json — input target code, output phases.json."""
+    if plugin_stage is not None:
+        if plugin_stage.type == "pass":
+            print("[Pipeline] Stage 1/6: Plugin stage 'generate_phase_plan' type=pass, skipping.")
+            return
+        if plugin_stage.type == "replace":
+            print("[Pipeline] Stage 1/6: Plugin stage 'generate_phase_plan' type=replace, running plugin command.")
+            from .plugin import run_plugin_command
+            run_plugin_command(plugin_stage.replace_cmd, plugin_root, proj_dir, label="generate_phase_plan")
+            return
+
     phases_json = os.path.join(work_dir, "phases.json")
     prev_mtime = os.path.getmtime(phases_json) if os.path.exists(phases_json) else None
 
@@ -67,7 +24,26 @@ def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
     if _resume_skip:
         print("[Pipeline] Stage 1/6: RESUME — phases.json found, skipping phase plan generation.")
 
-    _prepare_workflow_file(proj_dir, work_dir, script_dir, "workflow_generate_phases.md")
+    if plugin_stage is not None and plugin_stage.type == "modify" and plugin_stage.input_md:
+        workflow_src = str(plugin_root / plugin_stage.input_md)
+        workflow_dst = os.path.join(work_dir, "workflow_generate_phases.md")
+        shutil.copy2(workflow_src, workflow_dst)
+        user_knowledge_paths = list_staged_domain_knowledge_relpaths(work_dir)
+        if user_knowledge_paths:
+            with open(workflow_dst, "a") as _f:
+                _f.write(
+                    "\n---\n\n"
+                    "## User-Provided Domain Knowledge\n\n"
+                    "The user supplied extra Markdown files with domain knowledge for this run. "
+                    "Read these files before writing `phases.json` and the generated domain "
+                    "context files. Use them only as contextual knowledge about intended "
+                    "behavior, terminology, business rules, data encodings, and invariants; "
+                    "do NOT include these Markdown files as project source files in "
+                    "`phases.json`, and do NOT edit or summarize them in place.\n\n"
+                    f"{format_domain_knowledge_bullets(user_knowledge_paths)}\n"
+                )
+    else:
+        _prepare_workflow_file(proj_dir, work_dir, script_dir, "workflow_generate_phases.md")
 
     fm_reminder = ("IMPORTANT: The fm_agent/ directory is NOT part of the project source code. "
                     "It is a workspace for storing your output files only. "
@@ -189,3 +165,8 @@ def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
                 f"Check {os.path.basename(proj_dir)}/fm_agent/trace/ for details."
             )
             sys.exit(1)
+
+    if plugin_stage is not None and plugin_stage.type == "modify" and plugin_stage.output_process:
+        print("[Pipeline] Stage 1/6: Running plugin post-process for generate_phase_plan...")
+        from .plugin import run_plugin_command
+        run_plugin_command(plugin_stage.output_process, plugin_root, proj_dir, label="generate_phase_plan post-process")

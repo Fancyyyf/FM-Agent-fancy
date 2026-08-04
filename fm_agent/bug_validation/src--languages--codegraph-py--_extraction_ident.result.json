@@ -1,11 +1,11 @@
 {
   "id": "src--languages--codegraph-py--_extraction_ident",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_extraction_ident.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/_extraction_ident.py",
   "function_name": "_extraction_ident",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_extraction_ident.py",
   "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_extraction_ident.md",
-  "probe_stdout": "CONFIRMED — Empty components found in _extraction_ident output\n  [whitespace-only middle qualifier] name='func', qualified_name='foo:: ::func'\n    actual:   'foo::::func'\n    split by '::': ['foo', '', 'func'] (contains empty!)\n  [space+tab qualifier] name='baz', qualified_name='X:: ::\tbaz'\n    actual:   'X::::::baz'\n    split by '::': ['X', '', '', 'baz'] (contains empty!)\n",
-  "trigger_summary": "Whitespace-only scope qualifier components (e.g., 'foo:: ::func') produce empty strings from _bare_function_name, which pass through canonicalize and create empty '::'-separated components in the result, violating the spec's non-empty component requirement."
+  "probe_stdout": "CONFIRMED — actual: '::foo' | expected: 'foo'\n",
+  "trigger_summary": "qualified_name with whitespace after '::' like ':: foo' causes _bare_function_name to produce an empty component, resulting in a leading '::' separator in the output where only 'foo' is expected."
 }

@@ -1,4 +1,0 @@
-{
-  "info_updated": true,
-  "new_info": "# [INFO]\n# self._proc.stdin.write(data: bytes)\n#   Pre-condition: The subprocess stdin pipe associated with self._proc is\n#     open and writable; data is a bytes object\n#   Post-condition: data is buffered for delivery to the subprocess's standard\n#     input\n# [SPLIT]\n# self._proc.stdin.flush()\n#   Pre-condition: self._proc.stdin is a _StdoutTee whose _console is an open,\n#     writable stream that supports flush, and whose _log_stream is a writable\n#     stream (may be closed) that supports flush\n#   Post-condition: All buffered data written via this tee's write operations\n#     is pushed to the console; data is pushed to the log stream if and only if\n#     the log stream is open; no exception is raised if the log stream is\n#     closed, and the console flush succeeds regardless\n# [INFO]"
-}

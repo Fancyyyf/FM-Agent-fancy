@@ -1,3 +1,0 @@
-{
-  "post_condition": "The return value is the string obtained from `path` by applying the following transformations sequentially: (1) replace all occurrences of \"\\\\\" by \"/\"; (2) if the resulting string starts with \"fm_agent/logic_verification_results/\", remove that prefix; (3) remove the file extension (i.e., all characters from the last \".\" to the end, inclusive; if no \".\", keep the whole string); (4) replace all occurrences of \"/\" by \"::\". Formally, let s1 = path.replace('\\\\', '/'), s2 = s1[len('fm_agent/logic_verification_results/'):] if s1.startswith('fm_agent/logic_verification_results/') else s1, s3 = os.path.splitext(s2)[0], then the return value is s3.replace('/', '::')."
-}

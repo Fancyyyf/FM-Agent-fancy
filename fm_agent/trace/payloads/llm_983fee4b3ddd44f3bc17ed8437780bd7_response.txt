@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/project' (a directory where CodeGraphExtractor.from_proj_dir returns a valid CodeGraphExtractor instance), filepath='/project/src/main.rs' containing Rust code:\n\nfn top_level() {}\nstruct Foo;\nimpl Foo {\n    fn method(&self) {}\n}\n\nCodeGraphExtractor.get_function_spans('rust', filepath) returns [('top_level', 0, 0), ('method', 3, 3)] (or similar line numbers). The code returns that list, which includes the method definition. The specification requires only top-level function definitions, so the method should be excluded.",
-  "offending_statements": "Line 8: return cg.get_function_spans(\"rust\", filepath) if cg else None",
-  "reason": "The code returns the unfiltered list from cg.get_function_spans, which includes all function and method definitions (as documented). The specification requires only top-level function declarations; method definitions inside impl blocks must be excluded. This input contains both a top-level function and a method, causing the code to produce an output that includes the method, violating the requirement."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "files=[], prompt='any text'",
-  "offending_statements": "Line 2:     if not files:\nLine 3:         return prompt",
-  "reason": "Condition B specifies that when files is empty, the function must return None, but the code returns the prompt string."
-}

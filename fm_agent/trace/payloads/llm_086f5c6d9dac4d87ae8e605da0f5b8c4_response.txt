@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/empty_existing_directory', resume=False, required_source_files=None, domain_knowledge_files=None, submodules=None, one_phase=False, extra_call_edges_path=None, only_spec=False",
-  "offending_statements": "Line 14: if not _has_source_code(proj_dir, submodules):\nLine 15:     scope = f\" selected submodule(s): {', '.join(submodules)}\" if submodules else f\" {proj_dir}\"\nLine 16:     print(f\"[Pipeline] ERROR: No source code files found in{scope}. \"\nLine 17:           f\"Supported extensions: {', '.join(sorted(EXT_TO_LANG.keys()))}\")\nLine 18:     sys.exit(1)",
-  "reason": "The specification requires that if no functions are found for verification (empty file_list), the function returns early without generating specs. When proj_dir is a directory containing no supported source files, the pipeline would produce an empty file_list, so the expected behavior is a graceful early return. However, the code calls sys.exit(1) after printing an error, which terminates the process and violates the specification."
-}

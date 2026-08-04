@@ -1,86 +1,76 @@
-"""Probe script for bug: _select_functions_by_source missing return statement.
+"""Probe script for bug: _select_functions_by_source returns normally when entry_func is not found instead of raising ValueError.
 
-Bug claim: After reaching line 40, the function falls off and returns None
-instead of the required (all_by_source, keep_by_source) tuple.
-
-Verification approach: static inspection of the function source code.
+Spec claims: Raises ValueError when entry_func is not found among extracted functions.
+Actual: Code returns normally with empty keep_by_source (buggy versions lacked the entry_func check).
 """
-
-import ast
 import sys
-import textwrap
-from pathlib import Path
+import os
+import tempfile
+import subprocess
+import shutil
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-SOURCE_FILE = REPO_ROOT / "src" / "entry_reasoning_pipeline.py"
+# This project uses a flat package layout (package=false in pyproject.toml).
+# src/ modules import from 'src.xxx', so the repo root must be on the path.
+_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
+try:
+    from src.entry_reasoning_pipeline import _select_functions_by_source
+except ImportError as e:
+    print(f"ERROR: Could not import _select_functions_by_source: {e}")
+    sys.exit(1)
 
-def _find_function_node(tree, func_name):
-    """Find the AST FunctionDef node for the given function name."""
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == func_name:
-            return node
-    return None
+tmpdir = tempfile.mkdtemp(dir="/tmp")
+try:
+    # Create a minimal Python project with a simple source file
+    with open(os.path.join(tmpdir, "example.py"), "w") as f:
+        f.write("def foo():\n    pass\n\ndef bar():\n    foo()\n")
 
+    # Initialize git (required by _make_run_copy via shutil.copytree expecting a valid repo)
+    subprocess.run(["git", "init"], cwd=tmpdir, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=tmpdir, capture_output=True)
+    subprocess.run(["git", "config", "user.name", "test"], cwd=tmpdir, capture_output=True)
+    subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
 
-def _has_explicit_return(func_node):
-    """Check if the function body contains at least one explicit Return statement."""
-    for node in ast.walk(func_node):
-        if isinstance(node, ast.Return) and node.value is not None:
-            return True
-    return False
+    # Call with a non-existent entry_func that is NOT in the project.
+    # The spec requires ValueError; the bug is that it returns normally.
+    expected = "ValueError"
+    passed = False
+    actual = None
 
-
-def _find_empty_phase_files_handler(func_node):
-    """Find the if-not-phase_files block and check it has a raise or return.
-
-    Returns (found: bool, has_raise_or_return: bool).
-    """
-    for node in ast.walk(func_node):
-        if not isinstance(node, ast.If):
-            continue
-        # Check if test is: not phase_files  (UnaryOp(Not(), Name('phase_files')))
-        test = node.test
-        if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
-            if isinstance(test.operand, ast.Name) and test.operand.id == "phase_files":
-                # Check if body contains a Raise or Return
-                for stmt in node.body:
-                    if isinstance(stmt, (ast.Raise, ast.Return)):
-                        return True, True
-                return True, False
-    return False, False
-
-
-def main():
     try:
-        source = SOURCE_FILE.read_text()
-        tree = ast.parse(source)
-        func = _find_function_node(tree, "_select_functions_by_source")
-
-        if func is None:
-            print("ERROR: _select_functions_by_source not found in source")
-            sys.exit(1)
-
-        # Check 1: Does function have an explicit return?
-        has_return = _has_explicit_return(func)
-
-        # Check 2: Does the empty phase_files guard raise/return?
-        found_guard, has_raise = _find_empty_phase_files_handler(func)
-
-        # Bug is CONFIRMED if:
-        #   - No explicit return (function falls off => returns None)
-        #   - OR the empty phase_files guard has no raise/return (falls through)
-        bug_confirmed = not has_return or (found_guard and not has_raise)
-
-        if bug_confirmed:
-            print(f"CONFIRMED — has_return={has_return}, found_guard={found_guard}, has_raise={has_raise}")
-        else:
-            print(f"NOT CONFIRMED — has_return={has_return}, found_guard={found_guard}, has_raise={has_raise}")
-
+        result = _select_functions_by_source(
+            tmpdir,
+            "nonexistent::example-py::foo",  # not found in the project
+            None,  # no end_funcs restriction
+        )
+        # Reached here means NO ValueError was raised -- bug reproduced.
+        actual = f"returned normally: all_by_source has {len(result[0])} key(s), keep_by_source has {len(result[1])} key(s)"
+        passed = True
+    except ValueError as e:
+        # Correct behavior: ValueError raised as spec requires.
+        actual = f"ValueError: {e}"
+        passed = False
     except Exception as e:
-        print(f"ERROR: {e}")
-        sys.exit(1)
+        actual = f"{type(e).__name__}: {e}"
+        passed = True  # Wrong exception type is also a bug
 
+except Exception as e:
+    print(f"ERROR: Setup failed: {e}")
+    sys.exit(1)
+finally:
+    # Clean up leftover .fm-entry-select directory if the function crashed mid-way
+    sel_dir = tmpdir + ".fm-entry-select"
+    if os.path.exists(sel_dir):
+        shutil.rmtree(sel_dir, ignore_errors=True)
+    shutil.rmtree(tmpdir, ignore_errors=True)
 
-if __name__ == "__main__":
-    main()
+if passed:
+    expected_str = str(expected)
+    actual_str = repr(actual)
+    print(f"CONFIRMED -- actual: {actual_str} | expected: {expected_str}")
+else:
+    actual_str = repr(actual)
+    print(f"NOT CONFIRMED -- actual matched expected: {actual_str}")

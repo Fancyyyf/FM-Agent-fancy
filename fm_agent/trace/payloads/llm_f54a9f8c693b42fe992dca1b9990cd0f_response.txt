@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "seconds = -1.2",
-  "offending_statements": "Line 4:     s = int(seconds)\nLine 7:     if h:",
-  "reason": "The code uses int(seconds) which truncates toward zero, while the specification requires truncation via floor (floor(seconds)). For negative seconds, these differ. For example, with seconds=-1.2, int(-1.2) = -1, but floor(-1.2) = -2. The code then computes h = -1 and enters the hour formatting branch (because if h: is true), returning '-1h 59m 59s'. The specification requires floor(-1.2) = -2, so no hour or minute segment, yielding '-2s'. This violates the output format and value."
-}

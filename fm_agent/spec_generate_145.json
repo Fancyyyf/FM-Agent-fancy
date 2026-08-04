@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_fqn_to_ident.py\n#\n# _fqn_to_ident(fqn) -> str\n#\n# Pre-condition:\n#   - fqn is a non-empty string of \"::\"-delimited components\n#\n# Post-condition:\n#   - Returns the class-qualified function identifier obtained by removing the\n#     path prefix up to and including the source-file component from fqn\n#   - A component is recognized as a source-file component when it consists of\n#     a non-empty base name, a hyphen, and a suffix that is a recognized\n#     source-file language extension\n#   - When fqn contains more than one source-file component, the rightmost one\n#     determines where the prefix ends\n#   - When fqn contains no source-file component, returns the last component\n#     of fqn unchanged\n#   - The returned string is non-empty\n# [SPEC]",
-  "info_updated": false,
-  "new_info": "",
-  "updated_callees": []
-}

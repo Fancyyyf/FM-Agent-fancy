@@ -3,5 +3,10 @@
             os.path.relpath(output_dir, proj_dir),
             os.path.splitext(rel)[0] + ".json",
         )
-        _validate_single_bug(result_json_rel, proj_dir, work_dir)
+        _validate_single_bug(
+            result_json_rel,
+            proj_dir,
+            work_dir,
+            bug_validator_path=bug_validator_path,
+        )
         return rel

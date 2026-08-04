@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/empty_project' (directory containing no .erl files)",
-  "offending_statements": "Line 5: return ErlangAnalysis(functions={}, edges={})",
-  "reason": "When no .erl files exist the specification requires the returned ErlangAnalysis to have all three dict attributes (functions, edges, spans) empty; the code returns an object without a spans attribute, violating the specification."
-}

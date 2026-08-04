@@ -1,6 +1,6 @@
 # Bug Report: _check_codegraph_version
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/env_check-py/_check_codegraph_version.py`
+**Source file:** `src/env_check-py/_check_codegraph_version.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,97 +12,87 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns (True, None) when the configured codegraph version, after stripping whitespace and a leading "v" prefix, is the empty string  no version is pinned so verification is skipped
-  - Otherwise, attempts to obtain the installed codegraph binary's version string by executing it with a --version flag and capturing its standard output
-  - Returns (False, message) when the version string could not be obtained (binary missing, not executable, or times out), with a message identifying the configured binary directory and instructing the user to re-run ./install.sh
-  - Returns (False, message) when the obtained version string does not equal the configured pinned version (after stripping whitespace and any leading "v" prefix), with a message stating the installed and pinned versions and instructing the user to re-run ./install.sh
-  - Returns (True, None) when the obtained version string equals the configured pinned version
-  - Never raises an exception: all error paths return (False, message) with a human-readable description
+Returns (True, None) when the configured version, after stripping a leading 'v' prefix and surrounding whitespace, is empty. Returns (True, None) when the configured version is non-empty and the codegraph binary located within the configured bin_dir reports a version string that, after stripping surrounding whitespace, exactly equals the configured version (comparing after stripping any leading 'v' from the configured version). Returns (False, error_message) when the configured version is non-empty and any of the following hold: the codegraph binary cannot be invoked (not found, not executable, or a subprocess-level error occurs), the binary produces empty or whitespace-only output, or the binary's reported version differs from the configured version. The error_message is a non-empty, human-readable string. The function does not modify config, the filesystem, or any external state.
 
 ---
 
 ### Actual Behavior
 
-After the execution of _check_codegraph_version(config), the function returns a tuple (status, msg) where status is True if the installed codegraph version matches the pinned version (or if no version is pinned), and False otherwise. The behavior is defined as follows:
-
-- Let w = config.settings.codegraph.version.strip().removeprefix('v').
-- If w is empty, return (True, None).
-- Otherwise, let cmd = _codegraph_cmd(). By its specification, cmd is an absolute path to an executable file under config.settings.codegraph.bin_dir if that file exists and is executable, else the string 'codegraph' (to be resolved via PATH).
-- Attempt to obtain the installed version by executing subprocess.run([cmd, '--version'], capture_output=True, text=True, timeout=10). On success, let got = strip(stdout). On any OSError or subprocess.SubprocessError, let got = ''.
-- Let bin_dir = os.path.expanduser(config.settings.codegraph.bin_dir) (used only in messages).
-- If got == '', return (False, 'codegraph (pinned v{want}) is not installed at {bin_dir}  run ./install.sh (C/C++ extraction falls back to the regex extractor otherwise).').
-- Else if got != w, return (False, 'codegraph {got} is installed but v{w} is pinned in fm-agent.toml  re-run ./install.sh to install the pinned build.').
-- Else (got == w), return (True, None).
+The function returns a tuple (ok, msg) where ok is a boolean and msg is either a string or None. Let want = config.settings.codegraph.version.strip(); if want starts with 'v' then want = want[1:]. If want is empty, the function returns (True, None) without further action. Otherwise, let cmd = _codegraph_cmd() and bin = os.path.expanduser(config.settings.codegraph.bin_dir). The function attempts to run subprocess.run([cmd, '--version'], capture_output=True, text=True, timeout=10). If the call raises OSError or subprocess.SubprocessError, let got = ''; otherwise let got = the stdout of the process stripped. If got is empty, the function returns (False, f'codegraph (pinned v{want}) is not installed at {bin}  run ./install.sh (C/C++ extraction falls back to the regex extractor otherwise).'). Else if got != want, the function returns (False, f'codegraph {got} is installed but v{want} is pinned in fm-agent.toml  re-run ./install.sh to install the pinned build.'). Else (got == want), it returns (True, None). No other side effects occur. If config.settings.codegraph.version is not a string or missing, an unhandled exception may propagate.
 
 ---
 
 ## Code Evidence
 
-Line 19: if not got:
+Line 11: cmd = _codegraph_cmd()  does not ensure the command references the binary inside the configured bin_dir. Line 14: [cmd, "--version"]  runs the binary without verifying its location against the bin_dir.
 
 ---
 
 ## Trigger Condition
 
-The code treats an empty version string (got='') the same as a failure to execute the binary, returning a 'not installed' error. The specification requires that if the binary executes successfully (even with empty output), the obtained version string (empty) should be compared against the pinned version. An empty string is not equal to a non-empty pinned version, so the correct behavior per spec is to return a version-mismatch error, not a missing-binary error.
+The specification requires checking the codegraph binary located within the configured bin_dir. The code does not enforce that the executed binary is from that directory; it relies on whatever command _codegraph_cmd() returns, which may be a binary elsewhere on PATH. This allows a True return even when the binary in bin_dir is missing or broken, violating the condition that True must come from the binary in the specified bin_dir.
 
 ---
 
 ## How to trigger the bug
 
-The bug manifests when the codegraph binary exists and executes successfully but returns an empty version string on stdout. The `if not got:` check on line 77 of `src/env_check.py` treats the empty string as falsy, conflating "no output from a successful execution" with "binary failed to execute." Per the specification, a successful execution with empty output should be treated as an obtained version of `""`, which would mismatch any non-empty pinned version and produce a version-mismatch error.
+`_codegraph_cmd()` at `src/languages/codegraph.py:474` falls back to bare `"codegraph"` (resolved from PATH) when `os.access(bin_dir/codegraph, os.X_OK)` is False — i.e., when the pinned binary in the configured `bin_dir` is missing or not executable. `_check_codegraph_version` then runs `subprocess.run(["codegraph", "--version"], ...)` which picks up whatever codegraph binary exists on PATH, without verifying that it came from the configured `bin_dir`. If a codegraph binary with the matching version happens to be on PATH (e.g., a system-installed one), the function returns `(True, None)` even though the binary in `bin_dir` is absent, violating the specification which requires `True` only when the binary **in the configured bin_dir** reports the pinned version.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `config.settings.codegraph.version` | `"1.2.3"` (non-empty pinned version) |
-| `config.settings.codegraph.bin_dir` | any existing directory path |
-| codegraph binary stdout | `""` (empty, simulating a binary that prints nothing on `--version`) |
-| codegraph binary exit code | `0` (successful execution) |
+| `config.settings.codegraph.version` | `"v0.1.0"` |
+| `config.settings.codegraph.bin_dir` | `/tmp/bugprobe_.../empty_bin` (empty — no codegraph binary inside) |
+| PATH (environment) | Includes a directory with a fake `codegraph` that outputs `"0.1.0"` |
 
 ### Expected (spec-correct) Output
 
-`(False, "codegraph  is installed but v1.2.3 is pinned in fm-agent.toml — re-run ./install.sh to install the pinned build.")`
-
-The specification requires distinguishing "binary executed successfully" from "binary could not be obtained." Since the binary ran and returned `""`, the obtained version is `""`, which does not equal the pinned version `"1.2.3"`. The correct error path is the version-mismatch branch.
+`(False, error_message)` — because the codegraph binary in the configured `bin_dir` does not exist / cannot be invoked.
 
 ### Actual (buggy) Output
 
-`(False, "codegraph (pinned v1.2.3) is not installed at <bin_dir> — run ./install.sh (C/C++ extraction falls back to the regex extractor otherwise).")`
-
-The code uses `if not got:` which evaluates to `True` when `got` is the empty string `""`. This incorrectly routes to the "not installed" error path instead of the version-mismatch path.
+`(True, None)` — because `_codegraph_cmd()` falls back to bare `"codegraph"`, which resolves to the matching-version binary on PATH.
 
 ### How to Reproduce
+
+Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
 ```python
-from unittest.mock import patch, MagicMock
-from src.env_check import _check_codegraph_version
+import os
+import tempfile
 
-class MockCodegraphSettings:
-    version = "1.2.3"
-    bin_dir = "/tmp"
+# Create an empty directory for bin_dir
+tmp = tempfile.mkdtemp()
+empty_bin = os.path.join(tmp, "empty_bin")
+os.makedirs(empty_bin)
 
-class MockSettings:
-    codegraph = MockCodegraphSettings()
+# Create a fake codegraph on PATH that outputs "0.1.0"
+fake_bin = os.path.join(tmp, "fake_bin")
+os.makedirs(fake_bin)
+with open(os.path.join(fake_bin, "codegraph"), "w") as f:
+    f.write("#!/bin/sh\necho '0.1.0'\n")
+os.chmod(os.path.join(fake_bin, "codegraph"), 0o755)
+os.environ["PATH"] = fake_bin + os.pathsep + os.environ["PATH"]
 
-class MockConfig:
-    settings = MockSettings()
-
+# Force _codegraph_cmd to return bare "codegraph" (simulating fallback)
 import src.languages.codegraph as cg
+orig = cg._codegraph_cmd
 cg._codegraph_cmd = lambda: "codegraph"
 
-with patch('subprocess.run') as mock_run:
-    mock_result = MagicMock()
-    mock_result.stdout = ""   # binary runs OK but returns empty output
-    mock_run.return_value = mock_result
-    status, msg = _check_codegraph_version(MockConfig())
-    print(status, msg)
-# actual (buggy) output: (False, 'codegraph (pinned v1.2.3) is not installed at ...')
-# expected (correct) output: (False, 'codegraph  is installed but v1.2.3 is pinned ...')
+class C:
+    class settings:
+        class codegraph:
+            version = "v0.1.0"
+            bin_dir = empty_bin
+
+from src.env_check import _check_codegraph_version
+print(_check_codegraph_version(C()))
+# actual (buggy) output: (True, None)
+# expected (correct) output: (False, "...")
 ```
 
 ---
@@ -110,94 +100,95 @@ with patch('subprocess.run') as mock_run:
 ## Probe Script
 
 ```python
-"""Probe for bug src--env_check-py--_check_codegraph_version.
-
-Bug: When codegraph binary executes successfully but returns empty stdout,
-`if not got:` on line 77 treats empty string as "binary not installed" instead
-of as a version-mismatch ('' != pinned_version).
-
-Spec requires: if binary ran OK but output is empty, compare '' vs pinned version
-and return version-mismatch error, not "not installed" error.
-
-Workspace: all temp files under /tmp/bug_probe_env_check_codegraph/
 """
+Probe for bug: _check_codegraph_version returns True when bin_dir binary is
+missing but PATH has a matching codegraph version.
+
+Spec requires True only when the binary IN BIN_DIR reports the right version.
+Bug: _codegraph_cmd() falls back to bare "codegraph" (PATH) when bin_dir
+binary is missing, and _check_codegraph_version doesn't verify the location.
+"""
+
 import sys
 import os
+import tempfile
+import shutil
 
-# ── workspace (fresh temp dir) ──────────────────────────────────────────
-WORKSPACE = "/tmp/bug_probe_env_check_codegraph"
-os.makedirs(WORKSPACE, exist_ok=True)
+# Ensure the repo root is on sys.path so "src" is importable
+_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
-# ── setup path to import from the project's package entry point ─────────
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot")
+# ── 1. Create a temporary workspace ──────────────────────────────────────────
+tmpdir = tempfile.mkdtemp(prefix="bugprobe_")
 
-# Standard-library mocking utility (not a test framework)
-from unittest.mock import patch, MagicMock
+# ── 2. Create a fake codegraph binary on PATH that outputs "0.1.0" ──────────
+fake_bin_dir = os.path.join(tmpdir, "fake_bin")
+os.makedirs(fake_bin_dir, exist_ok=True)
+fake_cg_path = os.path.join(fake_bin_dir, "codegraph")
+with open(fake_cg_path, "w") as f:
+    f.write("#!/bin/sh\necho '0.1.0'\n")
+os.chmod(fake_cg_path, 0o755)
+os.environ["PATH"] = fake_bin_dir + os.pathsep + os.environ.get("PATH", "")
 
-def main():
-    # ── Build mock config: non-empty pinned version ─────────────────────
-    class MockCodegraphSettings:
-        version = "1.2.3"
-        bin_dir = WORKSPACE  # arbitrary existing dir for message formatting
+# ── 3. Create an EMPTY bin_dir (where codegraph should be per config) ───────
+empty_bin_dir = os.path.join(tmpdir, "empty_bin")
+os.makedirs(empty_bin_dir, exist_ok=True)
 
-    class MockSettings:
-        codegraph = MockCodegraphSettings()
+# ── 4. Build a mock config matching the fake codegraph version ──────────────
+class FakeCodegraphSettings:
+    version = "v0.1.0"       # pinned version (matching what fake codegraph outputs)
+    bin_dir = empty_bin_dir   # THIS dir has NO codegraph binary
 
-    class MockConfig:
-        settings = MockSettings()
+class FakeSettings:
+    codegraph = FakeCodegraphSettings()
 
-    config = MockConfig()
+class FakeConfig:
+    settings = FakeSettings()
+    LLM_API_KEY = "sk-test-dummy-key"  # needed to avoid import-side effects
 
-    # ── Mock _codegraph_cmd so the import inside the function works ─────
-    import src.languages.codegraph as cg
-    cg._codegraph_cmd = lambda: "codegraph"
+# ── 5. Monkey-patch _codegraph_cmd to simulate the fallback-to-PATH case ────
+# When bin_dir/codegraph is missing, _codegraph_cmd() returns bare "codegraph",
+# which resolves from PATH.  We force that behavior.
+import src.languages.codegraph as cg_module
+_original_cg_cmd = cg_module._codegraph_cmd
+cg_module._codegraph_cmd = lambda: "codegraph"
 
-    # ── Mock subprocess.run: succeed but return empty stdout ────────────
-    actual_status = None
-    actual_msg = None
+# ── 6. Call the function under test ─────────────────────────────────────────
+from src.env_check import _check_codegraph_version
 
-    try:
-        with patch('subprocess.run') as mock_run:
-            mock_result = MagicMock()
-            mock_result.stdout = ""   # <-- empty output from successful binary
-            mock_run.return_value = mock_result
+exit_code = 0
+try:
+    ok, msg = _check_codegraph_version(FakeConfig())
 
-            actual_status, actual_msg = _check_codegraph_version(config)
-    except Exception as e:
-        print(f"ERROR: {e!r}")
-        sys.exit(1)
+    # Per spec:  binary in bin_dir is missing → must return (False, error_msg)
+    # Per code:  PATH has matching version → returns (True, None) ← BUG
+    spec_expected_ok = False   # spec says "False when binary not in bin_dir"
 
-    # ── Assert: spec-correct vs buggy behavior ──────────────────────────
-    # Spec says: got='' != want='1.2.3' → version-mismatch error, not "not installed"
-    # Buggy code: got='' is falsy → "not installed" error
-
-    # A version-mismatch message would contain "is installed but"
-    # A "not installed" message would contain "not installed"
-    if actual_status is False and "not installed" in (actual_msg or "").lower():
+    if ok == spec_expected_ok:
         print(
-            f"CONFIRMED — actual: (False, {actual_msg!r}) "
-            f"| expected: version-mismatch error, not 'not installed' error"
-        )
-    elif actual_status is False and "is installed but" in (actual_msg or "").lower():
-        print(
-            f"NOT CONFIRMED — actual: (False, {actual_msg!r}) "
-            f"| already returns version-mismatch error per spec"
+            f"NOT CONFIRMED — actual: ({ok}, {msg!r}) | expected: ({spec_expected_ok}, error_message)"
         )
     else:
         print(
-            f"NOT CONFIRMED — unexpected result: ({actual_status!r}, {actual_msg!r})"
+            f"CONFIRMED — actual: ({ok}, {msg!r}) | expected: ({spec_expected_ok}, error_message); "
+            f"bug: True returned despite codegraph missing in bin_dir '{empty_bin_dir}'"
         )
+except Exception as e:
+    print(f"ERROR: {e}")
+    import traceback
+    traceback.print_exc()
+    exit_code = 1
+finally:
+    # ── 7. Restore original state ───────────────────────────────────────────
+    cg_module._codegraph_cmd = _original_cg_cmd
+    shutil.rmtree(tmpdir, ignore_errors=True)
 
-# Import the target function from the package entry point
-from src.env_check import _check_codegraph_version
-
-if __name__ == "__main__":
-    main()
+sys.exit(exit_code)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: (False, 'codegraph (pinned v1.2.3) is not installed at /tmp/bug_probe_env_check_codegraph — run ./install.sh (C/C++ extraction falls back to the regex extractor otherwise).') | expected: version-mismatch error, not 'not installed' error
+CONFIRMED — actual: (True, None) | expected: (False, error_message); bug: True returned despite codegraph missing in bin_dir '/tmp/bugprobe_7p3r4_7c/empty_bin'
 ```

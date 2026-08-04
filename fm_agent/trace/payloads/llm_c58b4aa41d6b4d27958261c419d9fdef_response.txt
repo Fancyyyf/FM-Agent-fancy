@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function _is_workspace_file returns a boolean value. Let norm be the string obtained by replacing all occurrences of the backslash character '\\' in rel_path with a forward slash '/'. The function returns True if and only if norm == 'fm_agent' or norm.startswith('fm_agent/'); otherwise it returns False. No exceptions are raised, and no other state is modified. Formally: (return = True) ↔ (norm = 'fm_agent' ∨ prefix(norm, 'fm_agent/')), where norm = replace(rel_path, '\\\\', '/')."
-}

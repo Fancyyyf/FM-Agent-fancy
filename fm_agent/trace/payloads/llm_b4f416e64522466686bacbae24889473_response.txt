@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "caller_fqn='caller', callee_names=['  foo  '], callees_map={'caller': ['module::  foo  ']}, edge_aliases_map=None",
-  "offending_statements": "Line 10: wanted = {n.strip() for n in callee_names if n and n.strip()}",
-  "reason": "The specification requires matching against the original strings in callee_names, case-insensitively, without stripping whitespace or discarding empty strings. The code strips whitespace from names, changing the matching criteria. For the given input, the stem is '  foo  ' and callee_names contains '  foo  '. The spec expects a match, but the code strips the name to 'foo', causing stem.lower() = '  foo  ' not to be in wanted_lower = {'foo'}, so the callee FQN is not returned."
-}

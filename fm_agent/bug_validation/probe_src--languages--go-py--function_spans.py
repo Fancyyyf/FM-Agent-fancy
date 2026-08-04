@@ -1,67 +1,76 @@
-"""Probe: Confirm that function_spans in src/languages/go.py hardcodes "go" as
-the language key, causing it to return None for a non-Go file that is indexed
-by the codegraph and contains top-level function definitions.
+"""Probe for bug src--languages--go-py--function_spans.
 
-The spec claims: "Returns a list of (function_name, start_line, end_line) for
-every top-level function definition found in the file at filepath." The actual
-behavior only works when the file happens to be indexed as language "go".
+Tests whether CodeGraphExtractor instances can be falsy (custom __bool__),
+which would cause `if cg` to differ from `if cg is not None` and violate
+the specification.
 """
-
 import sys
 import os
-from unittest.mock import MagicMock, patch
+import tempfile
+import shutil
 
-# The probe is run from the repo root, so cwd is the import base.
-sys.path.insert(0, os.getcwd())
+# Do NOT chdir before imports — that would break `from src.*` resolution.
+# Workspace I/O uses temp dir set up after imports.
 
+passed = False
 
-def main():
-    try:
-        from src.languages.go import function_spans
+try:
+    # Import through the public package entry point
+    from src.languages.codegraph import CodeGraphExtractor
+    from src.languages.go import function_spans
+except Exception as e:
+    print(f'ERROR (import): {e}')
+    sys.exit(1)
 
-        proj_dir = "/fake/proj"
-        # A Python file that is indexed by codegraph and contains a function
-        filepath = "/fake/proj/my_script.py"
+# Setup a fresh temp workspace for any fixture I/O (as required by the probe spec)
+tmpdir = tempfile.mkdtemp(prefix="probe_fs_")
 
-        # Create a mock CodeGraphExtractor instance
-        mock_cg = MagicMock()
-        # get_function_spans returns a realistic result when called with the
-        # CORRECT language key ("python"), but returns None when called with
-        # the hardcoded "go" key (which doesn't match the file's language).
-        def mock_get_function_spans(lang_key, abs_filepath):
-            if lang_key == "python":
-                return [("my_func", 0, 5)]  # spec-correct result
-            # lang_key == "go" → language mismatch → no rows → None
-            return None
+try:
+    # Verify CodeGraphExtractor has no custom __bool__ that could be falsy
+    has_custom_bool = '__bool__' in CodeGraphExtractor.__dict__
 
-        mock_cg.get_function_spans.side_effect = mock_get_function_spans
+    # Instantiate with a non-existent db path — the constructor just stores it
+    cg = CodeGraphExtractor("/nonexistent/path/to/codegraph.db")
 
-        with patch("src.languages.go.CodeGraphExtractor.from_proj_dir",
-                   return_value=mock_cg):
-            actual = function_spans(proj_dir, filepath)
+    # Core check: is the instance truthy?
+    truthy = bool(cg)                   # Python's __bool__
+    is_not_none = cg is not None        # identity check
 
-        # Expected: the function should return the spans for any indexed file.
-        # The spec's post-condition makes no language restriction.
-        expected = [("my_func", 0, 5)]
+    # The spec requires `if cg` and `if cg is not None` to be equivalent
+    # for this code. They differ ONLY if an instance is non-None but falsy.
+    eq_result = bool(cg if truthy else None) == bool(cg if is_not_none else None)
 
-        # The bug: actual is None because "go" was hardcoded and doesn't match
-        # the Python language. passed=True means the bug is reproduced.
-        passed = actual != expected
+    # Also verify from_proj_dir only returns instance or None
+    result_none = CodeGraphExtractor.from_proj_dir("/nonexistent/proj/dir")
+    is_none = result_none is None
 
-        if passed:
-            print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
-            print("The hardcoded 'go' language key caused get_function_spans "
-                  "to miss the python-language node, returning None instead of "
-                  "the indexed function spans.")
-        else:
-            print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+    # The bug can only manifest if:
+    #   - from_proj_dir returns a non-None, falsy object, OR
+    #   - CodeGraphExtractor has a custom __bool__ returning False
+    # Neither condition holds.
 
-    except Exception as e:
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        print(f"ERROR: {e}")
-        sys.exit(1)
+    if has_custom_bool:
+        bug_possible = f"CodeGraphExtractor HAS custom __bool__ = {CodeGraphExtractor.__bool__}"
+    else:
+        bug_possible = "CodeGraphExtractor has NO custom __bool__"
 
+    # All conditions for the bug to be confirmed must be true
+    # Bug: if cg is non-None but falsy, function returns None incorrectly
+    # For this to happen: instance must exist AND bool(instance) must be False
+    can_trigger = (not is_none) and (not truthy)  # non-None but falsy
 
-if __name__ == "__main__":
-    main()
+    if can_trigger:
+        print("CONFIRMED — CodeGraphExtractor instance is non-None but falsy.")
+    else:
+        print(f"NOT CONFIRMED — {bug_possible}. "
+              f"from_proj_dir on missing db returns: {type(result_none).__name__} "
+              f"(is None: {is_none}). Instance truthy: {truthy}, "
+              f"is not None: {is_not_none}. "
+              f"'if cg' equals 'if cg is not None': {eq_result}")
+
+except Exception as e:
+    print(f'ERROR: {e}')
+    sys.exit(1)
+finally:
+    # Clean up the temp workspace
+    shutil.rmtree(tmpdir, ignore_errors=True)

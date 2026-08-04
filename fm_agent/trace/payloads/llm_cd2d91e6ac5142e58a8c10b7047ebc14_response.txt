@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function always returns a set of strings. If the path returned by _memory_path(work_dir) exists and opening/reading it succeeds without an IOError, the returned set contains every non-empty line from that file, with leading and trailing whitespace removed. If the file does not exist, or opening/reading it raises an IOError (which is caught), the returned set is empty. Formally: let path = _memory_path(work_dir). If os.path.exists(path) and open(path) does not raise IOError, then result = { line.strip() | line ∈ lines_of_file(path) ∧ line.strip() ≠ \"\" }. Else result = ∅."
-}

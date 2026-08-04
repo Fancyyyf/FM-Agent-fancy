@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "signature_text='operator,(int a, int b)', lang_cfg={'keywords': {'if', 'while', 'for'}}",
-  "offending_statements": "Line 5: r'\\b(operator\\s*(?:\\[\\]|\\(\\)|[+\\-*/%&|^~!=<>]+|new(?:\\s*\\[\\s*\\])?|delete(?:\\s*\\[\\s*\\])?))'\nLine 6: r'\\s*\\('",
-  "reason": "The operator regex does not include the comma symbol, which is a valid overloadable operator in languages like C++. For the input 'operator,(int a, int b)', the regex fails to match, and the fallback identifier search yields no result, causing the function to return None. The specification requires that operator definition signatures be recognized and the full operator token (e.g., 'operator,') returned."
-}

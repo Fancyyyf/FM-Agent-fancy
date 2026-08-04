@@ -1,11 +1,11 @@
 {
   "id": "src--llm_client-py--_messages_to_anthropic",
-  "source_file": "src/llm_client-py/_messages_to_anthropic.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_messages_to_anthropic.py",
   "function_name": "_messages_to_anthropic",
   "confirmation_status": "confirmed",
-  "attempts": "1",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_messages_to_anthropic.py",
   "detail_file": "fm_agent/bug_validation/src--llm_client-py--_messages_to_anthropic.md",
-  "probe_stdout": "CONFIRMED — bug reproduced. Failures:\n  [three systems (key test)]\n    actual:   'a\\n\\n  b\\n\\nc'\n    expected: 'a\\n\\n  b  \\n\\nc'\n  [four systems]\n    actual:   'x  \\n\\n  y\\n\\n  z\\n\\nw'\n    expected: 'x  \\n\\n  y\\n\\n  z  \\n\\nw'",
-  "trigger_summary": "With 3+ system messages, the code's iterative .strip() on line 92 prematurely removes trailing whitespace from intermediate messages' content, while the spec requires concatenating all contents first and stripping only the final result."
+  "probe_stdout": "CONFIRMED -- actual: 'Hello  \\n\\n there' | expected: '  Hello  \\n\\n there '",
+  "trigger_summary": "Multiple system messages with leading/trailing whitespace in content have that whitespace stripped by the .strip() call on line 13, violating the spec requirement to preserve whitespace."
 }

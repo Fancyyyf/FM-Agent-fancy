@@ -1,20 +1,3 @@
-# [SPEC]
-# Unit: src/languages/codegraph.py
-#
-# _qualified_parts(name: str, qualified_name: str) -> list
-#
-# Pre-condition:
-#   - name and qualified_name are strings
-#
-# Post-condition:
-#   - Returns a list of non-empty strings
-#   - The last element of the returned list equals name
-#   - When qualified_name is non-empty and has name as a suffix, the elements before the last are the scope qualifier components extracted from the prefix of qualified_name that precedes name, split on "::" or "."
-#   - When qualified_name is empty or does not have name as a suffix, the returned list is [name]
-#   - The character used as the scope separator in qualified_name ("." or "::") does not affect the set or order of components in the returned list
-#   - The same (name, qualified_name) pair always produces the same returned list
-# [SPEC]
-
 def _qualified_parts(name: str, qualified_name: str) -> list:
     """Split codegraph's ``qualified_name`` into ``[*scope_parts, name]``.
 

@@ -1,35 +1,63 @@
-"""Probe for bug src--incremental_reasoner-py--_update_specs_for_intent.
+"""Probe script for bug: src--incremental_reasoner-py--_update_specs_for_intent
 
-Claim: seed set is only populated from relevant_rel_files; changed_targets are
-never added.  The probe inspects the source of _update_specs_for_intent to
-verify whether seed.update(changed_targets.keys()) is present.
+Tests whether importing _update_specs_for_intent raises an IndentationError
+as claimed by the logic verification result.
 """
 import sys
-import inspect
+import os
+import importlib.util
+
+# The probe runs from the repo root. The extracted function file is at:
+# fm_agent/extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent.py
+# Probe is at: fm_agent/bug_validation/probe_...py
+probe_dir = os.path.dirname(os.path.abspath(__file__))
+# probe_dir is fm_agent/bug_validation; going up two levels reaches repo root
+repo_root = os.path.dirname(os.path.dirname(probe_dir))
+# Now repo_root/fm_agent/extracted_functions/... should work
+extracted_path = os.path.join(
+    repo_root, 'fm_agent', 'extracted_functions', 'src',
+    'incremental_reasoner-py', '_update_specs_for_intent.py'
+)
+
+confirmed = None
+error_msg = None
+actual = None
+expected = "IndentationError raised, function not created"
 
 try:
-    from src.incremental_reasoner import _update_specs_for_intent
+    spec = importlib.util.spec_from_file_location(
+        '_update_specs_for_intent_probe',
+        extracted_path
+    )
+    mod = importlib.util.module_from_spec(spec)
 
-    source = inspect.getsource(_update_specs_for_intent)
+    try:
+        spec.loader.exec_module(mod)
+        fn = getattr(mod, '_update_specs_for_intent', None)
+        if fn is not None and callable(fn):
+            actual = (
+                "Function _update_specs_for_intent exists and is callable "
+                "(extracted file imported successfully, no IndentationError)"
+            )
+            confirmed = False
+        else:
+            actual = (
+                "Module loaded but _update_specs_for_intent not found as callable"
+            )
+            confirmed = False
+    except IndentationError as e:
+        actual = f"IndentationError: {e}"
+        confirmed = True
+    except SyntaxError as e:
+        actual = f"SyntaxError: {e}"
+        confirmed = True
 
-    # The spec requires that changed_targets (added/modified) populate the seed.
-    # The actual code does this at line 1708 of the source file.
-    has_seed_update = "seed.update(changed_targets" in source
-
-    if has_seed_update:
-        # changed_targets ARE added to seed — the code matches the spec.
-        # Bug NOT confirmed.
-        print(
-            "NOT CONFIRMED — seed.update(changed_targets.keys()) found in "
-            "_update_specs_for_intent; changed_targets are added to the seed "
-            "alongside relevant_rel_files."
-        )
-    else:
-        # changed_targets are NOT added — the bug IS real.
-        print(
-            "CONFIRMED — seed.update(changed_targets.keys()) missing from "
-            "_update_specs_for_intent; only relevant_rel_files populate the seed."
-        )
 except Exception as e:
-    print(f"ERROR: {e}")
-    sys.exit(1)
+    error_msg = f'{type(e).__name__}: {e}'
+
+if confirmed:
+    print(f'CONFIRMED — actual: {actual!r} | expected: {expected!r}')
+elif confirmed is False:
+    print(f'NOT CONFIRMED — actual: {actual!r}')
+else:
+    print(f'ERROR: {error_msg}')

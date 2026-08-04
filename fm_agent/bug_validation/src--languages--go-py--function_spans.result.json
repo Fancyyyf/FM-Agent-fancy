@@ -1,11 +1,11 @@
 {
   "id": "src--languages--go-py--function_spans",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/go-py/function_spans.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/go-py/function_spans.py",
   "function_name": "function_spans",
-  "confirmation_status": "confirmed",
-  "attempts": "1",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--go-py--function_spans.py",
   "detail_file": "fm_agent/bug_validation/src--languages--go-py--function_spans.md",
-  "probe_stdout": "CONFIRMED — actual: None | expected: [('my_func', 0, 5)]\nThe hardcoded 'go' language key caused get_function_spans to miss the python-language node, returning None instead of the indexed function spans.",
-  "trigger_summary": "function_spans hardcodes the language key 'go' in the call to get_function_spans, causing it to return None for non-Go files that are indexed by the codegraph and contain function definitions."
+  "probe_stdout": "NOT CONFIRMED \u2014 CodeGraphExtractor has NO custom __bool__. from_proj_dir on missing db returns: NoneType (is None: True). Instance truthy: True, is not None: True. 'if cg' equals 'if cg is not None': True",
+  "trigger_summary": "Code uses 'if cg' truthiness check instead of 'if cg is not None' identity check, but CodeGraphExtractor has no custom __bool__ and from_proj_dir only returns an instance or None, making the two checks equivalent in practice."
 }

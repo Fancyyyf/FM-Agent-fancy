@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "value = ['   '], where _clean_label('   ') returns a blank string",
-  "offending_statements": "Line 9: if label:",
-  "reason": "The code filters cleaned labels using 'if label:', which is truthy for any non-empty string. The specification requires including only non-blank strings, so blank (whitespace-only but non-empty) strings returned by _clean_label would be incorrectly kept."
-}

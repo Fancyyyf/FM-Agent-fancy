@@ -1,6 +1,0 @@
-```json
-{
-  "info_updated": true,
-  "new_info": "# [INFO]\n# CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None\n#   Pre-condition: proj_dir is a valid directory path.\n#   Post-condition: Returns a CodeGraphExtractor instance bound to proj_dir if\n#     codegraph is available and its index is built for the project; returns a\n#     falsy value (None or equivalent) if codegraph is unavailable or\n#     initialization fails.\n# [SPLIT]\n# CodeGraphExtractor.get_functions_by_file(lang_key: str, proj_dir: str) -> dict[str, list[tuple[str, str]]]\n#   Pre-condition: lang_key is a string; proj_dir is the project root directory path.\n#   Post-condition: Returns a dictionary mapping absolute file paths (str) to\n#     lists of (function_name: str, body: str) tuples for top-level functions in\n#     files matching lang_key under proj_dir. Files that cannot be opened for\n#     reading are omitted. Returns an empty dictionary if lang_key is unrecognized\n#     or no matching functions are found.\n# [INFO]"
-}
-```

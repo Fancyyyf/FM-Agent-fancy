@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "phases_json file contains {\"phases\": [{\"phase\": 1, \"modules\": [{\"name\": \"modA\", \"source_files\": \"file.txt\"}]}]} and modified_modules = [{\"phase\": 1, \"module\": \"modA\"}].",
-  "offending_statements": "Line 17-18: source_files_by_key[(phase.get(\"phase\"), module.get(\"name\", \"\"))] = list(module.get(\"source_files\", []))",
-  "reason": "The specification requires that only modules with a non-empty source_files array be listed. The code converts the value of 'source_files' to a list unconditionally. If the JSON contains a non-array value like a string, list() turns it into a non-empty list of characters, incorrectly including the module in the prompt. This violates the spec's definition of a non-empty source_files array."
-}

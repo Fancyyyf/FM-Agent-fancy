@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir points to a valid project with a JavaScript file (e.g., '/repo/test.js') containing two functions: 'func1' at lines 1-4 and 'func2' at lines 5-10. The CodeGraphExtractor is available and its get_function_spans returns [('func2', 5, 10), ('func1', 1, 4)] (i.e., unordered). The function_spans returns that list unchanged, violating the specification that the list must be ordered by ascending start_idx (which would be [('func1', 1, 4), ('func2', 5, 10)]).",
-  "offending_statements": "Line 8: return cg.get_function_spans(\"javascript\", filepath) if cg else None",
-  "reason": "The specification requires the returned list to be ordered by ascending start_idx. The code simply returns the raw list from cg.get_function_spans without sorting. The post-condition of get_function_spans does not guarantee ordering, so a valid input where the codegraph backend returns an unordered list leads to a specification violation."
-}

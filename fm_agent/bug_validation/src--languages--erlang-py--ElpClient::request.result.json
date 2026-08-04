@@ -1,1 +1,11 @@
-{"id": "src--languages--erlang-py--ElpClient::request", "source_file": "src/languages/erlang.py", "function_name": "ElpClient.request", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::request.py", "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::request.md", "probe_stdout": "CONFIRMED — AssertionError raised (spec violation): unreachable\n", "trigger_summary": "Setting _MAX_CONTENT_MODIFIED_RETRIES to 0 causes range(0) to produce zero iterations, falling through to raise AssertionError(\"unreachable\") which violates the spec's allowed outcomes (return, TimeoutError, RuntimeError)."}
+{
+  "id": "src--languages--erlang-py--ElpClient::request",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::request.py",
+  "function_name": "ElpClient::request",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::request.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::request.md",
+  "probe_stdout": "CONFIRMED — actual: RuntimeError raised | expected: TimeoutError | deadline=10.0, monotonic_reached=11.0, deadline expired on final retry\n",
+  "trigger_summary": "When the last retry receives a ContentModifiedError after the overall deadline has expired, the code immediately raises RuntimeError without checking the remaining time."
+}

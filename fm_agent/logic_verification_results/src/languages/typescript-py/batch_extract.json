@@ -1,10 +1,5 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/typescript-py/batch_extract.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "- If codegraph is available: returns a dict whose keys are absolute file\n    paths to TypeScript source files within proj_dir, and whose values are\n    lists of (function_name, function_body) tuples for every top-level\n    function declared in the corresponding file.\n  - Each function_name is the identifier of the function declaration.\n  - Each function_body is the full source text of the function definition.\n  - If proj_dir contains no TypeScript files with top-level functions:\n    returns an empty dict.\n  - If codegraph is unavailable: returns an empty dict {}.",
-    "actual_behavior": "The function returns a dictionary. Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is None, the result is the empty dictionary {}. Otherwise, the result is cg.get_functions_by_file(\"typescript\", proj_dir). Formally: result  dict. (result = {}  (cg  None  result = cg.get_functions_by_file(\"typescript\", proj_dir))). The values of result, if any, satisfy: for every key k (str), result[k] is a list of tuples; each tuple (name: str, body: str) represents a TypeScript function. The result may be empty for any of the following reasons: CodeGraphExtractor initialization failed, the language \"typescript\" is not recognized, or no TypeScript source files with extractable functions were found under proj_dir.",
-    "code_evidence": "Line 4: return cg.get_functions_by_file(\"typescript\", proj_dir) if cg else {}",
-    "trigger_condition": "The specification (B) states values must contain only toplevel function definitions. The implementation delegates to `get_functions_by_file`, whose documented postcondition does not restrict results to toplevel functions. Consequently, a project directory with a file containing nested functions will produce an output that includes those nested declarations, failing requirement B."
-  }
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/typescript-py/batch_extract.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

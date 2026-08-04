@@ -1,37 +1,3 @@
-# [SPEC]
-# Unit: src/pipeline_setup.py
-#
-# _collect_changed_modules(ensure_changes, *change_sets) -> list
-#
-# Pre-condition:
-#   - ensure_changes is a dict that may contain an "augmented_modules" key
-#     whose value is a list of dicts, each with at least "phase" and "module"
-#     keys.
-#   - Each positional argument in change_sets is a dict that may contain a
-#     "modified_modules" key whose value is a list of dicts, each with at
-#     least "phase" and "module" keys.
-#
-# Post-condition:
-#   - Returns a list of dicts, each containing "phase" and "module" keys,
-#     with no duplicate (phase, module) pairs.
-#   - The set of (phase, module) pairs in the result is exactly the union of
-#     all pairs from every change_set's "modified_modules" list (in the order
-#     the change_sets arguments are given) and from
-#     ensure_changes["augmented_modules"].
-#   - When a (phase, module) pair appears in multiple inputs, only the first
-#     occurrence is retained in the result.
-#   - The order of entries in the result is the order of first appearance
-#     across the inputs: change_sets in positional order, then
-#     ensure_changes.
-#   - Returns an empty list when none of the inputs contain
-#     "modified_modules" / "augmented_modules" keys, or when those keys are
-#     absent or map to empty lists.
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _collect_changed_modules(ensure_changes, *change_sets):
     """Collect the modules whose source-file list changed during post-processing.
 

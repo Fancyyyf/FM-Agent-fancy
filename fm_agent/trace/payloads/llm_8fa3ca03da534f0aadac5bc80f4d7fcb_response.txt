@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "{\"verdict\": \"MATCH\", \"counterexample\": \"   \", \"offending_statements\": null, \"reason\": \"\"}",
-  "offending_statements": "Line 27: def _nonempty_string(value):\nLine 28:     return isinstance(value, str) and bool(value.strip())\nLine 47:     if _nonempty_string(counterexample) or _nonempty_string(offending_statements):",
-  "reason": "The specification requires raising a ValueError if counterexample or offending_statements is a non-empty string for a MATCH verdict, but the code treats whitespace-only strings as empty and does not raise an error, violating the requirement."
-}

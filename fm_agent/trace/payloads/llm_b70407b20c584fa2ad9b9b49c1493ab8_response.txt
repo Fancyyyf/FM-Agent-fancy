@@ -1,1 +1,0 @@
-{"post_condition": "The function returns an integer, which is always at least 1. Formally: isinstance(result, int) ∧ result ≥ 1."}

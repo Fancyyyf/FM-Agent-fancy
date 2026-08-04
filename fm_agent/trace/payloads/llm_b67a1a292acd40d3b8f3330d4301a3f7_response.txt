@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Suppose the fixed maximum length (capacity) is 3. Initially, self.llm_statuses already contains 4 elements (e.g., previous entries). Call _push_llm_status with any valid arguments, for example ts=None, source='test', label='', status='', model=None, code=None, detail=None. After the call, self.llm_statuses will have 5 elements, exceeding the allowed capacity of 3, violating the specification that the sequence never exceeds the maximum length.",
-  "offending_statements": "Line 1: def _push_llm_status(self, ts, source, label, status, model=None, code=None, detail=None): ... The method (as described in post-condition A) only evicts the oldest entry when len(old) == capacity; it does not evict when len(old) > capacity. Consequently, if the sequence is already over capacity, appending another entry violates the invariant.",
-  "reason": "The specification requires that the sequence never exceeds the maximum length, and when an append would exceed it, the oldest entry is evicted. Post-condition A guarantees eviction only if len(old) == capacity, leaving cases where len(old) > capacity unhandled. In such a case, the sequence grows beyond the limit, violating requirement B."
-}

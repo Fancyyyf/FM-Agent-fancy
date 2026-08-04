@@ -1,11 +1,11 @@
 {
   "id": "src--languages--rust-py--batch_extract",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/src/languages/rust-py/batch_extract.py",
+  "source_file": "src/languages/rust.py",
   "function_name": "batch_extract",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--rust-py--batch_extract.py",
   "detail_file": "fm_agent/bug_validation/src--languages--rust-py--batch_extract.md",
-  "probe_stdout": "CONFIRMED — batch_extract does not filter empty-list values. File '/fake/proj/src/empty_mod.rs' maps to [] but spec requires Each value must be a non-empty list of (function_name, function_body) tuples",
-  "trigger_summary": "batch_extract passes through empty-list values from get_functions_by_file without filtering, violating the spec's requirement that each value be a non-empty list of tuples."
+  "probe_stdout": "CONFIRMED — batch_extract raised exception instead of returning a dict: DatabaseError: file is not a database\n",
+  "trigger_summary": "batch_extract propagates sqlite3.DatabaseError when .codegraph/codegraph.db exists but is not a valid SQLite database, instead of returning an empty dict as the spec requires."
 }

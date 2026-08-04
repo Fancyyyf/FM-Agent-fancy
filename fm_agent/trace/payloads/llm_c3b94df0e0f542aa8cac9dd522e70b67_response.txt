@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "first_line='blah foo! bar', name='foo!'",
-  "offending_statements": "Line 6: return bool(re.search(rf\"(?<![A-Za-z0-9_]){re.escape(name)}(?:\\s*\\(|\\b)\", first_line))",
-  "reason": "The regex uses \\b to check for a following non-word character, but \\b only matches between a word character and a non-word character. When name ends with a non-word character (e.g., '!') and the next character is also non-word (e.g., space) or end-of-string, \\b does not match, causing the function to incorrectly return False. The specification requires matching when the name is immediately followed by any non-word character or end-of-string, which would be correctly tested with a negative lookahead like (?!\\w) instead of \\b."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "message = {\"method\": \"elp/status\"}, self._status initially equals \"initial_value\"",
-  "offending_statements": "Line 4: if params is None:\nLine 5:     params = {}\nLine 7:     self._status = params.get(\"status\")",
-  "reason": "The code unconditionally sets self._status to params.get('status'), which evaluates to None when the 'status' key is absent or params is missing. The specification requires self._status to remain unchanged in that scenario."
-}

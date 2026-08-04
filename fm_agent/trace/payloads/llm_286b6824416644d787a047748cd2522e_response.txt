@@ -1,1 +1,0 @@
-{"verdict": "MISMATCH", "counterexample": "content = \"hello [SPEC]\"", "offending_statements": "Line 6: return line[:idx].rstrip()", "reason": "The code returns \"hello\", which is not a valid single-line comment prefix (e.g., '#', '//', '%'), violating the specification that the returned value must be a comment prefix."}

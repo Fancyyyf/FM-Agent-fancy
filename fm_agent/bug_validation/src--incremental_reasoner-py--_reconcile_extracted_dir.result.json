@@ -1,11 +1,11 @@
 {
   "id": "src--incremental_reasoner-py--_reconcile_extracted_dir",
-  "source_file": "fm_agent/extracted_functions/src/incremental_reasoner-py/_reconcile_extracted_dir.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_reconcile_extracted_dir.py",
   "function_name": "_reconcile_extracted_dir",
   "confirmation_status": "confirmed",
-  "attempts": "1",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_reconcile_extracted_dir.py",
   "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_reconcile_extracted_dir.md",
-  "probe_stdout": "CONFIRMED — PermissionError raised; stale_undeletable.txt remains on disk while stale_deletable.txt was already removed.  Filesystem left in partial state (deletion incomplete).\n",
-  "trigger_summary": "os.remove() raises PermissionError on a file in a non-writable subdirectory, terminating the function immediately and leaving the filesystem partially modified — one orphaned file deleted, another still present."
+  "probe_stdout": "CONFIRMED — func_dir still exists after reconcile (spec requires removal)",
+  "trigger_summary": "abs_src does not exist on disk; _reconcile_extracted_dir empties func_dir but never removes the directory itself, violating the spec requirement of full removal."
 }

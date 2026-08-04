@@ -1,28 +1,3 @@
-# [SPEC]
-# Unit: src/languages/codegraph.py
-#
-# CodeGraphExtractor.get_function_spans(self, lang_key: str, abs_filepath: str) -> list[tuple[str, int, int]] | None
-#
-# Pre-condition:
-#   - self is a CodeGraphExtractor instance initialized with a valid codegraph SQLite database path
-#   - lang_key is a non-empty string identifying a programming language
-#   - abs_filepath is an absolute filesystem path to a source file residing within the project root
-#
-# Post-condition:
-#   - Returns None when lang_key does not map to any language identifier recognized by the codegraph backend, signalling the caller to fall back to regex-based function extraction
-#   - Returns None when the database contains no rows for the given file — this covers the file not being indexed, the file containing no function or method definitions, and the file path not resolving relative to the project root
-#   - Otherwise returns a list of (name, start_idx, end_idx) tuples covering every function and method definition that the codegraph backend detects in the file
-#   - name is a class-qualified identifier string suitable for use as both a function FQN tail and a filesystem path component
-#   - start_idx and end_idx are 0-indexed inclusive line numbers delimiting each function's source span, converted from the backend's 1-indexed representation
-#   - The list is ordered by ascending start_idx, matching the definition order of functions in the source file
-# [SPEC]
-
-# [INFO]
-# _extraction_ident(name: str, qualified_name: str) -> str
-#   Pre-condition: name and qualified_name are strings (qualified_name may be empty) obtained from the codegraph database for a single function or method node
-#   Post-condition: Returns a class-qualified filesystem-safe identifier string. When qualified_name contains a non-empty scope prefix and ends with name, the returned string includes scope components joined with "::" before the bare function name. When qualified_name is empty or its tail does not match name, the returned string is the bare function name with any tree-sitter signature decorations stripped. Every component in the returned string is canonicalized so the identifier can serve as both a function FQN tail and a filesystem path component.
-# [INFO]
-
     def get_function_spans(self, lang_key: str, abs_filepath: str):
         """Return ``[(name, start_idx, end_idx), ...]`` for a single file, or None.
 

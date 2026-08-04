@@ -1,34 +1,3 @@
-# [SPEC]
-# Unit: src/generate_topdown_layers-py/_tarjan_scc.py
-#
-# _tarjan_scc(nodes, edges) -> list[set]
-#
-# Pre-condition:
-#   - nodes is an iterable of hashable, equality-comparable node identifiers
-#   - edges is a mapping from each node to an iterable of successor nodes
-#     (outgoing directed edges); successor nodes that are not members of the
-#     iterable nodes are permitted — they are visited but do not contribute SCCs
-#     to the result beyond their role as intermediate targets
-#
-# Post-condition:
-#   - Returns a list of sets, each set representing one strongly connected
-#     component (SCC); the list is ordered in reverse topological order: for any
-#     directed edge from a node in SCC at position i to a node in SCC at position
-#     j, i ≤ j (no edge goes from a later SCC in the list to an earlier SCC)
-#   - Every node in nodes appears in exactly one SCC in the result
-#   - Each returned SCC is a maximal strongly connected subgraph restricted to
-#     nodes: for every ordered pair of distinct nodes (u, v) in the same SCC,
-#     there exists a directed path u → ... → v using only nodes from nodes as
-#     intermediate vertices, and no proper superset containing that SCC satisfies
-#     this property while also being a subset of nodes
-#   - A node that cannot reach any other node in nodes that can also reach it
-#     back appears as a singleton SCC (a set containing exactly that node)
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _tarjan_scc(nodes, edges):
     """Compute strongly connected components using Tarjan's algorithm (iterative).
 

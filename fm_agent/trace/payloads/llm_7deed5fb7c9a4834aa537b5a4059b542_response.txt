@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "symbol = {'location': 'invalid'}",
-  "offending_statements": "Line 4: return (symbol.get(\"location\") or {}).get(\"range\")",
-  "reason": "If 'location' is truthy but lacks a 'get' method (e.g., a string), the code raises an AttributeError instead of returning None as required by the specification."
-}

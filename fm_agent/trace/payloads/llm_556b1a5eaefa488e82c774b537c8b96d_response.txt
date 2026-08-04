@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input with `changed_targets` = {\"a::b\": \"/path/to/extracted_functions/a/b.py\"}, `seed` initially empty, `relevant_rel_files` = [], all other parameters valid. After line 41 `seed` remains empty, lines 42-44 return `[]`. The specification requires processing all functions in the seed set, which must include the `changed_targets` function \"a::b\". The code erroneously returns an empty list without generating or updating the spec for \"a::b\".",
-  "offending_statements": "Line 41: seed.add(_file_to_fqn(os.path.join(extracted_dir, rel), work_dir))",
-  "reason": "The seed set is only populated from `relevant_rel_files`; the `changed_targets` (functions from 'added' and 'modified' classifications) are never added to the seed. Consequently, when `relevant_rel_files` is empty but `changed_targets` is non‑empty the code incorrectly returns an empty list, violating the requirement that all changed functions must be processed."
-}

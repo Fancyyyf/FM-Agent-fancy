@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Consider a project directory with a Rust file 'dummy.rs' containing only comments and no function definitions. The codegraph backend initializes successfully. Then cg.get_functions_by_file('rust', proj_dir) returns a dictionary with key '/path/to/dummy.rs' and value [] (empty list), which violates spec that each value must be a non-empty list.",
-  "offending_statements": "Line 4",
-  "reason": "The specification requires every value in the returned dictionary to be a non-empty list of (function_name, function_body) tuples. The code delegates to cg.get_functions_by_file without filtering out files that contain zero functions, thus potentially returning a dictionary with empty lists."
-}

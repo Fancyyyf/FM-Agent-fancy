@@ -1,1 +1,11 @@
-{"id": "src--cli_backend-py--resolve_model_backend", "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/src/cli_backend.py", "function_name": "resolve_model_backend", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--resolve_model_backend.py", "detail_file": "fm_agent/bug_validation/src--cli_backend-py--resolve_model_backend.md", "probe_stdout": "CONFIRMED — actual: 'foobar' | expected: one of ['claude-cli', 'codex-cli', 'opencode']", "trigger_summary": "settings.llm.backend set to unrecognized value 'foobar' — _normalize_backend passes it through unchanged, causing resolve_model_backend to return a non-canonical identifier."}
+{
+  "id": "src--cli_backend-py--resolve_model_backend",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/resolve_model_backend.py",
+  "function_name": "resolve_model_backend",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--resolve_model_backend.py",
+  "detail_file": "fm_agent/bug_validation/src--cli_backend-py--resolve_model_backend.md",
+  "probe_stdout": "CONFIRMED — actual: 'unknown_backend' | allowed set: {'opencode', 'claude-cli', 'codex-cli'}",
+  "trigger_summary": "When settings.llm.backend is set to an unrecognized value (e.g. 'unknown_backend'), _normalize_backend passes it through unchanged and resolve_model_backend returns it directly instead of constraining the output to the allowed set {\"codex-cli\", \"claude-cli\", \"opencode\"}."
+}

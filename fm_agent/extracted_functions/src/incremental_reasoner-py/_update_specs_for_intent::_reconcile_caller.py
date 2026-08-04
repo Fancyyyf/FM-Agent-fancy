@@ -1,6 +1,6 @@
     def _reconcile_caller(caller_fqn, updates, base_idx):
         """
-        Reconcile caller_fqn's [INFO] block against a sequence of changed callees.
+        Reconcile caller_fqn's .info.json against a sequence of changed callees.
 
         updates is a list of (callee_name, callee_new_spec). The entries are applied
         sequentially, re-reading the caller file between each, because they all edit the same
@@ -15,35 +15,27 @@
         clang = EXT_TO_LANG.get(cext)
         if not clang:
             return None
-        ccfg = LANG_CONFIG[clang]
-        cprefix = ccfg["comment_prefix"]
-        cmarker = ccfg["spec_marker"]
-
         changed = False
         for offset, (callee_name, callee_new_spec) in enumerate(updates):
             with open(cpath, "r", errors="replace") as f:
-                ccontent = f.read()
-            cleading = _extract_leading_spec_comments(ccontent, cprefix, cmarker)
-            if cleading is None:
-                continue
-            csource = ccontent[len(cleading):]
-            c_spec, c_info = _split_spec_and_info(cleading, cprefix, cmarker)
-            if c_info is None:
-                # No callee-contract block to reconcile.
+                csource = f.read()
+            try:
+                with open(f"{cpath}.info.json", "r", encoding="utf-8") as f:
+                    c_info = json.load(f)
+            except (OSError, json.JSONDecodeError):
                 continue
 
             cresult = _llm_check_caller_info_update(
-                proj_dir, work_dir, base_idx + offset, caller_fqn, callee_name, clang, cprefix,
+                proj_dir, work_dir, base_idx + offset, caller_fqn, callee_name, clang, "",
                 callee_new_spec, c_info, csource,
             )
             if not cresult or not cresult.get("info_updated"):
                 continue
-            c_new_info = (cresult.get("new_info") or "").strip()
-            if not c_new_info:
+            c_new_info = cresult.get("new_info")
+            if not isinstance(c_new_info, dict):
                 continue
 
-            c_block = c_spec.rstrip("\n") + "\n\n" + c_new_info.strip("\n")
-            with open(cpath, "w") as f:
-                f.write(c_block + "\n\n" + csource.lstrip("\n"))
+            with open(f"{cpath}.info.json", "w", encoding="utf-8") as f:
+                json.dump(_normalize_info_dict(c_new_info), f, indent=2, ensure_ascii=False)
             changed = True
         return cpath if changed else None

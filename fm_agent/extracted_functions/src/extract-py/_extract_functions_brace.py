@@ -1,36 +1,3 @@
-# [SPEC]
-# Unit: src/extract.py
-#
-# _extract_functions_brace(lines, lang_key, lang_cfg) -> [(raw_name, start, end)]
-#
-# Pre-condition:
-#   - lines is a list of strings representing source lines with line endings stripped
-#   - lang_key is a recognized language key
-#   - lang_cfg is the LANG_CONFIG entry for that language, with body type "brace"
-#
-# Post-condition:
-#   - Returns a list of (raw_name, start, end) tuples, one per top-level function definition detected in lines, ordered by first appearance in the source
-#   - Each tuple describes a contiguous span: start is the 0-based index of the first line of the function definition, end is the 0-based index of the last line of the function body (containing the matching closing brace of the body), satisfying 0 <= start <= end < len(lines)
-#   - A function definition is identified by a language-specific declarator pattern at the outermost nesting level, followed by a brace-delimited body
-#   - The raw_name is the unqualified function name as it appears in the source text
-#   - Returned spans are non-overlapping: no line index belongs to more than one span
-#   - Lines inside syntactically well-formed comments (both line comments and block comments delimited by the language's comment syntax) are excluded from function-definition detection
-#   - Lines matching the skip-prefix and skip-keyword patterns defined in lang_cfg are excluded from function-definition detection
-#   - Language-specific exclusion rules (e.g., namespace and class declarations, constexpr variables, test-annotated functions) are applied so that non-function constructs are not misidentified as function definitions
-#   - For C and C++, only source lines at the leftmost indent level are considered as function-definition candidates
-#   - When no function definitions are detected, returns an empty list
-# [SPEC]
-
-# [INFO]
-# _find_brace_end(lines, brace_line_idx) -> int
-#   Pre-condition: lines is a list of source lines; brace_line_idx is a 0-based index into lines where the line contains an opening brace '{' that begins a brace-delimited scope
-#   Post-condition: Returns the 0-based index of the line containing the matching closing brace '}', accounting for properly nested balanced brace pairs; braces that appear inside string literals, character literals, or comments do not contribute to the brace-depth count for matching purposes
-# [SPLIT]
-# _extract_func_name_brace(sig_text, lang_cfg) -> str | None
-#   Pre-condition: sig_text is a string containing one or more concatenated source lines forming a function signature; lang_cfg is a language configuration entry
-#   Post-condition: Returns the function name as a string when sig_text matches the language's function-definition identifier pattern according to the rules encoded in lang_cfg; returns None when sig_text does not match any recognized function-definition form for that language
-# [INFO]
-
 def _extract_functions_brace(lines, lang_key, lang_cfg):
     """Extract functions from a brace-delimited language source."""
     functions = []

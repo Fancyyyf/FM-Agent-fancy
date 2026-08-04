@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/home/user/proj' containing a TypeScript file '/home/user/proj/foo.ts' with content 'function top() { function nested() { return 1; } }'",
-  "offending_statements": "Line 4: return cg.get_functions_by_file('typescript', proj_dir) if cg else {}",
-  "reason": "The specification requires the output to contain only top-level functions, but the code unconditionally returns the result of get_functions_by_file, which includes all function declarations (including nested/non-top-level functions) found in TypeScript files. A project containing a nested function results in an output that violates the specification by including that function."
-}

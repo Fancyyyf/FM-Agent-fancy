@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "extra_call_edges = [MockEdge(callee=MockCallee(fqn='callee1', info_names=[]), caller=MockCaller(fqn='', callsite_names=[]), source='')], phase_fqns = [''], known_fqns = {'callee1'}. The code returns (by_caller_fqn={}, by_callsite={}), but by_caller_fqn must map '' to a list containing the resolved edge.",
-  "offending_statements": "Line 24: if edge.caller.fqn:",
-  "reason": "The code uses a truthiness check on edge.caller.fqn, skipping empty strings or other falsy values even if they are members of phase_fqns. The specification requires that any caller FQN present in phase_fqns appears as a key, without exempting falsy values."
-}

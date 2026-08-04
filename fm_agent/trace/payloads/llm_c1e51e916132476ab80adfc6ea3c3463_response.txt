@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir=\"/home/user/myproject\" containing a file \"/home/user/myproject/script.mjs\" with content \"function foo() { return 1; }\", and no .js or .jsx files.",
-  "offending_statements": "Line 4: return cg.get_functions_by_file(\"javascript\", proj_dir) if cg else {}",
-  "reason": "The specification requires all JavaScript function definitions across all project files to be returned. However, the code only extracts functions from .js and .jsx files, ignoring other valid JavaScript source files such as .mjs, .cjs, etc. In the provided counterexample, script.mjs contains a function foo but is not included in the returned dictionary, violating the specification."
-}

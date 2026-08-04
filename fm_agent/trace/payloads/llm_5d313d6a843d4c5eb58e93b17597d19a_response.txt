@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input: phases.json contains two phases: [{\"phase\": 1, \"name\": \"Phase1\"}, {\"phase\": 2, \"name\": \"Phase2\"}], both with at least one extracted function file. Call the top‑level function with phase_numbers=None. The specification requires writing a file for each phase and returning [path_phase1, path_phase2]; the code returns a list with exactly one element (path for the first phase only).",
-  "offending_statements": "Line 98: return output_files",
-  "reason": "The code block terminates after processing a single phase, returning a list containing exactly one output file path. The specification requires processing all phases that match the phase_numbers filter, writing a JSON file for each, and returning a list of all written file paths in the order the phases appear in phases.json. The missing iteration over phases and the immediate return violate the specification."
-}

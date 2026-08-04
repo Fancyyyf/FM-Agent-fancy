@@ -1,18 +1,19 @@
 {
   "phase": 1,
-  "layers": "7",
-  "total_functions": 1,
+  "layers": "6",
+  "total_functions": 2,
   "total_batches": 1,
   "batches": [
     {
       "index": 0,
-      "file": "batch_000_layer7_extracted_b0.txt",
-      "layer": 7,
+      "file": "batch_000_layer6_extracted_b0.txt",
+      "layer": 6,
       "is_cycle": false,
-      "num_functions": 1,
+      "num_functions": 2,
       "num_pending": 0,
       "functions": [
-        "fm_agent/extracted_functions/src/trace_writer-py/_ensure_trace_dirs.py"
+        "fm_agent/extracted_functions/src/configure_llm-py/adapter_for_api_style.py",
+        "fm_agent/extracted_functions/src/configure_llm-py/validate_base_url.py"
       ]
     }
   ]

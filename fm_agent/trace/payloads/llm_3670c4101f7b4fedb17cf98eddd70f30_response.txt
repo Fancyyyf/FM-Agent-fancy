@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a fully qualified name (FQN) string constructed from the relative path of `filepath` with respect to `<proj_dir>/extracted_functions`. The file extension of the final component is removed, and all directory separators are replaced by '::'. No exceptions are raised; the return value is deterministic given the inputs. \n\nFormal logic:\nLet `extracted_base = os.path.join(proj_dir, \"extracted_functions\")`.\nLet `rel = os.path.relpath(filepath, extracted_base)`.\nLet `(stem, _) = os.path.splitext(rel)`.\nThen the return value `result = \"::\".join(Path(stem).parts)`."
-}

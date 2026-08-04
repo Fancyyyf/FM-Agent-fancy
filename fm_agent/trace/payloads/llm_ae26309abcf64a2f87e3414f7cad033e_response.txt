@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "state.model_seen = \"\" , state.totals = {\"input\": 100, \"cache_read\": 50, \"cache_write\": 10, \"output\": 200}, state.cost_native = 0.5, state.opencode_token_totals = {\"input\": 10, \"cache_read\": 5, \"cache_write\": 2, \"output\": 20}, state.opencode_cost = 0.2, state.opencode_calls = 3",
-  "offending_statements": "Line 2: p = _price_for(state.model_seen or \"\")",
-  "reason": "When state.model_seen is an empty string (or any falsy value), the expression `state.model_seen or \"\"` evaluates to an empty string. This violates _price_for’s documented precondition that model must be a non‑empty string, leading to an exception or undefined behavior and preventing the function from returning a Rich Panel as required by the specification."
-}

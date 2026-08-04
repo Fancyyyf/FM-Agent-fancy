@@ -1,6 +1,6 @@
 # Bug Report: resolve_model_backend
 
-**Source file:** `src/cli_backend.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/resolve_model_backend.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,67 +12,47 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a canonical backend identifier string: one of "opencode",
-    "codex-cli", or "claude-cli"
-  - The returned backend is first determined by normalizing
-    settings.llm.backend via _normalize_backend; if the result is not
-    "auto", that result is returned immediately
-  - When the normalized value of settings.llm.backend is "auto", the
-    backend is determined by inspecting environment markers in a fixed
-    priority order:
-      1. FM_AGENT_HOST or FM_AGENT_CLIENT (whichever is set) is checked
-         case-insensitively for "claude" or "codex" substrings
-      2. The presence of any Claude-specific environment variable
-         (CLAUDE_PLUGIN_ROOT, CLAUDE_CODE_ENTRYPOINT)
-      3. The presence of any Codex-specific environment variable
-         (CODEX_HOME, CODEX_SANDBOX, CODEX_EXECUTION_MODE)
-  - The first matching marker in this priority order determines the
-    returned backend: "claude-cli" for Claude markers, "codex-cli" for
-    Codex markers
-  - When no marker matches, returns "codex-cli" (the default fallback)
-  - The same input (settings.llm.backend value and environment state)
-    always produces the same output (pure function with respect to its
-    inputs at call time)
+Returns a non-empty string from the set {"codex-cli", "claude-cli", "opencode"} identifying which CLI backend is configured for use. When an explicit backend is configured (not "auto"), the canonical form of the configured backend name is returned. When the backend is configured to auto-detect, the return value identifies the first CLI backend detected as available in the current process environment, defaulting to "codex-cli" when no CLI backend is detected.
 
 ---
 
 ### Actual Behavior
 
-The function returns a string that is the canonical backend identifier resolved from the configuration and environment. Let normalized = _normalize_backend(settings.llm.backend). If normalized != 'auto', the result is normalized. Otherwise, when normalized == 'auto', let H = (os.environ.get('FM_AGENT_HOST') or os.environ.get('FM_AGENT_CLIENT') or '').lower(). If 'claude'  H or any of the environment variables CLAUDE_PLUGIN_ROOT or CLAUDE_CODE_ENTRYPOINT is set to a non-empty value, the result is 'claude-cli'. In all other cases (including when H contains 'codex' but not 'claude', when any of CODEX_HOME, CODEX_SANDBOX, or CODEX_EXECUTION_MODE is set, or when no environment hints are present), the result is 'codex-cli'.
+Natural language: The function returns a string that resolves the model backend according to a priority scheme. First, it normalizes the configured backend from `settings.llm.backend` using `_normalize_backend`; if that canonical name is not `'auto'`, it is returned directly. Otherwise, it inspects environment variables: if either `FM_AGENT_HOST` or `FM_AGENT_CLIENT` (caseinsensitive) contains `'claude'`, the result is `'claude-cli'`; if it contains `'codex'`, the result is `'codex-cli'`. If no such hint is found, it checks for the presence of Claudespecific markers `CLAUDE_PLUGIN_ROOT` or `CLAUDE_CODE_ENTRYPOINT`  if any is set, the result is `'claude-cli'`. Failing that, it checks for Codex markers `CODEX_HOME`, `CODEX_SANDBOX`, or `CODEX_EXECUTION_MODE`  if any is set, the result is `'codex-cli'`. In the absence of any positive signal, the default return value is `'codex-cli'`. The function modifies no external state. Formal logic: Let `B = _normalize_backend(settings.llm.backend)`. Let `H = (getenv('FM_AGENT_HOST') OR getenv('FM_AGENT_CLIENT') OR '')` lowercased. Let `C = getenv('CLAUDE_PLUGIN_ROOT') OR getenv('CLAUDE_CODE_ENTRYPOINT')`. Let `X = getenv('CODEX_HOME') OR getenv('CODEX_SANDBOX') OR getenv('CODEX_EXECUTION_MODE')`. The return value `R` is defined as: `R = B` if `B  'auto'`; else if `'claude'  H` then `R = 'claude-cli'`; else if `'codex'  H` then `R = 'codex-cli'`; else if `C  ` then `R = 'claude-cli'`; else if `X  ` then `R = 'codex-cli'`; else `R = 'codex-cli'`. The environment is unchanged and `settings` is readonly.
 
 ---
 
 ## Code Evidence
 
-Line 2:     backend = _normalize_backend(settings.llm.backend)
-Line 3:     if backend != "auto":
-Line 4:         return backend
+Line 2: backend = _normalize_backend(settings.llm.backend)
+Line 3: if backend != "auto":
+Line 4:     return backend
 
 ---
 
 ## Trigger Condition
 
-The specification requires the function to return one of the canonical backend identifiers 'opencode', 'codex-cli', or 'claude-cli'. The code returns the result of _normalize_backend unchanged when it is not 'auto'. According to the provided behaviour of _normalize_backend, if the input is not a recognised alias, it returns the input as-is. Therefore, for an input like 'foobar', the function returns 'foobar', which is not one of the allowed identifiers, violating the specification.
+The specification requires the return value to be from the set {"codex-cli", "claude-cli", "opencode"}. However, when an explicit backend is configured (not "auto") and _normalize_backend does not map it to one of those allowed values, the code returns the normalized value unchanged. For example, with backend='unknown_backend', _normalize_backend returns 'unknown_backend', and the function returns it, violating the specification.
 
 ---
 
 ## How to trigger the bug
 
-The bug occurs when `settings.llm.backend` is set to a value that is not a recognized alias in `_BACKEND_ALIASES` and is not `"auto"`. The `_normalize_backend` function passes such values through unchanged, and `resolve_model_backend` returns the unrecognized value directly — violating the spec's post-condition that only canonical identifiers are returned.
+Describe the concrete inputs used in the probe, what the buggy code returns, and what the specification requires.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `settings.llm.backend` | `"foobar"` |
+| settings.llm.backend | "unknown_backend" |
 
 ### Expected (spec-correct) Output
 
-`one of "opencode", "codex-cli", or "claude-cli"`
+Any value from `{"codex-cli", "claude-cli", "opencode"}`
 
 ### Actual (buggy) Output
 
-`"foobar"`
+`"unknown_backend"`
 
 ### How to Reproduce
 
@@ -82,14 +62,13 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
-from unittest.mock import patch
-import config
+from config import settings
 from src.cli_backend import resolve_model_backend
 
-with patch.object(config.settings.llm, "backend", "foobar"):
-    result = resolve_model_backend()
-    print(result)  # actual (buggy) output: 'foobar'
-                   # expected (correct) output: one of 'opencode', 'codex-cli', 'claude-cli'
+settings.llm.backend = "unknown_backend"
+print(resolve_model_backend())
+# actual (buggy) output: "unknown_backend"
+# expected (correct) output: one of {"codex-cli", "claude-cli", "opencode"}
 ```
 
 ---
@@ -97,44 +76,40 @@ with patch.object(config.settings.llm, "backend", "foobar"):
 ## Probe Script
 
 ```python
+"""Probe script: confirm resolve_model_backend returns values outside the allowed set."""
 import sys
 import os
-from unittest.mock import patch
 
-# The probe is run from the repo root, so cwd is the import base.
-sys.path.insert(0, os.getcwd())
+# Ensure the repo root is importable
+_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
+ALLOWED_BACKENDS = {"codex-cli", "claude-cli", "opencode"}
 
-def main():
-    try:
-        import config
-        from src.cli_backend import resolve_model_backend
+try:
+    from config import settings
+    from src.cli_backend import resolve_model_backend
 
-        canonical = {"opencode", "codex-cli", "claude-cli"}
-        # Monkey-patch settings.llm.backend to a non-canonical value
-        with patch.object(config.settings.llm, "backend", "foobar"):
-            actual = resolve_model_backend()
-            # The spec requires a canonical identifier. The buggy code
-            # passes the unrecognized value straight through.
-            passed = actual not in canonical  # True = bug reproduced
+    # Inject an unrecognized backend value — per the spec, the function
+    # must return one of the allowed backends, but the code returns the
+    # normalized value unchanged for any unknown backend.
+    settings.llm.backend = "unknown_backend"
 
-        if passed:
-            expected_fmt = f"one of {sorted(canonical)}"
-            print(f"CONFIRMED — actual: {actual!r} | expected: {expected_fmt}")
-        else:
-            print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+    actual = resolve_model_backend()
+    bug_reproduced = actual not in ALLOWED_BACKENDS
+except Exception as e:
+    print(f"ERROR: {e}")
+    sys.exit(1)
 
-    except Exception as e:
-        print(f"ERROR: {e}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+if bug_reproduced:
+    print(f"CONFIRMED — actual: {actual!r} | allowed set: {ALLOWED_BACKENDS!r}")
+else:
+    print(f"NOT CONFIRMED — actual matched allowed set: {actual!r}")
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: 'foobar' | expected: one of ['claude-cli', 'codex-cli', 'opencode']
+CONFIRMED — actual: 'unknown_backend' | allowed set: {'opencode', 'claude-cli', 'codex-cli'}
 ```

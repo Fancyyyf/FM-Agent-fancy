@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Environment variable ELP_TIMEOUT_SECONDS is set to the invalid string 'abc', and settings.erlang.timeout_s is 100. The function returns 100, but the specification requires returning the built-in default constant _DEFAULT_TIMEOUT_SECONDS.",
-  "offending_statements": "Line 1: def _timeout_seconds() -> int:\nLine 4:     return max(1, settings.erlang.timeout_s)",
-  "reason": "The specification (B) mandates that when ELP_TIMEOUT_SECONDS is missing or invalid, the function must return _DEFAULT_TIMEOUT_SECONDS. The code never reads the environment variable and never references _DEFAULT_TIMEOUT_SECONDS; it only returns max(1, settings.erlang.timeout_s). Even if the config loader normally sets the default, the function's own logic does not enforce the specified fallback, so there exist states (e.g., settings.erlang.timeout_s ≠ _DEFAULT_TIMEOUT_SECONDS) where the output violates B."
-}

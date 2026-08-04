@@ -1,1 +1,0 @@
-{"post_condition": "The function returns a pathlib.Path object. Let p = Path(proj_dir).resolve(). If (p / 'trace') is an existing directory, the return value is p; otherwise, it is p / 'fm_agent'. The returned path is absolute."}

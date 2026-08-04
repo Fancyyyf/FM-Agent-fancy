@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "work_dir is a symbolic link that points to an existing directory (e.g., '/tmp/dirlink')",
-  "offending_statements": "Line 3: if os.path.isdir(work_dir):\nLine 4: shutil.rmtree(work_dir)",
-  "reason": "The code uses os.path.isdir, which returns True for symbolic links to directories. It then unconditionally calls shutil.rmtree on that path. However, shutil.rmtree raises an OSError when the top-level path is a symbolic link to a directory (since Python 3.3+), because it refuses to follow symlinks at the root. As a result, the target directory and its contents are not removed and an exception is propagated. This violates the specification, which requires that when work_dir refers to an existing directory, that directory and all its contents are permanently removed without error."
-}

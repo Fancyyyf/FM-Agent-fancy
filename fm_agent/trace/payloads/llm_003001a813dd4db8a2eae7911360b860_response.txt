@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Setup: input_dir = '/tmp/target'; output_path = '/tmp/cache.json'. First, create /tmp/target with a regular file and a subdirectory, call collect_file_names('/tmp/target', '/tmp/cache.json') to populate cache.json. Then remove read permission from the subdirectory (chmod -r). Second call: collect_file_names('/tmp/target', '/tmp/cache.json'). The code executes os.walk(input_dir) on Line 6, which tries to list the now unreadable subdirectory, raising PermissionError. The function terminates with an exception and does not return the cached list. Specification requires that the cached list be returned without re-scanning, i.e., without any exception.",
-  "offending_statements": "Line 6: for root, _, files in os.walk(input_dir):",
-  "reason": "The code unconditionally rescans the directory tree before consulting the cache, contrary to the specification that subsequent calls with a valid output_path shall return the cached list without any re-scan. This causes an observable difference (exception instead of successful return) when the directory tree becomes inaccessible."
-}

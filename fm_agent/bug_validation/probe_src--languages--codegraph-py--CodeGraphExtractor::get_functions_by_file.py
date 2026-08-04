@@ -1,89 +1,93 @@
-import os
+"""Probe script for bug: src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file
+
+The spec claims get_functions_by_file returns a dictionary mapping each absolute
+source file path (str) to a list of (function_name, body_text) tuples. The actual
+code uses ``os.path.join(proj_dir, file_path) if proj_dir else file_path``, so
+when proj_dir is None the dict keys are raw relative file_path values instead of
+absolute paths.
+
+Strategy: create a temp workspace with a test source file and a minimal codegraph
+SQLite database, call get_functions_by_file with proj_dir=None from that temp
+directory (so the relative path resolves), and check whether the returned dict
+keys are absolute paths.
+"""
 import sys
+import os
 import sqlite3
 import tempfile
-import shutil
+import traceback
 
-# Add repo root to Python path so `from src.languages.codegraph import ...` works
-repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, repo_root)
+# Probe is at <repo>/fm_agent/bug_validation/probe_*.py
+# Go up 3 levels to reach repo root
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, _REPO_ROOT)
 
 try:
     from src.languages.codegraph import CodeGraphExtractor
 
-    # --- Setup: create a temporary directory with test fixtures ---
-    tmpdir = tempfile.mkdtemp(prefix="probe_cg_")
-    cg_dir = os.path.join(tmpdir, ".codegraph")
-    os.makedirs(cg_dir, exist_ok=True)
-    db_path = os.path.join(cg_dir, "codegraph.db")
+    # Create a self-contained temporary directory for all file I/O
+    tmpdir = tempfile.mkdtemp()
 
-    # Create the codegraph SQLite database with the nodes table
+    # Create a test source file in the temp dir with a simple function
+    test_file = os.path.join(tmpdir, "test_module.py")
+    with open(test_file, "w") as f:
+        f.write("def hello(name):\n    return f'Hello, {name}!'\n")
+
+    # Create a minimal codegraph SQLite database
+    db_path = os.path.join(tmpdir, "codegraph.db")
     conn = sqlite3.connect(db_path)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS nodes (
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE nodes (
             id INTEGER PRIMARY KEY,
             name TEXT,
             qualified_name TEXT,
             file_path TEXT,
-            start_line INTEGER,
-            end_line INTEGER,
             kind TEXT,
-            language TEXT
+            language TEXT,
+            start_line INTEGER,
+            end_line INTEGER
         )
     """)
 
-    # Create a small Python source file as a test subject
-    test_src = os.path.join(tmpdir, "test_module.py")
-    with open(test_src, "w") as f:
-        f.write("def hello():\n    return 'world'\n\n")
-        f.write("def goodbye():\n    return 'farewell'\n")
-
-    # Insert function entries referencing the test source file
-    conn.execute(
-        "INSERT INTO nodes (name, qualified_name, file_path, start_line, end_line, kind, language) "
+    # Insert a function node with a relative file_path (as codegraph stores)
+    rel_file = "test_module.py"
+    cur.execute(
+        "INSERT INTO nodes (name, qualified_name, file_path, kind, language, start_line, end_line) "
         "VALUES (?, ?, ?, ?, ?, ?, ?)",
-        ("hello", "hello", "test_module.py", 1, 2, "function", "python"),
-    )
-    conn.execute(
-        "INSERT INTO nodes (name, qualified_name, file_path, start_line, end_line, kind, language) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
-        ("goodbye", "goodbye", "test_module.py", 4, 5, "function", "python"),
+        ("hello", "hello", rel_file, "function", "python", 1, 2),
     )
     conn.commit()
     conn.close()
 
-    # --- Test: call get_functions_by_file with a RELATIVE proj_dir ---
-    cwd = os.getcwd()
-    rel_proj_dir = os.path.relpath(tmpdir, cwd)
-
     extractor = CodeGraphExtractor(db_path)
-    result = extractor.get_functions_by_file("python", proj_dir=rel_proj_dir)
 
-    # --- Oracle: spec requires ALL keys to be absolute filesystem paths ---
-    bug_confirmed = False
-    non_absolute_keys = []
+    # Change into the temp dir so that the relative file_path resolves
+    # correctly when proj_dir=None (the abs_path becomes just file_path,
+    # which is valid relative to CWD).
+    old_cwd = os.getcwd()
+    os.chdir(tmpdir)
+    try:
+        result = extractor.get_functions_by_file("python", proj_dir=None)
+    finally:
+        os.chdir(old_cwd)
 
-    for key in result:
-        if not os.path.isabs(key):
-            non_absolute_keys.append(key)
-            bug_confirmed = True
-
-    expected = os.path.abspath(os.path.join(rel_proj_dir, "test_module.py"))
-
-    if bug_confirmed:
-        print(
-            f"CONFIRMED — spec requires absolute paths as dict keys, "
-            f"but passing a relative proj_dir={rel_proj_dir!r} produced "
-            f"relative key: {non_absolute_keys!r} instead of expected absolute key {expected!r}"
-        )
+    # The spec claims ALL keys MUST be absolute paths.
+    if not result:
+        print("NOT CONFIRMED — result was empty (no functions extracted)")
     else:
-        print(f"NOT CONFIRMED — all keys are absolute: {list(result.keys())!r}")
+        abs_keys = [k for k in result.keys() if os.path.isabs(k)]
+        rel_keys = [k for k in result.keys() if not os.path.isabs(k)]
+        if rel_keys:
+            print(
+                f"CONFIRMED — returned dict keys are not all absolute: "
+                f"relative keys={rel_keys!r}, "
+                f"absolute keys={abs_keys!r}"
+            )
+        else:
+            print(f"NOT CONFIRMED — all {len(result)} returned keys are absolute paths")
 
 except Exception as e:
-    import traceback
     print(f"ERROR: {e}")
     traceback.print_exc()
     sys.exit(1)
-finally:
-    if "tmpdir" in dir():
-        shutil.rmtree(tmpdir, ignore_errors=True)

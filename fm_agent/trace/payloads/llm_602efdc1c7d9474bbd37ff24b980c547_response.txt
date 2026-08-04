@@ -1,3 +1,0 @@
-{
-  "post_condition": "Let parts = fqn.split(\"::\"), n = len(parts). Let i be the largest index in the range [0, n-1] such that there exists an integer pos > 0 where parts[i][pos] == '-' and parts[i][pos+1:] is a key in EXT_TO_LANG. If such an i exists, then result = \"::\".join(parts[i+1:]) (which may be an empty string if i == n-1). Otherwise, result = parts[-1]."
-}

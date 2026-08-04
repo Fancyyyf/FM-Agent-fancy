@@ -1,6 +1,0 @@
-{
-  "verdict": "MATCH",
-  "counterexample": null,
-  "offending_statements": null,
-  "reason": "The code returns None when from_proj_dir returns None (no backend available) and returns the call edges dictionary when the backend initializes successfully. These are exactly the two cases specified. The exception propagation described in Condition A is precluded by the post-conditions of CodeGraphExtractor.from_proj_dir and get_call_edges, which guarantee a return value or None without exceptions for valid inputs."
-}

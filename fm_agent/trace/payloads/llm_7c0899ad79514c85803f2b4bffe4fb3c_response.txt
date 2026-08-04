@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Consider an incremental run (is_incremental=True) with no submodules. phases.json exists, is valid JSON (schema errors empty), but _phases_cover_current_sources returns False (e.g., new source files added). The previous mtime is 1000.0 and the current mtime is 2000.0 (file touched but not updated to cover new sources). attempt=1, OPENCODE_MAX_RETRIES=3. The code sets phase_plan_ready to True because mtime changed, breaks out, and returns normally, accepting an incomplete phases.json. This violates the specification that an incremental run should only accept phases.json if it covers all current source files.",
-  "offending_statements": "Line 95:             elif is_incremental:\nLine 96:                 phase_plan_ready = (\nLine 97:                     os.path.getmtime(phases_json) != prev_mtime\nLine 98:                     or _phases_cover_current_sources(phases_json, proj_dir)\nLine 99:                 )",
-  "reason": "When is_incremental is true, the code sets phase_plan_ready to True solely because the file modification time changed, even if _phases_cover_current_sources returns False. The specification requires that a valid phases.json be accepted in incremental mode only when it covers all current source files; a timestamp change alone does not satisfy that requirement."
-}

@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function result satisfies: Let C = filepath.read_text(errors=\"replace\") (no exceptions due to valid pre-condition). Let p = _detect_comment_prefix(C). If p is None, result is None. Else let tag = p + \" [INFO]\". Let i = C.find(tag). If i == -1, result is None. Else let j = C.find(tag, i + len(tag)). If j == -1, result is None. Else result = C[i + len(tag) + 1 : j].strip(). The function has no side effects on the file or its content."
-}

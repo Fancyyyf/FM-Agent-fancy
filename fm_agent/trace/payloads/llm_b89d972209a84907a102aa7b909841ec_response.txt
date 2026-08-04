@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "(*T).Method()",
-  "offending_statements": "Line 19: m = re.search(r'(?:[:\\\\.)])(\\w+)$', name); Line 22: m = re.match(r'\\(\\s*\\*\\s*(\\w+)\\s*\\)', name)",
-  "reason": "For input '(*T).Method()', the specification requires returning the rightmost identifier after the last scope qualifier separator (the dot), which is 'Method', because it contains a parenthesized receiver expression ending with '.'. However, the suffix regex on line 19 fails to match because the string ends with '()', and the function-pointer regex on line 22 matches the leading '(*T)' and returns 'T', giving a wrong result."
-}

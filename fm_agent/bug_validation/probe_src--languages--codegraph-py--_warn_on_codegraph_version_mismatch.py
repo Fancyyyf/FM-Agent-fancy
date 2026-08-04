@@ -1,88 +1,97 @@
-"""Probe for bug src--languages--codegraph-py--_warn_on_codegraph_version_mismatch.
+#!/usr/bin/env python3
+"""Probe script: _warn_on_codegraph_version_mismatch short-circuits on
+empty version string from the executable.
 
-Bug: `_warn_on_codegraph_version_mismatch` removes the leading 'v' only from
-`settings.codegraph.version` (the 'want' side) but NOT from the command output
-(the 'got' side). When both strings differ only by a leading 'v' (e.g. configured
-"v1.0" and command output "v1.0"), the code incorrectly emits a WARNING because
-"v1.0" != "1.0". Per spec, both sides should be normalized before comparison,
-so no warning should be emitted when the versions are semantically equal.
+Bug ID: src--languages--codegraph-py--_warn_on_codegraph_version_mismatch
 
-Workspace: all temp files under /tmp/bug_probe_warn_version_mismatch/
+The code at line 15 uses: if got and got != want:
+When the executable reports an empty version (got=''), the condition
+short-circuits on `got` (falsy) and never evaluates `got != want`.
+The spec requires a warning whenever versions differ, even if empty.
 """
+
 import sys
 import os
 
-# ── workspace (fresh temp dir) ──────────────────────────────────────────
-WORKSPACE = "/tmp/bug_probe_warn_version_mismatch"
-os.makedirs(WORKSPACE, exist_ok=True)
+# Ensure the repo root is on sys.path so `import config` and `import src`
+# resolve correctly (Python adds the script's directory, not the cwd).
+sys.path.insert(0, os.getcwd())
 
-# ── setup path to import from the project ───────────────────────────────
-sys.path.insert(0, "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot")
+# Must set env BEFORE importing anything that reads fm-agent config.
+# This forces want = "1.0.0" after strip()+removeprefix("v").
+os.environ["CODEGRAPH_VERSION"] = "v1.0.0"
 
-from unittest.mock import patch, MagicMock
+import logging
+from unittest.mock import patch
 
 
 def main():
-    # ── Mock config.settings to set codegraph.version = "v1.0" ──────────
-    class MockCodegraphCfg:
-        version = "v1.0"
-        bin_dir = WORKSPACE
-        repo = "fmagent-project/codegraph"
+    # Import the private helper directly — FM-Agent self-validation guard
+    # says "test only the smallest relevant unit with mocks or fixtures."
+    from src.languages.codegraph import _warn_on_codegraph_version_mismatch
 
-    class MockSettings:
-        codegraph = MockCodegraphCfg()
+    warning_logged = False
+    warning_message = ""
 
-    # Replace the 'settings' reference that codegraph.py imports at the top
-    with patch("src.languages.codegraph.settings", MockSettings()):
-        # ── Import the target function AFTER patching settings ──────────
-        import src.languages.codegraph as cg
+    original_warning = logging.warning
 
-        # ── Mock subprocess.run to return stdout "v1.0" ─────────────────
-        # The command output has a leading "v" (e.g. "v1.0\n")
-        warning_was_called = [False]
-        warning_msg_holder = [None]
+    def _capture(msg, *args, **kwargs):
+        nonlocal warning_logged, warning_message
+        warning_logged = True
+        warning_message = msg % args if args else msg
 
-        def capture_warning(msg, *args):
-            warning_was_called[0] = True
-            warning_msg_holder[0] = msg % args if args else msg
+    logging.warning = _capture
 
-        try:
-            with patch("src.languages.codegraph.subprocess.run") as mock_run:
-                with patch("src.languages.codegraph.logging.warning",
-                           side_effect=capture_warning):
-                    mock_result = MagicMock()
-                    mock_result.stdout = "v1.0\n"
-                    mock_run.return_value = mock_result
+    try:
+        # Mock subprocess.run to simulate a codegraph binary that prints
+        # only whitespace/newlines for --version (got = "" after strip).
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value.stdout = "\n"
+            mock_run.return_value.returncode = 0
 
-                    # Call the function under test
-                    cg._warn_on_codegraph_version_mismatch("codegraph")
-        except Exception as e:
-            print(f"ERROR: {e!r}")
-            sys.exit(1)
+            _warn_on_codegraph_version_mismatch("/usr/bin/true")
 
-    # ── Oracle ──────────────────────────────────────────────────────────
-    # Spec says: both strings must be stripped and have leading "v" removed
-    # before comparison.  wanted = "v1.0" → "1.0", got = "v1.0" → should also
-    # be "1.0" after normalization. Since they are equal, NO warning should be
-    # emitted.
-    #
-    # Bug: got is only stripped ("v1.0"), not v-removed → "v1.0" != "1.0"
-    # → warning IS emitted, violating the spec.
+        # --- Verdict ---
+        # want = "v1.0.0".strip().removeprefix("v") = "1.0.0"
+        # got  = "\n".strip() = ""
+        #
+        # Spec claim: if got != want -> log warning with both strings.
+        # "" != "1.0.0" is True, so the spec requires a warning here.
+        #
+        # Code:     if got and got != want:
+        #           if ""  and ...       -> False (short-circuit on falsy got)
+        #           Warning is NEVER logged.
+        #
+        # Therefore: spec requires warning, code skips it → BUG CONFIRMED.
 
-    # want after normalization: "v1.0".strip().removeprefix("v") = "1.0"
-    # got after normalization (spec): "v1.0".strip().removeprefix("v") = "1.0"
-    # got after normalization (code): "v1.0".strip() = "v1.0"
-    # code compares "v1.0" != "1.0" → True → warning emitted (BUG!)
+        if warning_logged:
+            print(
+                "NOT CONFIRMED — warning was unexpectedly logged"
+            )
+            print(f"  Warning message: {warning_message!r}")
+        else:
+            print(
+                "CONFIRMED — bug reproduced: no warning logged when executable "
+                "reports empty version string, but spec requires warning when "
+                "versions differ"
+            )
+            print(
+                "  want: '1.0.0' (from CODEGRAPH_VERSION=v1.0.0)"
+            )
+            print(
+                "  got:  '' (empty, from mocked subprocess.run stdout='\\n')"
+            )
+            print(
+                "  Root cause: 'if got and got != want' short-circuits on "
+                "falsy got before checking inequality"
+            )
 
-    if warning_was_called[0]:
-        print(
-            "CONFIRMED — WARNING emitted despite versions matching after "
-            f"normalization: {warning_msg_holder[0]!r}"
-        )
-    else:
-        print(
-            "NOT CONFIRMED — no WARNING emitted; the code may have been fixed"
-        )
+    except Exception as exc:
+        print(f"ERROR: {exc!r}")
+        sys.exit(1)
+
+    finally:
+        logging.warning = original_warning
 
 
 if __name__ == "__main__":

@@ -1,62 +1,149 @@
 {
   "phase": 4,
-  "phase_name": "Specification Generation & Code Reasoning",
-  "total_functions": 13,
-  "total_layers": 4,
+  "phase_name": "LLM Communication & Tracing",
+  "total_functions": 57,
+  "total_layers": 7,
   "layers": [
     {
       "layer": 0,
       "functions": [
         {
-          "name": "src::prompts-py::_parse_post_condition_json",
-          "file": "extracted_functions/src/prompts-py/_parse_post_condition_json.py",
-          "unit": "prompts",
+          "name": "src::llm_client-py::_http_status_from_exc",
+          "file": "extracted_functions/src/llm_client-py/_http_status_from_exc.py",
+          "unit": "llm_client",
           "phase4_callers": [],
           "phase4_callees": [],
           "all_callees": []
         },
         {
-          "name": "src::reasoner-py::_sanitize_strings",
-          "file": "extracted_functions/src/reasoner-py/_sanitize_strings.py",
-          "unit": "reasoner",
-          "phase4_callers": [],
-          "phase4_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::reasoner-py::reasoner",
-          "file": "extracted_functions/src/reasoner-py/reasoner.py",
-          "unit": "reasoner",
+          "name": "src::llm_client-py::build_llm_cli_command",
+          "file": "extracted_functions/src/llm_client-py/build_llm_cli_command.py",
+          "unit": "llm_client",
           "phase4_callers": [],
           "phase4_callees": [
-            "src::prompts-py::_check_post_implies_spec",
-            "src::prompts-py::_generate_block_post_condition",
-            "src::reasoner-py::_has_terminating_statement",
-            "src::reasoner-py::_parse_spec_conditions",
-            "src::reasoner-py::_split_into_blocks_braced"
+            "src::cli_backend-py::build_agent_command",
+            "src::cli_backend-py::is_cli_backend_enabled"
           ],
           "all_callees": [
-            "src::prompts-py::_check_post_implies_spec",
-            "src::prompts-py::_generate_block_post_condition",
-            "src::reasoner-py::_has_terminating_statement",
-            "src::reasoner-py::_parse_spec_conditions",
-            "src::reasoner-py::_split_into_blocks_braced"
+            "src::cli_backend-py::build_agent_command",
+            "src::cli_backend-py::is_cli_backend_enabled"
           ]
-        }
-      ]
-    },
-    {
-      "layer": 1,
-      "functions": [
+        },
+        {
+          "name": "src::opencode_trace-py::_copy_opencode_output",
+          "file": "extracted_functions/src/opencode_trace-py/_copy_opencode_output.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::_write_command_stdin",
+          "file": "extracted_functions/src/opencode_trace-py/_write_command_stdin.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::finish_opencode_trace",
+          "file": "extracted_functions/src/opencode_trace-py/finish_opencode_trace.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [],
+          "phase4_callees": [
+            "src::opencode_trace-py::record_opencode_call",
+            "src::trace_writer-py::utc_now_iso"
+          ],
+          "all_callees": [
+            "src::opencode_trace-py::record_opencode_call",
+            "src::trace_writer-py::utc_now_iso"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::function_id_from_extracted_path",
+          "file": "extracted_functions/src/opencode_trace-py/function_id_from_extracted_path.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::function_id_from_result_path",
+          "file": "extracted_functions/src/opencode_trace-py/function_id_from_result_path.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::run_opencode_traced",
+          "file": "extracted_functions/src/opencode_trace-py/run_opencode_traced.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [],
+          "phase4_callees": [
+            "src::cli_backend-py::command_argv",
+            "src::opencode_trace-py::_opencode_log_path",
+            "src::opencode_trace-py::_opencode_trace_path",
+            "src::opencode_trace-py::_start_opencode_process",
+            "src::opencode_trace-py::_wait_opencode_process",
+            "src::opencode_trace-py::record_opencode_call",
+            "src::trace_writer-py::new_event_id",
+            "src::trace_writer-py::utc_now_iso"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::command_argv",
+            "src::opencode_trace-py::_opencode_log_path",
+            "src::opencode_trace-py::_opencode_trace_path",
+            "src::opencode_trace-py::_start_opencode_process",
+            "src::opencode_trace-py::_wait_opencode_process",
+            "src::opencode_trace-py::record_opencode_call",
+            "src::trace_writer-py::new_event_id",
+            "src::trace_writer-py::utc_now_iso"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::start_opencode_traced",
+          "file": "extracted_functions/src/opencode_trace-py/start_opencode_traced.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [],
+          "phase4_callees": [
+            "src::opencode_trace-py::_opencode_log_path",
+            "src::opencode_trace-py::_opencode_trace_path",
+            "src::opencode_trace-py::_start_opencode_process",
+            "src::trace_writer-py::new_event_id",
+            "src::trace_writer-py::utc_now_iso"
+          ],
+          "all_callees": [
+            "src::opencode_trace-py::_opencode_log_path",
+            "src::opencode_trace-py::_opencode_trace_path",
+            "src::opencode_trace-py::_start_opencode_process",
+            "src::trace_writer-py::new_event_id",
+            "src::trace_writer-py::utc_now_iso"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::wait_opencode_traced",
+          "file": "extracted_functions/src/opencode_trace-py/wait_opencode_traced.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [],
+          "phase4_callees": [
+            "src::opencode_trace-py::_wait_opencode_process"
+          ],
+          "all_callees": [
+            "src::opencode_trace-py::_wait_opencode_process"
+          ]
+        },
         {
           "name": "src::prompts-py::_check_post_implies_spec",
           "file": "extracted_functions/src/prompts-py/_check_post_implies_spec.py",
           "unit": "prompts",
-          "phase4_callers": [
-            "src::reasoner-py::reasoner"
-          ],
+          "phase4_callers": [],
           "phase4_callees": [
-            "src::prompts-py::_parse_spec_check_json"
+            "src::llm_client-py::_retry_create",
+            "src::prompts-py::_parse_spec_check_json",
+            "src::trace_writer-py::new_event_id",
+            "src::trace_writer-py::record_llm_exchange",
+            "src::trace_writer-py::utc_now_iso"
           ],
           "all_callees": [
             "src::llm_client-py::_retry_create",
@@ -70,55 +157,138 @@
           "name": "src::prompts-py::_generate_block_post_condition",
           "file": "extracted_functions/src/prompts-py/_generate_block_post_condition.py",
           "unit": "prompts",
-          "phase4_callers": [
-            "src::reasoner-py::reasoner"
+          "phase4_callers": [],
+          "phase4_callees": [
+            "src::llm_client-py::_llm_json_call"
           ],
-          "phase4_callees": [],
           "all_callees": [
             "src::llm_client-py::_llm_json_call"
           ]
         },
         {
-          "name": "src::reasoner-py::_has_terminating_statement",
-          "file": "extracted_functions/src/reasoner-py/_has_terminating_statement.py",
-          "unit": "reasoner",
-          "phase4_callers": [
-            "src::reasoner-py::reasoner"
-          ],
+          "name": "src::prompts-py::_parse_post_condition_json",
+          "file": "extracted_functions/src/prompts-py/_parse_post_condition_json.py",
+          "unit": "prompts",
+          "phase4_callers": [],
           "phase4_callees": [],
           "all_callees": []
-        },
-        {
-          "name": "src::reasoner-py::_parse_spec_conditions",
-          "file": "extracted_functions/src/reasoner-py/_parse_spec_conditions.py",
-          "unit": "reasoner",
-          "phase4_callers": [
-            "src::reasoner-py::reasoner"
-          ],
-          "phase4_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::reasoner-py::_split_into_blocks_braced",
-          "file": "extracted_functions/src/reasoner-py/_split_into_blocks_braced.py",
-          "unit": "reasoner",
-          "phase4_callers": [
-            "src::reasoner-py::reasoner"
-          ],
-          "phase4_callees": [
-            "src::reasoner-py::_compute_brace_depth_per_line",
-            "src::reasoner-py::_split_into_blocks"
-          ],
-          "all_callees": [
-            "src::reasoner-py::_compute_brace_depth_per_line",
-            "src::reasoner-py::_split_into_blocks"
-          ]
         }
       ]
     },
     {
-      "layer": 2,
+      "layer": 1,
       "functions": [
+        {
+          "name": "src::llm_client-py::_llm_json_call",
+          "file": "extracted_functions/src/llm_client-py/_llm_json_call.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::prompts-py::_generate_block_post_condition"
+          ],
+          "phase4_callees": [
+            "src::llm_client-py::_parse_json_response",
+            "src::llm_client-py::_retry_create",
+            "src::trace_writer-py::new_event_id",
+            "src::trace_writer-py::record_llm_exchange",
+            "src::trace_writer-py::utc_now_iso"
+          ],
+          "all_callees": [
+            "src::llm_client-py::_parse_json_response",
+            "src::llm_client-py::_retry_create",
+            "src::trace_writer-py::new_event_id",
+            "src::trace_writer-py::record_llm_exchange",
+            "src::trace_writer-py::utc_now_iso"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::_opencode_log_path",
+          "file": "extracted_functions/src/opencode_trace-py/_opencode_log_path.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::opencode_trace-py::start_opencode_traced"
+          ],
+          "phase4_callees": [
+            "src::opencode_trace-py::_payload_dir",
+            "src::opencode_trace-py::_trace_dir"
+          ],
+          "all_callees": [
+            "src::opencode_trace-py::_payload_dir",
+            "src::opencode_trace-py::_trace_dir"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::_opencode_trace_path",
+          "file": "extracted_functions/src/opencode_trace-py/_opencode_trace_path.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::opencode_trace-py::start_opencode_traced"
+          ],
+          "phase4_callees": [
+            "src::opencode_trace-py::_trace_dir"
+          ],
+          "all_callees": [
+            "src::opencode_trace-py::_trace_dir"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::_start_opencode_process",
+          "file": "extracted_functions/src/opencode_trace-py/_start_opencode_process.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::opencode_trace-py::start_opencode_traced"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::command_argv",
+            "src::cli_backend-py::command_stdin",
+            "src::opencode_trace-py::_opencode_env"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::command_argv",
+            "src::cli_backend-py::command_stdin",
+            "src::opencode_trace-py::_opencode_env"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::_wait_opencode_process",
+          "file": "extracted_functions/src/opencode_trace-py/_wait_opencode_process.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::opencode_trace-py::wait_opencode_traced"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::command_display"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::command_display"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::record_opencode_call",
+          "file": "extracted_functions/src/opencode_trace-py/record_opencode_call.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::finish_opencode_trace",
+            "src::opencode_trace-py::run_opencode_traced"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::command_argv",
+            "src::cli_backend-py::command_display",
+            "src::opencode_trace-py::_payload_ref",
+            "src::opencode_trace-py::_trace_dir",
+            "src::trace_writer-py::record_trace_event"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::command_argv",
+            "src::cli_backend-py::command_display",
+            "src::opencode_trace-py::_payload_ref",
+            "src::opencode_trace-py::_trace_dir",
+            "src::trace_writer-py::record_trace_event"
+          ]
+        },
         {
           "name": "src::prompts-py::_parse_spec_check_json",
           "file": "extracted_functions/src/prompts-py/_parse_spec_check_json.py",
@@ -134,32 +304,94 @@
             "src::prompts-py::_load_spec_check_json",
             "src::prompts-py::_parse_spec_check_json::_nonempty_string"
           ]
-        },
-        {
-          "name": "src::reasoner-py::_compute_brace_depth_per_line",
-          "file": "extracted_functions/src/reasoner-py/_compute_brace_depth_per_line.py",
-          "unit": "reasoner",
-          "phase4_callers": [
-            "src::reasoner-py::_split_into_blocks_braced"
-          ],
-          "phase4_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::reasoner-py::_split_into_blocks",
-          "file": "extracted_functions/src/reasoner-py/_split_into_blocks.py",
-          "unit": "reasoner",
-          "phase4_callers": [
-            "src::reasoner-py::_split_into_blocks_braced"
-          ],
-          "phase4_callees": [],
-          "all_callees": []
         }
       ]
     },
     {
-      "layer": 3,
+      "layer": 2,
       "functions": [
+        {
+          "name": "src::cli_backend-py::command_display",
+          "file": "extracted_functions/src/cli_backend-py/command_display.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::opencode_trace-py::_wait_opencode_process",
+            "src::opencode_trace-py::record_opencode_call"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::command_argv",
+            "src::cli_backend-py::command_stdin"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::command_argv",
+            "src::cli_backend-py::command_stdin"
+          ]
+        },
+        {
+          "name": "src::llm_client-py::_retry_create",
+          "file": "extracted_functions/src/llm_client-py/_retry_create.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_llm_json_call",
+            "src::prompts-py::_check_post_implies_spec"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::is_cli_backend_enabled",
+            "src::cli_backend-py::run_agent_for_messages",
+            "src::llm_client-py::_anthropic_create",
+            "src::llm_client-py::_is_anthropic_model",
+            "src::llm_client-py::_metadata_body",
+            "src::llm_client-py::_read_error_body",
+            "src::llm_client-py::_should_inject_user_id"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::is_cli_backend_enabled",
+            "src::cli_backend-py::run_agent_for_messages",
+            "src::llm_client-py::_anthropic_create",
+            "src::llm_client-py::_is_anthropic_model",
+            "src::llm_client-py::_metadata_body",
+            "src::llm_client-py::_read_error_body",
+            "src::llm_client-py::_should_inject_user_id"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::_opencode_env",
+          "file": "extracted_functions/src/opencode_trace-py/_opencode_env.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::_start_opencode_process"
+          ],
+          "phase4_callees": [
+            "src::opencode_trace-py::_deep_merge",
+            "src::opencode_trace-py::_opencode_provider_config",
+            "src::opencode_trace-py::_trace_dir"
+          ],
+          "all_callees": [
+            "src::opencode_trace-py::_deep_merge",
+            "src::opencode_trace-py::_opencode_provider_config",
+            "src::opencode_trace-py::_trace_dir"
+          ]
+        },
+        {
+          "name": "src::opencode_trace-py::_payload_dir",
+          "file": "extracted_functions/src/opencode_trace-py/_payload_dir.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::_opencode_log_path"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::_payload_ref",
+          "file": "extracted_functions/src/opencode_trace-py/_payload_ref.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::record_opencode_call"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
         {
           "name": "src::prompts-py::_load_spec_check_json",
           "file": "extracted_functions/src/prompts-py/_load_spec_check_json.py",
@@ -167,7 +399,9 @@
           "phase4_callers": [
             "src::prompts-py::_parse_spec_check_json"
           ],
-          "phase4_callees": [],
+          "phase4_callees": [
+            "src::llm_client-py::_parse_json_response"
+          ],
           "all_callees": [
             "src::llm_client-py::_parse_json_response"
           ]
@@ -178,6 +412,411 @@
           "unit": "prompts",
           "phase4_callers": [
             "src::prompts-py::_parse_spec_check_json"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::trace_writer-py::new_event_id",
+          "file": "extracted_functions/src/trace_writer-py/new_event_id.py",
+          "unit": "trace_writer",
+          "phase4_callers": [
+            "src::llm_client-py::_llm_json_call",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::opencode_trace-py::start_opencode_traced",
+            "src::prompts-py::_check_post_implies_spec"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::trace_writer-py::record_llm_exchange",
+          "file": "extracted_functions/src/trace_writer-py/record_llm_exchange.py",
+          "unit": "trace_writer",
+          "phase4_callers": [
+            "src::llm_client-py::_llm_json_call",
+            "src::prompts-py::_check_post_implies_spec"
+          ],
+          "phase4_callees": [
+            "src::trace_writer-py::record_trace_event",
+            "src::trace_writer-py::write_payload"
+          ],
+          "all_callees": [
+            "src::trace_writer-py::record_trace_event",
+            "src::trace_writer-py::write_payload"
+          ]
+        },
+        {
+          "name": "src::trace_writer-py::utc_now_iso",
+          "file": "extracted_functions/src/trace_writer-py/utc_now_iso.py",
+          "unit": "trace_writer",
+          "phase4_callers": [
+            "src::llm_client-py::_llm_json_call",
+            "src::opencode_trace-py::finish_opencode_trace",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::opencode_trace-py::start_opencode_traced",
+            "src::prompts-py::_check_post_implies_spec"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "functions": [
+        {
+          "name": "src::cli_backend-py::command_argv",
+          "file": "extracted_functions/src/cli_backend-py/command_argv.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::cli_backend-py::command_display",
+            "src::opencode_trace-py::_start_opencode_process",
+            "src::opencode_trace-py::record_opencode_call",
+            "src::opencode_trace-py::run_opencode_traced"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::cli_backend-py::command_stdin",
+          "file": "extracted_functions/src/cli_backend-py/command_stdin.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::cli_backend-py::command_display",
+            "src::opencode_trace-py::_start_opencode_process"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::cli_backend-py::is_cli_backend_enabled",
+          "file": "extracted_functions/src/cli_backend-py/is_cli_backend_enabled.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::llm_client-py::_retry_create",
+            "src::llm_client-py::build_llm_cli_command"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::resolve_model_backend"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::resolve_model_backend"
+          ]
+        },
+        {
+          "name": "src::cli_backend-py::run_agent_for_messages",
+          "file": "extracted_functions/src/cli_backend-py/run_agent_for_messages.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::llm_client-py::_retry_create"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::build_agent_command",
+            "src::cli_backend-py::messages_to_prompt"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::build_agent_command",
+            "src::cli_backend-py::messages_to_prompt",
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::llm_client-py::_anthropic_create",
+          "file": "extracted_functions/src/llm_client-py/_anthropic_create.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_retry_create"
+          ],
+          "phase4_callees": [
+            "src::llm_client-py::_messages_to_anthropic",
+            "src::llm_client-py::_metadata_body",
+            "src::llm_client-py::_should_inject_user_id"
+          ],
+          "all_callees": [
+            "src::llm_client-py::_messages_to_anthropic",
+            "src::llm_client-py::_metadata_body",
+            "src::llm_client-py::_should_inject_user_id"
+          ]
+        },
+        {
+          "name": "src::llm_client-py::_is_anthropic_model",
+          "file": "extracted_functions/src/llm_client-py/_is_anthropic_model.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_retry_create"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::llm_client-py::_parse_json_response",
+          "file": "extracted_functions/src/llm_client-py/_parse_json_response.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_llm_json_call",
+            "src::prompts-py::_load_spec_check_json"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::llm_client-py::_read_error_body",
+          "file": "extracted_functions/src/llm_client-py/_read_error_body.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_retry_create"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::_deep_merge",
+          "file": "extracted_functions/src/opencode_trace-py/_deep_merge.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::_opencode_env"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::_opencode_provider_config",
+          "file": "extracted_functions/src/opencode_trace-py/_opencode_provider_config.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::_opencode_env"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::opencode_trace-py::_trace_dir",
+          "file": "extracted_functions/src/opencode_trace-py/_trace_dir.py",
+          "unit": "opencode_trace",
+          "phase4_callers": [
+            "src::opencode_trace-py::_opencode_env",
+            "src::opencode_trace-py::_opencode_log_path",
+            "src::opencode_trace-py::_opencode_trace_path",
+            "src::opencode_trace-py::record_opencode_call"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::trace_writer-py::record_trace_event",
+          "file": "extracted_functions/src/trace_writer-py/record_trace_event.py",
+          "unit": "trace_writer",
+          "phase4_callers": [
+            "src::opencode_trace-py::record_opencode_call",
+            "src::trace_writer-py::record_llm_exchange"
+          ],
+          "phase4_callees": [
+            "src::trace_writer-py::append_event"
+          ],
+          "all_callees": [
+            "src::trace_writer-py::append_event"
+          ]
+        },
+        {
+          "name": "src::trace_writer-py::write_payload",
+          "file": "extracted_functions/src/trace_writer-py/write_payload.py",
+          "unit": "trace_writer",
+          "phase4_callers": [
+            "src::trace_writer-py::record_llm_exchange"
+          ],
+          "phase4_callees": [
+            "src::trace_writer-py::_ensure_trace_dirs"
+          ],
+          "all_callees": [
+            "src::trace_writer-py::_ensure_trace_dirs"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 4,
+      "functions": [
+        {
+          "name": "src::cli_backend-py::build_agent_command",
+          "file": "extracted_functions/src/cli_backend-py/build_agent_command.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::cli_backend-py::run_agent_for_messages",
+            "src::llm_client-py::build_llm_cli_command"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::_compose_stdin",
+            "src::cli_backend-py::_normalize_backend",
+            "src::cli_backend-py::cli_effort",
+            "src::cli_backend-py::resolve_model_backend"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::_compose_stdin",
+            "src::cli_backend-py::_normalize_backend",
+            "src::cli_backend-py::cli_effort",
+            "src::cli_backend-py::resolve_model_backend"
+          ]
+        },
+        {
+          "name": "src::cli_backend-py::messages_to_prompt",
+          "file": "extracted_functions/src/cli_backend-py/messages_to_prompt.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::cli_backend-py::run_agent_for_messages"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::llm_client-py::_messages_to_anthropic",
+          "file": "extracted_functions/src/llm_client-py/_messages_to_anthropic.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_anthropic_create"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::llm_client-py::_metadata_body",
+          "file": "extracted_functions/src/llm_client-py/_metadata_body.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_anthropic_create",
+            "src::llm_client-py::_retry_create"
+          ],
+          "phase4_callees": [
+            "src::llm_client-py::_stable_user_id"
+          ],
+          "all_callees": [
+            "src::llm_client-py::_stable_user_id"
+          ]
+        },
+        {
+          "name": "src::llm_client-py::_should_inject_user_id",
+          "file": "extracted_functions/src/llm_client-py/_should_inject_user_id.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_anthropic_create",
+            "src::llm_client-py::_retry_create"
+          ],
+          "phase4_callees": [
+            "src::llm_client-py::_inject_targets",
+            "src::llm_client-py::_matches_inject_target"
+          ],
+          "all_callees": [
+            "src::llm_client-py::_inject_targets",
+            "src::llm_client-py::_matches_inject_target"
+          ]
+        },
+        {
+          "name": "src::trace_writer-py::append_event",
+          "file": "extracted_functions/src/trace_writer-py/append_event.py",
+          "unit": "trace_writer",
+          "phase4_callers": [
+            "src::trace_writer-py::record_trace_event"
+          ],
+          "phase4_callees": [
+            "src::trace_writer-py::_ensure_trace_dirs"
+          ],
+          "all_callees": [
+            "src::trace_writer-py::_ensure_trace_dirs"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 5,
+      "functions": [
+        {
+          "name": "src::cli_backend-py::_compose_stdin",
+          "file": "extracted_functions/src/cli_backend-py/_compose_stdin.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::cli_backend-py::build_agent_command"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::cli_backend-py::cli_effort",
+          "file": "extracted_functions/src/cli_backend-py/cli_effort.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::cli_backend-py::build_agent_command"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::cli_backend-py::resolve_model_backend",
+          "file": "extracted_functions/src/cli_backend-py/resolve_model_backend.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::cli_backend-py::build_agent_command",
+            "src::cli_backend-py::is_cli_backend_enabled"
+          ],
+          "phase4_callees": [
+            "src::cli_backend-py::_normalize_backend"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::_normalize_backend"
+          ]
+        },
+        {
+          "name": "src::llm_client-py::_inject_targets",
+          "file": "extracted_functions/src/llm_client-py/_inject_targets.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_should_inject_user_id"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::llm_client-py::_matches_inject_target",
+          "file": "extracted_functions/src/llm_client-py/_matches_inject_target.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_should_inject_user_id"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::llm_client-py::_stable_user_id",
+          "file": "extracted_functions/src/llm_client-py/_stable_user_id.py",
+          "unit": "llm_client",
+          "phase4_callers": [
+            "src::llm_client-py::_metadata_body"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::trace_writer-py::_ensure_trace_dirs",
+          "file": "extracted_functions/src/trace_writer-py/_ensure_trace_dirs.py",
+          "unit": "trace_writer",
+          "phase4_callers": [
+            "src::trace_writer-py::append_event",
+            "src::trace_writer-py::write_payload"
+          ],
+          "phase4_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 6,
+      "functions": [
+        {
+          "name": "src::cli_backend-py::_normalize_backend",
+          "file": "extracted_functions/src/cli_backend-py/_normalize_backend.py",
+          "unit": "cli_backend",
+          "phase4_callers": [
+            "src::cli_backend-py::build_agent_command",
+            "src::cli_backend-py::resolve_model_backend"
           ],
           "phase4_callees": [],
           "all_callees": []

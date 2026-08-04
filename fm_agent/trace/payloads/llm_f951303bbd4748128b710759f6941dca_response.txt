@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "ensure_changes = {'augmented': {'1': 'a', 2: 'b', 3.14: 'c'}}, change_sets = ({'modified_modules': [{'phase': '3'}, {'phase': None}]},)",
-  "offending_statements": "Line 16:         if phase_num is not None:\nLine 17:             phases.add(phase_num)\nLine 21:         if phase_num is not None:\nLine 22:             phases.add(phase_num)",
-  "reason": "The code only checks for None but does not verify that the phase numbers are integers. The specification requires the returned set to contain only non-None integers, so non-integers like strings or floats should be excluded."
-}

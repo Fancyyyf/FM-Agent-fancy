@@ -1,3 +1,0 @@
-{
-  "post_condition": "Returns a float score computed as W_FUZZY_NAME multiplied by the sum over every intent token t (where t is in the union of signals['backtick_idents'] | signals['plain_idents'] | signals['dotted_refs'] | signals['all_words'], len(t) >= FUZZY_NAME_MIN_LEN, t ∉ _STOP, t ∉ _PY_KEYWORDS, and t ∉ name_tokens) of the maximum SequenceMatcher ratio between t and any name token n (where n ∈ parts, len(n) >= FUZZY_NAME_MIN_LEN, n ∉ _STOP, n ∉ _PY_KEYWORDS, and n ∉ intent_tokens), provided that maximum ratio is >= FUZZY_NAME_THRESHOLD; otherwise the contribution for that t is 0.0. No input data structures are modified."
-}

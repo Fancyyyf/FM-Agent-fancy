@@ -1,3 +1,0 @@
-{
-  "post_condition": "If the function completes normally, it returns a value r where either (1) CodeGraphExtractor.from_proj_dir(proj_dir) is falsy and r is None, or (2) CodeGraphExtractor.from_proj_dir(proj_dir) is truthy and r is the result of calling get_call_edges(\"go\") on that object, which is a dict mapping each (caller_stem: str, caller_module: str) tuple to a set of callee_stems: Set[str] representing Go call-graph edges in the project. If an exception is raised during the from_proj_dir or get_call_edges calls, the function does not return and the exception propagates to the caller."
-}

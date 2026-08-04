@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "::loader-cpp::loadData",
-  "offending_statements": "Line 8: extracted_rel = os.path.join(*entry_func.split(\"::\"))\nLine 9: return _extracted_file_to_source_rel(extracted_rel).replace(os.sep, \"/\")",
-  "reason": "The code does not handle FQNs with a leading \"::\" separator, which produces an empty first component. When joined with os.path.join, this yields an absolute path (e.g., \"/loader.cpp\" on Unix) instead of a project-relative path, violating the specification that requires a relative path."
-}

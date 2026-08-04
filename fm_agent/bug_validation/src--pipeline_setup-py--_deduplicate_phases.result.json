@@ -1,1 +1,11 @@
-{"id": "src--pipeline_setup-py--_deduplicate_phases", "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/src/pipeline_setup.py", "function_name": "_deduplicate_phases", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_deduplicate_phases.py", "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_deduplicate_phases.md", "probe_stdout": "CONFIRMED — duplicate removed_files for module_b: actual=['a.py', 'a.py'] | expected (unique)=['a.py']\n", "trigger_summary": "When a module's source_files contains duplicate entries of a file that is entirely removed, removed_files preserves those duplicates instead of deduplicating them."}
+{
+  "id": "src--pipeline_setup-py--_deduplicate_phases",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/src/pipeline_setup-py/_deduplicate_phases.py",
+  "function_name": "_deduplicate_phases",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_deduplicate_phases.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_deduplicate_phases.md",
+  "probe_stdout": "CONFIRMED — Phase 2 (smaller numeric) lost shared.py to phase 10 (larger numeric) — lexicographic sort of string phases produced wrong ordering, Returned phase type is str (value '2'), spec requires int\n",
+  "trigger_summary": "String phase numbers are sorted lexicographically instead of numerically when not cast to int, causing smaller-numeric phases to lose source files to larger-numeric phases that sort earlier lexicographically; returned phase values also preserve the original string type instead of int."
+}

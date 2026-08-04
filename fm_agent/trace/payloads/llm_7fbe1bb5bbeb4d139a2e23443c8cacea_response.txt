@@ -1,1 +1,0 @@
-{"post_condition": "The flush operation completes normally. The console stream (self._console) has been flushed. The log stream (self._log_stream) has been flushed if and only if it was not closed prior to the call. No other state changes occur."}

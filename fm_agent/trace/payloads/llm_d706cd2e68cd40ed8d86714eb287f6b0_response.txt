@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp', work_dir='/tmp', command=['sleep','10'], configured timeout 1 second, _wait_opencode_process returns (0, 'Timed out')",
-  "offending_statements": "Line 45: status=\"success\" if exit_code == 0 else \"error\"",
-  "reason": "The specification requires the trace status to be 'error' for any failure including timeouts. The code sets status to 'success' whenever exit_code == 0, even if a timeout error occurred with exit_code 0. A concrete input where the subprocess times out and the wait function returns (0, error_string) causes the event to be recorded as 'success' while the specification demands 'error'. This violates the requirement that every failure writes an 'error' status event."
-}

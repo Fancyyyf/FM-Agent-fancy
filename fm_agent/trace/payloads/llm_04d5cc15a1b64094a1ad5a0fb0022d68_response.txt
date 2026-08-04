@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "backend='codex-cli', model='gpt-4', prompt='test', cwd='/home', files=['a.txt', 'b.txt'], effort='high'",
-  "offending_statements": "Line 12: construction of argv for codex-cli does not attach files as context; Line 28: construction of argv for claude-cli does not attach files as context; the requirement to attach each file path as context to the backend invocation is not implemented anywhere in the function.",
-  "reason": "The specification requires that when files is a non-empty list, each file path is attached as context to the backend invocation (i.e., appears in argv as arguments). The code only combines file contents into stdin but never adds the file paths to argv. With the given input (files=['a.txt','b.txt']), the returned AgentCommand.argv lacks any file-related flags like '--file a.txt', violating the specification."
-}

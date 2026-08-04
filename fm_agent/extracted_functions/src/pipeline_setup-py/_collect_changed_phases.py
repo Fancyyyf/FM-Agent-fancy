@@ -1,25 +1,3 @@
-# [SPEC]
-# Unit: src/pipeline_setup-py/_collect_changed_phases.py
-#
-# _collect_changed_phases(ensure_changes, *change_sets) -> set
-#
-# Pre-condition:
-#   - ensure_changes is a mapping optionally containing an "augmented" key whose value, if present, is a mapping.
-#   - Each element of change_sets is a mapping optionally containing a "modified_modules" key whose value, if present, is an iterable of mappings, each optionally containing a "phase" key.
-#   - Phase number values (keys of ensure_changes["augmented"] and values of m["phase"]) are expected to be integers or None.
-#
-# Post-condition:
-#   - Returns a set containing every non-None integer that is either:
-#     a) a key of ensure_changes["augmented"], or
-#     b) the value of the "phase" key from any entry in "modified_modules" across all change_sets.
-#   - Each phase number appears at most once in the result (duplicates are collapsed).
-#   - Returns an empty set if no non-None phase numbers are found across all sources.
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _collect_changed_phases(ensure_changes, *change_sets):
     """Collect the phase numbers whose source-file composition changed during
     post-processing.

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Call open_document(path='/tmp/test.erl', source='hello') on an ElpClient instance that has a closed LSP communication channel.",
-  "offending_statements": "Line 5: self.notify(...) is executed without any check on the communication channel state, failing to raise the required exception.",
-  "reason": "The specification requires an exception when the LSP communication channel is not open, but the code invokes self.notify (Line 5) without verifying the channel state. If self.notify does not raise an exception itself (its contract does not mandate one), the function returns None instead of raising, violating the specification."
-}

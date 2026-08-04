@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A handle object with no 'returncode' attribute, a 'done' method that returns True, and a 'result' method that raises KeyboardInterrupt (a non-Exception exception). For example, class K: done=lambda self: True; result=lambda self: exec('raise KeyboardInterrupt') . When passed to the function, it will propagate KeyboardInterrupt instead of returning 1.",
-  "offending_statements": "Line 9:         except Exception:",
-  "reason": "The code only catches Exception subclasses. However, the specification requires returning 1 when handle resolution raises any exception, including non-Exception exceptions like KeyboardInterrupt or SystemExit. If result() raises KeyboardInterrupt, the code does not catch it and the call raises, violating the spec."
-}

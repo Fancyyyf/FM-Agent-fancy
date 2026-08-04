@@ -1,3 +1,0 @@
-{
-  "post_condition": "If the input string `response` contains a JSON object that can be extracted by `_parse_json_response`, the function returns the corresponding dictionary. Otherwise, it raises `json.JSONDecodeError`.\n\nFormally: Let `parse(s)` be the result of `_parse_json_response(s)`. For any non-empty string `response`,\n  (∃ d ∈ dict: `parse(response)` terminates successfully and returns d)  ⇒  the function returns d\n  ∧\n  ( `parse(response)` raises `ValueError`  ∨  `parse(response)` returns a value that is not a `dict` )  ⇒  the function raises `json.JSONDecodeError`."
-}

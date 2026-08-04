@@ -1,10 +1,5 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/cpp-py/function_spans.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "- Returns None when a codegraph backend is unavailable or does not index the file, signaling the caller to fall back to regex-based extraction\n  - Otherwise returns a list of (name, start_idx, end_idx) tuples, each identifying one function in the file by its name and the range of source lines it occupies\n  - In every returned tuple, start_idx and end_idx are 0-indexed inclusive line indices\n  - The returned list covers every function that the codegraph backend detects in the file",
-    "actual_behavior": "After execution, the function either propagates any exception raised by `CodeGraphExtractor.from_proj_dir(proj_dir)` or returns a value.  If no exception occurs, the return value is determined as follows: let `cg = CodeGraphExtractor.from_proj_dir(proj_dir)`. If `cg` is falsy (e.g., `None`, `False`), the function returns `None`. Otherwise, let `spans = cg.get_function_spans('cpp', filepath)`. If `spans` is `None`, the function returns `None`; otherwise it returns the list `spans`, which is a nonempty list of 3tuples `(name: str, start: int, end: int)`. Each tuple describes a function definition found in the given C++ source file, with `start` and `end` being 0indexed inclusive line numbers. The function does not modify any external state.  Formally, let `R` denote the outcome (exception or return value), `E_from` the event that `CodeGraphExtractor.from_proj_dir(proj_dir)` raises an exception.  Then: (E_from  R = that exception)  (E_from  cg is falsy  R = None)  (E_from  cg is truthy  (spans = cg.get_function_spans('cpp', filepath)  (spans = None  R = None)  (spans  None  R = spans  spans is a list of tuples each of the form (string, int, int) with semantics as stated))).",
-    "code_evidence": "Line 7: cg = CodeGraphExtractor.from_proj_dir(proj_dir)\nLine 8: return cg.get_function_spans(\"cpp\", filepath) if cg else None",
-    "trigger_condition": "The function does not handle exceptions from CodeGraphExtractor.from_proj_dir. When proj_dir is an invalid directory, from_proj_dir may raise an exception (e.g., FileNotFoundError) instead of returning a falsy value. The specification requires returning None when the codegraph backend is unavailable, so the caller can fall back to regex extraction. By propagating the exception, the code violates this specification for any invalid proj_dir."
-  }
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/cpp-py/function_spans.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

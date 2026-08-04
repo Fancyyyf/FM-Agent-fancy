@@ -1,6 +1,6 @@
 # Bug Report: _collect_phase_files
 
-**Source file:** `src/generate_topdown_layers.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,61 +12,51 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a list of (file_path, module_name) pairs, where module_name is the "name" of a module in phase_data
-  - For each source file declared in a module: the source file's basename extension is stripped by replacing the last "." with "-" (e.g., "loader.cpp"  "loader-cpp"), and the resulting directory name is resolved under proj_dir/extracted_functions/ alongside the source file's parent directory
-  - Every regular file found in such a directory is collected into the result, each paired with the name of the module that declared the source file
-  - Directories that do not exist on disk are skipped with no error raised
-  - Returns an empty list when phase_data has no "modules" key, the modules list is empty, or no extracted-function directories exist on disk
-  - The returned list preserves no guaranteed ordering across calls
+Returns a list of (fpath, module_name) tuples. For each source_file path listed in each module of phase_data, the source file extension separator '.' is replaced by '-' to derive the extracted-function directory name, and that directory is searched under proj_dir/extracted_functions/. Every regular file found in that directory whose filename does not match the metadata sidecar naming pattern is included as one tuple where fpath is the absolute path to the file and module_name is the 'name' from the enclosing module object. Source files whose corresponding extracted-function directory does not exist under proj_dir/extracted_functions/ contribute no tuples. Each fpath is unique within the returned list. Results are ordered by module order in phase_data, then by source_file order, then by filesystem traversal order within each directory. The returned list may be empty if no extracted-function directories exist for any source file in the phase.
 
 ---
 
 ### Actual Behavior
 
-The function returns a list `results` such that:
-
-results = [(file_path, module_name) for each module in phase_data.get('modules', []) if 'source_files' in module for each src_file in module['source_files'] where os.path.isdir(func_dir) for each regular file (os.path.isfile) with path file_path found by recursively walking func_dir via os.walk].
-
-Here func_dir = os.path.join(proj_dir, 'extracted_functions', src_dir, dir_name) if src_dir (os.path.dirname(src_file)) is non-empty, else os.path.join(proj_dir, 'extracted_functions', dir_name). dir_name is derived from os.path.basename(src_file): if a last dot position > 0 exists, dir_name = basename[:last_dot] + '-' + basename[last_dot+1:]; otherwise dir_name = basename.
-
-file_path is the absolute path (given proj_dir) of each file inside the extracted directory tree; module_name is the string module['name']. The order in results matches iteration order of modules, then source_files, and for each directory the order of files from os.walk (depth-first, top-down). The function has no side effects and raises no exceptions under the pre-condition.
+Returns a list results = [(fpath, module_name), ...] that contains exactly one tuple for each regular file found by os.walk inside the directories derived from phase_data's modules' source files, excluding metadata sidecar files. Formally: Let R be the returned list. R is empty at first. For each module m in phase_data.get('modules', []) in the given list order, let m_name = m['name']. For each source file s in m.get('source_files', []) in its list order: let B = os.path.basename(s), D = os.path.dirname(s), dot = B.rfind('.'). Set dir_name = (B[:dot] + '-' + B[dot+1:] if dot > 0 else B). Set func_dir = os.path.join(proj_dir, 'extracted_functions', D, dir_name) if D else os.path.join(proj_dir, 'extracted_functions', dir_name). If os.path.isdir(func_dir), then for each (root, _dirs, fnames) in the order yielded by os.walk(func_dir) and for each fname in fnames in the order yielded: let fpath = os.path.join(root, fname). If os.path.isfile(fpath) and not _is_metadata_sidecar(fname) evaluates to True, then (fpath, m_name) is appended to R. No other elements are appended. The final value of R is the return value.
 
 ---
 
 ## Code Evidence
 
-Line 13: last_dot = src_base.rfind(".")
-Line 14: if last_dot > 0:
-Line 15: dir_name = src_base[:last_dot] + "-" + src_base[last_dot + 1:]
-Line 17: dir_name = src_base
+```
+Line 7: for module in phase_data.get("modules", []):
+Line 9:     for src_file in module.get("source_files", []):
+Line 28:                     if os.path.isfile(fpath) and not _is_metadata_sidecar(fname):
+Line 29:                         results.append((fpath, module_name))
+```
 
 ---
 
 ## Trigger Condition
 
-When a source file's basename starts with a dot (e.g., '.hidden'), the last dot is at index 0, and the condition last_dot > 0 fails, causing dir_name to remain '.hidden'. The specification replaces the last '.' with '-', which would produce '-hidden'. This leads the code to look for a directory '.hidden' instead of the expected '-hidden', missing files that should have been included.
+The code can produce duplicate fpath entries when the same extracted-function directory is traversed more than once (e.g., because the same source file appears in multiple modules), violating the specifications requirement that each fpath be unique in the returned list.
 
 ---
 
 ## How to trigger the bug
 
-The bug arises when a source file's basename begins with a dot (e.g., `.hidden`, `.envrc`, `.gitignore`). The `rfind(".")` call returns 0 for these names, and the guard `if last_dot > 0:` is False, so `dir_name` stays as the original basename (e.g., `.hidden`). Per the specification, the last `.` should be replaced with `-`, yielding `-hidden`. The function then looks for a directory named `.hidden` under `extracted_functions/` instead of the correct `-hidden`.
+When `phase_data` contains two modules that both reference the same source file (e.g., `"foo/bar.cpp"`), the derived `func_dir` is identical for both modules. The `os.walk` on `func_dir` is executed twice — once per module — and each file found is appended to the results list with a different `module_name`. This produces duplicate fpath entries.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `proj_dir` | Temporary directory containing `extracted_functions/` |
-| `phase_data` | `{"modules": [{"name": "test_module", "source_files": [".hidden"]}]}` |
-| source file basename | `.hidden` (starts with a dot) |
+| `proj_dir` | Temporary directory with `extracted_functions/foo/bar-cpp/` containing `func_a.cpp` and `func_b.cpp` |
+| `phase_data["modules"]` | `[{"name": "module_A", "source_files": ["foo/bar.cpp"]}, {"name": "module_B", "source_files": ["foo/bar.cpp"]}]` |
 
 ### Expected (spec-correct) Output
 
-`[("<tmp>/extracted_functions/-hidden/correct_file.py", "test_module")]`
+`[(<fpath_func_a>, "module_A"), (<fpath_func_b>, "module_A")]` — each fpath appears at most once.
 
 ### Actual (buggy) Output
 
-`[("<tmp>/extracted_functions/.hidden/buggy_file.py", "test_module")]`
+`[(<fpath_func_b>, "module_A"), (<fpath_func_a>, "module_A"), (<fpath_func_b>, "module_B"), (<fpath_func_a>, "module_B")]` — each fpath appears twice (once per module).
 
 ### How to Reproduce
 
@@ -79,23 +69,27 @@ Step-by-step instructions to trigger the bug manually:
 import os, tempfile
 from src.generate_topdown_layers import _collect_phase_files
 
-tmpdir = tempfile.mkdtemp()
-extracted = os.path.join(tmpdir, "extracted_functions")
+with tempfile.TemporaryDirectory() as proj_dir:
+    extracted_base = os.path.join(proj_dir, "extracted_functions")
+    func_dir = os.path.join(extracted_base, "foo", "bar-cpp")
+    os.makedirs(func_dir)
+    for fname in ("func_a.cpp", "func_b.cpp"):
+        with open(os.path.join(func_dir, fname), "w") as f:
+            f.write("// extracted function\n")
 
-# Create both possible lookup directories
-os.makedirs(os.path.join(extracted, "-hidden"))
-with open(os.path.join(extracted, "-hidden", "correct.py"), "w") as f:
-    f.write("# spec correct")
+    phase_data = {
+        "modules": [
+            {"name": "module_A", "source_files": ["foo/bar.cpp"]},
+            {"name": "module_B", "source_files": ["foo/bar.cpp"]},
+        ]
+    }
 
-os.makedirs(os.path.join(extracted, ".hidden"))
-with open(os.path.join(extracted, ".hidden", "buggy.py"), "w") as f:
-    f.write("# buggy")
+    results = _collect_phase_files(proj_dir, phase_data)
+    for fpath, mod in results:
+        print(f"  {os.path.relpath(fpath, proj_dir)} -> module={mod}")
 
-phase_data = {"modules": [{"name": "test_module", "source_files": [".hidden"]}]}
-result = _collect_phase_files(tmpdir, phase_data)
-print(result)
-# actual (buggy) output: [(<path>/extracted_functions/.hidden/buggy.py, 'test_module')]
-# expected (correct) output: [(<path>/extracted_functions/-hidden/correct.py, 'test_module')]
+# actual (buggy) output: 4 entries — func_a and func_b each appear twice (with module_A, module_B)
+# expected (correct) output: 2 entries — func_a and func_b each appear once
 ```
 
 ---
@@ -107,66 +101,70 @@ import sys
 import os
 import tempfile
 
-# Add repo root to path so `src` is importable
-_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, _repo_root)
+# Ensure the repo root is on sys.path so 'src' is importable
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, REPO_ROOT)
 
 try:
     from src.generate_topdown_layers import _collect_phase_files
-except Exception as e:
-    print(f'ERROR: {e}')
-    sys.exit(1)
 
-# Create temp workspace — all fixtures isolated from the repo
-tmpdir = tempfile.mkdtemp(prefix="probe_collect_phase_files_")
-extracted_base = os.path.join(tmpdir, "extracted_functions")
+    with tempfile.TemporaryDirectory() as proj_dir:
+        # Create mock extracted_function directory
+        extracted_base = os.path.join(proj_dir, "extracted_functions")
+        func_subdir = os.path.join(extracted_base, "foo", "bar-cpp")
+        os.makedirs(func_subdir)
 
-# Directory the spec says should be looked up: -hidden
-# (basename ".hidden" → replace last "." with "-" → "-hidden")
-spec_correct_dir = os.path.join(extracted_base, "-hidden")
-os.makedirs(spec_correct_dir, exist_ok=True)
-with open(os.path.join(spec_correct_dir, "correct_file.py"), "w") as f:
-    f.write("# spec correct\n")
+        # Create mock extracted function files
+        func_a = os.path.join(func_subdir, "func_a.cpp")
+        func_b = os.path.join(func_subdir, "func_b.cpp")
+        for f in (func_a, func_b):
+            with open(f, "w") as fh:
+                fh.write("// extracted function\n")
 
-# Directory the buggy code actually looks up: .hidden
-# (last_dot == 0, last_dot > 0 is False, dir_name stays ".hidden")
-buggy_dir = os.path.join(extracted_base, ".hidden")
-os.makedirs(buggy_dir, exist_ok=True)
-with open(os.path.join(buggy_dir, "buggy_file.py"), "w") as f:
-    f.write("# buggy\n")
-
-# phase_data with a source file whose basename starts with a "." (dot file)
-phase_data = {
-    "modules": [
-        {
-            "name": "test_module",
-            "source_files": [".hidden"]
+        # Phase data where the same source_file appears in TWO different modules
+        phase_data = {
+            "modules": [
+                {"name": "module_A", "source_files": ["foo/bar.cpp"]},
+                {"name": "module_B", "source_files": ["foo/bar.cpp"]},
+            ]
         }
-    ]
-}
 
-results = _collect_phase_files(tmpdir, phase_data)
-actual_files = {os.path.normpath(fp) for fp, _ in results}
+        results = _collect_phase_files(proj_dir, phase_data)
 
-spec_expected = {os.path.normpath(os.path.join(spec_correct_dir, "correct_file.py"))}
-buggy_expected = {os.path.normpath(os.path.join(buggy_dir, "buggy_file.py"))}
+        # Check uniqueness by fpath
+        fpaths = [r[0] for r in results]
+        seen = set()
+        duplicates = set()
+        for fp in fpaths:
+            if fp in seen:
+                duplicates.add(fp)
+            seen.add(fp)
 
-# Cleanup before reporting
-import shutil
-shutil.rmtree(tmpdir, ignore_errors=True)
+        if duplicates:
+            print(
+                "CONFIRMED — duplicate fpaths found in result:",
+                [os.path.relpath(d, proj_dir) for d in duplicates],
+            )
+            print("Results:")
+            for fpath, mod in results:
+                print(f"  {os.path.relpath(fpath, proj_dir)} -> module={mod}")
+        else:
+            print(f"NOT CONFIRMED — all fpaths unique ({len(fpaths)} entries)")
 
-if actual_files == spec_expected:
-    print(f'NOT CONFIRMED — actual matched spec-expected: {actual_files}')
-elif actual_files == buggy_expected:
-    print(f'CONFIRMED — actual: {actual_files} | spec-expected (look in -hidden/): {spec_expected} | code looked in .hidden/ instead because last_dot>0 is False when last_dot==0')
-elif not actual_files:
-    print(f'NOT CONFIRMED — no files found (maybe neither directory was checked or dirs were cleaned)')
-else:
-    print(f'ERROR: unexpected result: actual={actual_files}, spec_expected={spec_expected}, buggy_expected={buggy_expected}')
+except Exception as e:
+    print(f"ERROR: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: {'/tmp/probe_collect_phase_files_cztzyoif/extracted_functions/.hidden/buggy_file.py'} | spec-expected (look in -hidden/): {'/tmp/probe_collect_phase_files_cztzyoif/extracted_functions/-hidden/correct_file.py'} | code looked in .hidden/ instead because last_dot>0 is False when last_dot==0
+CONFIRMED — duplicate fpaths found in result: ['extracted_functions/foo/bar-cpp/func_a.cpp', 'extracted_functions/foo/bar-cpp/func_b.cpp']
+Results:
+  extracted_functions/foo/bar-cpp/func_b.cpp -> module=module_A
+  extracted_functions/foo/bar-cpp/func_a.cpp -> module=module_A
+  extracted_functions/foo/bar-cpp/func_b.cpp -> module=module_B
+  extracted_functions/foo/bar-cpp/func_a.cpp -> module=module_B
 ```

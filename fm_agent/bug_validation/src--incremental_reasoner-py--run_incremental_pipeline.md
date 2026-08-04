@@ -1,8 +1,8 @@
 # Bug Report: run_incremental_pipeline
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/run_incremental_pipeline.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/run_incremental_pipeline.py`
 **Verdict:** MISMATCH
-**Confirmation status:** not_confirmed
+**Confirmation status:** confirmed
 
 ---
 
@@ -12,125 +12,97 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- If proj_dir has no previous full-run baseline (fm_agent/phases.json absent
-    or fm_agent/extracted_functions/ incomplete given submodules), delegates
-    the entire pipeline to a full run via run_pipeline() with the same
-    arguments and returns None.
-  - If intent_file_path does not refer to an existing regular file, or the
-    file content is empty after whitespace stripping, logs an error and
-    returns None without modifying any project or fm_agent/ file.
-  - Before producing any new output, removes all files under
-    fm_agent/logic_verification_results/ and fm_agent/bug_validation/, and
-    removes incremental scope-selection and spec-update artifacts prefixed
-    with "select_relevant_", "relevant_", and "spec_update_" from fm_agent/.
-  - Regenerates fm_agent/phases.json from the current working tree.
-  - Re-extracts every function from the current code, then restores the
-    captured [SPEC] and [INFO] blocks from the prior run onto each function
-    whose body is identical between old_commit_id and the current working
-    tree.
-  - Produces a mapping from each changed source-file path to the sets of
-    function names added, modified, or removed since old_commit_id; deletes
-    extracted-function files for removed functions.
-  - Produces a ranked list of extracted-function relative paths whose
-    implementations are judged relevant to the developer intent.
-  - For every function that is either changed (added or modified) or appears
-    in the relevance-ranked list, re-evaluates whether its [SPEC] and/or
-    [INFO] blocks need updating to reflect the current code and intent;
-    when a callee's [SPEC] changes, propagates the update to every caller's
-    [INFO] block. Writes the set of files whose specs were modified to
-    fm_agent/incremental_updated_specs.json.
-  - Runs verification on the affected subset: every changed function, every
-    function with an updated spec, and every function that calls a callee
-    whose spec was updated. Returns a sorted list of extracted-function
-    relative paths for which the reasoner reported a spec-to-code mismatch
-    (MISMATCH verdict) and bug validation subsequently confirmed the
-    violation. Returns an empty list when no such violations are confirmed.
-  - Does not modify any file under proj_dir outside of fm_agent/.
+If no previous full run is detected (phases.json missing or incomplete extracted_functions), falls back to a complete full pipeline run via run_pipeline and returns None. If intent_file_path does not resolve to an existing, non-empty file, logs an error and returns None. Otherwise, executes the 10-stage incremental pipeline and returns a sorted list of relative paths to extracted function files that have confirmed bugs  i.e. where the reasoner produced a MISMATCH verdict and bug validation independently confirmed the violation. Side effects: (a) re-extracts function sources into extracted_functions/ without overwriting existing .spec.json and .info.json sidecars; (b) regenerates phases.json and topdown dependency layers; (c) updates behavioral specs (.spec.json and .info.json) for every function that is either changed relative to old_commit_id or judged relevant to the developer intent; (d) records the set of updated spec paths in fm_agent/incremental_updated_specs.json; (e) writes verification verdicts to logic_verification_results/; (f) writes confirmed bug reports to bug_validation/<bug_id>.md; (g) removes stale verification-result directories and scope-selection artifacts from the workspace before writing any new outputs.
 
 ---
 
 ### Actual Behavior
 
-**Normal termination paths:**
-- If `check_last_run_existence(proj_dir, submodules)` returns `False`: the function emits a warning log message ("No previous full run detected..."), invokes `run_pipeline(proj_dir, domain_knowledge_files=..., submodules=..., ...)` (which performs the full pipeline and produces artifacts under `fm_agent/`), and then returns `None` immediately.
-- If `check_last_run_existence` returns `True` but the intent file at `intent_file_path` does not exist or is empty after stripping: the function logs an error ("Intent file ... does not exist" or "is empty") and returns `None` immediately.
-- Otherwise (last run exists and intent file is valid): the function logs that a previous run was found, logs "[Stage 2/10] Loading developer intent...", reads and binds the nonempty developer intent to `developer_intent`, logs "intent loaded (%d chars)", then removes the stale directories `output_dir` and `<work_dir>/bug_validation` if they exist (logging one line per removed directory). Execution continues normally beyond line 80 with `developer_intent` set and the stale artifacts removed; no value is returned yet.
+In natural language: After executing Lines 41-80, exactly one of the following has occurred:
 
-Additional logging side effects that are **always** performed by the code block (unless an exception prevented reaching them):
-- A separator line of 70 `'='` characters is emitted (line 41).
-- The message "[Stage 1/10] Checking for a previous full run to compare against..." is emitted.
-- In the `True` branch of `check_last_run_existence`: "  -> previous full run found; proceeding with incremental analysis." is emitted.
+1. If no previous full run existed (has_last_run is False), the warning was logged, run_pipeline(proj_dir, domain_knowledge_files, submodules, one_phase, extra_call_edges_path, bug_validator_path, plugin_config) was executed (completing a full 6-stage analysis and producing all outputs), and the function returned. No further statements in the function are reached.
 
-**Exception paths:**
-- If `check_last_run_existence` raises an exception, it propagates to the caller immediately; any log messages emitted up to that point (the separator and the "[Stage 1/10] ..." message) persist.
-- If the fileopen or read on the intent file raises an exception, it propagates; the "[Stage 2/10] ..." log and the preceding stage1 logs remain.
-- If `run_pipeline` raises an exception, it propagates to the caller.
+2. If a previous full run existed (has_last_run is True), the success log was emitted and the intent file was examined:
+   a) If the intent file does not exist, an error is logged and the function returns.
+   b) If the intent file exists but is empty or whitespace-only, an error is logged and the function returns.
+   c) If the intent file exists and is nonempty, developer_intent is set to the stripped content, an info message with its length is logged, and execution continues to the next line (the artifact-wiping comment block). In this path the function does not return; all other variables (work_dir, script_dir, input_dir, output_dir, extra_call_edges, etc.) retain the values they had in the precondition.
+
+Logging for Stage 1 and, when reached, Stage 2 has been performed in all paths.
+
+In formal logic: Let pre be the state immediately before Line 41. The post-state post is described by the disjunction of return-on-no-prior-run, return-on-missing-intent, return-on-empty-intent, or continue-to-stage-3 when the intent file is valid and nonempty.
 
 ---
 
 ## Code Evidence
 
-Line 77:     for stale_dir in (output_dir, os.path.join(work_dir, "bug_validation")):
-Line 78:         if os.path.isdir(stale_dir):
-Line 79:             shutil.rmtree(stale_dir, ignore_errors=True)
-Line 80:             logging.info("  -> removed stale results dir %s.", stale_dir)
+Line 69:         with open(intent_file_path, "r") as f:
+Line 70:             developer_intent = f.read().strip()
+
+These lines (corresponding to lines 767-768 in the actual source file `src/incremental_reasoner.py`) open and read the intent file inside an `else` branch that only checks `os.path.isfile(intent_file_path)`. There is no `try/except` block wrapping the `open()` call, so any I/O error (e.g., `PermissionError`) propagates as an unhandled exception.
 
 ---
 
 ## Trigger Condition
 
-The specification demands removal of incremental scope-selection and spec-update artifacts (files prefixed with 'select_relevant_', 'relevant_', and 'spec_update_') before producing new output. The code only removes the two directories, omitting the required prefixbased file deletion, so a valid run where those files exist leaves the system in a state that violates the precondition for the subsequent incremental steps.
+The specification demands that if the intent file does not resolve to an existing, nonempty file (including when it cannot be read), the function logs an error and returns None. The code only checks file existence and emptiness, but does not wrap the open() call in a try/except to handle permission or I/O errors, leading to an unhandled exception that violates the specification.
 
 ---
 
 ## How to trigger the bug
 
-The verification incorrectly claims the code omits prefixed-file deletion. In reality, the code immediately following the directory removal (lines 227-245 in the extracted-function file, corresponding to lines 756-774 in `src/incremental_reasoner.py`) contains the required artifact removal using glob patterns that cover all three required prefixes.
+Pass an `intent_file_path` that points to a file that exists (so `os.path.isfile()` returns `True`) but is not readable by the current process (e.g., file permissions set to `000`). The function will raise `PermissionError` at the `open()` call instead of logging an error and returning `None`.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| N/A (static code inspection) | N/A |
+| `proj_dir` | A temporary directory (must exist) |
+| `intent_file_path` | Path to an existing file with permissions `000` (unreadable) |
+| `old_commit_id` | `"HEAD"` (any valid commit-ish) |
+| `domain_knowledge_files` | `None` (default) |
+| `submodules` | `None` (default) |
+| `check_last_run_existence` | Mocked to return `True` (so the code reaches Stage 2) |
 
 ### Expected (spec-correct) Output
 
-The function should remove files prefixed with `select_relevant_`, `relevant_`, and `spec_update_` from `fm_agent/`.
+The function should log an error message and return `None`.
 
 ### Actual (buggy) Output
 
-N/A — the code does include the required removal. The glob patterns `select_relevant_modules.md`, `select_relevant_files_*.md`, `relevant_modules.json`, `relevant_files_*.json`, `spec_update_*.md`, and `spec_update_*.json` are present at lines 231-234 of the extracted-function file, and the deletion loop at lines 237-243 removes matching files.
+The function raises `PermissionError: [Errno 13] Permission denied: '<path>'` — an unhandled exception.
 
 ### How to Reproduce
 
 Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
-2. Run the following snippet (uses the package entry point):
+2. Run the probe script:
 
 ```python
-import sys
 import os
+import tempfile
+from unittest.mock import MagicMock
+import sys
 
-probe_dir = os.path.dirname(os.path.abspath(__file__))
-repo_root = os.path.dirname(os.path.dirname(probe_dir))
-source_file = os.path.join(repo_root, 'src', 'incremental_reasoner.py')
+sys.path.insert(0, "/path/to/FM-Agent")
+sys.modules['main'] = MagicMock()
 
-with open(source_file, 'r') as f:
-    source = f.read()
+from src.incremental_reasoner import run_incremental_pipeline
+import src.incremental_reasoner as incr
 
-required_globs = [
-    'select_relevant_modules.md',
-    'select_relevant_files_*.md',
-    'relevant_modules.json',
-    'relevant_files_*.json',
-    'spec_update_*.md',
-    'spec_update_*.json',
-]
+tmp = tempfile.mkdtemp()
+proj_dir = os.path.join(tmp, "proj")
+os.makedirs(proj_dir)
+intent_file = os.path.join(tmp, "intent.txt")
+with open(intent_file, "w") as f:
+    f.write("test")
+os.chmod(intent_file, 0o000)
 
-found = [p for p in required_globs if p in source]
-# actual (buggy) output: all 6 found — bug NOT confirmed
-# expected (correct) output: all 6 found — spec satisfied
+incr.check_last_run_existence = lambda *a, **kw: True
+incr._setup_incremental_logging = lambda wd: "/dev/null"
+
+run_incremental_pipeline(proj_dir, intent_file, "HEAD")
+# Raises: PermissionError: [Errno 13] Permission denied: '.../intent.txt'
 ```
 
 ---
@@ -140,43 +112,103 @@ found = [p for p in required_globs if p in source]
 ```python
 import sys
 import os
+import tempfile
+import shutil
+from unittest.mock import MagicMock
+
+# The probe runs from the repo root; ensure src/ is importable.
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, REPO_ROOT)
+
+# All fixtures and temp data live under a fresh temporary directory owned by the probe.
+PROBE_TMP = tempfile.mkdtemp(prefix="fm_agent_probe_")
+proj_dir = os.path.join(PROBE_TMP, "project")
+os.makedirs(proj_dir, exist_ok=True)
+
+# Create an intent file that exists but is unreadable (mode 0000)
+intent_file = os.path.join(PROBE_TMP, "unreadable_intent.txt")
+with open(intent_file, "w") as f:
+    f.write("test developer intent content")
+os.chmod(intent_file, 0o000)
+
+old_commit_id = "HEAD"
+
+actual = None
 
 try:
-    # Locate the actual source file (probe script is at fm_agent/bug_validation/, source is at src/)
-    probe_dir = os.path.dirname(os.path.abspath(__file__))
-    repo_root = os.path.dirname(os.path.dirname(probe_dir))
-    source_file = os.path.join(repo_root, 'src', 'incremental_reasoner.py')
+    # Mock the 'main' module before it gets imported by the function body.
+    # This prevents any FM-Agent workflow from starting.
+    mock_main = MagicMock()
+    mock_main.run_pipeline = MagicMock(return_value=None)
+    mock_main._run_setup_extract = MagicMock(return_value=None)
+    mock_main.main = MagicMock(return_value=None)
+    sys.modules['main'] = mock_main
 
-    with open(source_file, 'r') as f:
-        source = f.read()
+    from src.incremental_reasoner import run_incremental_pipeline
+    import src.incremental_reasoner as incr_mod
 
-    # The spec requires removal of files prefixed with 'select_relevant_',
-    # 'relevant_', and 'spec_update_'. These glob patterns should exist in the
-    # source code indicating the function removes the required artifacts.
-    required_globs = [
-        'select_relevant_modules.md',
-        'select_relevant_files_*.md',
-        'relevant_modules.json',
-        'relevant_files_*.json',
-        'spec_update_*.md',
-        'spec_update_*.json',
-    ]
+    # Mock check_last_run_existence to return True so we reach the
+    # intent-file-reading code path (Stage 2) without falling back to
+    # a full pipeline run (which would start FM-Agent).
+    original_check = incr_mod.check_last_run_existence
+    incr_mod.check_last_run_existence = lambda *a, **kw: True
 
-    found = [p for p in required_globs if p in source]
-    missing = [p for p in required_globs if p not in source]
+    # Mock _setup_incremental_logging so it doesn't set up real file handlers
+    original_setup_logging = incr_mod._setup_incremental_logging
+    incr_mod._setup_incremental_logging = lambda wd: os.path.join(wd, "incremental_dummy.log")
 
-    if len(found) == len(required_globs):
-        print('NOT CONFIRMED — code includes required prefixed-file removal: all %d glob patterns present in source' % len(found))
-    else:
-        print('CONFIRMED — missing removal patterns: %s' % missing)
+    # Also mock stage_domain_knowledge_files to avoid side effects
+    if hasattr(incr_mod, 'stage_domain_knowledge_files'):
+        original_stage = incr_mod.stage_domain_knowledge_files
+        incr_mod.stage_domain_knowledge_files = lambda *a, **kw: []
 
-except Exception as e:
-    print('ERROR: %s' % e)
+    result = run_incremental_pipeline(
+        proj_dir,
+        intent_file,
+        old_commit_id,
+    )
+    # If we get here, no exception was raised — the bug was NOT triggered.
+    actual = result
+    print(f"NOT CONFIRMED — function returned {result!r} without raising an exception")
+
+except PermissionError as e:
+    actual = f"PermissionError: {e}"
+    print(f"CONFIRMED — PermissionError raised: {e}")
+except OSError as e:
+    actual = f"OSError: {e}"
+    print(f"CONFIRMED — OSError raised: {e}")
+except ImportError as e:
+    actual = f"ImportError: {e}"
+    print(f"ERROR: ImportError — {e}")
     sys.exit(1)
+except Exception as e:
+    actual = f"{type(e).__name__}: {e}"
+    print(f"CONFIRMED — unexpected exception {type(e).__name__}: {e}")
+finally:
+    # Cleanup: restore mocked modules and functions
+    if 'incr_mod' in dir():
+        if 'original_check' in dir():
+            incr_mod.check_last_run_existence = original_check
+        if 'original_setup_logging' in dir():
+            incr_mod._setup_incremental_logging = original_setup_logging
+        if 'original_stage' in dir():
+            incr_mod.stage_domain_knowledge_files = original_stage
+
+    # Restore the real main module
+    sys.modules.pop('main', None)
+
+    # Clean up temp files and directories
+    try:
+        if os.path.exists(intent_file):
+            os.chmod(intent_file, 0o644)
+    except Exception:
+        pass
+    if os.path.isdir(PROBE_TMP):
+        shutil.rmtree(PROBE_TMP, ignore_errors=True)
 ```
 
 ### Probe Output
 
 ```
-NOT CONFIRMED — code includes required prefixed-file removal: all 6 glob patterns present in source
+CONFIRMED — PermissionError raised: [Errno 13] Permission denied: '/tmp/fm_agent_probe_8tm61xz6/unreadable_intent.txt'
 ```

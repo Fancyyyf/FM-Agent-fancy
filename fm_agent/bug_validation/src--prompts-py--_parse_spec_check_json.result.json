@@ -1,11 +1,11 @@
 {
   "id": "src--prompts-py--_parse_spec_check_json",
-  "source_file": "src/prompts-py/_parse_spec_check_json.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/prompts-py/_parse_spec_check_json.py",
   "function_name": "_parse_spec_check_json",
   "confirmation_status": "confirmed",
-  "attempts": 1,
+  "attempts": "1",
   "probe_script": "fm_agent/bug_validation/probe_src--prompts-py--_parse_spec_check_json.py",
   "detail_file": "fm_agent/bug_validation/src--prompts-py--_parse_spec_check_json.md",
-  "probe_stdout": "CONFIRMED — _nonempty_string treats whitespace-only as empty, but spec requires ValueError for any non-empty string. Actual: returned tuple (False, None, None) (no error) | Expected: 'ValueError'",
-  "trigger_summary": "Whitespace-only counterexample/offending_statements strings bypass the MATCH-verdict ValueError check because _nonempty_string uses bool(value.strip()) instead of len(value) > 0."
+  "probe_stdout": "CONFIRMED — bug reproduced: ValueError raised for valid MATCH verdict with non-empty counterexample\n  Expected: should return (False, None, None, data)\n  Actual error: spec-check MATCH JSON must not include counterexample or offending_statements\n",
+  "trigger_summary": "A MATCH verdict with a non-empty counterexample field raises ValueError, but the specification does not list this as a rejection condition."
 }

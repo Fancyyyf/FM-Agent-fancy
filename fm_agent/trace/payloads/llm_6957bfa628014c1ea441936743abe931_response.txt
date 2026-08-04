@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns True if and only if value is a string and after stripping leading and trailing whitespace it is non-empty; otherwise returns False. No side effects. Formal: return_value ↔ (isinstance(value, str) ∧ value.strip() ≠ \"\")."
-}

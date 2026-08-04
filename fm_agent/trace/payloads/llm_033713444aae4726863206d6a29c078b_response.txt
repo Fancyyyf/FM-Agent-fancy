@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Given self.source = b'Hello, w\\xc3\\xb6rld', self.lines = ['Hello, wörld'], self.line_offsets = [0], and position = {'line': 0, 'character': 8}, the code returns 9 but the specification requires the byte offset 8 (the start of 'ö').",
-  "offending_statements": "Line 16: return base + index",
-  "reason": "The code computes offset by adding a character index (counted in UTF-16 code units) to a byte offset base. For characters that occupy multiple bytes in the source encoding (e.g., 'ö' with UTF-8 2 bytes), the character index does not match the byte offset, causing the return value to point into the middle of a character instead of its start. The specification explicitly requires a byte offset into self.source."
-}

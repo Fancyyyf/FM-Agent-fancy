@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "value = 1 (or any truthy non-string, e.g., an integer)",
-  "offending_statements": "Line 2: backend = (value or \"\").strip().lower()",
-  "reason": "The specification requires that the function returns a str for any input and never raises an exception. For value=1 (an integer), (1 or '') evaluates to 1, which has no .strip() method, so the code raises AttributeError, violating the specification."
-}

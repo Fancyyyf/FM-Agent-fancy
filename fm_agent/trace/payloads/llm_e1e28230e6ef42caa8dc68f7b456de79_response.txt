@@ -1,3 +1,0 @@
-{
-  "post_condition": "After the function completes, either an exception has been raised (propagated from a failing call to `self.position_to_offset` if a position is invalid) or the function has returned normally. In the normal case, let `so = self.position_to_offset(lsp_range['start'])` and `eo = self.position_to_offset(lsp_range['end'])`. By the precondition that the start position does not follow the end position, we have `so <= eo`. The return value `r` is a string such that `r == self.source[so:eo]`. The state of `self` is unmodified. Formally: (normal_return ⇒ ∃ so, eo ∈ ℤ. so = self.position_to_offset(lsp_range['start']) ∧ eo = self.position_to_offset(lsp_range['end']) ∧ so ≤ eo ∧ result == self.source[so:eo])."
-}

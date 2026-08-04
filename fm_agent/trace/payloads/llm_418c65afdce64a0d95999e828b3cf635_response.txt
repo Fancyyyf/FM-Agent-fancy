@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/project', and CodeGraphExtractor.from_proj_dir('/project') returns an instance cg where cg.get_functions_by_file('go', '/project') returns {'/outside/file.go': [('main', 'package main\\n')]}",
-  "offending_statements": "Line 4: return cg.get_functions_by_file(\"go\", proj_dir) if cg else {}",
-  "reason": "The code's behavior does not guarantee that only .go files within proj_dir are processed; get_functions_by_file may return file paths outside proj_dir, violating the specification."
-}

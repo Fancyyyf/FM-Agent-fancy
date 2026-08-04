@@ -1,11 +1,11 @@
 {
   "id": "src--llm_client-py--_stable_user_id",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py",
   "function_name": "_stable_user_id",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_stable_user_id.py",
   "detail_file": "fm_agent/bug_validation/src--llm_client-py--_stable_user_id.md",
-  "probe_stdout": "CONFIRMED — actual type: int, value: 5 | expected type: str",
-  "trigger_summary": "When settings.inject.id is a truthy non-string (e.g., integer 5), Python's `or` returns the non-string value as-is instead of a string, violating the spec requirement that the return value always be a non-empty string."
+  "probe_stdout": "CONFIRMED — first: 'stable-user-or-session-id-xxxxxxx123' | second: 'altered-user-999' | setting changed from '' to 'altered-user-999'\n",
+  "trigger_summary": "settings.inject.id is mutated between calls; _stable_user_id() reevaluates it each time instead of caching the initial value, so the returned user ID is not stable."
 }

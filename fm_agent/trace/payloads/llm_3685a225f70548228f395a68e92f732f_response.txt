@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "source = 'hello\\vworld'",
-  "offending_statements": "Line 2: lines = source.splitlines(keepends=True)",
-  "reason": "The specification requires line boundaries to correspond only to newline character positions. For source='hello\\vworld', the vertical tab (\\v) is not a standard newline character, but splitlines(keepends=True) splits on it, creating two lines ('hello\\v' and 'world') and computing line offsets accordingly. This violates the requirement that the returned index represents source as an ordered sequence of lines where line boundaries correspond to newline positions."
-}

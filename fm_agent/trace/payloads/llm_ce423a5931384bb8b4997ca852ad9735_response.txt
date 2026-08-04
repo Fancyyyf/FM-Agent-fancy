@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir points to a project directory that has a valid cached analysis entry with an unchanged fingerprint. At the time of the call, the ELP backend is unavailable (e.g., server down or process not running).",
-  "offending_statements": "Line 6: if cached and cached[0] == fingerprint:\nLine 7: return cached[1]",
-  "reason": "The specification requires raising an exception when the ELP backend is unavailable or analysis cannot complete. The code returns a cached analysis without attempting to contact the backend, thereby bypassing the required exception."
-}

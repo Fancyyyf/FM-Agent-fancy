@@ -1,25 +1,3 @@
-# [SPEC]
-# Unit: src/incremental_reasoner-py/_setup_incremental_logging.py
-#
-# _setup_incremental_logging(work_dir) -> str
-#
-# Pre-condition:
-#   - work_dir is an absolute or relative filesystem path (the parent directory does not need to exist yet)
-#
-# Post-condition:
-#   - If work_dir does not exist, it has been created as a directory
-#   - A new log file named incremental_<YYYYmmdd_HHMMSS>.log exists under work_dir, where the timestamp captures the moment this function was called; repeated calls produce distinct timestamped files
-#   - The root logger has exactly two handlers: a FileHandler writing formatted records to that log file, and a StreamHandler writing the same formatted records to the real console stream; any handlers previously installed on the root logger have been removed
-#   - sys.stdout is replaced so that every bare print() call writes to the real console stream and also appends the same content to the log file; logging.* records are written to the log file once (via the FileHandler) and are not duplicated by the stdout tee
-#   - Returns the absolute path of the created log file
-# [SPEC]
-
-# [INFO]
-# _StdoutTee(console_stream, file_stream) -> _StdoutTee
-#   Pre-condition: console_stream is a writable stream (typically the real sys.stdout); file_stream is a writable stream open for append
-#   Post-condition: Returns a file-like object whose write(str) method writes str to both console_stream and file_stream, and delegates other attributes (including flush) to console_stream
-# [INFO]
-
 def _setup_incremental_logging(work_dir):
     """
     Route the incremental pipeline's progress output to a log file AND stdout.

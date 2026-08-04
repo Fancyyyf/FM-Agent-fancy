@@ -1,4 +1,0 @@
-{
-  "info_updated": true,
-  "new_info": "# [INFO]\n# _extraction_ident(name: str, qualified_name: str) -> str\n#   Pre-condition: name and qualified_name are strings (qualified_name may be empty) obtained from the codegraph database for a single function or method node\n#   Post-condition: Returns a class-qualified filesystem-safe identifier string. When qualified_name contains a non-empty scope prefix and ends with name, the returned string includes scope components joined with \"::\" before the bare function name. When qualified_name is empty or its tail does not match name, the returned string is the bare function name with any tree-sitter signature decorations stripped. Every component in the returned string is canonicalized so the identifier can serve as both a function FQN tail and a filesystem path component.\n# [INFO]"
-}

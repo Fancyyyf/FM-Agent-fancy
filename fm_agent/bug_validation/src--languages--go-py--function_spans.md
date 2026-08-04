@@ -1,8 +1,8 @@
 # Bug Report: function_spans
 
-**Source file:** `/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/languages/go-py/function_spans.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/go-py/function_spans.py`
 **Verdict:** MISMATCH
-**Confirmation status:** confirmed
+**Confirmation status:** not_confirmed
 
 ---
 
@@ -12,18 +12,18 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a list of (function_name, start_line, end_line) tuples for every
-    top-level function definition found in the file at filepath.
-  - start_line and end_line are 0-indexed and inclusive.
-  - The returned list is ordered by function occurrence within the file.
-  - Returns None when the codegraph backend is unavailable or does not index
-    the file at filepath.
+When the CodeGraph backend can index the specified Go source file, returns a list of (name, start_idx, end_idx) tuples, one tuple per function defined in the file. name is the canonicalized function name, and start_idx and end_idx are 0-indexed inclusive line indices marking the function's span. When the CodeGraph backend is unavailable or does not index the file, returns None.
 
 ---
 
 ### Actual Behavior
 
-Natural: If CodeGraphExtractor.from_proj_dir(proj_dir) returns a falsy value (e.g., None because the codegraph could not be loaded), the function immediately returns None. Otherwise, it calls the obtained instance's get_function_spans("go", filepath) and returns its result. That result is None when the codegraph does not index the given file or the file contains no function definitions, or when the preconditions of get_function_spans are violated (e.g., filepath is not an absolute path, or the language key is not recognised). If the internal preconditions hold, the return value is a nonNone list of 3tuples (name, start_idx, end_idx) where name is a classqualified function/method identifier, start_idx and end_idx are 0indexed inclusive line numbers converted from the backend, and the list is sorted by ascending start_idx. No exceptions are intentionally raised; all error conditions are signalled through the None return value. Formal: Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If not cg: return None. Else: result = cg.get_function_spans("go", filepath). The final return value satisfies: (result = None)  ( (lang_key "go" is supported  filepath is an absolute path inside the project root)  (result is a list L  i : L[i] = (n_i, s_i, e_i)  n_i  String  s_i, e_i    0  s_i  e_i  (j < i : s_j  s_i)  each n_i is a classqualified function/method name in the file indexed by filepath) ). If those additional conditions are not met, result may be None or have an unspecified structure reflecting the internal implementation.
+If the function completes normally, the return value is either None or a list of tuples. The return value is None if and only if the CodeGraph index is unavailable (CodeGraphExtractor.from_proj_dir(proj_dir) returns None) or the file is not indexed by the backend (get_function_spans('go', filepath) returns None). Otherwise, the return value is a list of (name, start_idx, end_idx) tuples, where name is a string and start_idx, end_idx are inclusive 0based line indices of the function definition; the list contains one such tuple for each function found in the file (the list may be empty if the file contains no functions). No side effects are caused beyond internal state of a transient CodeGraphExtractor instance. Formal post-condition:
+let cg = CodeGraphExtractor.from_proj_dir(proj_dir) in
+  (cg = None  ret = None)
+   (cg  None  ret = cg.get_function_spans("go", filepath))
+   (ret  None  (ret is list   e  ret : e = (name, start, end)  name is str  start, end are ints  0  start  end))
+   (ret = None  (cg = None  cg.get_function_spans("go", filepath) = None)).
 
 ---
 
@@ -35,28 +35,32 @@ Line 8: return cg.get_function_spans("go", filepath) if cg else None
 
 ## Trigger Condition
 
-The code hardcodes the language key 'go', causing it to return None for non-Go files that are nevertheless indexed by the codegraph and contain top-level function definitions, violating the specification that requires returning the list of definitions for any such file.
+The code uses 'if cg' to test whether the CodeGraphExtractor instance was obtained, but this will evaluate to False for a non-None instance that is falsy (e.g., due to a custom __bool__). In such a case, the function returns None even though the backend is available and can index the file, violating the specification which requires a non-None list when the backend can index the file.
 
 ---
 
 ## How to trigger the bug
 
-The function in `src/languages/go.py` (line 24: `cg.get_function_spans("go", filepath)`) hardcodes the language key `"go"`. This maps to `language IN ('go')` in the codegraph SQLite query. When a non-Go file (e.g., a Python file) is indexed by codegraph, its nodes have `language = 'python'`, which does not match the hardcoded filter. The query returns no rows, and `get_function_spans` returns `None` — even though the file IS indexed and DOES contain top-level function definitions. The specification requires returning the list of definitions for any such indexed file.
+The probe attempted to reproduce the bug by checking whether the `CodeGraphExtractor` class has a custom `__bool__` method and whether `from_proj_dir()` can return a non-None but falsy value. Neither condition is met.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| proj_dir | `/fake/proj` (contains a valid `.codegraph/codegraph.db`) |
-| filepath | `/fake/proj/my_script.py` (a Python file indexed by codegraph with one function) |
+| proj_dir | `/nonexistent/proj/dir` |
+| filepath | (not called — the check is on `from_proj_dir` return value) |
 
 ### Expected (spec-correct) Output
 
-`[('my_func', 0, 5)]`
+`None` (when no codegraph index exists) or a list of tuples (when the index exists).
 
 ### Actual (buggy) Output
 
-`None`
+The `if cg` check behaves identically to `if cg is not None` in this codebase because:
+- `CodeGraphExtractor` has no custom `__bool__` — all instances are truthy.
+- `from_proj_dir()` only returns either a `CodeGraphExtractor` instance (truthy) or `None` (falsy).
+
+Therefore, `if cg` is functionally equivalent to `if cg is not None`, and the bug cannot be triggered.
 
 ### How to Reproduce
 
@@ -64,23 +68,23 @@ The function in `src/languages/go.py` (line 24: `cg.get_function_spans("go", fil
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import sys, os
-sys.path.insert(0, os.getcwd())
-from src.languages.go import function_spans
+from src.languages.codegraph import CodeGraphExtractor
 
-# Set up a project with a codegraph database that indexes a Python file.
-# The mock simulates the real side_effect: get_function_spans only succeeds
-# when the correct lang_key matches the file's language.
+# Verify no custom __bool__ on CodeGraphExtractor
+has_custom_bool = '__bool__' in CodeGraphExtractor.__dict__
+print(f"Has custom __bool__: {has_custom_bool}")
 
-from unittest.mock import MagicMock, patch
-mock_cg = MagicMock()
-def mock_get(lang_key, fp):
-    return [("my_func", 0, 5)] if lang_key == "python" else None
-mock_cg.get_function_spans.side_effect = mock_get
+# Verify instance truthiness
+cg = CodeGraphExtractor("/nonexistent/path/to/codegraph.db")
+print(f"Instance is truthy: {bool(cg)}")
 
-with patch("src.languages.go.CodeGraphExtractor.from_proj_dir", return_value=mock_cg):
-    result = function_spans("/fake/proj", "/fake/proj/my_script.py")
-# result is None (bug) — expected [('my_func', 0, 5)]
+# Verify from_proj_dir returns only instance or None
+result = CodeGraphExtractor.from_proj_dir("/no/such/project")
+print(f"from_proj_dir returns: {type(result).__name__}")
+
+# actual output: Has custom __bool__: False
+# actual output: Instance is truthy: True
+# actual output: from_proj_dir returns: NoneType
 ```
 
 ---
@@ -88,78 +92,86 @@ with patch("src.languages.go.CodeGraphExtractor.from_proj_dir", return_value=moc
 ## Probe Script
 
 ```python
-"""Probe: Confirm that function_spans in src/languages/go.py hardcodes "go" as
-the language key, causing it to return None for a non-Go file that is indexed
-by the codegraph and contains top-level function definitions.
+"""Probe for bug src--languages--go-py--function_spans.
 
-The spec claims: "Returns a list of (function_name, start_line, end_line) for
-every top-level function definition found in the file at filepath." The actual
-behavior only works when the file happens to be indexed as language "go".
+Tests whether CodeGraphExtractor instances can be falsy (custom __bool__),
+which would cause `if cg` to differ from `if cg is not None` and violate
+the specification.
 """
-
 import sys
 import os
-from unittest.mock import MagicMock, patch
+import tempfile
+import shutil
 
-# The probe is run from the repo root, so cwd is the import base.
-sys.path.insert(0, os.getcwd())
+# Do NOT chdir before imports — that would break `from src.*` resolution.
+# Workspace I/O uses temp dir set up after imports.
 
+passed = False
 
-def main():
-    try:
-        from src.languages.go import function_spans
+try:
+    # Import through the public package entry point
+    from src.languages.codegraph import CodeGraphExtractor
+    from src.languages.go import function_spans
+except Exception as e:
+    print(f'ERROR (import): {e}')
+    sys.exit(1)
 
-        proj_dir = "/fake/proj"
-        # A Python file that is indexed by codegraph and contains a function
-        filepath = "/fake/proj/my_script.py"
+# Setup a fresh temp workspace for any fixture I/O (as required by the probe spec)
+tmpdir = tempfile.mkdtemp(prefix="probe_fs_")
 
-        # Create a mock CodeGraphExtractor instance
-        mock_cg = MagicMock()
-        # get_function_spans returns a realistic result when called with the
-        # CORRECT language key ("python"), but returns None when called with
-        # the hardcoded "go" key (which doesn't match the file's language).
-        def mock_get_function_spans(lang_key, abs_filepath):
-            if lang_key == "python":
-                return [("my_func", 0, 5)]  # spec-correct result
-            # lang_key == "go" → language mismatch → no rows → None
-            return None
+try:
+    # Verify CodeGraphExtractor has no custom __bool__ that could be falsy
+    has_custom_bool = '__bool__' in CodeGraphExtractor.__dict__
 
-        mock_cg.get_function_spans.side_effect = mock_get_function_spans
+    # Instantiate with a non-existent db path — the constructor just stores it
+    cg = CodeGraphExtractor("/nonexistent/path/to/codegraph.db")
 
-        with patch("src.languages.go.CodeGraphExtractor.from_proj_dir",
-                   return_value=mock_cg):
-            actual = function_spans(proj_dir, filepath)
+    # Core check: is the instance truthy?
+    truthy = bool(cg)                   # Python's __bool__
+    is_not_none = cg is not None        # identity check
 
-        # Expected: the function should return the spans for any indexed file.
-        # The spec's post-condition makes no language restriction.
-        expected = [("my_func", 0, 5)]
+    # The spec requires `if cg` and `if cg is not None` to be equivalent
+    # for this code. They differ ONLY if an instance is non-None but falsy.
+    eq_result = bool(cg if truthy else None) == bool(cg if is_not_none else None)
 
-        # The bug: actual is None because "go" was hardcoded and doesn't match
-        # the Python language. passed=True means the bug is reproduced.
-        passed = actual != expected
+    # Also verify from_proj_dir only returns instance or None
+    result_none = CodeGraphExtractor.from_proj_dir("/nonexistent/proj/dir")
+    is_none = result_none is None
 
-        if passed:
-            print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
-            print("The hardcoded 'go' language key caused get_function_spans "
-                  "to miss the python-language node, returning None instead of "
-                  "the indexed function spans.")
-        else:
-            print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+    # The bug can only manifest if:
+    #   - from_proj_dir returns a non-None, falsy object, OR
+    #   - CodeGraphExtractor has a custom __bool__ returning False
+    # Neither condition holds.
 
-    except Exception as e:
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        print(f"ERROR: {e}")
-        sys.exit(1)
+    if has_custom_bool:
+        bug_possible = f"CodeGraphExtractor HAS custom __bool__ = {CodeGraphExtractor.__bool__}"
+    else:
+        bug_possible = "CodeGraphExtractor has NO custom __bool__"
 
+    # All conditions for the bug to be confirmed must be true
+    # Bug: if cg is non-None but falsy, function returns None incorrectly
+    # For this to happen: instance must exist AND bool(instance) must be False
+    can_trigger = (not is_none) and (not truthy)  # non-None but falsy
 
-if __name__ == "__main__":
-    main()
+    if can_trigger:
+        print("CONFIRMED — CodeGraphExtractor instance is non-None but falsy.")
+    else:
+        print(f"NOT CONFIRMED — {bug_possible}. "
+              f"from_proj_dir on missing db returns: {type(result_none).__name__} "
+              f"(is None: {is_none}). Instance truthy: {truthy}, "
+              f"is not None: {is_not_none}. "
+              f"'if cg' equals 'if cg is not None': {eq_result}")
+
+except Exception as e:
+    print(f'ERROR: {e}')
+    sys.exit(1)
+finally:
+    # Clean up the temp workspace
+    shutil.rmtree(tmpdir, ignore_errors=True)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: None | expected: [('my_func', 0, 5)]
-The hardcoded 'go' language key caused get_function_spans to miss the python-language node, returning None instead of the indexed function spans.
+NOT CONFIRMED — CodeGraphExtractor has NO custom __bool__. from_proj_dir on missing db returns: NoneType (is None: True). Instance truthy: True, is not None: True. 'if cg' equals 'if cg is not None': True
 ```

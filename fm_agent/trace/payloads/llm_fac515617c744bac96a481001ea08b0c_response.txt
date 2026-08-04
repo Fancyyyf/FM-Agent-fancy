@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "messages = 'hello' (string instead of a list of message dicts), model = 'gpt-4', client = any valid client object (with is_cli_backend_enabled() returning False and _is_anthropic_model returning False)",
-  "offending_statements": "Line 60: except Exception as exc:",
-  "reason": "The code catches all Exception instances and treats them as transient errors to retry. A TypeError caused by an invalid messages type is not a recoverable transient error; the specification requires that only recoverable errors (rate limiting, server unavailability, etc.) be retried. Non-recoverable errors like malformed input should be propagated immediately without retry, but the code retries them and eventually raises a RuntimeError."
-}

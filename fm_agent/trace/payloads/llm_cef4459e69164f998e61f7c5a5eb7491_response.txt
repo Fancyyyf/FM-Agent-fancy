@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "filepath = \"/home/user/script.py\", with global EXT_TO_LANG = {\".py\": \"Python\"}",
-  "offending_statements": "Line 4: ext = base.rsplit(\".\", 1)[-1] if \".\" in base else \"\"",
-  "reason": "The code strips the leading dot from the extension (e.g., 'py' instead of '.py'). If the global EXT_TO_LANG mapping keys include the dot (e.g., \".py\"), the code returns None because it looks up 'py', but the specification requires returning the language key when the file's extension is in the mapping. This causes a mismatch where a valid mapping entry is missed."
-}

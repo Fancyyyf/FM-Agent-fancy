@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "text = '\"foo()\"', lang_key = 'python', known_stems = {'foo'}, keywords = set(). The code returns {'foo'}; the specification requires an empty set because 'foo()' appears inside a string literal, which should not be treated as a call site.",
-  "offending_statements": "Line 6: for m in regex.finditer(cleaned):",
-  "reason": "The code only strips comments but not string or character literals. Consequently, a regex that matches function-call patterns can capture identifiers inside string literals, incorrectly including them in the result when they belong to known_stems, violating the specification's requirement that identifiers within string/character literal contexts are not treated as call sites."
-}

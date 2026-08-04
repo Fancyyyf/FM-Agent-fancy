@@ -1,7 +1,0 @@
-{
-  "spec_updated": true,
-  "new_spec": "# [SPEC]\n# Unit: src/opencode_trace.py\n#\n# _deep_merge(base: dict, overlay: dict) -> dict\n#\n# Pre-condition:\n#   - base is a dict\n#   - overlay is a dict\n#\n# Post-condition:\n#   - Returns a new dict. Neither base nor overlay is modified.\n#   - The returned dict contains the union of keys from base and overlay.\n#   - For each key present in both base and overlay:\n#     - If both base[key] and overlay[key] are dicts, the returned value is a dict produced\n#       by recursively applying these same merge rules to base[key] and overlay[key].\n#     - Otherwise, the returned value is overlay[key].\n#   - For each key present only in base, the returned value is equal to base[key].\n#   - For each key present only in overlay, the returned value is equal to overlay[key].\n# [SPEC]",
-  "info_updated": false,
-  "new_info": "",
-  "updated_callees": []
-}

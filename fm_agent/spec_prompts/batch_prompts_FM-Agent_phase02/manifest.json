@@ -12,7 +12,7 @@
       "num_functions": 1,
       "num_pending": 0,
       "functions": [
-        "fm_agent/extracted_functions/src/languages/erlang-py/_send.py"
+        "fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::_send.py"
       ]
     }
   ]

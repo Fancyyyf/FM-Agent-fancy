@@ -1,10 +1,10 @@
 {
-  "function": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_setup_outputs_complete.py",
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_setup_outputs_complete.py",
   "verdict": "MISMATCH",
   "gaps": {
-    "spec_claim": "- Returns True when phases.json, engine_overview.txt, and at least one file whose name matches the pattern phase_NN_types.txt (where NN is one or more digits) all exist as regular files under work_dir.\n  - Returns False when any one of the three required output categories is absent from work_dir.",
-    "actual_behavior": "After the function returns, the boolean result R satisfies: R = True if and only if (a) a regular file \"phases.json\" exists under \"work_dir\", its content parses as valid JSON and conforms to the required schema, and (b) both \"engine_overview.txt\" and at least one regular file matching the pattern \"phase_NN_types.txt\" (with NN one or more digits) exist under \"work_dir\". Otherwise R = False. The \"work_dir\" path is unchanged.",
-    "code_evidence": "Line 3",
-    "trigger_condition": "The code returns False if phases.json is not valid JSON/schema-conformant, but the specification only requires the file's existence. Hence, for an input where phases.json exists but is invalid JSON, the code returns False while the specification mandates True."
+    "spec_claim": "Returns True if and only if all of the following exist at their expected paths under work_dir: (1) phases.json, (2) spec_prompts/domain_context/engine_overview.txt, and (3) for every phase number P declared in the phases.json file, a file spec_prompts/domain_context/phase_P_types.txt",
+    "actual_behavior": "The function returns True if and only if both the phase plan and domain context are complete: the file 'phases.json' exists under 'work_dir' and contains a valid phases plan, the file 'engine_overview.txt' exists under 'work_dir', and for every phase number P defined in that 'phases.json', the file 'phase_P_types.txt' exists under 'work_dir'. Returns False otherwise.",
+    "code_evidence": "Line 3: return _phase_plan_complete(work_dir) and _domain_context_complete(work_dir)",
+    "trigger_condition": "The specification requires engine_overview.txt and phase_P_types.txt to be placed under the spec_prompts/domain_context/ subdirectory. The actual code checks for these files directly under work_dir (as per Condition A). Thus, when the required files exist directly under work_dir but not in the subdirectory, the code returns True, violating the specification which expects False."
   }
 }

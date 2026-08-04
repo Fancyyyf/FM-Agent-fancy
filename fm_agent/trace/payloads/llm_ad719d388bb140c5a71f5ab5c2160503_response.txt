@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/test_erlang' containing a single file '/tmp/test_erlang/module.erl' with any valid Erlang source.",
-  "offending_statements": "Line 4: if not files:\nLine 5:     return ErlangAnalysis(functions={}, edges={})\nLine 8: spans: dict[str, list[tuple[str, int, int]]] = {}\nLine 14: server_info = client.initialize(files[0], sources[files[0]])",
-  "reason": "The specification requires the returned ErlangAnalysis to contain .spans and .server_info attributes, populated respectively with per-file span data and server initialization info. The code neither populates the spans dict nor stores or returns server_info; the early return (Line 5) also omits both attributes. Therefore, for any input (including an empty directory and one containing .erl files), the returned object violates the required attributes."
-}

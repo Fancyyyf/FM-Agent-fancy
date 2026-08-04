@@ -1,1 +1,0 @@
-{"post_condition": "self[function_name] == spec  ∧  self.signatures[function_name] == signature  ∧  (∀k ∈ keys(self) \\ {function_name} : self[k] == old(self)[k])  ∧  (∀k ∈ keys(self.signatures) \\ {function_name} : self.signatures[k] == old(self.signatures)[k])"}

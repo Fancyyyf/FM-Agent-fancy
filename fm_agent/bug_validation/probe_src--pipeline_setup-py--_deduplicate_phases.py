@@ -1,84 +1,76 @@
-"""
-Probe script for bug: src--pipeline_setup-py--_deduplicate_phases
-
-Bug: _deduplicate_phases() returns duplicate file paths in removed_files
-when the original source_files list in a module contains duplicate entries
-of a file that is entirely removed from that module.
-"""
-import sys
-import os
 import json
+import os
+import sys
 import tempfile
+from pathlib import Path
 
-# The source module is at the repo root's src/
-REPO_ROOT = os.getcwd()
-sys.path.insert(0, REPO_ROOT)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 try:
     from src.pipeline_setup import _deduplicate_phases
 
-    # Set up a temp workspace with a phases.json that has duplicate entries
-    with tempfile.TemporaryDirectory(prefix="probe_dedup_") as tmpdir:
-        phases_json_path = os.path.join(tmpdir, "phases.json")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        phases_path = os.path.join(tmpdir, "phases.json")
 
-        # Module A (phase 1) claims "a.py" first
-        # Module B (phase 1, same or later) has ["a.py", "a.py", "c.py"] -
-        # "a.py" appears twice, and since "a.py" was already claimed by Module A,
-        # it will be entirely removed from Module B.
+        # phases.json with string phase numbers: "10" and "2".
+        # Numeric order: 2 < 10  → phase 2 should process first.
+        # Lexicographic: "10" < "2" → phase "10" processes first (BUG).
+        # Both phases share "shared.py" — the first-processed phase keeps it.
         phases_data = {
             "phases": [
                 {
-                    "phase": 1,
+                    "phase": "10",
                     "modules": [
-                        {
-                            "name": "module_a",
-                            "source_files": ["a.py", "b.py"]
-                        },
-                        {
-                            "name": "module_b",
-                            "source_files": ["a.py", "a.py", "c.py"]
-                        }
-                    ]
-                }
+                        {"name": "mod_a", "source_files": ["shared.py", "a.py"]}
+                    ],
+                },
+                {
+                    "phase": "2",
+                    "modules": [
+                        {"name": "mod_b", "source_files": ["shared.py", "b.py"]}
+                    ],
+                },
             ]
         }
-
-        with open(phases_json_path, "w") as f:
-            json.dump(phases_data, f, indent=2)
+        with open(phases_path, "w") as f:
+            json.dump(phases_data, f)
 
         result = _deduplicate_phases(tmpdir)
+        modified = result.get("modified_modules", [])
 
-        # Find module_b's entry in modified_modules
-        mod_b_entry = None
-        for mod in result.get("modified_modules", []):
-            if mod.get("module") == "module_b":
-                mod_b_entry = mod
+        bug_confirmed = False
+        issues = []
+
+        # Check 1: If phase "2" (numeric 2) lost shared.py, that means phase "10"
+        # was processed first (lexicographic sort of strings) — the BUG.
+        for mod in modified:
+            if str(mod["phase"]) == "2" and "shared.py" in mod.get(
+                "removed_files", []
+            ):
+                bug_confirmed = True
+                issues.append(
+                    "Phase 2 (smaller numeric) lost shared.py to phase 10 (larger numeric) — "
+                    "lexicographic sort of string phases produced wrong ordering"
+                )
                 break
 
-        if mod_b_entry is None:
-            print("ERROR: module_b not found in modified_modules")
-            sys.exit(1)
+        # Check 2: Returned phase values must be int per spec, but code preserves original type.
+        for mod in modified:
+            if not isinstance(mod["phase"], int):
+                bug_confirmed = True
+                issues.append(
+                    f"Returned phase type is {type(mod['phase']).__name__} "
+                    f"(value {mod['phase']!r}), spec requires int"
+                )
 
-        removed = mod_b_entry.get("removed_files", [])
-        expected_unique = sorted(set(removed))
-        has_duplicates = len(removed) != len(set(removed))
-
-        actual = sorted(removed)
-        expected = expected_unique
-
-        if has_duplicates:
-            print(
-                f"CONFIRMED — duplicate removed_files for module_b: "
-                f"actual={removed!r} | expected (unique)={expected_unique!r}"
-            )
+        if bug_confirmed:
+            print(f"CONFIRMED — {', '.join(issues)}")
         else:
-            print(
-                f"NOT CONFIRMED — removed_files already unique: "
-                f"actual={removed!r}"
-            )
+            print(f"NOT CONFIRMED — phases sorted correctly despite string types")
 
 except Exception as e:
-    import traceback
     print(f"ERROR: {e}")
+    import traceback
+
     traceback.print_exc()
     sys.exit(1)

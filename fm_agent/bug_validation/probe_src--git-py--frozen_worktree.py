@@ -1,110 +1,102 @@
 """Probe script for bug: src--git-py--frozen_worktree
 
-Bug: git add -A skips gitignored untracked files, so they are omitted from the
-snapshot worktree. The spec requires capturing ALL untracked files.
+The bug claim: frozen_worktree() uses `git rm --cached` with only top-level
+exclude names (e.g. "fm_agent"), so nested directories/files with the same
+name are NOT removed from the commit and leak into the snapshot.
+
+This script creates a temporary git repo with:
+  - A top-level fm_agent/ dir (should be excluded)
+  - A nested testdata/fm_agent/ dir (should ALSO be excluded per spec)
+then calls frozen_worktree() and checks whether the nested fm_agent/ leaks.
 """
 
 import os
-import subprocess
+import sys
 import shutil
 import tempfile
-import sys
+import subprocess
 
-# The probe is at fm_agent/bug_validation/probe_*.py, three levels deep.
-# Go up three levels to reach the repo root.
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _repo_root)
+# ---------------------------------------------------------------------------
+# Must import from the public entry point
+# ---------------------------------------------------------------------------
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from src.git import frozen_worktree
+
+# ---------------------------------------------------------------------------
+# Build a fresh temporary git repo with the trigger structure
+# ---------------------------------------------------------------------------
+tmpdir = tempfile.mkdtemp(prefix="probe_fwt_")
+repo_path = os.path.join(tmpdir, "repo")
+os.makedirs(repo_path)
+
+def git(*args):
+    subprocess.run(["git", "-C", repo_path, *args], check=True,
+                   capture_output=True, text=True)
+
+git("init")
+git("config", "user.name", "test")
+git("config", "user.email", "test@example.com")
+
+# Create the top-level excluded directory (fm_agent/)
+os.makedirs(os.path.join(repo_path, "fm_agent"))
+with open(os.path.join(repo_path, "fm_agent", "top_level.txt"), "w") as f:
+    f.write("should be excluded")
+
+# Create a NESTED directory with the same name (testdata/fm_agent/)
+os.makedirs(os.path.join(repo_path, "testdata", "fm_agent"))
+with open(os.path.join(repo_path, "testdata", "fm_agent", "nested.txt"), "w") as f:
+    f.write("should ALSO be excluded but may leak")
+
+# Create a regular file that should be present regardless
+with open(os.path.join(repo_path, "regular.txt"), "w") as f:
+    f.write("should be in snapshot")
+
+# Initial commit so we have a HEAD
+git("add", "testdata/")
+git("add", "regular.txt")
+git("add", "fm_agent/")
+git("commit", "-m", "initial")
+
+# ---------------------------------------------------------------------------
+# Call frozen_worktree (set copy_excluded=False so excluded dirs are NOT
+# copied back — we only care about what the git worktree commit contains)
+# ---------------------------------------------------------------------------
+result = "ERROR"
+actual_detail = ""
 
 try:
-    from src.git import frozen_worktree
-except Exception as e:
-    print(f"ERROR: Failed to import frozen_worktree: {e}")
-    sys.exit(1)
+    with frozen_worktree(repo_path, exclude=("fm_agent",), copy_excluded=False) as wt:
+        # Check: is the nested fm_agent/ present in the snapshot?
+        nested_path = os.path.join(wt, "testdata", "fm_agent")
+        top_level_path = os.path.join(wt, "fm_agent")
+        regular_path = os.path.join(wt, "regular.txt")
 
+        nested_exists = os.path.isdir(nested_path)
 
-def main():
-    # Create a temporary git repo outside the FM-Agent workspace
-    tmp_root = tempfile.mkdtemp(prefix="bug_probe_")
-    proj_dir = os.path.join(tmp_root, "testrepo")
-    os.makedirs(proj_dir)
-
-    try:
-        # Initialize a git repo
-        subprocess.run(["git", "init"], cwd=proj_dir, check=True,
-                       capture_output=True, text=True)
-
-        # Configure git user (required for commits)
-        subprocess.run(["git", "config", "user.email", "test@test.com"],
-                       cwd=proj_dir, check=True, capture_output=True, text=True)
-        subprocess.run(["git", "config", "user.name", "Test"],
-                       cwd=proj_dir, check=True, capture_output=True, text=True)
-
-        # Create .gitignore that ignores *.secret files
-        gitignore_path = os.path.join(proj_dir, ".gitignore")
-        with open(gitignore_path, "w") as f:
-            f.write("*.secret\n")
-
-        # Create a tracked file
-        tracked_path = os.path.join(proj_dir, "tracked.txt")
-        with open(tracked_path, "w") as f:
-            f.write("hello\n")
-
-        # Stage and commit the tracked file + .gitignore
-        subprocess.run(["git", "add", ".gitignore", "tracked.txt"],
-                       cwd=proj_dir, check=True, capture_output=True, text=True)
-        subprocess.run(["git", "commit", "-m", "initial"],
-                       cwd=proj_dir, check=True, capture_output=True, text=True)
-
-        # Create an untracked file that matches .gitignore
-        secret_path = os.path.join(proj_dir, "test.secret")
-        with open(secret_path, "w") as f:
-            f.write("secret content\n")
-
-        # Also create an untracked file that does NOT match .gitignore
-        normal_path = os.path.join(proj_dir, "normal.txt")
-        with open(normal_path, "w") as f:
-            f.write("normal content\n")
-
-        # Call frozen_worktree through the public entry point.
-        # Use empty exclude and copy_excluded=False to keep the test simple.
-        snapshot_dir = None
-        with frozen_worktree(proj_dir, exclude=(), copy_excluded=False) as wt:
-            snapshot_dir = wt
-
-            # Check: does the gitignored untracked file exist in the snapshot?
-            snapshot_secret = os.path.join(wt, "test.secret")
-            secret_present = os.path.isfile(snapshot_secret)
-
-            # Check: does the normal untracked file exist?
-            snapshot_normal = os.path.join(wt, "normal.txt")
-            normal_present = os.path.isfile(snapshot_normal)
-
-            # Check: tracked file exists?
-            snapshot_tracked = os.path.join(wt, "tracked.txt")
-            tracked_present = os.path.isfile(snapshot_tracked)
-
-        # The spec claims: "HEAD tree + all tracked modifications + all untracked files"
-        # If the gitignored file is missing, the bug is CONFIRMED.
-        expected = True    # spec says it SHOULD be present
-        actual = secret_present
-
-        if actual != expected:
-            print(f"CONFIRMED — gitignored untracked file 'test.secret' is missing from snapshot. "
-                  f"present={secret_present}, normal_untracked_present={normal_present}, "
-                  f"tracked_present={tracked_present}")
+        if nested_exists:
+            # BUG CONFIRMED: nested fm_agent/ leaked into snapshot
+            result = "CONFIRMED"
+            nested_files = os.listdir(nested_path)
+            actual_detail = (
+                f"nested fm_agent/ present in snapshot at {nested_path} "
+                f"(contains: {nested_files}) — spec requires exclusion at all depths"
+            )
         else:
-            print(f"NOT CONFIRMED — gitignored untracked file 'test.secret' was present in snapshot. "
-                  f"secret_present={secret_present}, normal_untracked_present={normal_present}, "
-                  f"tracked_present={tracked_present}")
+            result = "NOT CONFIRMED"
+            actual_detail = (
+                "nested fm_agent/ was correctly excluded from snapshot"
+            )
 
-    finally:
-        # Clean up: remove the snapshot worktree and the temp repo
-        if snapshot_dir and os.path.exists(snapshot_dir):
-            parent = os.path.dirname(snapshot_dir)
-            if os.path.exists(parent):
-                shutil.rmtree(parent, ignore_errors=True)
-        shutil.rmtree(tmp_root, ignore_errors=True)
+except Exception as e:
+    result = "ERROR"
+    actual_detail = str(e)
 
+# ---------------------------------------------------------------------------
+# Cleanup
+# ---------------------------------------------------------------------------
+shutil.rmtree(tmpdir, ignore_errors=True)
 
-if __name__ == "__main__":
-    main()
+# ---------------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------------
+print(f"{result} — {actual_detail}")

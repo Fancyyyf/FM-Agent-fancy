@@ -1,11 +1,1 @@
-{
-  "id": "src--incremental_reasoner-py--_remove_stale_extracted",
-  "source_file": "/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_remove_stale_extracted.py",
-  "function_name": "_remove_stale_extracted",
-  "confirmation_status": "confirmed",
-  "attempts": "1",
-  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_remove_stale_extracted.py",
-  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_remove_stale_extracted.md",
-  "probe_stdout": "CONFIRMED — empty func directories a-py and b-py left behind; parent pkg/ not pruned. Spec requires pruning all empty parent directories.",
-  "trigger_summary": "_remove_stale_extracted calls _reconcile_extracted_dir per source file, which removes stale files but never removes the func_dir itself or prunes empty parent directories above it; when multiple deleted source files share a common parent, empty directories are left behind."
-}
+{"id": "src--incremental_reasoner-py--_remove_stale_extracted", "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_remove_stale_extracted.py", "function_name": "_remove_stale_extracted", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_remove_stale_extracted.py", "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_remove_stale_extracted.md", "probe_stdout": "CONFIRMED — orphan extracted files remain after _remove_stale_extracted (func_file=True, spec=True, info=True) | expected: all removed (orphans cleaned)\n", "trigger_summary": "A source file removed from phases.json and deleted from disk, but not present in modified_functions, leaves its extracted-function directory and sidecar files as orphans because _remove_stale_extracted never visits it."}

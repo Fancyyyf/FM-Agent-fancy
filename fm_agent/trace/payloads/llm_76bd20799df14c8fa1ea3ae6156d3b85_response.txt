@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input: proj_dir pointing to a directory where fm_agent/extracted_functions/ exists and contains a regular file with a [SPEC] block using '#' comments and a [INFO] block using '//' comments. Example file content:\n# [SPEC]\n...\n# [SPEC]\n// [INFO]\n...\n// [INFO]\nThe code will use '#' as prefix for the info block markers, producing '# [INFO]\\n...\\n# [INFO]' instead of the actual '// [INFO]\\n...\\n// [INFO]'.",
-  "offending_statements": "Line 35: full_info_block = None\nLine 36: if info_block is not None:\nLine 37:     prefix = _detect_comment_prefix(spec_block) or \"\"\nLine 38:     info_tag = f\"{prefix} [INFO]\".strip()\nLine 39:     full_info_block = f\"{info_tag}\\n{info_block}\\n{info_tag}\"",
-  "reason": "The specification requires the 'info' value to be the exact complete text of the file's [INFO] block (including original markers). The code reconstructs the block using the comment prefix detected from the [SPEC] block, which may differ from the actual comment prefix used around the [INFO] block. In the counterexample, the spec block uses '#' but the info block uses '//', causing the output info string to misrepresent the actual file content."
-}

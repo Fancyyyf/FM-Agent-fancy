@@ -1,53 +1,104 @@
-import sys
+"""Probe for bug: ElpClient.open_document raises FileNotFoundError when source=None
+and the file does not exist, but the spec only allows exceptions for
+server unreachable, notification rejection, or connection loss.
+
+Bug ID: src--languages--erlang-py--ElpClient::open_document
+
+Expected (spec): Only server-reachable, notification-rejection, or
+connection-loss exceptions are allowed. File-read errors like
+FileNotFoundError should not propagate from open_document.
+
+Actual (bug): document.read_text() on line 247 raises FileNotFoundError
+when the file doesn't exist, before any notification is attempted.
+"""
+
 import os
+import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
-# Add snapshot root to path for imports
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot')
+# Ensure repo root is on sys.path so 'src' package resolves
+repo_root = os.path.dirname(os.path.abspath(__file__))
+for _ in range(5):
+    if os.path.isdir(os.path.join(repo_root, "src")) and os.path.isfile(os.path.join(repo_root, "config.py")):
+        break
+    repo_root = os.path.dirname(repo_root)
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
 
-from src.languages.erlang import ElpClient
+# --- Save environment relevant to FM_AGENT config ---
+_saved_env = {k: os.environ.get(k) for k in (
+    "FM_AGENT_CONFIG", "LLM_API_KEY", "LLM_API_BASE_URL",
+    "FM_AGENT_MODEL_BACKEND", "LLM_MODEL",
+)}
+for k in _saved_env:
+    if k in os.environ:
+        del os.environ[k]
+
+tmpdir = None
+confirmed = None
 
 try:
-    with tempfile.TemporaryDirectory() as tmpdir:
-        # Create a real file with content so read_text doesn't fail
-        real_file = Path(tmpdir) / "real.erl"
-        real_file.write_text("-module(real).\n-export([hello/0]).\n\nhello() -> ok.\n")
+    from src.languages.erlang import ElpClient
+except Exception as e:
+    print(f"ERROR: Failed to import ElpClient: {e}")
+    sys.exit(1)
 
-        # Create a symlink pointing to the real file
-        symlink = Path(tmpdir) / "link.erl"
-        symlink.symlink_to(real_file)
+try:
+    # Create a temporary directory for the probe workspace
+    tmpdir = tempfile.mkdtemp(prefix="probe_open_document_")
+    nonexistent_file = Path(tmpdir) / "nonexistent_file.erl"
 
-        # Instantiate ElpClient — constructor does NOT spawn a subprocess
-        # (only __enter__ does that, so this is safe)
-        client = ElpClient(tmpdir)
+    # Ensure the file genuinely does not exist
+    if nonexistent_file.exists():
+        nonexistent_file.unlink()
 
-        # Mock notify to capture the params argument
-        captured_params = [None]
+    # Create an ElpClient pointing at the temp dir (no server started)
+    client = ElpClient(str(tmpdir))
 
-        def capture_notify(method, params):
-            captured_params[0] = params
+    # Attempt to open a non-existent document with source=None
+    # Spec allows only server/network exceptions, but this should raise
+    # FileNotFoundError — a file-read exception not covered by the spec.
+    client.open_document(str(nonexistent_file), source=None)
 
-        with patch.object(client, 'notify', side_effect=capture_notify):
-            client.open_document(str(symlink))
-
-        # Extract the URI that was sent
-        actual_uri = captured_params[0]['textDocument']['uri']
-
-        # The spec says URI must represent the "path argument" (the symlink),
-        # but resolve() follows symlinks to the target.
-        expected_uri = symlink.as_uri()
-
-        passed = actual_uri != expected_uri
-
-        if passed:
-            print(f'CONFIRMED — actual URI: {actual_uri!r} | expected URI: {expected_uri!r}')
-        else:
-            print(f'NOT CONFIRMED — actual URI matched expected: {actual_uri!r}')
+    # If we reach here, no exception was raised — bug NOT confirmed
+    print(
+        "NOT CONFIRMED — open_document() completed without raising "
+        f"FileNotFoundError for non-existent file: {nonexistent_file}"
+    )
 
 except Exception as e:
-    print(f'ERROR: {e}')
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    if isinstance(e, FileNotFoundError) or (
+        hasattr(e, "__class__") and e.__class__.__name__ == "FileNotFoundError"
+    ):
+        print(
+            f"CONFIRMED — FileNotFoundError raised by open_document() "
+            f"when source=None and the file does not exist. "
+            f"The spec only allows exceptions for server unreachable, "
+            f"notification rejection, or connection loss. "
+            f"Exception: {type(e).__name__}: {e}"
+        )
+    elif isinstance(e, PermissionError):
+        print(
+            f"CONFIRMED — PermissionError raised by open_document() "
+            f"when source=None and the file is not readable. "
+            f"This is also a file-read exception not allowed by the spec. "
+            f"Exception: {type(e).__name__}: {e}"
+        )
+    else:
+        import traceback
+        traceback.print_exc()
+        print(f"ERROR: unexpected exception type: {type(e).__name__}: {e}")
+
+finally:
+    # Restore environment
+    for k, v in _saved_env.items():
+        if v is not None:
+            os.environ[k] = v
+        elif k in os.environ:
+            del os.environ[k]
+
+    # Clean up temp directory
+    if tmpdir:
+        import shutil
+        shutil.rmtree(tmpdir, ignore_errors=True)

@@ -3,9 +3,9 @@
   "source_file": "src/languages/erlang.py",
   "function_name": "ElpClient.open_document",
   "confirmation_status": "confirmed",
-  "attempts": "1",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::open_document.py",
   "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::open_document.md",
-  "probe_stdout": "CONFIRMED — actual URI: 'file:///tmp/tmpn3s6sqex/real.erl' | expected URI: 'file:///tmp/tmpn3s6sqex/link.erl'\n",
-  "trigger_summary": "Path.resolve() follows symlinks, so open_document sends the target URI instead of the path argument URI when path is a symbolic link."
+  "probe_stdout": "CONFIRMED — FileNotFoundError raised by open_document() when source=None and the file does not exist. The spec only allows exceptions for server unreachable, notification rejection, or connection loss. Exception: FileNotFoundError: [Errno 2] No such file or directory: '/tmp/probe_open_document_mzgd9rwi/nonexistent_file.erl'",
+  "trigger_summary": "open_document() with source=None and a non-existent file path raises FileNotFoundError, which is not among the spec's allowed exception categories (server unreachable, notification rejection, connection loss)."
 }

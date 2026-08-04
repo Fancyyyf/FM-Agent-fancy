@@ -1,266 +1,167 @@
-# FM-Agent Engine Overview
+# FM-Agent: Architecture & Pipeline Overview
 
-## Architecture
+## System Purpose
+FM-Agent is an automated Hoare-style formal reasoning framework for large-scale
+codebases. It generates behavioral specifications for every function, reasons
+about code correctness against those specifications, and diagnoses bugs via
+structured verification and probe-script validation.
 
-FM-Agent is a 6-phase pipeline that performs automated Hoare-style reasoning over
-large-scale codebases. The pipeline reads a project's source code, extracts
-functions, generates behavioral correctness specifications via LLM agents, reasons
-about code against those specifications block-by-block, and diagnoses bugs when
-the code's actual behavior diverges from its specification.
+## Pipeline Stages (6 Phases)
 
-### Pipeline Stages
-
-Data flows linearly through six phases:
-
-1. **Environment & Pipeline Setup** — Validates the runtime environment, generates
-   `phases.json` (a phase/module plan of the target codebase), and writes
-   per-phase domain context files (`phase_NN_types.txt`) describing the types
-   and invariants for each phase. Also manages git worktrees, CLI backend detection,
-   domain knowledge staging, structured trace recording, and configuration.
-
-2. **Function Extraction & Call Graph Construction** — Language-aware function
-   extraction from source files (supported: C, C++, Python, Rust, Go, Java,
-   JavaScript, TypeScript, CUDA, Erlang, ArkTS). Writes one file per function
-   under `fm_agent/extracted_functions/<src-dir>/<file>-<ext>/<func_name>.<ext>`.
-   Builds static call graphs via codegraph or regex fallback, and merges
-   user-supplied supplemental call edges.
-
-3. **Scope Analysis & Layer Organization** — Uses heuristic signal scoring
-   (traceback names, backtick idents, class.method refs, exception types,
-   body-word overlap) with call-graph propagation for function-level localization.
-   Builds dependency-ordered top-down layers from intra-phase call graphs using
-   topological sort with Tarjan's SCC for cycles. Groups functions into
-   token-budgeted batches for parallel specification generation.
-
-4. **Specification Generation & Code Reasoning** — LLM agents generate behavioral
-   correctness specifications using [SPEC] blocks (pre/post-conditions) and [INFO]
-   blocks encoding caller expectations for callees. The reasoner splits functions
-   into GRANULARITY-sized blocks respecting brace depth, then performs block-by-block
-   Hoare-style reasoning: each block's post-condition becomes the next block's
-   pre-condition. Terminating statements and last blocks are checked against the
-   spec's expected post-condition via a structured JSON verdict (MATCH/MISMATCH
-   with counterexample, offending_statements, reason).
-
-5. **Bug Diagnosis & Verification** — Continuously watches extracted functions
-   for ready specced files, runs the reasoner on each via a ThreadPoolExecutor
-   (MAX_WORKERS concurrency), and when MISMATCH is detected, invokes an OpenCode
-   bug-validation agent that examines the discrepancy, constructs a probe script
-   to reproduce the bug, executes it to confirm/deny, and writes a structured
-   bug report to `fm_agent/bug_validation/`. Aggregates results into
-   `summary.json` with confirmed/not_confirmed/error counts.
-
-6. **Alternative Pipeline Entry Points** — Entry-point-scoped reasoning traces
-   the call graph from a user-specified entry function (optionally restricted to
-   chains reaching end functions), trims the project to only on-chain functions,
-   and runs the full pipeline on the trimmed copy. Incremental analysis diffs
-   the current codebase against a previous run's commit, re-extracts changed
-   functions, scopes to developer intent, updates specs for changed/relevant
-   functions, and re-verifies the impacted subgraph.
-
-### Key Data Flow
-
+### Stage Flow
 ```
-Source files
-  → phases.json (phase/module/function plan)
-  → extracted_functions/ (one file per function, with [SPEC]/[INFO] headers)
-  → spec_prompts/phase_NN_topdown_layers.json (topologically ordered layers)
-  → spec_prompts/batch_prompts_<project>/ (per-batch prompt files for spec agents)
-  → logic_verification_results/ (per-function verdict JSON: MATCH/MISMATCH/ERROR/SKIPPED)
-  → bug_validation/ (per-bug markdown reports + result.json + summary.json)
+Phase 1 (Init/Config) ──┬── Phase 2 (Extraction)
+                         ├── Phase 3 (Planning/Domain Knowledge)
+                         ├── Phase 4 (LLM Communication/Trace)
+                         └── Phase 5 (Spec Utilities)
+                                  │
+                                  ▼
+                         Phase 6 (Reasoning & Verification)
 ```
+
+Phases 2-5 all depend on Phase 1 and run independently.
+Phase 6 depends on Phases 2, 3, 4, and 5 — it consumes extracted functions,
+the phase plan, domain context, and LLM infrastructure.
+
+### Per-Phase Summary
+1. **Initialization & Configuration** — Load fm-agent.toml/.env config via
+   Pydantic, validate runtime (API key, oh-my-openagent, comment-checker,
+   codegraph), manage git state, set up LLM backends.
+2. **Language Backend & Function Extraction** — Parse source files across 12
+   languages via CodeGraph (SQLite index) or regex fallback, extract function
+   bodies/signatures into flat files under `extracted_functions/`, build call
+   graphs with supplemental edges.
+3. **Pipeline Planning & Domain Knowledge** — Generate `phases.json` mapping
+   project modules to phases, produce domain-context type files, stage
+   user-provided domain-knowledge markdown, load plugins.
+4. **LLM Communication & Tracing** — Abstract LLM calls via OpenAI-compatible
+   API or CLI backends (OpenCode/Codex/Claude), with structured tracing
+   (`events.jsonl` + payload files), retry logic, and prompt template generation.
+5. **Specification & Verification Utilities** — Manage function file lists,
+   parse `.spec.json`/`.info.json` sidecars, format specs for the reasoner,
+   generate per-layer batch prompts for spec generation.
+6. **Reasoning & Verification Engine** — Build call graphs and topdown dependency
+   layers, generate specs via LLM batches, run block-level Hoare-style reasoning,
+   check post-condition implications, validate bugs with probe scripts.
+
+## Key Data Flows
+
+### Function Extraction → Spec Generation
+Source files → CodeGraph/regex extractors → `extracted_functions/<module>/<file-ext>/<FuncName>.<ext>`
+→ Spec generation agent → `<FuncName>.<ext>.spec.json` + `<FuncName>.<ext>.info.json`
+
+### Call Graph → Topdown Layers
+Extracted functions + language backends + supplemental edges → `{caller_fqn: [callee_fqns]}`
+→ dependency sort (callees before callers) → per-layer function lists → batch prompts
+
+### Spec → Reasoning → Bug Report
+`.spec.json` (signature, pre_condition, post_condition)
++ `.info.json` (callees with their specs)
+→ Reasoner: split function into GRANULARITY-sized blocks
+→ Generate block post-conditions via LLM
+→ Check if block post-conditions jointly imply function post-condition
+→ Spec-check verdict: MATCH (code correct) or MISMATCH (violation found)
+→ Bug validation agent: build probe script, run it, confirm/refute bug
+→ `bug_validation/<bug_id>.md`
+
+### Incremental Pipeline
+Previous run's commit (from `version.log`) → git diff → identify changed functions
+→ determine affected callers via call graph → regenerate specs only for changed scope
+→ re-verify impacted call chains
 
 ## Encoding Conventions
 
-### FQN (Fully Qualified Name) Format
+### Function Fully-Qualified Names (FQNs)
+- Separator: `::` (double colon)
+- Derived from file path: `src/engine/loader-cpp/loadData.cpp` → `src::engine::loader-cpp::loadData`
+- Unsafe characters (`/`) are translated to `_` via `canonicalize()`
+- Member functions: class-qualified (e.g., `LocalStorage::Flush`)
 
-Functions are named with `::`-separated fully qualified names:
-```
-src::engine::loader-cpp::loadData
-src::storage-cpp::LocalStorage::Flush
-```
-The `<base>-<ext>` component (e.g., `loader-cpp`) represents the source file
-directory for extracted functions. Class-qualified names keep `::` in the
-flat filename (e.g., `LocalStorage::Flush.cpp`). Canonicalization removes
-operator overload characters for safe filenames.
+### Extracted Function File Layout
+`extracted_functions/<source_dir>/<basename-ext>/<ClassName::><FuncName>.<ext>`
+Example: `extracted_functions/src/engine/loader-cpp/LocalStorage::Flush.cpp`
 
-### Spec File Layout
+### Metadata Sidecar JSON Schemas
 
-Every specced file follows the Spec Format:
-```
-<comment> [SPEC]
-<comment> Unit: <file path relative to repo root>
-<comment>
-<comment> <FunctionName>(<params>) -> <ReturnType>
-<comment>
-<comment> Pre-condition:
-<comment>   - <condition 1>
-<comment>   - <condition 2>
-<comment>
-<comment> Post-condition:
-<comment>   - <guarantee 1>
-<comment>   - <guarantee 2>
-<comment> [SPEC]
-
-<comment> [INFO]
-<comment> <callee_name>(<params>) -> <ReturnType>
-<comment>   Pre-condition: <what this caller assumes>
-<comment>   Post-condition: <what this caller expects the callee to guarantee>
-<comment> [SPLIT]
-<comment> <another_callee>(<params>) -> <ReturnType>
-<comment>   ...
-<comment> [INFO]
-
-<unchanged source code>
-```
-
-Comment prefix varies by language:
-- `//` for C, C++, Java, Go, Rust, JS, TS, CUDA, ArkTS
-- `#` for Python, Ruby
-- `%` for Erlang
-- `--` for SQL
-
-If a function has no callees: `<comment> (no callees)` between the [INFO] markers.
-
-### Reasoning Result Format
-
-Each function's reasoning result is a JSON file:
+**`.spec.json`** — Function specification
 ```json
 {
-  "function": "path/to/file",
-  "verdict": "MATCH" | "MISMATCH" | "ERROR" | "SKIPPED",
-  "gaps": {
-    "spec_claim": "<the specification post-condition>",
-    "actual_behavior": "<the code's actual post-condition>",
-    "code_evidence": "<statements that trigger the violation>",
-    "trigger_condition": "<conditions that trigger the bug>"
-  }
+  "signature": "string — function signature",
+  "pre_condition": "string — Hoare-style pre-condition",
+  "post_condition": "string — Hoare-style post-condition"
 }
 ```
 
-### Bug Validation Result Format
-
-Each bug validation produces a `result.json`:
+**`.info.json`** — Callee specifications
 ```json
 {
-  "id": "bug-id",
-  "confirmation_status": "confirmed" | "not_confirmed" | "error",
-  ...
+  "callees": [
+    {
+      "name": "string — callee function name/FQN",
+      "signature": "string — callee signature",
+      "pre_condition": "string — callee pre-condition",
+      "post_condition": "string — callee post-condition"
+    }
+  ]
 }
 ```
 
-### Trace Events
+### Spec-Check JSON Verdict
+```json
+{
+  "verdict": "MATCH | MISMATCH",
+  "counterexample": "string | null — concrete inputs causing violation (MISMATCH only)",
+  "offending_statements": "string | null — code lines violating spec (MISMATCH only)",
+  "reason": "string — plain-text explanation"
+}
+```
+- MATCH: code satisfies post-condition; counterexample/offending_statements must be null
+- MISMATCH: code violates post-condition; all three fields required and non-empty
 
-Structured execution traces under `fm_agent/trace/`:
-- `events.jsonl` — JSONL of structured events with fields: `event_id`
-  (UUID-prefixed), `type` (opencode_call/llm_call), `stage`, `status`
-  (success/error/mismatch/format_error), `start_time`, `end_time`,
-  `summary`, `metadata`, `children`
-- `payloads/` — Event payloads (system prompts, user prompts, assistant
-  outputs, raw OpenCode stdout)
-- `trace/opencode/` — Optional raw LLM request/response JSONL from the
-  OpenCode trace plugin
-
-Each LLM exchange records: all messages with their roles, the raw response,
-parsed JSON, parse errors, model, attempt number, token usage, and timing.
+### Bug Validation Report
+Each bug produces `bug_validation/<bug_id>.md` with:
+- Specification Claim, Actual Behavior, Code Evidence, Trigger Condition,
+  How to Trigger, Probe Script, Probe Output
+And a `summary.json` aggregating all bug results.
 
 ## Key Precomputed Data Structures
 
-### phases.json
+### `phases.json` (Phase 3 output, consumed by Phase 6)
+- `phases[].phase`: int (1-indexed)
+- `phases[].modules[].source_files[]`: string paths relative to project root
+- `phases[].depends_on_phases`: int list
 
-```json
-{
-  "project": "ProjectName",
-  "languages": ["python", "rust", ...],
-  "file_extensions": ["py", "rs", ...],
-  "phases": [
-    {
-      "phase": 1,
-      "name": "Phase Name",
-      "description": "...",
-      "modules": [
-        {
-          "name": "module_name",
-          "description": "...",
-          "source_files": ["src/file.py"]
-        }
-      ],
-      "depends_on_phases": []
-    }
-  ]
-}
-```
+### Call Graph (Phase 6)
+`{caller_fqn_string: [callee_fqn_string]}`
+- Built from static analysis (call-site regex), codegraph edges,
+  and supplemental edges from `--extra-edge` JSON files
+- Language keywords and common library functions are filtered out
 
-### spec_prompts/phase_NN_topdown_layers.json
+### Topdown Layers (Phase 6)
+- Computed by dependency-sorting the call graph (Kahn's algorithm)
+- Layer metadata files store per-function callee spec references
+- Ensures callees are spec'd and reasoned before their callers
 
-```json
-{
-  "phase": 1,
-  "phase_name": "...",
-  "total_functions": N,
-  "total_layers": M,
-  "layers": [
-    {
-      "layer": 0,
-      "cycle_resolution": false,
-      "functions": [
-        {
-          "name": "full::fqn::here",
-          "file": "extracted_functions/path/to/file.ext",
-          "unit": "module_name",
-          "phaseN_callers": ["caller_fqn"],
-          "phaseN_callees": ["callee_fqn"],
-          "all_callees": ["cross_phase_callee_fqn"],
-          "phaseN_callee_info_names_by_caller": {"caller_fqn": ["alias1", "alias2"]}
-        }
-      ]
-    }
-  ]
-}
-```
+### Scope Ranking (Incremental Pipeline)
+For each scoped source file, functions are scored via:
+- Traceback names (×10), backtick identifiers (×5 name, ×2 body),
+  dotted Class.method refs (×15), plain names (×3), exception matching (×4),
+  body word overlap (×1)
+- Intra-file call-graph propagation: callee inherits 0.30× caller score,
+  caller inherits 0.20× callee score
 
-### Supplemental Call Edges
+## Important Invariants (Cross-Phase)
 
-```json
-{
-  "edges": [
-    {
-      "caller": {
-        "fqn": "path::to::file-c::func",
-        "callsite_names": ["callsite_func"]
-      },
-      "callee": {
-        "fqn": "target::fqn",
-        "info_names": ["alias1", "alias2"]
-      }
-    }
-  ]
-}
-```
-
-## Important Invariants Across All Phases
-
-1. **Source files appear in exactly one phase after deduplication.** The
-   `_deduplicate_phases` post-process ensures the earliest phase wins; duplicates
-   in later phases are stripped.
-
-2. **Top-down layering is topological.** For any function F with phase-internal
-   callees C, C belongs to a layer ≤ F's layer. This ensures callees have specs
-   generated before callers need them.
-
-3. **Each extracted function file contains exactly one function.** The extraction
-   validation (`_validate_extraction`) checks this invariant.
-
-4. **[SPEC] and [INFO] markers are mandatory for "ready" files.** `is_file_ready()`
-   requires both markers present; files without specs are skipped by the reasoner.
-
-5. **The reasoner operates sequentially.** Block i's post-condition becomes block
-   i+1's pre-condition. Verification (post-condition vs spec) only triggers at
-   terminating statements (`return`, `exit`, `throw`, `panic`, etc.) or the last
-   block (implicit return).
-
-6. **Bug validation is idempotent on resume.** If the result artifact exists and
-   is valid JSON, the validation agent is not re-invoked.
-
-7. **Configuration precedence is: env > .env > fm-agent.toml > defaults.**
-   The `Settings` class loads from TOML with env overlays; every key is validated
-   with Pydantic (positive ints, valid enums, etc.).
+1. **Function name canonicalization**: Every entry point introducing a function
+   name MUST call `canonicalize()` before using it in FQNs, file paths, or call-edge keys.
+2. **Metadata sidecar completeness**: A function is "ready" for reasoning when
+   BOTH `.spec.json` AND `.info.json` exist with valid schemas.
+3. **Dependency ordering**: A function MUST NOT be reasoned until ALL its
+   callees have been reasoned and their specs are available.
+4. **Granularity**: The GRANULARITY config (default 40 lines) controls block
+   splitting in the reasoner. A value ≤ 0 would loop forever — validated `gt=0`.
+5. **Config precedence**: process env > .env > fm-agent.toml > built-in defaults.
+   Every Pydantic model uses `extra="forbid"` to fail fast on typo'd keys.
+6. **Trace completeness**: Every OpenCode subprocess call and verification LLM
+   call produces a structured event in `trace/events.jsonl` with timestamp,
+   event_id, stage, function_ids, input/output file references, and exit code.

@@ -1,25 +1,3 @@
-# [SPEC]
-# Unit: src/llm_client-py/_parse_json_response.py
-#
-# _parse_json_response(response) -> dict | list
-#
-# Pre-condition:
-#   - response is a string
-#
-# Post-condition:
-#   - Returns the one JSON object or array contained in response, parsed into a Python dict or list
-#   - If the trimmed response is itself a valid JSON object or array, returns that parsed value
-#   - If the trimmed response is valid JSON but represents a non-structural type (string, number, boolean, null), raises ValueError
-#   - If the trimmed response is not valid JSON, the function tolerates non-JSON text (such as markdown code fences or explanatory prose) surrounding exactly one embedded JSON object or array literal, and returns that parsed value
-#   - Raises ValueError if response is not a string
-#   - Raises ValueError if response contains zero embedded JSON objects or arrays
-#   - Raises ValueError if response contains more than one embedded top-level JSON object or array
-# [SPEC]
-
-# [INFO]
-# (no callees)
-# [INFO]
-
 def _parse_json_response(response):
     """Parse the only JSON object or array in an LLM response.
 

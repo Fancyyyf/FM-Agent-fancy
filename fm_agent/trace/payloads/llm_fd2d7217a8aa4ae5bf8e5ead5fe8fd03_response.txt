@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "File content: ' # [SPEC]\\n# [SPEC]\\n# [INFO]\\n# [INFO]'",
-  "offending_statements": "Line 14: marker = _READY_MARKER_RE.fullmatch(line) fails to match due to leading whitespace; Line 16: returns False because marker is None and before_header is True",
-  "reason": "The specification does not forbid leading whitespace on marker lines, as a line containing a comment prefix followed immediately by the section label still matches the described pattern. The code's use of fullmatch requires the whole line to exactly match the marker regex without any leading whitespace, causing it to incorrectly reject a file that should be valid according to the specification."
-}

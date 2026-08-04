@@ -12,16 +12,13 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns a string suitable for use as an executable command name.
-  - When a file named "codegraph" exists within the directory obtained by expanding any leading tilde in the configured bin_dir to the user's home directory and that file has the execute permission bit set for the effective user of the current process, returns the absolute filesystem path to that file.
-  - When that file does not exist or lacks the execute permission bit, returns the bare string "codegraph", deferring resolution to the directories named by the PATH environment variable of the calling process.
-  - Never raises an exception.
+Returns a non-empty string. If the file formed by expanding the user home directory in the configured codegraph.bin_dir and appending 'codegraph' is executable by the calling process, returns the absolute path to that file. Otherwise, returns the bare string 'codegraph'.
 
 ---
 
 ### Actual Behavior
 
-The function returns the absolute path of the 'codegraph' executable under the tilde-expanded `settings.codegraph.bin_dir` directory if that file exists and has the executable permission (os.X_OK); otherwise it returns the bare command string 'codegraph'. Formally: let expanded = os.path.expanduser(settings.codegraph.bin_dir), let path = os.path.join(expanded, 'codegraph'); then the return value r satisfies r = path if os.access(path, os.X_OK) else r = 'codegraph'.
+The function terminates normally without raising an exception. The global state, including the value of `settings.codegraph.bin_dir`, remains unchanged. The return value is a string. Let `expanded = os.path.expanduser(settings.codegraph.bin_dir)` and `local = os.path.join(expanded, 'codegraph')`. If `os.access(local, os.X_OK)` evaluates to True, the return value equals `local`; otherwise, the return value equals `'codegraph'`. Formally: (return = os.path.join(os.path.expanduser(settings.codegraph.bin_dir), 'codegraph') ∧ os.access(return, os.X_OK)) ∨ (return = 'codegraph' ∧ ¬os.access(os.path.join(os.path.expanduser(settings.codegraph.bin_dir), 'codegraph'), os.X_OK)).
 
 ---
 
@@ -34,54 +31,47 @@ Line 14: return local if os.access(local, os.X_OK) else "codegraph"
 
 ## Trigger Condition
 
-The code does not convert the joined path to an absolute path before returning it, so when the configured bin_dir is relative the returned path is relative, violating the specification's requirement to return an absolute filesystem path.
+Specification requires returning an absolute path when the file is executable. The code returns the path as constructed from os.path.join(os.path.expanduser(...), 'codegraph'), which yields a relative path if the configured bin_dir is relative (e.g., '.'). This violates the absolute-path requirement.
 
 ---
 
 ## How to trigger the bug
 
-When `settings.codegraph.bin_dir` is configured to a relative path (e.g., `"."` or `"../../some/dir"`) and an executable file named `codegraph` exists at that relative location (and has the execute permission bit set), `_codegraph_cmd()` returns the relative joined path (e.g., `../../some/dir/codegraph`) instead of the required absolute filesystem path.
+When `settings.codegraph.bin_dir` is set to a relative path and an executable `codegraph` file exists at the resolved location, `_codegraph_cmd()` returns a relative path instead of the absolute path required by the specification.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `settings.codegraph.bin_dir` | A relative path, e.g., `"../../probe_codegraph_cmd_yy10d4pr"` |
-| File at `<bin_dir>/codegraph` | Exists and has `os.X_OK` permission |
+| `settings.codegraph.bin_dir` | A relative path (e.g., `.` or `some/rel/dir`) |
+| Executable at `os.path.join(os.path.expanduser(bin_dir), "codegraph")` | An executable file must exist |
 
 ### Expected (spec-correct) Output
 
-`'/tmp/probe_codegraph_cmd_yy10d4pr/codegraph'` (absolute path, e.g. via `os.path.abspath(result)`)
+`<absolute path to the codegraph executable>` — e.g., obtained via `os.path.abspath()` on the joined path.
 
 ### Actual (buggy) Output
 
-`'../../probe_codegraph_cmd_yy10d4pr/codegraph'` (relative path — no `os.path.abspath` call)
+`<relative path to the codegraph executable>` — the raw result of `os.path.join(os.path.expanduser(bin_dir), "codegraph")` without conversion to absolute.
 
 ### How to Reproduce
+
+Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
 ```python
 import os
-import tempfile
 import config
-
-# Create a temp dir with an executable "codegraph"
-tmpdir = tempfile.mkdtemp()
-codegraph_path = os.path.join(tmpdir, "codegraph")
-with open(codegraph_path, "w") as f:
-    f.write("#!/bin/sh\necho ok\n")
-os.chmod(codegraph_path, 0o755)
-
-# Set bin_dir to a relative path
-rel = os.path.relpath(tmpdir, os.getcwd())
-config.settings.codegraph.bin_dir = rel
-
 from src.languages.codegraph import _codegraph_cmd
-result = _codegraph_cmd()
-# actual (buggy) output: '../../probe_codegraph_cmd_xxx/codegraph'  (relative)
-# expected (correct) output: '/tmp/probe_codegraph_cmd_xxx/codegraph'  (absolute)
+
+# Set bin_dir to a relative path with an executable 'codegraph' in it
+config.settings.codegraph.bin_dir = "."
+# Ensure ./codegraph is executable for the test
+# actual (buggy) output: './codegraph' (relative)
+# expected (correct) output: '/absolute/path/to/codegraph'
+print(_codegraph_cmd())
 ```
 
 ---
@@ -89,83 +79,55 @@ result = _codegraph_cmd()
 ## Probe Script
 
 ```python
-"""Probe script for bug id: src--languages--codegraph-py--_codegraph_cmd
-
-Bug: _codegraph_cmd() returns a relative path when bin_dir is relative,
-violating the spec requirement to return an absolute path.
-"""
-
-import os
 import sys
+import os
 import tempfile
-from unittest.mock import patch
+import shutil
 
-# ── Step 1: Create a temp directory with an executable "codegraph" file ──
-
-tmpdir = tempfile.mkdtemp(prefix="probe_codegraph_cmd_")
-codegraph_path = os.path.join(tmpdir, "codegraph")
-
-# Write a minimal executable script
-with open(codegraph_path, "w") as f:
-    f.write("#!/bin/sh\necho ok\n")
-os.chmod(codegraph_path, 0o755)
-
-# ── Step 2: Compute the relative path from cwd to tmpdir ──
-
-cwd = os.getcwd()
-rel_dir = os.path.relpath(tmpdir, cwd)
-
-# ── Step 3: Monkey-patch settings.codegraph.bin_dir to the relative path ──
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../..")
 
 try:
+    import config
     from src.languages.codegraph import _codegraph_cmd
-except Exception as e:
-    print(f"ERROR: Failed to import _codegraph_cmd: {e}")
-    sys.exit(1)
 
-import config
+    tmpdir = tempfile.mkdtemp(prefix="probe_codegraph_cmd_")
+    relbin = os.path.join(tmpdir, "relbin")
+    os.makedirs(relbin)
+    codegraph_path = os.path.join(relbin, "codegraph")
+    with open(codegraph_path, "w") as f:
+        f.write("#!/bin/sh\necho ok")
+    os.chmod(codegraph_path, 0o755)
 
-original_bin_dir = config.settings.codegraph.bin_dir
-try:
-    # Patch bin_dir to the relative path
-    config.settings.codegraph.bin_dir = rel_dir
+    rel_bin_dir = os.path.relpath(relbin, os.getcwd())
+
+    original_bin_dir = config.settings.codegraph.bin_dir
+    config.settings.codegraph.bin_dir = rel_bin_dir
 
     actual = _codegraph_cmd()
 
-    # Expected: os.path.abspath of what the code computed (absolute path)
-    # Buggy code does NOT call abspath, so when bin_dir is relative,
-    # the return is relative when the file exists and is executable.
-    expected = os.path.abspath(os.path.join(
-        os.path.expanduser(rel_dir), "codegraph"
-    ))
-
-    # Verify: the actual result should be absolute per spec
-    is_absolute = os.path.isabs(actual)
-    bug_reproduced = (not is_absolute) and os.access(
-        os.path.join(rel_dir, "codegraph"), os.X_OK
-    )
-
-    if bug_reproduced:
-        print(
-            f"CONFIRMED — actual (relative): {actual!r} | "
-            f"expected (absolute): {expected!r}"
-        )
-    else:
-        print(
-            f"NOT CONFIRMED — actual: {actual!r} (is_absolute={is_absolute}, "
-            f"expected: {expected!r})"
-        )
-
-finally:
-    # Restore original bin_dir
     config.settings.codegraph.bin_dir = original_bin_dir
-    # Clean up temp directory
-    os.remove(codegraph_path)
-    os.rmdir(tmpdir)
+
+    if actual == "codegraph":
+        print("NOT CONFIRMED — fallback 'codegraph' returned; executable at "
+              + repr(rel_bin_dir) + " not detected")
+    else:
+        if os.path.isabs(actual):
+            print("NOT CONFIRMED — returned absolute path: " + repr(actual))
+        else:
+            print("CONFIRMED — returned relative path: " + repr(actual)
+                  + ", spec requires absolute")
+
+    shutil.rmtree(tmpdir)
+
+except Exception as e:
+    import traceback
+    print("ERROR: " + str(e))
+    traceback.print_exc()
+    sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual (relative): '../../probe_codegraph_cmd_yy10d4pr/codegraph' | expected (absolute): '/tmp/probe_codegraph_cmd_yy10d4pr/codegraph'
+CONFIRMED — returned relative path: '../../../../tmp/probe_codegraph_cmd_53p8bo8x/relbin/codegraph', spec requires absolute
 ```

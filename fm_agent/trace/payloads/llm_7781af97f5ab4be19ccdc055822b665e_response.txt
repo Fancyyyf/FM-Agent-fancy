@@ -1,3 +1,0 @@
-{
-  "post_condition": "If the input 'ts' is falsy (i.e., evaluates to False in a boolean context), the function returns None. Otherwise, 'ts' is a non-empty string. Define t = (ts[:-1] + '+00:00') if ts ends with 'Z' else ts. The function attempts to call datetime.fromisoformat(t). If that call succeeds, the return value is the resulting datetime.datetime object; if any Exception is raised, the return value is None. No non-local state is modified. Formal post-condition: let R be the return value. R = None if (not ts) or (isinstance(ts, str) and datetime.fromisoformat(t) raises an Exception), else R = datetime.fromisoformat(t), where t = (ts[:-1] + '+00:00') if (isinstance(ts, str) and ts.endswith('Z')) else ts. All other program state is unchanged."
-}

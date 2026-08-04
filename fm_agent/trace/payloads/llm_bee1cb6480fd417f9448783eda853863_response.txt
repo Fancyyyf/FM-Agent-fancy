@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "File content: \"x = '# [INFO]'\\n# [INFO]\\nsome text\\n# [INFO]\\n\" (prefix detected as '#').",
-  "offending_statements": "Line 8: start = content.find(tag)",
-  "reason": "The code locates the marker substring anywhere in the content instead of requiring it to appear as a whole line matching '<prefix> [INFO]'. This causes the first marker to match inside a non-marker line, selecting wrong boundaries and returning incorrect text (empty string instead of 'some text') against the specification."
-}

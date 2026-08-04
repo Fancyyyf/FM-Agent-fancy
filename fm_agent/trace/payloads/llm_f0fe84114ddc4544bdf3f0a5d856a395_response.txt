@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a list of strings. Let `v` be the value of the environment variable 'INJECT_HOST' if it is set, otherwise `v = ''`. Then the return value is `[token.strip() for token in v.split(',') if token.strip() != '']`. Equivalently, the returned list contains all non-empty, stripped substrings obtained by splitting `v` by commas, in the original order, with any empty or whitespace-only components excluded."
-}

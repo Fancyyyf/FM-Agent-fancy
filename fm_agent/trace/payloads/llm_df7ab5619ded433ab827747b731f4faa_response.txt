@@ -1,1 +1,0 @@
-{"post_condition": "Returns True if phases.json exists as a regular file under work_dir AND engine_overview.txt exists as a regular file under work_dir AND at least one regular file whose name matches the pattern phase_\\d+_types\\.txt exists under work_dir; otherwise returns False."}

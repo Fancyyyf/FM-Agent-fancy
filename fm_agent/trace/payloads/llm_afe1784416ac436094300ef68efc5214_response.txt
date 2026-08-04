@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "rows = []  (or rows = [(5, 0)])",
-  "offending_statements": "Line 5: return None, cr_total, in_total",
-  "reason": "When input_sum == 0, the code returns None as the rate, but the specification requires 0.0. For example, with rows = [], cr_total=0, in_total=0, the code returns (None, 0, 0) instead of (0.0, 0, 0)."
-}

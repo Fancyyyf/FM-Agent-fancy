@@ -1,29 +1,3 @@
-# [SPEC]
-# Unit: src/generate_topdown_layers-py/_compute_layers.py
-#
-# _compute_layers(phase_fqns, callees_map, callers_map) -> list[dict]
-#
-# Pre-condition:
-#   - phase_fqns is a non-empty iterable of unique, hashable function identifiers (FQNs)
-#   - callees_map maps each FQN to an iterable of FQNs it calls (may be empty); referenced callee FQNs that belong to this phase must be members of phase_fqns
-#   - callers_map maps each FQN to an iterable of FQNs that call it (may be empty); referenced caller FQNs that belong to this phase must be members of phase_fqns
-#
-# Post-condition:
-#   - Returns a list of layer dicts, sorted by ascending "layer" (0-indexed integer)
-#   - Each layer dict contains: "layer" (int), "functions" (list of FQNs in lexicographic order), and "cycle_resolution" (bool)
-#   - Every FQN in phase_fqns appears in exactly one layer's "functions" list
-#   - For every directed edge (caller → callee) where both endpoints are in phase_fqns: the callee's layer index is less than or equal to the caller's layer index
-#   - Equality (callee and caller in the same layer) occurs only when the two functions belong to the same strongly connected component (mutual recursion), and the layer is marked with "cycle_resolution": true
-#   - "cycle_resolution" is true when the layer contains at least one SCC with two or more members; it is false when all SCCs in the layer are singletons (no mutual recursion resolved)
-#   - When no cycles exist, layers are assigned by applying Kahn's algorithm on the caller graph: a function enters the current layer when all its in-phase callers have already been assigned to strictly earlier layers
-# [SPEC]
-
-# [INFO]
-# _tarjan_scc(nodes, edges) -> list[list]
-#   Pre-condition: nodes is an iterable of hashable node identifiers; edges maps each node to an iterable of its outgoing neighbors (other node identifiers)
-#   Post-condition: returns a list of SCCs in reverse topological order (no edge from a later SCC to an earlier SCC); each SCC is a maximal set of nodes where every node is reachable from every other node via directed paths restricted to nodes; every node in nodes appears in exactly one SCC
-# [INFO]
-
 def _compute_layers(phase_fqns, callees_map, callers_map):
     """Compute topological layers using Kahn's algorithm with cycle handling.
 

@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a dictionary resulting from the call-graph analysis of the effective project root (which may be a subdirectory of `proj_dir` as determined by `_callgraph_project_root`). If the analysis is available, the dictionary contains a module-qualified Erlang call edges mapping (caller to callees); otherwise, it is an empty dictionary. No exceptions are raised; the function always terminates normally under the given pre-condition. Formally: `result = _analysis_or_empty(_callgraph_project_root(proj_dir)).edges` and `isinstance(result, dict)` holds, with `result` being either the non‑empty edges dictionary or `{}` when analysis is unavailable."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "expected_files = {'file1.txt', 'file3.txt'}; file1.txt and file3.txt are both unready (missing specs) while file1.txt has a reasoning future still in progress; spec_procs contains a single subprocess that has exited (_spec_task_done returns True); processed is empty; reasoning_futures = {future_for_file1}; validation_futures = {}. According to specification B.6 the function should exit with a warning immediately, but the code continues the loop because reasoning_futures is non-empty.",
-  "offending_statements": "Line 133: if _all_procs is not None and all(_spec_task_done(p) for p in _all_procs):\nLine 135: if unready and not reasoning_futures and not validation_futures:",
-  "reason": "Specification B.6 requires the function to exit with a warning as soon as spec_procs processes have all exited and not all expected files are ready. The code adds extra conditions `not reasoning_futures` and `not validation_futures`, delaying exit until those in‑flight futures finish. This violates the immediate‑exit behaviour implied by B.6."
-}

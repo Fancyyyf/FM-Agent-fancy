@@ -1,1 +1,0 @@
-{"verdict": "MATCH", "counterexample": null, "offending_statements": null, "reason": "The code correctly handles all requirements: returns sorted paths with normalized prefix, excludes manifest file, filters by recognized extensions, uses forward slashes, and returns empty list when staging directory is absent. No concrete input violates the specification."}

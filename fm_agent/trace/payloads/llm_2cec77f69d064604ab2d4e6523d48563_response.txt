@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/home/user', filepath='/home/user/extracted_functions/src::engine/loader-cpp/loadData.cpp'",
-  "offending_statements": "Line 10: parts = Path(stem).parts; Line 11: return \"::\".join(parts)",
-  "reason": "The code joins path components with '::' but does not ensure no component already contains '::'. If a directory or filename in the path contains '::', the resulting FQN will contain a segment with '::', violating the specification that each segment must not contain '::'. In the counterexample, the relative path is 'src::engine/loader-cpp/loadData.cpp', stem is 'src::engine/loader-cpp/loadData', parts includes 'src::engine' (which contains '::'), and the output 'src::engine::loader-cpp::loadData' has a segment with '::'."
-}

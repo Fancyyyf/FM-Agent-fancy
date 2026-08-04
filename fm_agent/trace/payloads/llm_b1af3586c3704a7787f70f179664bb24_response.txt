@@ -1,3 +1,0 @@
-{
-  "post_condition": "Returns a dict. If a CodeGraphExtractor instance could be created from `proj_dir` (i.e., backend available and project indexed), the dict maps each absolute path of a Python file under `proj_dir` to a list of (function_name, function_body) tuples; otherwise the dict is empty ({}). The input `proj_dir` is unchanged."
-}

@@ -1,31 +1,3 @@
-# [SPEC]
-# Unit: src/llm_client-py/_retry_create.py
-#
-# _retry_create(client, model, messages) -> (str, dict)
-#
-# Pre-condition:
-#   - client can send conversation messages for the given model and return text responses
-#   - model is a non-empty string
-#   - messages is a list of message dicts with "role" and "content" keys
-#
-# Post-condition:
-#   - Returns a tuple of (response_text, usage_metadata_dict) from a successful LLM call
-#   - response_text is the text content returned by the LLM
-#   - usage_metadata_dict maps token-usage keys to numeric counts from the LLM response, or is an empty dict when no usage data is reported
-#   - When the CLI backend is active, the LLM interaction is delegated to an external agent
-#   - For direct client calls, Anthropic-family models use a dedicated native Anthropic endpoint; all other models use the standard chat-completions endpoint
-#   - Recoverable errors (rate limiting, server unavailability, and other transient HTTP/middleware failures) are retried with increasing delay bounded by a per-category maximum retry count
-#   - Non-recoverable errors (provider-rejected malformed requests) are propagated immediately without retry
-#   - Raises RuntimeError when a recoverable error exhausts its retry budget
-# [SPEC]
-
-# [INFO]
-# _anthropic_create:
-#   - Pre: model non-empty string; messages list of dicts with "role" and "content"
-#   - Post: returns (text: str, usage: dict) on success; may raise RuntimeError on non-JSON response
-#   - Relies on global settings LLM_API_BASE_URL, LLM_API_KEY, _ANTHROPIC_MAX_TOKENS
-# [INFO]
-
 def _retry_create(client, model, messages):
     """Call the LLM with retries. Returns (text, usage_dict).
 

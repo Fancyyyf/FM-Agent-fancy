@@ -1,84 +1,97 @@
-"""Probe for bug: _LayeredSource.__call__ returns self._data without filtering model defaults."""
+"""Probe for bug: _LayeredSource.__call__ returns self._data unfiltered,
+allowing non-field keys to leak when the settings model accepts extra fields.
+
+Bug ID: config-py--_LayeredSource::__call__
+"""
+
+import os
 import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, '/tmp/fm_agent_wt_FM-Agent_xyeqtgt6/snapshot')
+# Ensure the repo root is importable
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+# --- Save and sanitize environment to isolate the test ---
+_saved_env = {k: os.environ.get(k) for k in (
+    "FM_AGENT_CONFIG", "LLM_API_KEY", "LLM_API_BASE_URL", "FM_AGENT_MODEL_BACKEND",
+    "LLM_MODEL", "LLM_EFFORT", "OPENCODE_MODEL_PROVIDER", "LLM_API_STYLE",
+    "MAX_SPC_ITER", "GRANULARITY", "MAX_WORKERS", "OPENCODE_MAX_RETRIES",
+    "BUG_VALIDATION_MAX_RETRIES", "OPENCODE_TIMEOUT_SECONDS",
+    "FM_AGENT_DOMAIN_KNOWLEDGE",
+)}
+for k in _saved_env:
+    if k in os.environ:
+        del os.environ[k]
 
 try:
-    import config
+    # Step 1: Create a temporary TOML file with an unexpected section
+    tmpdir = tempfile.mkdtemp(prefix="probe_layered_source_")
+    toml_content = """[llm]
+name = "test-model"
+
+[unexpected_section]
+foo = "bar"
+baz = 42
+"""
+    toml_path = Path(tmpdir) / "test.toml"
+    toml_path.write_text(toml_content)
+
+    # Step 2: Create a minimal settings class with extra="allow"
+    # (extra="allow" is what makes the bug observable - with extra="forbid"
+    # pydantic would catch the leak at the Settings validation level instead)
     from pydantic import BaseModel
-    from pydantic_settings import BaseSettings
+    from pydantic_settings import BaseSettings, SettingsConfigDict
 
-    # Define a minimal Settings subclass with known model defaults.
-    class SubModel(BaseModel):
-        count: int = 99
-        tag: str = "untagged"
+    class FakeSection(BaseModel):
+        model_config = {"extra": "allow"}
+        name: str = "default"
 
-    class ProbeSettings(BaseSettings):
-        model_config = {"extra": "forbid"}
-        nested: SubModel = SubModel()
-        enabled: bool = True
-        title: str = "fallback-title"
+    class TestSettings(BaseSettings):
+        model_config = SettingsConfigDict(extra="allow")
+        llm: FakeSection = FakeSection()
 
-    # Create a temporary TOML that configures only ONE field (nested.count),
-    # leaving nested.tag, enabled, and title unconfigured.
-    tmpdir = tempfile.mkdtemp()
-    toml_path = Path(tmpdir) / "probe.toml"
-    toml_path.write_text("""\
-[nested]
-count = 99
-""")
+    # Step 3: Import _LayeredSource from the public config module
+    from config import _LayeredSource
 
-    # Instantiate _LayeredSource and call it.
-    source = config._LayeredSource(ProbeSettings, toml_path)
+    source = _LayeredSource(TestSettings, toml_path)
+
+    # Step 4: Call __call__() — this is the method under test
     result = source()
 
-    # --- Verify the result against the spec ---
-    # Spec claim: "no model-level defaults are included"
-    # Model defaults:  SubModel(count=99, tag="untagged"), enabled=True, title="fallback-title"
-    #
-    # Only nested.count was explicitly in the TOML.  Every other field has only
-    # its model default — those MUST be absent from the result dict.
+    # Step 5: Verify — the spec claims every key must be a valid field
+    # name of the settings class. Valid field names of TestSettings: {"llm"}
+    valid_fields = set(TestSettings.model_fields.keys())
 
-    bug_indicators = []
+    extra_keys = set(result.keys()) - valid_fields
 
-    # nested.count (99) is in the TOML → should be present.
-    if 'nested' not in result or result['nested'].get('count') != 99:
-        bug_indicators.append(
-            "nested.count=99 was in TOML but missing from result"
+    if extra_keys:
+        print(
+            f"CONFIRMED — extra non-field keys leaked through: {sorted(extra_keys)} "
+            f"(valid fields: {sorted(valid_fields)}) | "
+            f"actual extra data: { {k: result[k] for k in extra_keys}!r}"
         )
-
-    # nested.tag ("untagged") is NOT in the TOML — model default only.
-    if 'nested' in result and 'tag' in result['nested']:
-        bug_indicators.append(
-            f"nested.tag={result['nested']['tag']!r} is only a model default "
-            f"but appears in result"
-        )
-
-    # enabled (True) is NOT in the TOML — model default only.
-    if 'enabled' in result:
-        bug_indicators.append(
-            f"enabled={result['enabled']!r} is only a model default but appears in result"
-        )
-
-    # title ("fallback-title") is NOT in the TOML — model default only.
-    if 'title' in result:
-        bug_indicators.append(
-            f"title={result['title']!r} is only a model default but appears in result"
-        )
-
-    if bug_indicators:
-        print("CONFIRMED — model defaults leaked into __call__ output:")
-        for b in bug_indicators:
-            print(f"  - {b}")
-        print(f"  Full result: {result!r}")
     else:
-        print("NOT CONFIRMED — no model defaults leaked; only TOML values present")
-        print(f"  Result: {result!r}")
+        print(
+            f"NOT CONFIRMED — all keys are valid fields: {sorted(result.keys())} "
+            f"(valid fields: {sorted(valid_fields)})"
+        )
 
 except Exception as e:
-    print(f"ERROR: {e}")
     import traceback
     traceback.print_exc()
-    sys.exit(1)
+    print(f"ERROR: {e}")
+
+finally:
+    # Restore environment
+    for k, v in _saved_env.items():
+        if v is not None:
+            os.environ[k] = v
+        elif k in os.environ:
+            del os.environ[k]
+
+    # Clean up temp directory
+    import shutil
+    shutil.rmtree(tmpdir, ignore_errors=True)

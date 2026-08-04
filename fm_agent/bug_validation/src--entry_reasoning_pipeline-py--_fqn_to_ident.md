@@ -1,6 +1,6 @@
 # Bug Report: _fqn_to_ident
 
-**Source file:** `src/entry_reasoning_pipeline-py/_fqn_to_ident.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_fqn_to_ident.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,55 +12,45 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- Returns the class-qualified function identifier obtained by removing the
-    path prefix up to and including the source-file component from fqn
-  - A component is recognized as a source-file component when it consists of
-    a non-empty base name, a hyphen, and a suffix that is a recognized
-    source-file language extension
-  - When fqn contains more than one source-file component, the rightmost one
-    determines where the prefix ends
-  - When fqn contains no source-file component, returns the last component
-    of fqn unchanged
-  - The returned string is non-empty
+Returns the class-qualified identifier portion of fqn: the tail after the source-file component (the component whose rightmost hyphen-separated token is a known language file extension). If no source-file component is found, returns the last '::'-delimited component of fqn.
 
 ---
 
 ### Actual Behavior
 
-Let parts = fqn.split("::"), n = len(parts). Let i be the largest index in the range [0, n-1] such that there exists an integer pos > 0 where parts[i][pos] == '-' and parts[i][pos+1:] is a key in EXT_TO_LANG. If such an i exists, then result = "::".join(parts[i+1:]) (which may be an empty string if i == n-1). Otherwise, result = parts[-1].
+Let parts = fqn.split('::') and n = len(parts). The function returns a string result determined as follows: the code searches from i = n-1 down to 0 to find the first (i.e., rightmost) component where parts[i].rfind('-') returns a position h > 0 and the substring parts[i][h+1:] is a key in the global dictionary EXT_TO_LANG. If such an index i0 is found, the function immediately returns '::'.join(parts[i0+1:]). Otherwise (if no component satisfies the condition), it returns parts[-1] (the last component). If n = 1, the loop over indices is empty and result equals parts[0].
 
 ---
 
 ## Code Evidence
 
-Line 15: return "::".join(parts[i + 1:])
+Line 14: if hyphen > 0 and comp[hyphen + 1:] in EXT_TO_LANG:
 
 ---
 
 ## Trigger Condition
 
-When the rightmost source-file component is the last component of the FQN, parts[i+1:] is empty, so the code returns an empty string, violating the specification requirement that the returned string is non-empty.
+The code's condition requires hyphen > 0, so it rejects components like '-cpp' that start with a hyphen even though the spec treats the rightmost hyphen-separated token 'cpp' as a valid extension. For input 'src::-cpp::foo::bar', the spec expects 'foo::bar' (tail after the source-file component '-cpp'), but the code returns 'bar' because it does not recognize '-cpp' as a source-file component.
 
 ---
 
 ## How to trigger the bug
 
-When an FQN has the source-file component as its final component (with no class/function qualifier after it), `parts[i+1:]` produces an empty slice, `"::".join([])` evaluates to `""`, and the function returns an empty string. The specification requires the return value to be non-empty.
+The function `_fqn_to_ident` incorrectly rejects source-file components that start with a hyphen (e.g., `-cpp`). The condition `hyphen > 0` on line 129 of the source file (`src/entry_reasoning_pipeline.py`) requires the hyphen to not be at position 0, which means any source-file directory beginning with `-<ext>` is ignored even though the spec clearly states the component is identified by the rightmost hyphen-separated token being a known language file extension.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| fqn | `src::storage-cpp` |
-| fqn | `storage-cpp` |
+| fqn | `src::-cpp::foo::bar` |
 
 ### Expected (spec-correct) Output
 
-`"storage-cpp"` (non-empty — at minimum, the source-file component itself should be returned when it is the last component)
+`foo::bar`
 
 ### Actual (buggy) Output
 
-`""` (empty string)
+`bar`
 
 ### How to Reproduce
 
@@ -70,12 +60,15 @@ Step-by-step instructions to trigger the bug manually:
 2. Run the following snippet (uses the package entry point):
 
 ```python
+import sys
+sys.path.insert(0, ".")
 from src.entry_reasoning_pipeline import _fqn_to_ident
 
-# When the rightmost source-file component is the last FQN component:
-result = _fqn_to_ident("src::storage-cpp")
-print(repr(result))  # actual (buggy) output: ''
-# expected (correct) output: 'storage-cpp'
+# The fqn 'src::-cpp::foo::bar' contains a source-file component '-cpp'
+# where 'cpp' is a known extension in EXT_TO_LANG.
+result = _fqn_to_ident("src::-cpp::foo::bar")
+# actual (buggy) output: 'bar'
+# expected (correct) output: 'foo::bar'
 ```
 
 ---
@@ -83,67 +76,40 @@ print(repr(result))  # actual (buggy) output: ''
 ## Probe Script
 
 ```python
-"""Probe for _fqn_to_ident bug: empty string when source-file component is the last FQN component."""
+"""Probe script for bug src--entry_reasoning_pipeline-py--_fqn_to_ident.
+
+The bug: _fqn_to_ident at line 129 uses `hyphen > 0` which rejects
+components like `-cpp` (where rfind("-") returns 0). For input
+`src::-cpp::foo::bar`, the spec expects `foo::bar` but the code returns `bar`
+because `-cpp` is not recognized as a source-file component.
+"""
+
 import sys
 import os
 
-# Add the project root to sys.path so the 'src' package is importable
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../..")
+# Add repo root to path so the import works
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 try:
     from src.entry_reasoning_pipeline import _fqn_to_ident
+
+    # Test case: input where the source-file component starts with a hyphen
+    actual = _fqn_to_ident("src::-cpp::foo::bar")
+    expected = "foo::bar"
+    passed = actual != expected
+
+    if passed:
+        print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
+    else:
+        print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+
 except Exception as e:
-    print(f"ERROR: Failed to import _fqn_to_ident: {e}")
+    print(f"ERROR: {e}")
     sys.exit(1)
-
-# --- Test cases ---
-# Test case 1: Normal - source-file is NOT the last component
-#   src::storage-cpp::LocalStorage::Flush -> "LocalStorage::Flush"
-actual_1 = _fqn_to_ident("src::storage-cpp::LocalStorage::Flush")
-expected_1 = "LocalStorage::Flush"
-assert actual_1 == expected_1, f"Test 1 failed: got {actual_1!r}, expected {expected_1!r}"
-
-# Test case 2: Normal - source-file is NOT the last component
-#   src::checkpoint-cpp::RunCheckpoint -> "RunCheckpoint"
-actual_2 = _fqn_to_ident("src::checkpoint-cpp::RunCheckpoint")
-expected_2 = "RunCheckpoint"
-assert actual_2 == expected_2, f"Test 2 failed: got {actual_2!r}, expected {expected_2!r}"
-
-# Test case 3: BUG - source-file IS the last component
-#   src::storage-cpp -> should be non-empty per spec, but returns ""
-actual_3 = _fqn_to_ident("src::storage-cpp")
-expected_3 = "storage-cpp"  # spec-correct: at minimum non-empty; reasonable value
-passed_3 = (actual_3 != expected_3)  # bug is confirmed if they differ
-
-# Test case 4: BUG - single component that IS a source-file
-#   storage-cpp -> should be non-empty, returns ""
-actual_4 = _fqn_to_ident("storage-cpp")
-expected_4 = "storage-cpp"  # spec-correct: non-empty
-passed_4 = (actual_4 != expected_4)  # bug is confirmed if they differ
-
-# Test case 5: No source-file component
-#   MyClass::myMethod -> "myMethod" (fallback)
-actual_5 = _fqn_to_ident("MyClass::myMethod")
-expected_5 = "myMethod"
-assert actual_5 == expected_5, f"Test 5 failed: got {actual_5!r}, expected {expected_5!r}"
-
-# --- Verdict ---
-bug_confirmed = passed_3 and passed_4
-
-if bug_confirmed:
-    print(f"CONFIRMED")
-    print(f"  Test 3 (src::storage-cpp):        actual={actual_3!r} | expected={expected_3!r}")
-    print(f"  Test 4 (storage-cpp):             actual={actual_4!r} | expected={expected_4!r}")
-    print(f"  Tests 1,2,5 (no-bug cases):       all passed")
-else:
-    print(f"NOT CONFIRMED")
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED
-  Test 3 (src::storage-cpp):        actual='' | expected='storage-cpp'
-  Test 4 (storage-cpp):             actual='' | expected='storage-cpp'
-  Tests 1,2,5 (no-bug cases):       all passed
+CONFIRMED — actual: 'bar' | expected: 'foo::bar'
 ```

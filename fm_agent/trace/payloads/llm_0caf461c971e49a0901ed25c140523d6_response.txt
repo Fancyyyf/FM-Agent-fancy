@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns the Python object obtained by calling `json.loads(path.read_text())`. No `FileNotFoundError` is raised because `path.exists()` evaluates to `True` under the given pre‑condition. Formally: `(path.exists() ⇒ returns json.loads(path.read_text())) ∧ ¬raised(FileNotFoundError)`."
-}

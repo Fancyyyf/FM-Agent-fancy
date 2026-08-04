@@ -1,95 +1,73 @@
-"""Probe: validate whether collect_relevent_function_scope incorporates the
-changed_functions criterion in module selection.
+"""Probe script for bug src--incremental_reasoner-py--collect_relevent_function_scope.
 
-Spec claim: A module is selected when EITHER its description is assessed as
-relevant by LLM, OR the module contains at least one source file whose
-relativized path matches a key in changed_functions.
-
-Bug claim: "The code performs only an LLM-based relevance assessment on module
-descriptions and does not incorporate the changed_functions criterion."
-
-This probe tests the exact filtering expression from the source code
-(src/incremental_reasoner.py line ~1161) to verify the claim.
+Tests that collect_relevent_function_scope silently returns [] when _llm_select_json
+fails at the module selection tier, instead of retaining all modules as the spec requires.
 """
-
 import sys
 import os
+import json
+import tempfile
+from unittest.mock import patch
 
-# --- The exact logic under test, extracted verbatim from the source ---
+# Ensure the repo root is on sys.path so package imports resolve when the
+# script is run by path (e.g. `python3 fm_agent/bug_validation/probe_....py`).
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
-def _filter_relevant_modules(modules, selected_keys, changed_source_rels):
-    """Verbatim reproduction of the filtering logic at lines 1158-1162 of
-    src/incremental_reasoner.py."""
-    return [
-        (phase_num, module)
-        for phase_num, module in modules
-        if (phase_num, module.get("name")) in selected_keys
-        or any(
-            sf.replace("\\", "/") in changed_source_rels
-            for sf in module.get("source_files", [])
-        )
-    ]
+try:
+    from src.incremental_reasoner import collect_relevent_function_scope
 
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fm_agent_dir = os.path.join(tmpdir, "fm_agent")
+        os.makedirs(fm_agent_dir)
 
-# --- Test case: LLM selects NO modules, but a module has a changed file ---
+        phases = {
+            "phases": [
+                {
+                    "phase": 1,
+                    "modules": [
+                        {
+                            "name": "module_a",
+                            "description": "Module A does something",
+                            "source_files": ["src/a.py"],
+                        },
+                        {
+                            "name": "module_b",
+                            "description": "Module B does other things",
+                            "source_files": ["src/b.py"],
+                        },
+                    ],
+                }
+            ]
+        }
+        phases_path = os.path.join(fm_agent_dir, "phases.json")
+        with open(phases_path, "w") as f:
+            json.dump(phases, f)
 
-def main():
-    # Simulate: LLM returned empty selection (no modules assessed as relevant)
-    selected_keys = set()
+        with patch("src.incremental_reasoner._llm_select_json", return_value=None):
+            result = collect_relevent_function_scope(
+                tmpdir, "test developer intent", changed_functions=[], range=None
+            )
 
-    # Simulate: changed_functions maps an absolute path to a source file;
-    # after relativization and normalization, it becomes "src/utils/helper.py"
-    changed_source_rels = {"src/utils/helper.py", "src/main.c"}
-
-    # Simulate: phases.json defines two modules
-    modules = [
-        (1, {
-            "name": "core_module",
-            "description": "Core infrastructure module",
-            "source_files": ["src/core/engine.py", "src/core/alloc.py"],
-        }),
-        (2, {
-            "name": "util_module",
-            "description": "Utility helpers module",
-            "source_files": ["src/utils/helper.py", "src/utils/format.py"],
-        }),
-    ]
-
-    # Apply the filtering logic
-    relevant = _filter_relevant_modules(modules, selected_keys, changed_source_rels)
-
-    # Spec says: "util_module" must be selected because its source_file
-    # "src/utils/helper.py" matches a key in changed_source_rels, even though
-    # selected_keys is empty (LLM found nothing relevant).
+    # Spec (from the documentation and spec_claim): when automated selection
+    # fails at any tier, the full scope at that tier is retained rather than
+    # dropped -- no functions are silently excluded.  The function should fall
+    # back to all modules, then proceed through the remaining passes.
     #
-    # Bug claim says: code does NOT incorporate the changed_functions criterion,
-    # so relevant would be []. But the code DOES have the `or any(...)` clause,
-    # so relevant should be [(2, util_module)].
+    # Actual (buggy) behaviour: returns [] when _llm_select_json returns None.
+    expected = "non-empty list (all modules retained when LLM selection fails per spec)"
+    actual = result
 
-    module_names = [m.get("name") for _, m in relevant]
-    expected = ["util_module"]
-
-    if module_names == expected:
-        print(
-            "NOT CONFIRMED — changed_functions criterion IS incorporated: "
-            f"selected modules={module_names}, expected={expected}"
-        )
-    elif module_names == []:
-        print(
-            "CONFIRMED — changed_functions criterion NOT incorporated: "
-            "empty result when util_module should have been selected via "
-            "changed_functions"
-        )
+    # Bug confirmed if the code drops to an empty list instead of retaining scope.
+    if actual == []:
+        print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
     else:
-        print(
-            f"UNEXPECTED — modules selected: {module_names}, "
-            f"expected: {expected}"
-        )
+        print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
 
+except Exception as err:
+    import traceback
 
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"ERROR: {e}")
-        sys.exit(1)
+    traceback.print_exc()
+    print(f"ERROR: {err}")
+    sys.exit(1)

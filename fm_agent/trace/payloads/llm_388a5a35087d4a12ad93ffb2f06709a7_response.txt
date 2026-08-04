@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir contains a valid codegraph that indexes a Python file 'foo.py' with a top-level function 'def hello():' spanning lines 1-2; filepath is the absolute path to 'foo.py'. The code will return None because it queries with language key 'go', but the specification requires it to return [('hello', 0, 1)].",
-  "offending_statements": "Line 8: return cg.get_function_spans(\"go\", filepath) if cg else None",
-  "reason": "The code hardcodes the language key 'go', causing it to return None for non-Go files that are nevertheless indexed by the codegraph and contain top-level function definitions, violating the specification that requires returning the list of definitions for any such file."
-}

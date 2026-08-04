@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "record.stdin_thread = None\nrecord.log_thread = None\nrecord.error = None\nrecord.proc = type('proc', (), {'returncode': 0})()\nrecord.work_dir = '/invalid/path/without/write/permission'\nrecord.event_id = '1'\nrecord.stage = 'build'\nrecord.started = '2025-01-01T00:00:00Z'\nrecord.command = ['cmd']\nrecord.function_ids = None\nrecord.input_files = None\nrecord.output_files = None\nrecord.summary = None\nrecord.metadata = None\nrecord.opencode_log_path = None\nrecord.opencode_trace_path = None",
-  "offending_statements": "Line 7: record_opencode_call(...)",
-  "reason": "The code does not ensure that the trace event is recorded. If record.work_dir is not a writable directory, record_opencode_call will raise an exception and the trace event will not be appended, violating the specification requirement that a trace event has been recorded."
-}

@@ -1,6 +1,6 @@
-# Bug Report: ElpClient._handle_server_message
+# Bug Report: ElpClient::_handle_server_message
 
-**Source file:** `src/languages/erlang.py`
+**Source file:** `src/languages/erlang-py/ElpClient::_handle_server_message.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,70 +12,48 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-- When message.method is "elp/status", updates self._status to the
-    value of message.params.status; if the params dict is absent or lacks
-    a "status" key, self._status is unchanged
-  - When message lacks an "id" field, or message.method is absent or
-    falsy, no response is sent (the message is treated as a notification)
-  - When message carries both a non-empty "method" and an "id" (a server
-    request), sends a JSON-RPC response with jsonrpc "2.0" and the same
-    id; the result value satisfies the protocol-defined expectation for
-    that method:
-    - For workspace configuration queries: result is a list whose length
-      equals the number of requested configuration items, each element
-      being null
-    - For workspace folder queries: result is a singleton list containing
-      the workspace-folder descriptor with the project root URI and
-      directory name
-    - For workspace edit requests: result indicates the edit was declined
-      (applied is false)
-    - For any other method the client does not handle: result is null
+When message has a 'method' key with value 'elp/status' and a 'params' key, self._status is updated to the value of params['status'] (or a falsy default if 'status' is absent from params). When message has both an 'id' key and a truthy 'method' key, a JSON-RPC 2.0 response is sent via self._send with: 'jsonrpc' set to '2.0', 'id' set to message['id'], and 'result' determined by the method  for 'workspace/configuration', result is a list of None values whose length equals the count of entries in params['items'] (or a zero-length list if 'items' is absent from params); for 'workspace/workspaceFolders', result is a list containing a single dict with 'uri' set to self.root_uri and 'name' set to the last path component of self.proj_dir; for 'workspace/applyEdit', result is {'applied': False}; for any other method, result is None. When message lacks an 'id' key or lacks a truthy 'method' key, no response is sent. The function returns None.
 
 ---
 
 ### Actual Behavior
 
-After execution of _handle_server_message: if the incoming message's method field equals 'elp/status', the client's _status attribute is set to the value of params.get('status') (which may be None). If the message contains an 'id' and the method field is truthy (non-empty string), a JSON-RPC 2.0 response with the same id and a computed result is sent to the ELP server via the stdin pipe, using the transport protocol framing; the server will receive it as its next input. The result sent is: for 'workspace/configuration', a list of None of length equal to len(params.get('items', [])); for 'workspace/workspaceFolders', [{'uri': self.root_uri, 'name': os.path.basename(self.proj_dir)}]; for 'workspace/applyEdit', {'applied': False}; for any other method with an id, None. No response is sent if the message is a notification (no 'id') or the method is falsy. The ELP subprocess remains running and the message reader thread continues to be active. Formal logic: Let pre-state satisfy IsRunning(pre)  ThreadActive(pre)  pre_message = message. Then the post-state satisfies: IsRunning(post)  ThreadActive(post)  (self._status = pre_self._status  (message.method = 'elp/status'  self._status = message.params.get('status')))  ((('id'  message  is_truthy(message.method))   sent_response : sent_response.jsonrpc = '2.0'  sent_response.id = message.id  WrittenToStdin(sent_response)  sent_response.result = RESULT(message.method, params, self))) with RESULT =  method, params, self. case method of 'workspace/configuration'  [None | _  params.get('items', [])], 'workspace/workspaceFolders'  [{'uri': self.root_uri, 'name': os.path.basename(self.proj_dir)}], 'workspace/applyEdit'  {'applied': False}, other  None.
+Natural language: After method execution, if the message 'method' is 'elp/status', self._status is updated to the value associated with 'status' in params (or None if not present), where params defaults to {} if absent. If the message contains an 'id' key and a truthy 'method' value, a JSON-RPC response is sent via self._send with 'jsonrpc':'2.0', 'id':message['id'], and 'result' computed as: if method=='workspace/configuration' then a list of None of length equal to len(items) with items from params (or [] if absent); if method=='workspace/workspaceFolders' then [{'uri':self.root_uri,'name':os.path.basename(self.proj_dir)}]; if method=='workspace/applyEdit' then {'applied':False}; otherwise None. If the message lacks an 'id' or the method is falsey, no response is sent. No other attributes are modified, and no exceptions are raised. Formal: (message.method = 'elp/status'  self._status = (params.status if paramsdict else None))  ((message.method = 'elp/status')  self._status = self._status_pre)  (('id'message  message.id  None  message.method  None  message.method  '')   r : (r = case message.method of 'workspace/configuration': [None | _  items] where items = params.get('items',[]); 'workspace/workspaceFolders': [{'uri':self.root_uri,'name':os.path.basename(self.proj_dir)}]; 'workspace/applyEdit': {'applied':False}; other: None)  self._send({'jsonrpc':'2.0','id':message.id,'result':r}) )  (('id'message  message.method truthy)  m s.t. self._send(m))
 
 ---
 
 ## Code Evidence
 
-Line 198-199 (in `_handle_server_message`):
-```py
-if method == "elp/status":
-    self._status = params.get("status")
-```
-
-The call `params.get("status")` returns `None` when params is a dict that lacks the `"status"` key. The specification requires `self._status` to **remain unchanged** in this scenario — i.e., `self._status` should only be updated when `"status"` is actually present in `params`.
+Line 4:         if params is None:
+Line 5:             params = {}
+Line 7:             self._status = params.get("status")
 
 ---
 
 ## Trigger Condition
 
-The code unconditionally sets self._status to params.get('status'), which evaluates to None when the 'status' key is absent or params is missing. The specification requires self._status to remain unchanged in that scenario.
+The specification requires self._status to be updated only when the message contains a 'params' key. The code defaults a missing 'params' to an empty dict, causing self._status to be unconditionally set to None (or another falsy value) even when no 'params' key is present, which violates the specification.
 
 ---
 
 ## How to trigger the bug
 
-Send an `"elp/status"` server notification where the `params` dict does not contain a `"status"` key. The code unconditionally sets `self._status = params.get("status")`, overwriting the previous value with `None`.
+When an ElpClient instance receives a server message with `method="elp/status"` but **without** a `"params"` key, the specification requires `self._status` to remain unchanged. However, the code defaults `params` to `{}` when missing, and then unconditionally executes `self._status = params.get("status")`, which overwrites `self._status` with `None`.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| message.method | `"elp/status"` |
-| message.params | `{"irrelevant": "data"}` (no `"status"` key) |
-| self._status (before) | `"INITIAL_VALUE"` |
+| message | `{"method": "elp/status"}` |
+| self._status (before) | `"INITIAL_SENTINEL"` |
 
 ### Expected (spec-correct) Output
 
-`self._status` remains `"INITIAL_VALUE"` (unchanged)
+`self._status` should remain `"INITIAL_SENTINEL"` (unchanged, because the message lacks a `"params"` key).
 
 ### Actual (buggy) Output
 
-`self._status` is `None`
+`self._status` is overwritten to `None`.
 
 ### How to Reproduce
 
@@ -84,91 +62,75 @@ Step-by-step instructions to trigger the bug manually:
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
-```py
-import queue
-from unittest.mock import MagicMock
+```python
+import sys, os
+sys.path.insert(0, os.getcwd())
 from src.languages.erlang import ElpClient
 
-client = ElpClient("/tmp/fake_proj_dir")
-client._status = "INITIAL_VALUE"
-client.timeout = 5
-client._send = MagicMock()
-client._proc = MagicMock()
-
-msg_queue = queue.Queue()
-# Send an elp/status notification without a "status" key
-msg_queue.put({"method": "elp/status", "params": {"irrelevant": "data"}})
-msg_queue.put({"id": 1, "result": {}})
-client._messages = msg_queue
-
-client.request("test/method")
-print(client._status)  # actual (buggy) output: None
-# expected (correct) output: "INITIAL_VALUE"
+client = ElpClient("/tmp/test_proj")
+client._status = "INITIAL_SENTINEL"  # sentinel to detect overwrite
+client._handle_server_message({"method": "elp/status"})
+print(client._status)
+# actual (buggy) output: None
+# expected (correct) output: INITIAL_SENTINEL
 ```
 
 ---
 
 ## Probe Script
 
-```py
+```python
 """Probe script for ElpClient._handle_server_message bug.
 
-Bug: When _handle_server_message receives an "elp/status" notification where
-params lacks a "status" key, it sets self._status to None (via params.get("status")).
-The specification requires self._status to remain unchanged in that scenario.
+Bug: When message has method="elp/status" but NO "params" key, the spec says
+self._status should NOT be updated. The code defaults missing params to {},
+causing self._status to be unconditionally set to None (via {}.get("status")),
+violating the specification.
 
-We exercise the bug through the public request() API, which calls
-_wait_for_response → _handle_server_message for server-initiated messages
-that do not match the pending request id.
+FM-Agent self-validation: tests the smallest unit (ElpClient instance without
+starting ELP subprocess), per the self-validation guard.
 """
+
 import sys
 import os
-import queue
+import tempfile
+
+# Add repo root to Python path so the 'src' package is importable
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 try:
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
     from src.languages.erlang import ElpClient
-    from unittest.mock import MagicMock
 
-    client = ElpClient("/tmp/fake_proj_dir")
-    # Set a known initial _status value
-    EXPECTED_UNCHANGED = "INITIAL_VALUE"
-    client._status = EXPECTED_UNCHANGED
-    # Override timeout to a small value (avoids config dependency edge cases)
-    client.timeout = 5
-    # Prevent subprocess writes
-    client._send = MagicMock()
-    client._proc = MagicMock()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create an ElpClient without starting it (no __enter__).
+        # __init__ sets _status to None via normal flow, so we must
+        # reassign to a sentinel before the test call.
+        client = ElpClient(os.path.join(tmpdir, "dummy_proj"))
 
-    # Build the message queue: first an "elp/status" notification without "status"
-    # key, then a matching response so request() returns cleanly.
-    msg_queue = queue.Queue()
+        # Set _status to a known sentinel value to detect overwrite
+        client._status = "INITIAL_SENTINEL"
 
-    # Bug trigger: elp/status with params lacking "status" key
-    msg_queue.put({
-        "method": "elp/status",
-        "params": {"irrelevant": "data"}
-        # NOTE: no "status" key — spec says _status must NOT change
-    })
+        # Message: method="elp/status", no "params" key, no "id" key
+        # Spec: _status should NOT change (requires "params" key present)
+        # Code (buggy): _status gets set to None when "params" key is absent
+        message = {"method": "elp/status"}
 
-    # Dummy response matching the request id so _wait_for_response returns
-    msg_queue.put({
-        "id": 1,
-        "result": {}
-    })
-    client._messages = msg_queue
+        client._handle_server_message(message)
 
-    # Exercise the buggy code path via the public API
-    client.request("test/method")
-
-    actual = client._status
-    expected = EXPECTED_UNCHANGED
-    passed = actual != expected  # True → bug confirmed (actual != expected)
-
-    if passed:
-        print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
-    else:
-        print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+        # Per spec: _status should remain "INITIAL_SENTINEL" when "params" is absent
+        # Per code: _status is overwritten to None
+        if client._status == "INITIAL_SENTINEL":
+            print(
+                "NOT CONFIRMED — _status remained unchanged ('INITIAL_SENTINEL') "
+                "when 'params' key was absent, which matches the specification."
+            )
+        else:
+            print(
+                f"CONFIRMED — _status was overwritten to {client._status!r} from "
+                f"'INITIAL_SENTINEL' despite the message lacking a 'params' key. "
+                f"The specification requires _status to be updated ONLY when the "
+                f"message contains a 'params' key."
+            )
 
 except Exception as e:
     print(f"ERROR: {e}")
@@ -180,5 +142,5 @@ except Exception as e:
 ### Probe Output
 
 ```
-CONFIRMED — actual: None | expected: 'INITIAL_VALUE'
+CONFIRMED — _status was overwritten to None from 'INITIAL_SENTINEL' despite the message lacking a 'params' key. The specification requires _status to be updated ONLY when the message contains a 'params' key.
 ```

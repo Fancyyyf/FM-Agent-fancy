@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns the string obtained from the first line of `content` that contains the substring '[SPEC]', by extracting the part before '[SPEC]' and removing trailing whitespace, or `None` if no line contains '[SPEC]'. Formally: Let `lines = content.splitlines()`. If there exists an index `i` such that `lines[i].find('[SPEC]') != -1`, let `first = lines[i]` and `idx = first.find('[SPEC]')`; the function returns `first[:idx].rstrip()`. Otherwise, the function returns `None`."
-}

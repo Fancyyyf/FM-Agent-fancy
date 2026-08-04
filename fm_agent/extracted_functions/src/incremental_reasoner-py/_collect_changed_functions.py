@@ -1,61 +1,3 @@
-# [SPEC]
-# Unit: src/incremental_reasoner-py/_collect_changed_functions.py
-#
-# _collect_changed_functions(proj_dir, old_commit_id, submodules=None) -> dict
-#
-# Pre-condition:
-#   - proj_dir is a directory path containing a git repository
-#   - old_commit_id is a valid commit identifier in that repository
-#   - submodules is None or a list of subdirectory paths relative to proj_dir
-#
-# Post-condition:
-#   - Returns a dict mapping absolute file paths (str) to change-category dicts, each with
-#     keys "added", "removed", and "modified" whose values are sorted lists of function
-#     name strings.
-#   - A source file is considered only when its extension maps to a recognized key in
-#     EXT_TO_LANG, it is not classified as a test file, it is not under the fm_agent
-#     workspace directory, and — when submodules is provided — it resides under one of the
-#     specified subdirectory paths.
-#   - For a file present in the working tree but absent from old_commit_id (including
-#     untracked files): every function name extracted from the current version appears
-#     under "added"; "removed" and "modified" are empty lists.
-#   - For a file present at old_commit_id but absent from the working tree: every function
-#     name extracted from the old version appears under "removed"; "added" and "modified"
-#     are empty lists.
-#   - For a file present in both the old commit and the working tree: a function name
-#     extracted from the current tree but absent from the old tree is "added"; a function
-#     name extracted from the old tree but absent from the current tree is "removed"; a
-#     function name extracted from both trees whose source text differs is "modified".
-#   - Function identity is determined by extraction-result key, not by source text
-#     equivalence.
-#   - Source text comparison for "modified" uses exact string equality on the extracted
-#     function body.
-#   - Files with empty "added", "removed", and "modified" lists are excluded from the
-#     returned dict.
-#   - Raises subprocess.CalledProcessError when proj_dir is not a git repository or
-#     old_commit_id does not identify a valid commit reachable from the repository.
-# [SPEC]
-
-# [INFO]
-# extract_functions_from_file(filepath, lang_key) -> iterable[(str, str)]
-#   Pre-condition: filepath is a path to an existing source file; lang_key is a key
-#     recognized by the extraction framework.
-#   Post-condition: Returns an iterable of (function_name, source_text) pairs for every
-#     extractable function body in the file. Each source_text value is the full function
-#     definition source as a string.
-# [SPLIT]
-# _is_test_file(rel_path) -> bool
-#   Pre-condition: rel_path is a relative file path string.
-#   Post-condition: Returns True when rel_path identifies a test file according to naming
-#     conventions or directory pattern heuristics; returns False otherwise.
-# [SPLIT]
-# _is_under_submodules(rel_path, submodules) -> bool
-#   Pre-condition: rel_path is a relative file path string; submodules is None or a list of
-#     subdirectory path strings.
-#   Post-condition: Returns True when submodules is None, or when rel_path's directory
-#     prefix matches a member of submodules; returns False otherwise.
-# [INFO]
-
 def _collect_changed_functions(proj_dir, old_commit_id, submodules=None):
     """
     Determine which functions changed between commit old_commit_id and the current working
@@ -65,15 +7,15 @@ def _collect_changed_functions(proj_dir, old_commit_id, submodules=None):
     _is_test_file), anything under the fm_agent work dir, and files outside submodules
     when a submodule scope is provided are ignored. For each candidate file, functions are
     extracted from both the old (old_commit_id) version and the current working-tree
-    version using the same parser as extract.py, then compared by source text.
+    version, then compared by source text.
 
     Returns a dict mapping each changed file's absolute path to a dict with keys "added",
-    "removed", and "modified", each a sorted list of function names. Files with no
-    detectable function-level change are omitted; a file that did not exist at
-    old_commit_id reports all of its current functions under "added", and a file deleted
-    since old_commit_id reports all of its old functions under "removed". Raises
-    subprocess.CalledProcessError if proj_dir is not a git repository or old_commit_id is
-    not a valid commit.
+    "removed", and "modified", each a sorted list of function names. For every
+    non-Erlang language that CodeGraph can index, both revisions are compared using
+    its class-qualified identifiers. Erlang and CodeGraph-unavailable files retain
+    the previous regex-based comparison. Files with no detectable function-level
+    change are omitted. Raises subprocess.CalledProcessError if proj_dir is not a
+    git repository or old_commit_id is not a valid commit.
     """
     # Pathspecs limiting git to recognized source-file extensions (e.g. "*.py", "*.cpp").
     pathspecs = [f"*.{ext}" for ext in EXT_TO_LANG]
@@ -104,6 +46,40 @@ def _collect_changed_functions(proj_dir, old_commit_id, submodules=None):
         and _is_under_submodules(f, submodules)
     ]
 
+    # Erlang intentionally remains on its existing extraction path: its ELP
+    # integration has different project and tooling requirements. Every other
+    # changed language gets a CodeGraph comparison when both indexes are usable.
+    file_languages = {
+        rel_path: EXT_TO_LANG[rel_path.rsplit(".", 1)[-1]]
+        for rel_path in files
+        if "." in rel_path
+        and rel_path.rsplit(".", 1)[-1] in EXT_TO_LANG
+    }
+    codegraph_file_languages = {
+        rel_path: lang_key
+        for rel_path, lang_key in file_languages.items()
+        if lang_key != "erlang"
+    }
+    codegraph_langs = set(codegraph_file_languages.values())
+    current_codegraph = (
+        _codegraph_functions_by_file(proj_dir, codegraph_langs)
+        if codegraph_langs else None
+    )
+    current_coverage = (
+        _codegraph_legacy_coverage(
+            proj_dir, current_codegraph, codegraph_file_languages
+        )
+        if current_codegraph is not None else None
+    )
+    baseline_codegraph = None
+    baseline_coverage = None
+    if current_codegraph is not None and codegraph_file_languages:
+        baseline_result = _codegraph_functions_at_revision(
+            proj_dir, old_commit_id, codegraph_file_languages
+        )
+        if baseline_result is not None:
+            baseline_codegraph, baseline_coverage = baseline_result
+
     def _path_exists_in_commit(rel_path):
         """Return whether rel_path exists at old_commit_id without reading its contents."""
         return subprocess.run(
@@ -131,21 +107,38 @@ def _collect_changed_functions(proj_dir, old_commit_id, submodules=None):
         if not lang_key:
             continue
 
-        # Working-tree functions (empty if the file was deleted).
+        # Use CodeGraph for both revisions whenever it can index this non-Erlang
+        # file. This keeps the comparison identity identical to the extracted
+        # function filename (for example, ``LocalStorage::Flush``) and avoids
+        # bare-name collisions between same-named C++ members.
         abs_path = os.path.abspath(os.path.join(proj_dir, rel_path))
-        if os.path.exists(abs_path):
-            new_funcs = dict(extract_functions_from_file(abs_path, lang_key))
-        else:
-            new_funcs = {}
+        current_exists = os.path.exists(abs_path)
+        old_exists = _path_exists_in_commit(rel_path)
+        rel_key = _normalized_relative_path(proj_dir, rel_path)
+        use_codegraph = (
+            lang_key != "erlang"
+            and current_codegraph is not None
+            and baseline_codegraph is not None
+            and (not current_exists or current_coverage.get(rel_key, False))
+            and (not old_exists or baseline_coverage.get(rel_key, False))
+        )
 
-        # Old-commit functions (empty for files that did not exist at old_commit_id).
-        # A path can be absent from the base even when it is already tracked/staged in the
-        # current tree, so check the base commit directly instead of relying on untracked
-        # status.
-        if not _path_exists_in_commit(rel_path):
-            old_funcs = {}
+        if use_codegraph:
+            new_funcs = current_codegraph.get(rel_key, {})
+            old_funcs = baseline_codegraph.get(rel_key, {})
         else:
-            old_funcs = _funcs_from_commit(rel_path, lang_key, ext)
+            if lang_key != "erlang" and codegraph_langs:
+                logging.warning(
+                    "CodeGraph could not provide both revisions for %s; using "
+                    "legacy regex comparison.", rel_path,
+                )
+            new_funcs = (
+                dict(extract_functions_from_file(abs_path, lang_key))
+                if current_exists else {}
+            )
+            old_funcs = (
+                _funcs_from_commit(rel_path, lang_key, ext) if old_exists else {}
+            )
 
         added = sorted(n for n in new_funcs if n not in old_funcs)
         removed = sorted(n for n in old_funcs if n not in new_funcs)

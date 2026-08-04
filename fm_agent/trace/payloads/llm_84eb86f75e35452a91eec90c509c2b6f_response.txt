@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input phases.json with content: {\"phases\": [{\"phase\": 1, \"modules\": []}, {\"phase\": 2, \"modules\": [{\"source_files\": [\"a.py\"]}]}]}. Phase 1 has no modules with source files, so it is removed; phase 2 survives and is renumbered to 1.",
-  "offending_statements": "Line 36: renumbered = {}\nLine 37: for new_num, phase in enumerate(kept, start=1):\nLine 38: old_num = phase.get(\"phase\")\nLine 39: if old_num is not None:\nLine 40: renumbered[old_num] = new_num\nLine 41: phase[\"phase\"] = new_num\nLine 55: return {\"removed_phases\": removed_phase_nums, \"renumbered\": renumbered}",
-  "reason": "The specification requires the 'renumbered' dict to map an old phase number to a new number \"for every phase present in the original phases.json\". This includes removed phases, but the code only adds entries for the surviving (kept) phases. In the counterexample, phase 1 is removed but appears in the original file; the code returns renumbered = {2: 1}, missing the required mapping for phase 1."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/proj', abs_src='/proj/src.py' (exists and language recognized). The computed func_dir exists and contains a file 'stale.py' that is not among the current expected files. The directory func_dir has been set with permissions such that the current process has no write permission on it (e.g., chmod 500).",
-  "offending_statements": "Line 26: os.remove(abs_path)",
-  "reason": "Specification B requires that every non-expected file under func_dir is deleted. When os.remove raises an exception (e.g., PermissionError), the function terminates immediately, leaving the non-expected file 'stale.py' on disk. This violates the specification because the required deletion did not complete."
-}

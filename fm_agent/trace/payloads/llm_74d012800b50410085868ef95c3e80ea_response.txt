@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "fqn = 'mymod.myfunc', file_map contains an entry for fqn pointing to an existing file with a supported extension; the LLM call returns a valid response with spec_updated=True, new_spec='...', and updated_callees=['othermod.otherfunc'] (full FQN). The function returns a plan where updated_callees is ['othermod.otherfunc'] instead of a list of short names as required by the spec.",
-  "offending_statements": "Line 77:             \"updated_callees\": result.get(\"updated_callees\") or [],",
-  "reason": "The specification requires updated_callees to contain short callee names (last component of each callee FQN). The code passes through the LLM response directly without extracting the short name, so if the LLM returns FQNs, the returned plan violates the specification."
-}

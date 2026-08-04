@@ -1,145 +1,161 @@
-# Phase 3: Scope Analysis & Layer Organization — Types and Invariants
+# Phase 03 — Pipeline Planning & Domain Knowledge
 
-## Overview
+## Core Types
 
-Phase 3 has two responsibilities: (1) function-level localization for incremental
-mode (heuristic scoring + optional LLM re-ranking), and (2) building dependency-ordered
-top-down layers from intra-phase call graphs for batch prompt generation.
-
-## Key Types — Scope Analysis (scope.py)
-
-### Signal Extraction
-
-**`_parse_issue_signals(issue_text) → dict[str, set[str]]`:**
-- `traceback_funcs` — T1: Python traceback function names (×10)
-- `backtick_idents` — T2: backtick/code-block identifiers (×5 name, ×2 body)
-- `dotted_refs` — T3: method names from Class.method refs (×15)
-- `dotted_classes` — T3: class names from Class.method refs
-- `plain_idents` — T4: CamelCase/snake_case in prose (×3)
-- `exception_types` — T5: exception type names (×4)
-- `all_words` — T6: all alphabetic words ≥ 4 chars, not in `_STOP` (×1)
-
-### Per-Function Info Dict
+### `phases.json` Schema
+Top-level structure consumed by Phase 6 topdown layering:
 ```python
 {
-    "name": str,        "start": int,       "end": int,
-    "calls": set[str],  "idents": set[str],
-    "body_words": set[str],  "exc_types": set[str],
-    "docstring": str,   # Python only
+    "project": str,           # project name
+    "languages": [str],       # detected languages
+    "file_extensions": [str], # source file extensions
+    "phases": [
+        {
+            "phase": int,          # 1-indexed phase number
+            "name": str,           # human-readable phase name
+            "description": str,    # phase summary
+            "modules": [
+                {
+                    "name": str,              # module identifier
+                    "description": str,       # module description
+                    "source_files": [str]     # paths relative to project root
+                }
+            ],
+            "depends_on_phases": [int]  # phase numbers this phase depends on
+        }
+    ]
 }
 ```
 
-### Score Enrichments
+### Phase Plan Generation (pipeline_setup.py)
 
-**Call-graph propagation (intra-file):**
-- `CALLEE_INHERIT = 0.30` — callee of high-scoring function gets 30% of its score
-- `CALLER_INHERIT = 0.20` — caller of high-scoring function gets 20% of its score
+**`_run_setup_extract(proj_dir, work_dir, required_source_files, submodules, extra_call_edges_path)`**
+Runs Stage 1 setup/extraction: codegraph init + regex extraction.
+Returns True on success.
 
-**Class-scope narrowing (Python only):**
-- `W_CLASS_NAME_MATCH = 6.0` — per token overlap: class name × intent
-- `W_CLASS_DOC_MATCH = 2.0` — per token overlap: class docstring × intent
-- `CLASS_METHOD_INHERIT = 0.40` — fraction of class score to each method
-- `CLASS_BOOST_CAP = 8.0` — hard cap on per-method class bonus
+**`_run_generate_phases(proj_dir, work_dir, only_spec=False)`**
+Runs Stage 2 generate-phases agent. Produces `phases.json` under work_dir.
+Retries up to OPENCODE_MAX_RETRIES.
 
-### LLM Re-ranking
+**`_post_process_phases(phases_path, work_dir, only_spec)`**
+Post-processes `phases.json`:
+- Deduplicates source files: each file assigned to exactly ONE phase
+- Merges descriptions when modules are consolidated
+- Writes the final de-duplicated `phases.json`
 
-Triggers when: file has ≥ `LLM_TRIGGER_FUNCS` (default 5) unique functions,
-OR top heuristic score < `LLM_CONFIDENCE_THRESHOLD` (default 8.0).
+**`_run_generate_domain_context(proj_dir, work_dir)`**
+Runs domain-context generation agent. Produces `spec_prompts/domain_context/` files.
+- `engine_overview.txt`: overall system architecture and invariants
+- `phase_NN_types.txt`: per-phase types, structs, invariants
 
-**Input:** `"<name> | <signature> | <docstring first line>"` per function.
-**Output:** `["func_name_1", ...]` JSON array.
-Falls back to heuristic on failure (3 attempts with backoff).
+**`_build_domain_context_regen_prompt(phase_source_files, phase_cleanup)`**
+Composes the agent instruction for regenerating only the changed phase files.
 
-### `rank_functions_in_file()` Return
+### `_merge_descriptions(target_desc, source_desc) → str`
+Appends a removed module's description to the owning module's description.
+Avoids re-merging duplicate content.
+
+## Plugin System
+
+### `PluginStageConfig` (dataclass)
 ```python
-list[dict]  # each: {"file", "name", "lineno", "end_lineno", "score", "reason"}
+@dataclass
+class PluginStageConfig:
+    type: str = ""              # "pass" | "replace" | "modify"
+    replace_cmd: Optional[str] = None   # bash command (replace type only)
+    input_md: Optional[str] = None      # relative to plugin root (modify type)
+    output_process: Optional[str] = None  # (modify type)
 ```
-`reason` ∈ `{"heuristic", "llm", "heuristic_pad"}`.
-Capped at `TOP_K` (default 5).
+- Validated via `validated() → list[str]` returning error strings
+- "pass": skip the stage entirely
+- "replace": run `replace_cmd` instead
+- "modify": inject `input_md` into agent prompt, post-process with `output_process`
 
-## Key Types — Top-Down Layers (generate_topdown_layers.py)
-
-### Call Graph Construction
-
-**`_build_call_graph()` returns:**
+### `PluginConfig` (dataclass)
 ```python
-(
-    callees_map: dict[fqn, set[fqn]],     # within-phase callees
-    callers_map: dict[fqn, set[fqn]],     # within-phase callers
-    all_callees_map: dict[fqn, set[fqn]], # any phase
-    file_map: dict[fqn, filepath],
-    module_map: dict[fqn, module_name],
-    edge_aliases_map: dict[callee_fqn, dict[caller_fqn, set[alias]]],
-)
+@dataclass
+class PluginConfig:
+    name: str
+    version: str
+    root: Path
+    stages: Dict[str, PluginStageConfig] = field(default_factory=dict)
+```
+- `get_stage(stage_name) → PluginStageConfig | None`
+- Stages: `"generate_phase_plan"`, `"generate_domain_context"`
+
+### `run_plugin_command(cmd, plugin_root, proj_dir, label="") → None`
+Executes a plugin command with `check=True` (failure stops pipeline).
+Sets `FM_AGENT_PLUGIN_ROOT` in subprocess env.
+
+### `load_plugins() → List[PluginConfig]`
+Scans `plugins/` directory for subdirectories containing `plugin.json`.
+
+## Domain Knowledge
+
+### Types
+
+**Resolution:**
+```python
+def collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None) → list[str]:
+    # Collects markdown paths from CLI arguments + FM_AGENT_DOMAIN_KNOWLEDGE env var
+    # Returns list of validated absolute paths
 ```
 
-**Edge resolution:**
-- Codegraph: precise `caller_fqn → callee_fqn`; only extracted callees kept.
-- Regex fallback: bare-name call sites resolved to every same-named FQN.
-- Supplemental edges: resolved via `_resolve_extra_call_edges` into
-  `by_caller_fqn` (exact) and `by_callsite` (callsite name match).
-
-**Call-site regex patterns:**
-- C/C++/Java/JS/TS/CUDA/ArkTS: `\b(\w+)\s*(?:<[^>]*>)?\s*\(`
-- Rust: `\b(\w+)\s*(?:::<[^>]*>)?\s*\(` (turbofish)
-- Go: `\b(\w+)\s*(?:\[[^\]]*\])?\s*\(` (type params)
-
-### Layer Computation
-
-**`_compute_layers(phase_fqns, callees_map, callers_map)`:**
-Returns `list[{"layer": int, "functions": list[str], "cycle_resolution": bool}]`.
-
-Algorithm:
-1. Kahn's algorithm: find functions with all same-phase callers already assigned.
-2. On cycle: compute SCCs via iterative Tarjan's, build SCC DAG, topologically sort.
-3. SCCs with >1 node: `cycle_resolution: True`.
-
-**Invariant:** For any function F with phase-internal callee C, C's layer ≤ F's layer.
-
-### Top-Down Layer Output
-Written to `spec_prompts/phase_NN_topdown_layers.json`:
-```json
-{
-  "phase": N, "phase_name": "...",
-  "total_functions": N, "total_layers": N,
-  "layers": [{
-    "layer": 0, "cycle_resolution": false,
-    "functions": [{
-      "name": "fqn", "file": "extracted_functions/...",
-      "unit": "module", "phaseN_callers": [...],
-      "phaseN_callees": [...], "all_callees": [...],
-      "phaseN_callee_info_names_by_caller": {...}
-    }]
-  }]
-}
+**Staging:**
+```python
+def stage_domain_knowledge_files(paths, work_dir, manifest_rel=None) → dict:
+    # Copies markdown files into work_dir/spec_prompts/domain_context/user_knowledge/
+    # Writes manifest.json tracking the staged files
+    # Returns {original_path: staged_relpath} mapping
 ```
 
-### Batch Prompt Types (generate_batch_prompts.py)
+**Formatting:**
+```python
+def format_domain_knowledge_bullets(work_dir, prefix="fm_agent") → str:
+    # Returns bullet-list string for injecting into agent prompts
+    # Format: "- fm_agent/spec_prompts/domain_context/user_knowledge/<name>.md"
 
-**`build_prompt()`** generates per-batch prompt files containing:
-- Language/comment style, required reading files, key rules
-- Earlier-layer caller specs (from lower layers)
-- Callee expectations from callers' [INFO] blocks
-- Cycle layer guidance (for mutual recursion)
-- Function list with caller metadata, spec format template, process instructions
+def list_staged_domain_knowledge_relpaths(work_dir, prefix="fm_agent") → list[str]:
+    # Returns sorted list of relative paths to staged knowledge files
 
-**Output:** `batch_NNN_layerM_extracted_bI.txt` or `..._cycle_bI.txt`
-plus `manifest.json`:
-```json
-{
-  "phase": N, "layers": "0-M",
-  "total_functions": N, "total_batches": N,
-  "batches": [{
-    "index": 0, "file": "batch_000_layer0_extracted_b0.txt",
-    "layer": 0, "is_cycle": false,
-    "num_functions": 2, "num_pending": 2,
-    "functions": ["fm_agent/extracted_functions/..."]
-  }]
-}
+def load_staged_domain_knowledge_text(work_dir) → str:
+    # Returns concatenated text of all staged knowledge files for prompt injection
 ```
 
-**`COMMENT_PREFIX_BY_LANG`:**
+### Valid Extensions
+`.md`, `.markdown` only.
+
+### File Layout
 ```
-c/cpp/java/go/rust/javascript/typescript → "//"
-python/ruby → "#", sql → "--", erlang → "%"
+fm_agent/spec_prompts/domain_context/user_knowledge/
+├── manifest.json    # { "files": { "original_path": "staged_name.md" } }
+├── knowledge_01.md
+└── ...
+```
+
+### Naming
+Staged filenames derived from source basename with special chars replaced by `_`.
+Collisions resolved with numeric suffixes (e.g., `README.md` → `README_2.md`).
+
+## Entry Point Function Signatures
+
+```python
+def _run_generate_phases(proj_dir, work_dir, only_spec=False) -> bool:
+    """Run the generate-phases agent. Returns True on success."""
+
+def _post_process_phases(phases_path, work_dir, only_spec) -> None:
+    """Post-process phases.json and write deduplicated version."""
+
+def _run_generate_domain_context(proj_dir, work_dir) -> bool:
+    """Run the generate-domain-context agent. Returns True on success."""
+
+def collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None) -> list[str]:
+
+def stage_domain_knowledge_files(paths, work_dir, manifest_rel=None) -> dict:
+
+def format_domain_knowledge_bullets(work_dir, prefix="fm_agent") -> str:
+
+def load_plugins() -> list[PluginConfig]:
+
+def run_plugin_command(cmd, plugin_root, proj_dir, label="") -> None:
 ```

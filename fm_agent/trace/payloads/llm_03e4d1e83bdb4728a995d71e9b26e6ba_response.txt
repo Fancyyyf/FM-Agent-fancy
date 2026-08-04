@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/home/user/test', with '/home/user/test/fm_agent/phases.json' existing (any content), '/home/user/test/fm_agent/extracted_functions/' directory containing two files: 'func1.py' (has at least two [SPEC] and two [INFO] markers) and 'garbage.txt' (empty file, no markers). submodules=None. The code returns False because 'garbage.txt' is not ready. The specification requires True because the only function file 'func1.py' is ready.",
-  "offending_statements": "Line 32: if not is_file_ready(fpath):",
-  "reason": "The code checks every file in the extracted_functions directory tree, not just function files. According to the specification, only function files must carry the markers; non-function files should be ignored. A stray file without markers causes the code to incorrectly return False when the specification requires True."
-}

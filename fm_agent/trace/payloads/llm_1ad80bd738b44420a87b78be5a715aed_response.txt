@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "[\"/* {\", \"} */\"]",
-  "offending_statements": "Line 40: if ch == '/' and i + 1 < len(line) and line[i + 1] == '*':\nLine 48:                 continue",
-  "reason": "The code does not handle block comments that span multiple lines. Specification says braces between '/*' and '*/' on any line must not be counted, but the code only skips the rest of the current line when '*/' is not found on the same line. In the counterexample, line 0 has '/* {' without a closing '*/', and line 1 has '} */'. The code counts the '}' on line 1, producing a negative depth [-1], which violates the requirement of non-negative integers and correct brace count. The correct output under the specification is [0, 0]."
-}
