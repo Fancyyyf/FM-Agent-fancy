@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--prompt_for_config",
+  "source_file": "src/configure_llm.py",
+  "function_name": "prompt_for_config",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--prompt_for_config.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--prompt_for_config.md",
+  "probe_stdout": "API protocol:\n  1. OpenAI-compatible\n  2. Anthropic-compatible\nCONFIRMED \u2014 empty API key accepted without re-prompting. api_key='', backend='opencode', api_style='openai'",
+  "trigger_summary": "When the user provides an empty API key via getpass, prompt_for_config() accepts it without validation or re-prompting, returning an LLMConfigInput with an empty api_key string."
+}

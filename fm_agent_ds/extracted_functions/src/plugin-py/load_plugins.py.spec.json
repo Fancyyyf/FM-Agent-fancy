@@ -1,0 +1,5 @@
+{
+  "signature": "load_plugins(plugins_dir: Path) -> Dict[str, PluginConfig]",
+  "pre_condition": "plugins_dir is a pathlib.Path object.",
+  "post_condition": "Returns a dictionary mapping plugin names (str) to PluginConfig objects for all valid, non-hidden, non-__pycache__ subdirectories of plugins_dir, ordered by ascending subdirectory name. A valid plugin subdirectory is one whose contents pass PluginConfig validation (its plugin.json parses to a PluginConfig whose fields satisfy all configured validation rules). Each subdirectory that fails validation is skipped after printing its error reason; it is absent from the returned dictionary. If plugins_dir does not exist or is not a directory, returns an empty dictionary."
+}

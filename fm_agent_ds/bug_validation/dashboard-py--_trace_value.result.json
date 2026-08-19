@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_trace_value",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_trace_value.py",
+  "function_name": "_trace_value",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_trace_value.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_trace_value.md",
+  "probe_stdout": "CONFIRMED — actual: 0 | expected (spec-correct): None\n",
+  "trigger_summary": "Passing a dict with a key holding a falsy value (e.g. 0) causes _trace_value to return that falsy value instead of skipping it as the spec requires."
+}

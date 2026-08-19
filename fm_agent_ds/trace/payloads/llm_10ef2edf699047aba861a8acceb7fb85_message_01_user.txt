@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+value is None or a string.
+
+Code block:
+```python
+Line 1: def _normalize_backend(value):
+Line 2:     backend = (value or "").strip().lower()
+Line 3:     if not backend or backend in {"0", "false", "no", "off"}:
+Line 4:         return "opencode"
+Line 5:     if backend == "auto":
+Line 6:         return "auto"
+Line 7:     return _BACKEND_ALIASES.get(backend, backend)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

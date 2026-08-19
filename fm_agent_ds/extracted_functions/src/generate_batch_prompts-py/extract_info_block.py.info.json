@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_info_json_path",
+      "signature": "_info_json_path(filepath: Path) -> Path",
+      "pre_condition": "filepath is a Path object.",
+      "post_condition": "Returns a Path whose string representation equals the string representation of filepath with the literal suffix '.info.json' appended."
+    }
+  ]
+}

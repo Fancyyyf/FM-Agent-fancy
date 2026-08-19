@@ -1,0 +1,5 @@
+{
+  "signature": "_get_phase_files(phases_data, phase_num, input_dir) -> list",
+  "pre_condition": "phases_data is the full phases configuration dict whose key 'phases' maps to a list of dicts, at least one of which has a 'phase' key equal to phase_num. phase_num is an integer identifying a phase. input_dir is a string path to the extracted functions directory.",
+  "post_condition": "Returns a list of file identifiers (relative paths from input_dir) for all extracted function files belonging to the specified phase. Each identifier is a relative path to a regular file that is not a metadata sidecar file. No file identifier appears more than once in the returned list. Files within each extracted directory are returned in lexicographically ascending order of their names. Source files whose derived extracted directory does not exist on disk are skipped without raising an error."
+}

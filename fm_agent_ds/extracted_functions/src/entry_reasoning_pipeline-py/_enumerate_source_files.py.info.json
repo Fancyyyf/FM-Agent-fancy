@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_is_test_file",
+      "signature": "_is_test_file(src_rel) -> bool",
+      "pre_condition": "src_rel is a non-empty relative file path string using '/' as separator.",
+      "post_condition": "Returns True when src_rel matches the project's test-file naming or path conventions; returns False otherwise."
+    }
+  ]
+}

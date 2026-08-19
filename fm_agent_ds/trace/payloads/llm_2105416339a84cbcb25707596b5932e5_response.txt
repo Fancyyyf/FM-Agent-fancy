@@ -1,0 +1,1 @@
+{"post_condition": "After successful execution, the exception instance `self` satisfies: (i) `self.error` is the same dict object as the parameter `error` (i.e., `self.error is error`); (ii) the base `Exception` records the string representation of `error` as its message, so `str(self) == str(error)`; (iii) no exception is raised during initialization."}

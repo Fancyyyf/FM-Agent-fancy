@@ -1,0 +1,23 @@
+Programming language: Python
+
+Pre-condition:
+ts is a datetime.datetime or None. source is a string identifying the log origin. label, status, model, code, and detail are each either a string or None.
+
+Code block:
+```python
+Line 1:     def _push_llm_status(self, ts, source, label, status, model=None, code=None, detail=None):
+Line 2:         when = ts.strftime("%H:%M:%S") if ts else ""
+Line 3:         self.llm_statuses.append(
+Line 4:             {
+Line 5:                 "time": when,
+Line 6:                 "source": source,
+Line 7:                 "label": label or "llm_call",
+Line 8:                 "status": status or "?",
+Line 9:                 "model": model,
+Line 10:                 "code": code or status or "?",
+Line 11:                 "detail": detail,
+Line 12:             }
+Line 13:         )
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

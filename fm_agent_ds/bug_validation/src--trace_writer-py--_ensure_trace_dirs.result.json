@@ -1,0 +1,11 @@
+{
+  "id": "src--trace_writer-py--_ensure_trace_dirs",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/trace_writer-py/_ensure_trace_dirs.py",
+  "function_name": "_ensure_trace_dirs",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--trace_writer-py--_ensure_trace_dirs.py",
+  "detail_file": "fm_agent/bug_validation/src--trace_writer-py--_ensure_trace_dirs.md",
+  "probe_stdout": "CONFIRMED — actual: payloads directory is NOT writable (os.access says: False) | expected: writable directory per spec. os.makedirs(exist_ok=True) with read-only pre-existing directory does NOT ensure writability.\n",
+  "trigger_summary": "When payloads directory already exists with read-only permissions, os.makedirs(exist_ok=True) does nothing, leaving it non-writable in violation of the spec requiring it to be writable."
+}

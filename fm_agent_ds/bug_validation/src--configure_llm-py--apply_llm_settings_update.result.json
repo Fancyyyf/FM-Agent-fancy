@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--apply_llm_settings_update",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/apply_llm_settings_update.py",
+  "function_name": "apply_llm_settings_update",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--apply_llm_settings_update.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--apply_llm_settings_update.md",
+  "probe_stdout": "CONFIRMED -- actual: ConfigWizardError raised: fm-agent.toml not found at /tmp/tmp5zk0ey_k/fm-agent.toml; refusing to guess a new project config. | expected: function should have proceeded normally for an existing empty file\n",
+  "trigger_summary": "apply_llm_settings_update raises ConfigWizardError for an existing empty fm-agent.toml file because _read_text_if_exists returns '' for empty files and the 'if not toml_text' guard treats it identically to a missing file."
+}

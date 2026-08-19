@@ -1,0 +1,14 @@
+Programming language: Python
+
+Pre-condition:
+identifier is a non-empty string.
+
+Code block:
+```python
+Line 1: def _bare_function_name(identifier):
+Line 2:     """Return the unqualified tail, ignoring either extractor's dedup suffix."""
+Line 3:     bare = re.split(r"::|\.", identifier)[-1]
+Line 4:     return re.sub(r"_\d+$", "", bare)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

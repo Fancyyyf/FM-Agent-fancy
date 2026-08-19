@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns True if and only if `data` is a dictionary, has exactly the keys in `_SPEC_FIELDS`, and all values corresponding to those keys are strings. If the function returns False, then either `data` is not a dictionary, or its keys do not exactly match `_SPEC_FIELDS`, or some value for a field in `_SPEC_FIELDS` is not a string. Formally: \\(\\texttt{result} \\iff \\big(\\texttt{isinstance(data, dict)} \\land \\texttt{set(data) = \\_SPEC\\_FIELDS} \\land \\forall k \\in \\texttt{\\_SPEC\\_FIELDS},\\ \\texttt{isinstance(data[k], str)}\\big)\\)."
+}

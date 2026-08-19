@@ -1,0 +1,52 @@
+{
+  "callees": [
+    {
+      "name": "_load_phases",
+      "signature": "_load_phases(work_dir) -> dict",
+      "pre_condition": "work_dir is an existing directory containing a valid phases.json file.",
+      "post_condition": "Returns a dict parsed from phases.json containing at minimum a 'phases' key whose value is a list of phase objects, each with a 'modules' list. The returned structure preserves all keys and nested values from the file."
+    },
+    {
+      "name": "_parse_issue_signals",
+      "signature": "_parse_issue_signals(developer_intent) -> dict",
+      "pre_condition": "developer_intent is a non-empty string.",
+      "post_condition": "Returns a dict containing signal dictionaries extracted from the intent text: traceback function references, backtick/code-block identifiers, dotted class-method references, plain CamelCase/snake_case names, exception type names, and body-word tokens. Each signal dictionary maps signal types to sets or lists of extracted tokens."
+    },
+    {
+      "name": "_llm_select_json",
+      "signature": "_llm_select_json(work_dir, prompt, stage, validator, schema_description) -> list | None",
+      "pre_condition": "prompt is a non-empty string containing the LLM selection instructions. validator is a callable that validates parsed output. schema_description specifies the expected JSON shape.",
+      "post_condition": "Returns a list of parsed JSON objects matching the expected schema when the LLM produces valid output. Returns None when the LLM call fails, times out, or produces output that does not parse or validate against the expected schema."
+    },
+    {
+      "name": "_opencode_select_json",
+      "signature": "_opencode_select_json(proj_dir, work_dir, prompt_path, prompt, output_path, stage, input_files) -> list | None",
+      "pre_condition": "prompt is a non-empty string. input_files is a list of file paths (relative to proj_dir or absolute) that opencode should read. output_path specifies where opencode should write its selection output.",
+      "post_condition": "Returns a list of selected file paths parsed from the JSON output written to output_path by opencode. Returns None when opencode fails, exits non-zero, or the output file is missing, empty, or contains unparseable content."
+    },
+    {
+      "name": "rank_functions_in_file",
+      "signature": "rank_functions_in_file(filepath, src_path, issue, signals, proj_dir) -> list[dict]",
+      "pre_condition": "filepath is a source file path relative to proj_dir. src_path is the resolved absolute path to the source file. issue is a non-empty string describing the developer intent. signals is a dict of pre-parsed signal dictionaries from _parse_issue_signals.",
+      "post_condition": "Returns a list of dicts, each with keys 'name' (function name string), 'score' (float relevance score), 'lineno' and 'end_lineno' (int line boundaries), sorted by descending score. Returns an empty list when the source file contains no localizable functions or when parsing fails. Ranking combines heuristic signal matching (traceback patterns, identifier references, exception-type presence) with call-graph score propagation where callees inherit a fraction of caller scores and vice versa."
+    },
+    {
+      "name": "_extracted_func_dir",
+      "signature": "_extracted_func_dir(extracted_dir, src_rel) -> str",
+      "pre_condition": "extracted_dir is the root directory of extracted functions. src_rel is a source file path relative to the project root.",
+      "post_condition": "Returns the subdirectory path within extracted_dir that corresponds to src_rel—the directory where extracted function files for that source file reside."
+    },
+    {
+      "name": "_extracted_files_by_method",
+      "signature": "_extracted_files_by_method(func_dir) -> dict[str, list[str]]",
+      "pre_condition": "func_dir is an existing directory containing extracted function files (one file per function or method).",
+      "post_condition": "Returns a dict mapping each function or method name (as it appears in scope ranking results) to a list of extracted file paths within func_dir. A single name may map to multiple files when the same method name appears in multiple classes."
+    },
+    {
+      "name": "_is_metadata_sidecar",
+      "signature": "_is_metadata_sidecar(fname) -> bool",
+      "pre_condition": "fname is a non-empty filename string.",
+      "post_condition": "Returns True when fname is a specification or callee-info metadata file (i.e., has a .spec.json or .info.json suffix). Returns False otherwise."
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_strip_star",
+  "source_file": "fm_agent/extracted_functions/dashboard-py/_strip_star.py",
+  "function_name": "_strip_star",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_strip_star.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_strip_star.md",
+  "probe_stdout": "CONFIRMED — AttributeError raised on non-string key: \"'int' object has no attribute 'startswith'\" | expected: {1: 'a'}\n",
+  "trigger_summary": "When _strip_star receives a dict with a non-string key (e.g. integer 1), the unconditional k.startswith('*') call raises AttributeError instead of leaving non-string keys unchanged as the specification requires."
+}

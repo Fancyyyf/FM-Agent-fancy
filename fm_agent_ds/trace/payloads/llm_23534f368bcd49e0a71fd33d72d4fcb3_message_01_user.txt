@@ -1,0 +1,78 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a directory path within a git repository. old_commit_id is a valid commit identifier reachable in that repository. submodules, when provided, is a list of subdirectory paths relative to proj_dir.
+
+Code block:
+```python
+Line 1: def _collect_changed_functions(proj_dir, old_commit_id, submodules=None):
+Line 2:     """
+Line 3:     Determine which functions changed between commit old_commit_id and the current working
+Line 4:     tree under proj_dir, so the incremental pipeline only re-analyzes what actually moved.
+Line 5:     Only source files whose extension is in EXT_TO_LANG are considered; test files (per
+Line 6:     _is_test_file), anything under the fm_agent work dir, and files outside submodules
+Line 7:     when a submodule scope is provided are ignored. For each candidate file, functions are
+Line 8:     extracted from both the old (old_commit_id) version and the current working-tree
+Line 9:     version, then compared by source text.
+Line 10:     Returns a dict mapping each changed file's absolute path to a dict with keys "added",
+Line 11:     "removed", and "modified", each a sorted list of function names. For every
+Line 12:     non-Erlang language that CodeGraph can index, both revisions are compared using
+Line 13:     its class-qualified identifiers. Erlang and CodeGraph-unavailable files retain
+Line 14:     the previous regex-based comparison. Files with no detectable function-level
+Line 15:     change are omitted. Raises subprocess.CalledProcessError if proj_dir is not a
+Line 16:     git repository or old_commit_id is not a valid commit.
+Line 17:     """
+Line 18:     # Pathspecs limiting git to recognized source-file extensions (e.g. "*.py", "*.cpp").
+Line 19:     pathspecs = [f"*.{ext}" for ext in EXT_TO_LANG]
+Line 20:     def _git(*args):
+Line 21:         return subprocess.run(
+Line 22:             ["git", "-C", proj_dir, *args],
+Line 23:             check=True,
+Line 24:             capture_output=True,
+Line 25:             text=True,
+Line 26:         ).stdout
+Line 27:     def _is_workspace_file(rel_path):
+Line 28:         norm = rel_path.replace("\\", "/")
+Line 29:         return norm == "fm_agent" or norm.startswith("fm_agent/")
+Line 30:     # Files that changed between old_commit_id and the working tree, plus untracked files
+Line 31:     # (new files absent from old_commit_id), then drop test and workspace files.
+Line 32:     changed = _git(
+Line 33:         "diff", "--name-only", old_commit_id, "--", *pathspecs
+Line 34:     ).splitlines()
+Line 35:     untracked = _git(
+Line 36:         "ls-files", "--others", "--exclude-standard", "--", *pathspecs
+Line 37:     ).splitlines()
+Line 38:     files = [
+Line 39:         f for f in dict.fromkeys(changed + untracked)
+Line 40:         if not _is_test_file(f) and not _is_workspace_file(f)
+```
+
+Additional context:
+_is_test_file(file_path)
+Pre-condition: file_path is a relative or absolute file path string.
+Post-condition: Returns True when the file is classified as a test file based on its path or name; returns False otherwise.
+
+_is_under_submodules(file_path, submodules)
+Pre-condition: file_path is a relative file path string. submodules is a list of subdirectory path strings, or None.
+Post-condition: Returns True when submodules is None or file_path resides within at least one of the given submodule directories; returns False otherwise.
+
+_codegraph_functions_by_file(proj_dir, codegraph_langs)
+Pre-condition: proj_dir is a valid directory path. codegraph_langs is an iterable of language key strings recognized by CodeGraph.
+Post-condition: Returns a dict mapping each normalized relative file path string to a dict of {function_name: function_source} extracted by CodeGraph static analysis for all supported files in proj_dir.
+
+_codegraph_legacy_coverage(proj_dir, current_codegraph, codegraph_file_languages)
+Pre-condition: proj_dir is a valid directory path. current_codegraph is the dict returned by _codegraph_functions_by_file. codegraph_file_languages maps relative file paths to language keys.
+Post-condition: Returns a dict mapping each normalized relative file path to a boolean indicating whether CodeGraph successfully indexed that file in the current revision.
+
+_codegraph_functions_at_revision(proj_dir, old_commit_id, codegraph_file_languages)
+Pre-condition: proj_dir is a valid directory path within a git repository. old_commit_id is a valid commit identifier. codegraph_file_languages maps relative file paths to language keys.
+Post-condition: Returns a tuple of (codegraph_dict, coverage_dict) for the given revision if CodeGraph can index it; returns None when indexing the revision fails.
+
+extract_functions_from_file(file_path, lang_key)
+Pre-condition: file_path is an absolute path to an existing source file. lang_key is a recognized language key string.
+Post-condition: Returns an iterable of (function_name, function_source) tuples for every function found in the source file, using language-specific extraction logic for the given lang_key.
+
+_normalized_relative_path(proj_dir, rel_path)
+Pre-condition: proj_dir is a directory path. rel_path is a relative file path string.
+Post-condition: Returns a normalized relative path string with forward-slash separators and no leading dots or redundant separators.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

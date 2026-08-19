@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_codegraph_cmd",
+      "signature": "_codegraph_cmd() -> cmd",
+      "pre_condition": "None (no arguments required).",
+      "post_condition": "Returns a command (string or sequence of strings) that, when invoked with the --version flag, locates and executes the codegraph binary and prints its version to stdout."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_is_valid_spec_json",
+      "signature": "_is_valid_spec_json(spec) -> bool",
+      "pre_condition": "spec is a dict parsed from a JSON file.",
+      "post_condition": "Returns True when spec contains exactly the keys \"signature\", \"pre_condition\", \"post_condition\" and every value is of type str; returns False otherwise."
+    },
+    {
+      "name": "_is_valid_info_json",
+      "signature": "_is_valid_info_json(info) -> bool",
+      "pre_condition": "info is a dict parsed from a JSON file.",
+      "post_condition": "Returns True when info contains exactly the key \"callees\" whose value is an array, and every element of that array is a dict containing exactly the keys \"name\", \"signature\", \"pre_condition\", \"post_condition\" with all values of type str; returns False otherwise."
+    }
+  ]
+}

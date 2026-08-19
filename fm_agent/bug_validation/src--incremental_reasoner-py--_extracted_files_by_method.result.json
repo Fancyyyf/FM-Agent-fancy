@@ -1,1 +1,11 @@
-{"id":"src--incremental_reasoner-py--_extracted_files_by_method","source_file":"/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_extracted_files_by_method.py","function_name":"_extracted_files_by_method","confirmation_status":"confirmed","attempts":2,"probe_script":"fm_agent/bug_validation/probe_src--incremental_reasoner-py--_extracted_files_by_method.py","detail_file":"fm_agent/bug_validation/src--incremental_reasoner-py--_extracted_files_by_method.md","probe_stdout":"CONFIRMED — PermissionError from os.walk propagated instead of returning a dict","trigger_summary":"os.walk raises PermissionError on an inaccessible directory and the exception propagates unhandled instead of returning a dict as the spec requires."}
+{
+  "id": "src--incremental_reasoner-py--_extracted_files_by_method",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent_qwen_7d490/fm_agent/extracted_functions/src/incremental_reasoner-py/_extracted_files_by_method.py",
+  "function_name": "_extracted_files_by_method",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_extracted_files_by_method.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_extracted_files_by_method.md",
+  "probe_stdout": "DEBUG func_dir (relative input): extracted_funcs/src--incremental_reasoner-py\nDEBUG returned keys: ['Flush', 'LocalStorage::Flush', 'do_thing']\nDEBUG path: extracted_funcs/src--incremental_reasoner-py/do_thing.py | os.path.isabs: False\nDEBUG path: extracted_funcs/src--incremental_reasoner-py/LocalStorage::Flush.py | os.path.isabs: False\nDEBUG path: extracted_funcs/src--incremental_reasoner-py/LocalStorage::Flush.py | os.path.isabs: False\nCONFIRMED — all 3 returned path(s) are RELATIVE (e.g. 'extracted_funcs/src--incremental_reasoner-py/do_thing.py') although spec requires absolute paths | expected: all returned paths are absolute (os.path.isabs == True)",
+  "trigger_summary": "Calling _extracted_files_by_method with a relative func_dir that exists as a directory returns value lists of relative paths (os.path.join of os.walk's relative roots) because the code never applies os.path.abspath, violating the spec requirement that every value list contain only absolute paths."
+}

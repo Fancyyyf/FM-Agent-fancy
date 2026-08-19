@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "_llm_code_for_event('ERROR')",
+  "offending_statements": "Line 6: if status == \"error\":",
+  "reason": "The specification requires that any status value indicating a general error return 'ERR'. The input 'ERROR' clearly indicates a general error, but the code only checks for the exact lowercase string 'error', so it falls through and returns 'ERROR' unchanged, violating the specification."
+}

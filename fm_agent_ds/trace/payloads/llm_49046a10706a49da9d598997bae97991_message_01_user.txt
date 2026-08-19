@@ -1,0 +1,22 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _save_ignored(work_dir, ignored):
+Line 2:     path = _memory_path(work_dir)
+Line 3:     with open(path, "w") as f:
+Line 4:         for item in sorted(ignored):
+Line 5:             f.write(item + "\n")
+```
+
+Condition A (what the code actually does):
+After successful execution, the function creates or overwrites the file at path = _memory_path(work_dir). The file is closed, and its contents are the lines formed by each element of the input set `ignored` sorted in ascending order, each followed by a newline character, with no additional characters. Formally: let path = _memory_path(work_dir); then file_exists(path) ∧ ∀ line ∈ (readlines(path)) → line = x + "\n" for some x ∈ sorted(ignored) ∧ length(readlines(path)) = |ignored| ∧ closed(file_descriptor). If `ignored` is empty, the file is empty. The set `ignored` and the directory `work_dir` remain unchanged.
+
+Condition B (what the specification requires):
+Persists every check_id in ignored to the ignored-checks file under work_dir, one check_id per line. Creates the file if it does not exist; truncates and overwrites any previous content if it does. When ignored is an empty set, the file is created or truncated to empty. The function does not signal errors to the caller for any failure condition.
+
+Additional context:
+_memory_path(work_dir) -> str
+Pre-condition: work_dir is a path to an existing directory.
+Post-condition: Returns the path identifying the ignored-checks memory file under work_dir. The returned path resides under the directory work_dir.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_SourceIndex.build",
+      "signature": "build(cls, source: str) -> _SourceIndex",
+      "pre_condition": "source is a non-empty string containing source code text.",
+      "post_condition": "Returns a _SourceIndex instance that indexes the source text by line boundaries, enabling position-to-offset and range-to-source queries for the given source."
+    },
+    {
+      "name": "_SourceIndex.position_to_offset",
+      "signature": "position_to_offset(self, position: dict) -> int",
+      "pre_condition": "self is a _SourceIndex instance built from the same source string handed to _position_to_offset. position is a dict with 'line' and 'character' entries (each defaulting to 0) representing a location in the indexed source.",
+      "post_condition": "Returns the zero-indexed byte offset in the indexed source corresponding to the given position, clamped to [0, len(source)]. Characters above U+FFFF count as 2 UTF-16 code units."
+    }
+  ]
+}

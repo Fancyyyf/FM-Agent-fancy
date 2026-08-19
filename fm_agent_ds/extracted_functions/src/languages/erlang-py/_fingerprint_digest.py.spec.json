@@ -1,0 +1,5 @@
+{
+  "signature": "_fingerprint_digest(fingerprint: tuple) -> str",
+  "pre_condition": "fingerprint is a tuple whose elements are JSON-serializable values (strings, numbers, booleans, None, and nested tuples, lists, and dicts composed of JSON-serializable values).",
+  "post_condition": "Returns a deterministic 64-character lowercase hexadecimal string (each character in [0-9a-f]) that is a cryptographic digest of fingerprint. The mapping from fingerprint to the returned string is a pure function: identical fingerprint tuples always produce identical digest strings. Distinct fingerprints produce distinct digests (no collisions for the input domain of finite-length tuples of JSON-serializable data)."
+}

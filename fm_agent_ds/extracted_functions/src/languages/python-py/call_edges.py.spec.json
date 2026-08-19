@@ -1,0 +1,5 @@
+{
+  "signature": "call_edges(proj_dir: str) -> dict | None",
+  "pre_condition": "proj_dir is a path to an existing directory",
+  "post_condition": "Returns a dictionary mapping each caller identifier to the set of callee identifiers it directly invokes, covering all Python source files in proj_dir. Every key is a caller identifier and every value is a non-empty set of callee identifiers. Returns None when the static-analysis backend cannot initialize."
+}

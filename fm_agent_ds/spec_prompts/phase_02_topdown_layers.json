@@ -1,0 +1,1584 @@
+{
+  "phase": 2,
+  "phase_name": "Language Backend & Function Extraction",
+  "total_functions": 108,
+  "total_layers": 9,
+  "layers": [
+    {
+      "layer": 0,
+      "functions": [
+        {
+          "name": "src::call_graph_edges-py::load_call_edges",
+          "file": "extracted_functions/src/call_graph_edges-py/load_call_edges.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_dedupe_edges",
+            "src::call_graph_edges-py::_is_edge_file",
+            "src::call_graph_edges-py::_load_call_edge_file"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_dedupe_edges",
+            "src::call_graph_edges-py::_is_edge_file",
+            "src::call_graph_edges-py::_load_call_edge_file"
+          ]
+        },
+        {
+          "name": "src::extract-py::_function_spans",
+          "file": "extracted_functions/src/extract-py/_function_spans.py",
+          "unit": "extraction",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::extract-py::_extract_functions_brace",
+            "src::extract-py::_extract_functions_indent",
+            "src::languages::codegraph-py::canonicalize",
+            "src::languages::registry-py::function_spans_for_file"
+          ],
+          "all_callees": [
+            "src::extract-py::_extract_functions_brace",
+            "src::extract-py::_extract_functions_indent",
+            "src::languages::codegraph-py::canonicalize",
+            "src::languages::registry-py::function_spans_for_file"
+          ]
+        },
+        {
+          "name": "src::extract-py::run_extraction",
+          "file": "extracted_functions/src/extract-py/run_extraction.py",
+          "unit": "extraction",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::extract-py::_safe_filename",
+            "src::extract-py::_validate_extraction",
+            "src::extract-py::extract_functions_from_file",
+            "src::languages::registry-py::batch_extract_all"
+          ],
+          "all_callees": [
+            "src::extract-py::_safe_filename",
+            "src::extract-py::_validate_extraction",
+            "src::extract-py::extract_functions_from_file",
+            "src::file_utils-py::_is_test_file",
+            "src::file_utils-py::is_file_ready",
+            "src::languages::registry-py::batch_extract_all"
+          ]
+        },
+        {
+          "name": "src::languages::c-py::batch_extract",
+          "file": "extracted_functions/src/languages/c-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::languages::c-py::function_spans",
+          "file": "extracted_functions/src/languages/c-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ]
+        },
+        {
+          "name": "src::languages::codegraph-py::CodeGraphExtractor::__init__",
+          "file": "extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::__init__.py",
+          "unit": "codegraph",
+          "phase2_callers": [],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::codegraph-py::try_codegraph_init",
+          "file": "extracted_functions/src/languages/codegraph-py/try_codegraph_init.py",
+          "unit": "codegraph",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::_codegraph_cmd",
+            "src::languages::codegraph-py::_warn_on_codegraph_version_mismatch",
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::_codegraph_cmd",
+            "src::languages::codegraph-py::_warn_on_codegraph_version_mismatch",
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::languages::cpp-py::batch_extract",
+          "file": "extracted_functions/src/languages/cpp-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::languages::cpp-py::call_edges",
+          "file": "extracted_functions/src/languages/cpp-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::cpp-py::function_spans",
+          "file": "extracted_functions/src/languages/cpp-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::__enter__",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::__enter__.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::__init__",
+            "src::languages::erlang-py::_elp_argv"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::__init__",
+            "src::languages::erlang-py::_elp_argv"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::__exit__",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::__exit__.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::close"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::close"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_position_to_offset",
+          "file": "extracted_functions/src/languages/erlang-py/_position_to_offset.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::erlang-py::_SourceIndex::build",
+            "src::languages::erlang-py::_SourceIndex::position_to_offset"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_SourceIndex::build",
+            "src::languages::erlang-py::_SourceIndex::position_to_offset"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_source_for_range",
+          "file": "extracted_functions/src/languages/erlang-py/_source_for_range.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::erlang-py::_SourceIndex::build",
+            "src::languages::erlang-py::_SourceIndex::source_for_range"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_SourceIndex::build",
+            "src::languages::erlang-py::_SourceIndex::source_for_range"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::batch_extract",
+          "file": "extracted_functions/src/languages/erlang-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::erlang-py::_analysis_or_empty"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_analysis_or_empty"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::call_edges",
+          "file": "extracted_functions/src/languages/erlang-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::erlang-py::_analysis_or_empty",
+            "src::languages::erlang-py::_callgraph_project_root"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_analysis_or_empty",
+            "src::languages::erlang-py::_callgraph_project_root"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::function_spans",
+          "file": "extracted_functions/src/languages/erlang-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::erlang-py::_analysis_or_empty"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_analysis_or_empty"
+          ]
+        },
+        {
+          "name": "src::languages::go-py::batch_extract",
+          "file": "extracted_functions/src/languages/go-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::languages::go-py::call_edges",
+          "file": "extracted_functions/src/languages/go-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::go-py::function_spans",
+          "file": "extracted_functions/src/languages/go-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ]
+        },
+        {
+          "name": "src::languages::java-py::batch_extract",
+          "file": "extracted_functions/src/languages/java-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::languages::java-py::call_edges",
+          "file": "extracted_functions/src/languages/java-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::java-py::function_spans",
+          "file": "extracted_functions/src/languages/java-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ]
+        },
+        {
+          "name": "src::languages::javascript-py::batch_extract",
+          "file": "extracted_functions/src/languages/javascript-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::languages::javascript-py::call_edges",
+          "file": "extracted_functions/src/languages/javascript-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::javascript-py::function_spans",
+          "file": "extracted_functions/src/languages/javascript-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ]
+        },
+        {
+          "name": "src::languages::python-py::batch_extract",
+          "file": "extracted_functions/src/languages/python-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::languages::python-py::call_edges",
+          "file": "extracted_functions/src/languages/python-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::python-py::function_spans",
+          "file": "extracted_functions/src/languages/python-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ]
+        },
+        {
+          "name": "src::languages::registry-py::call_edges_all",
+          "file": "extracted_functions/src/languages/registry-py/call_edges_all.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::c-py::call_edges"
+          ],
+          "all_callees": [
+            "src::languages::c-py::call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::rust-py::batch_extract",
+          "file": "extracted_functions/src/languages/rust-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::languages::rust-py::call_edges",
+          "file": "extracted_functions/src/languages/rust-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::rust-py::function_spans",
+          "file": "extracted_functions/src/languages/rust-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ]
+        },
+        {
+          "name": "src::languages::typescript-py::batch_extract",
+          "file": "extracted_functions/src/languages/typescript-py/batch_extract.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::languages::typescript-py::call_edges",
+          "file": "extracted_functions/src/languages/typescript-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::typescript-py::function_spans",
+          "file": "extracted_functions/src/languages/typescript-py/function_spans.py",
+          "unit": "language_handlers",
+          "phase2_callers": [],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "functions": [
+        {
+          "name": "src::call_graph_edges-py::_dedupe_edges",
+          "file": "extracted_functions/src/call_graph_edges-py/_dedupe_edges.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::load_call_edges"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::call_graph_edges-py::_is_edge_file",
+          "file": "extracted_functions/src/call_graph_edges-py/_is_edge_file.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::load_call_edges"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::call_graph_edges-py::_load_call_edge_file",
+          "file": "extracted_functions/src/call_graph_edges-py/_load_call_edge_file.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::load_call_edges"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_load_json_edges"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_load_json_edges"
+          ]
+        },
+        {
+          "name": "src::extract-py::_safe_filename",
+          "file": "extracted_functions/src/extract-py/_safe_filename.py",
+          "unit": "extraction",
+          "phase2_callers": [
+            "src::extract-py::run_extraction"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::extract-py::_validate_extraction",
+          "file": "extracted_functions/src/extract-py/_validate_extraction.py",
+          "unit": "extraction",
+          "phase2_callers": [
+            "src::extract-py::run_extraction"
+          ],
+          "phase2_callees": [
+            "src::extract-py::extract_functions_from_file"
+          ],
+          "all_callees": [
+            "src::extract-py::extract_functions_from_file"
+          ]
+        },
+        {
+          "name": "src::languages::c-py::call_edges",
+          "file": "extracted_functions/src/languages/c-py/call_edges.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::registry-py::call_edges_all"
+          ],
+          "phase2_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ]
+        },
+        {
+          "name": "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans",
+          "file": "extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::get_function_spans.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::c-py::function_spans",
+            "src::languages::cpp-py::function_spans",
+            "src::languages::go-py::function_spans",
+            "src::languages::java-py::function_spans",
+            "src::languages::javascript-py::function_spans",
+            "src::languages::python-py::function_spans",
+            "src::languages::rust-py::function_spans",
+            "src::languages::typescript-py::function_spans"
+          ],
+          "phase2_callees": [
+            "src::languages::codegraph-py::_extraction_ident"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::_extraction_ident"
+          ]
+        },
+        {
+          "name": "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file",
+          "file": "extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::get_functions_by_file.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::c-py::batch_extract",
+            "src::languages::cpp-py::batch_extract",
+            "src::languages::go-py::batch_extract",
+            "src::languages::java-py::batch_extract",
+            "src::languages::javascript-py::batch_extract",
+            "src::languages::python-py::batch_extract",
+            "src::languages::rust-py::batch_extract",
+            "src::languages::typescript-py::batch_extract"
+          ],
+          "phase2_callees": [
+            "src::languages::codegraph-py::_extraction_ident"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::_extraction_ident"
+          ]
+        },
+        {
+          "name": "src::languages::codegraph-py::_codegraph_cmd",
+          "file": "extracted_functions/src/languages/codegraph-py/_codegraph_cmd.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::codegraph-py::try_codegraph_init"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::codegraph-py::_warn_on_codegraph_version_mismatch",
+          "file": "extracted_functions/src/languages/codegraph-py/_warn_on_codegraph_version_mismatch.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::codegraph-py::try_codegraph_init"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::close",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::close.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::__exit__"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::notify",
+            "src::languages::erlang-py::ElpClient::request"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::notify",
+            "src::languages::erlang-py::ElpClient::request"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_JsonRpcReader::__init__",
+          "file": "extracted_functions/src/languages/erlang-py/_JsonRpcReader::__init__.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::__enter__"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_analysis_or_empty",
+          "file": "extracted_functions/src/languages/erlang-py/_analysis_or_empty.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::batch_extract",
+            "src::languages::erlang-py::call_edges",
+            "src::languages::erlang-py::function_spans"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_analyze_project"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_analyze_project"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_callgraph_project_root",
+          "file": "extracted_functions/src/languages/erlang-py/_callgraph_project_root.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::call_edges"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_iter_project_files"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_iter_project_files"
+          ]
+        },
+        {
+          "name": "src::languages::registry-py::batch_extract_all",
+          "file": "extracted_functions/src/languages/registry-py/batch_extract_all.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::extract-py::run_extraction"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::registry-py::function_spans_for_file",
+          "file": "extracted_functions/src/languages/registry-py/function_spans_for_file.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::extract-py::_function_spans"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 2,
+      "functions": [
+        {
+          "name": "src::call_graph_edges-py::_load_json_edges",
+          "file": "extracted_functions/src/call_graph_edges-py/_load_json_edges.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_load_call_edge_file"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_edge_from_mapping"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_edge_from_mapping"
+          ]
+        },
+        {
+          "name": "src::extract-py::extract_functions_from_file",
+          "file": "extracted_functions/src/extract-py/extract_functions_from_file.py",
+          "unit": "extraction",
+          "phase2_callers": [
+            "src::extract-py::_validate_extraction",
+            "src::extract-py::run_extraction"
+          ],
+          "phase2_callees": [
+            "src::extract-py::_extract_functions_brace",
+            "src::extract-py::_extract_functions_indent",
+            "src::languages::codegraph-py::canonicalize"
+          ],
+          "all_callees": [
+            "src::extract-py::_extract_functions_brace",
+            "src::extract-py::_extract_functions_indent",
+            "src::languages::codegraph-py::canonicalize"
+          ]
+        },
+        {
+          "name": "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+          "file": "extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::from_proj_dir.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::c-py::batch_extract",
+            "src::languages::c-py::call_edges",
+            "src::languages::c-py::function_spans",
+            "src::languages::cpp-py::batch_extract",
+            "src::languages::cpp-py::call_edges",
+            "src::languages::cpp-py::function_spans",
+            "src::languages::go-py::batch_extract",
+            "src::languages::go-py::call_edges",
+            "src::languages::go-py::function_spans",
+            "src::languages::java-py::batch_extract",
+            "src::languages::java-py::call_edges",
+            "src::languages::java-py::function_spans",
+            "src::languages::javascript-py::batch_extract",
+            "src::languages::javascript-py::call_edges",
+            "src::languages::javascript-py::function_spans",
+            "src::languages::python-py::batch_extract",
+            "src::languages::python-py::call_edges",
+            "src::languages::python-py::function_spans",
+            "src::languages::rust-py::batch_extract",
+            "src::languages::rust-py::call_edges",
+            "src::languages::rust-py::function_spans",
+            "src::languages::typescript-py::batch_extract",
+            "src::languages::typescript-py::call_edges",
+            "src::languages::typescript-py::function_spans"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges",
+          "file": "extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::get_call_edges.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::c-py::call_edges",
+            "src::languages::cpp-py::call_edges",
+            "src::languages::go-py::call_edges",
+            "src::languages::java-py::call_edges",
+            "src::languages::javascript-py::call_edges",
+            "src::languages::python-py::call_edges",
+            "src::languages::rust-py::call_edges",
+            "src::languages::typescript-py::call_edges"
+          ],
+          "phase2_callees": [
+            "src::languages::codegraph-py::_node_fqn_map"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::_node_fqn_map"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_JsonRpcReader::run",
+          "file": "extracted_functions/src/languages/erlang-py/_JsonRpcReader::run.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::codegraph-py::_warn_on_codegraph_version_mismatch",
+            "src::languages::codegraph-py::try_codegraph_init"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_analyze_project",
+          "file": "extracted_functions/src/languages/erlang-py/_analyze_project.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analysis_or_empty"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_analyze_project_uncached",
+            "src::languages::erlang-py::_persist_analysis",
+            "src::languages::erlang-py::_project_fingerprint"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_analyze_project_uncached",
+            "src::languages::erlang-py::_persist_analysis",
+            "src::languages::erlang-py::_project_fingerprint"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "functions": [
+        {
+          "name": "src::call_graph_edges-py::_edge_from_mapping",
+          "file": "extracted_functions/src/call_graph_edges-py/_edge_from_mapping.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_load_json_edges"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_edge_source",
+            "src::call_graph_edges-py::_parse_callee",
+            "src::call_graph_edges-py::_parse_caller"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_edge_source",
+            "src::call_graph_edges-py::_parse_callee",
+            "src::call_graph_edges-py::_parse_caller"
+          ]
+        },
+        {
+          "name": "src::extract-py::_extract_functions_brace",
+          "file": "extracted_functions/src/extract-py/_extract_functions_brace.py",
+          "unit": "extraction",
+          "phase2_callers": [
+            "src::extract-py::_function_spans",
+            "src::extract-py::extract_functions_from_file"
+          ],
+          "phase2_callees": [
+            "src::extract-py::_extract_func_name_brace",
+            "src::extract-py::_find_brace_end"
+          ],
+          "all_callees": [
+            "src::extract-py::_extract_func_name_brace",
+            "src::extract-py::_find_brace_end"
+          ]
+        },
+        {
+          "name": "src::extract-py::_extract_functions_indent",
+          "file": "extracted_functions/src/extract-py/_extract_functions_indent.py",
+          "unit": "extraction",
+          "phase2_callers": [
+            "src::extract-py::_function_spans",
+            "src::extract-py::extract_functions_from_file"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::codegraph-py::_node_fqn_map",
+          "file": "extracted_functions/src/languages/codegraph-py/_node_fqn_map.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::codegraph-py::CodeGraphExtractor::get_call_edges"
+          ],
+          "phase2_callees": [
+            "src::languages::codegraph-py::_extraction_ident",
+            "src::languages::codegraph-py::_fqn_for"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::_extraction_ident",
+            "src::languages::codegraph-py::_fqn_for"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_analyze_project_uncached",
+          "file": "extracted_functions/src/languages/erlang-py/_analyze_project_uncached.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::__init__",
+            "src::languages::erlang-py::ElpClient::initialize",
+            "src::languages::erlang-py::ElpClient::open_document",
+            "src::languages::erlang-py::ElpClient::request",
+            "src::languages::erlang-py::_SourceIndex::build",
+            "src::languages::erlang-py::_SourceIndex::source_for_range",
+            "src::languages::erlang-py::_caller_module",
+            "src::languages::erlang-py::_erlang_files",
+            "src::languages::erlang-py::_function_id",
+            "src::languages::erlang-py::_symbol_line_span",
+            "src::languages::erlang-py::_symbol_range",
+            "src::languages::erlang-py::_symbol_uri"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::__init__",
+            "src::languages::erlang-py::ElpClient::initialize",
+            "src::languages::erlang-py::ElpClient::open_document",
+            "src::languages::erlang-py::ElpClient::request",
+            "src::languages::erlang-py::_SourceIndex::build",
+            "src::languages::erlang-py::_SourceIndex::source_for_range",
+            "src::languages::erlang-py::_caller_module",
+            "src::languages::erlang-py::_erlang_files",
+            "src::languages::erlang-py::_function_id",
+            "src::languages::erlang-py::_symbol_line_span",
+            "src::languages::erlang-py::_symbol_range",
+            "src::languages::erlang-py::_symbol_uri"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_persist_analysis",
+          "file": "extracted_functions/src/languages/erlang-py/_persist_analysis.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_caller_module",
+            "src::languages::erlang-py::_elp_argv",
+            "src::languages::erlang-py::_fingerprint_digest"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_caller_module",
+            "src::languages::erlang-py::_elp_argv",
+            "src::languages::erlang-py::_fingerprint_digest"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_project_fingerprint",
+          "file": "extracted_functions/src/languages/erlang-py/_project_fingerprint.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_elp_argv",
+            "src::languages::erlang-py::_iter_project_files"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_elp_argv",
+            "src::languages::erlang-py::_iter_project_files"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 4,
+      "functions": [
+        {
+          "name": "src::call_graph_edges-py::_edge_source",
+          "file": "extracted_functions/src/call_graph_edges-py/_edge_source.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_edge_from_mapping"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::call_graph_edges-py::_parse_callee",
+          "file": "extracted_functions/src/call_graph_edges-py/_parse_callee.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_edge_from_mapping"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_required_string",
+            "src::call_graph_edges-py::_string_list"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_required_string",
+            "src::call_graph_edges-py::_string_list"
+          ]
+        },
+        {
+          "name": "src::call_graph_edges-py::_parse_caller",
+          "file": "extracted_functions/src/call_graph_edges-py/_parse_caller.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_edge_from_mapping"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_optional_string",
+            "src::call_graph_edges-py::_string_list",
+            "src::call_graph_edges-py::normalize_fqn_label"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_optional_string",
+            "src::call_graph_edges-py::_string_list",
+            "src::call_graph_edges-py::normalize_fqn_label"
+          ]
+        },
+        {
+          "name": "src::extract-py::_extract_func_name_brace",
+          "file": "extracted_functions/src/extract-py/_extract_func_name_brace.py",
+          "unit": "extraction",
+          "phase2_callers": [
+            "src::extract-py::_extract_functions_brace"
+          ],
+          "phase2_callees": [
+            "src::extract-py::_strip_angle_brackets"
+          ],
+          "all_callees": [
+            "src::extract-py::_strip_angle_brackets"
+          ]
+        },
+        {
+          "name": "src::extract-py::_find_brace_end",
+          "file": "extracted_functions/src/extract-py/_find_brace_end.py",
+          "unit": "extraction",
+          "phase2_callers": [
+            "src::extract-py::_extract_functions_brace"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::codegraph-py::_extraction_ident",
+          "file": "extracted_functions/src/languages/codegraph-py/_extraction_ident.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::codegraph-py::CodeGraphExtractor::get_function_spans",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file",
+            "src::languages::codegraph-py::_node_fqn_map"
+          ],
+          "phase2_callees": [
+            "src::languages::codegraph-py::_bare_function_name",
+            "src::languages::codegraph-py::_qualified_parts",
+            "src::languages::codegraph-py::canonicalize"
+          ],
+          "all_callees": [
+            "src::languages::codegraph-py::_bare_function_name",
+            "src::languages::codegraph-py::_qualified_parts",
+            "src::languages::codegraph-py::canonicalize"
+          ]
+        },
+        {
+          "name": "src::languages::codegraph-py::_fqn_for",
+          "file": "extracted_functions/src/languages/codegraph-py/_fqn_for.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::codegraph-py::_node_fqn_map"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::__init__",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::__init__.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_timeout_seconds"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_timeout_seconds"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::initialize",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::initialize.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::_handle_server_message",
+            "src::languages::erlang-py::ElpClient::_next_message",
+            "src::languages::erlang-py::ElpClient::notify",
+            "src::languages::erlang-py::ElpClient::open_document",
+            "src::languages::erlang-py::ElpClient::request"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::_handle_server_message",
+            "src::languages::erlang-py::ElpClient::_next_message",
+            "src::languages::erlang-py::ElpClient::notify",
+            "src::languages::erlang-py::ElpClient::open_document",
+            "src::languages::erlang-py::ElpClient::request"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_SourceIndex::build",
+          "file": "extracted_functions/src/languages/erlang-py/_SourceIndex::build.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached",
+            "src::languages::erlang-py::_position_to_offset",
+            "src::languages::erlang-py::_source_for_range"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_SourceIndex::source_for_range",
+          "file": "extracted_functions/src/languages/erlang-py/_SourceIndex::source_for_range.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached",
+            "src::languages::erlang-py::_source_for_range"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_SourceIndex::position_to_offset"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_SourceIndex::position_to_offset"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_caller_module",
+          "file": "extracted_functions/src/languages/erlang-py/_caller_module.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached",
+            "src::languages::erlang-py::_persist_analysis"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_elp_argv",
+          "file": "extracted_functions/src/languages/erlang-py/_elp_argv.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::__enter__",
+            "src::languages::erlang-py::_persist_analysis",
+            "src::languages::erlang-py::_project_fingerprint"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_erlang_files",
+          "file": "extracted_functions/src/languages/erlang-py/_erlang_files.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_iter_project_files"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_iter_project_files"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_fingerprint_digest",
+          "file": "extracted_functions/src/languages/erlang-py/_fingerprint_digest.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_persist_analysis"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_function_id",
+          "file": "extracted_functions/src/languages/erlang-py/_function_id.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::_escape_component",
+            "src::languages::erlang-py::_module_from_uri"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_escape_component",
+            "src::languages::erlang-py::_module_from_uri"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_symbol_line_span",
+          "file": "extracted_functions/src/languages/erlang-py/_symbol_line_span.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_symbol_range",
+          "file": "extracted_functions/src/languages/erlang-py/_symbol_range.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_symbol_uri",
+          "file": "extracted_functions/src/languages/erlang-py/_symbol_uri.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 5,
+      "functions": [
+        {
+          "name": "src::call_graph_edges-py::_optional_string",
+          "file": "extracted_functions/src/call_graph_edges-py/_optional_string.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_parse_caller"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_clean_label"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_clean_label"
+          ]
+        },
+        {
+          "name": "src::call_graph_edges-py::_required_string",
+          "file": "extracted_functions/src/call_graph_edges-py/_required_string.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_parse_callee"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_clean_label"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_clean_label"
+          ]
+        },
+        {
+          "name": "src::call_graph_edges-py::_string_list",
+          "file": "extracted_functions/src/call_graph_edges-py/_string_list.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_parse_callee",
+            "src::call_graph_edges-py::_parse_caller"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_clean_label"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_clean_label"
+          ]
+        },
+        {
+          "name": "src::call_graph_edges-py::normalize_fqn_label",
+          "file": "extracted_functions/src/call_graph_edges-py/normalize_fqn_label.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_parse_caller"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_normalize_endpoint_label"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_normalize_endpoint_label"
+          ]
+        },
+        {
+          "name": "src::extract-py::_strip_angle_brackets",
+          "file": "extracted_functions/src/extract-py/_strip_angle_brackets.py",
+          "unit": "extraction",
+          "phase2_callers": [
+            "src::extract-py::_extract_func_name_brace"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::codegraph-py::_bare_function_name",
+          "file": "extracted_functions/src/languages/codegraph-py/_bare_function_name.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::codegraph-py::_extraction_ident"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::codegraph-py::_qualified_parts",
+          "file": "extracted_functions/src/languages/codegraph-py/_qualified_parts.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::languages::codegraph-py::_extraction_ident"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::codegraph-py::canonicalize",
+          "file": "extracted_functions/src/languages/codegraph-py/canonicalize.py",
+          "unit": "codegraph",
+          "phase2_callers": [
+            "src::extract-py::_function_spans",
+            "src::extract-py::extract_functions_from_file",
+            "src::languages::codegraph-py::_extraction_ident"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::open_document",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::open_document.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::initialize",
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::notify"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::notify"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::request",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::request.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::close",
+            "src::languages::erlang-py::ElpClient::initialize",
+            "src::languages::erlang-py::_analyze_project_uncached"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::_send",
+            "src::languages::erlang-py::ElpClient::_wait_for_response"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::_send",
+            "src::languages::erlang-py::ElpClient::_wait_for_response"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::_SourceIndex::position_to_offset",
+          "file": "extracted_functions/src/languages/erlang-py/_SourceIndex::position_to_offset.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_SourceIndex::source_for_range",
+            "src::languages::erlang-py::_position_to_offset"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_escape_component",
+          "file": "extracted_functions/src/languages/erlang-py/_escape_component.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_function_id"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_iter_project_files",
+          "file": "extracted_functions/src/languages/erlang-py/_iter_project_files.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_callgraph_project_root",
+            "src::languages::erlang-py::_erlang_files",
+            "src::languages::erlang-py::_project_fingerprint"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_module_from_uri",
+          "file": "extracted_functions/src/languages/erlang-py/_module_from_uri.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::_function_id"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_timeout_seconds",
+          "file": "extracted_functions/src/languages/erlang-py/_timeout_seconds.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::__init__"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 6,
+      "functions": [
+        {
+          "name": "src::call_graph_edges-py::_normalize_endpoint_label",
+          "file": "extracted_functions/src/call_graph_edges-py/_normalize_endpoint_label.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::normalize_fqn_label"
+          ],
+          "phase2_callees": [
+            "src::call_graph_edges-py::_clean_label",
+            "src::call_graph_edges-py::_is_path_function_label"
+          ],
+          "all_callees": [
+            "src::call_graph_edges-py::_clean_label",
+            "src::call_graph_edges-py::_is_path_function_label"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::_wait_for_response",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::_wait_for_response.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::request"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::_handle_server_message",
+            "src::languages::erlang-py::ElpClient::_next_message",
+            "src::languages::erlang-py::_ContentModifiedError::__init__"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::_handle_server_message",
+            "src::languages::erlang-py::ElpClient::_next_message",
+            "src::languages::erlang-py::_ContentModifiedError::__init__"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::notify",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::notify.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::close",
+            "src::languages::erlang-py::ElpClient::initialize",
+            "src::languages::erlang-py::ElpClient::open_document"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::_send"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::_send"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 7,
+      "functions": [
+        {
+          "name": "src::call_graph_edges-py::_clean_label",
+          "file": "extracted_functions/src/call_graph_edges-py/_clean_label.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_normalize_endpoint_label",
+            "src::call_graph_edges-py::_optional_string",
+            "src::call_graph_edges-py::_required_string",
+            "src::call_graph_edges-py::_string_list"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::call_graph_edges-py::_is_path_function_label",
+          "file": "extracted_functions/src/call_graph_edges-py/_is_path_function_label.py",
+          "unit": "call_graph_edges",
+          "phase2_callers": [
+            "src::call_graph_edges-py::_normalize_endpoint_label"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::_handle_server_message",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::_handle_server_message.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::_wait_for_response",
+            "src::languages::erlang-py::ElpClient::initialize"
+          ],
+          "phase2_callees": [
+            "src::languages::erlang-py::ElpClient::_send"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::ElpClient::_send"
+          ]
+        },
+        {
+          "name": "src::languages::erlang-py::ElpClient::_next_message",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::_next_message.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::_wait_for_response",
+            "src::languages::erlang-py::ElpClient::initialize"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::languages::erlang-py::_ContentModifiedError::__init__",
+          "file": "extracted_functions/src/languages/erlang-py/_ContentModifiedError::__init__.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::_wait_for_response"
+          ],
+          "phase2_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 8,
+      "functions": [
+        {
+          "name": "src::languages::erlang-py::ElpClient::_send",
+          "file": "extracted_functions/src/languages/erlang-py/ElpClient::_send.py",
+          "unit": "language_handlers",
+          "phase2_callers": [
+            "src::languages::erlang-py::ElpClient::_handle_server_message",
+            "src::languages::erlang-py::ElpClient::notify",
+            "src::languages::erlang-py::ElpClient::request"
+          ],
+          "phase2_callees": [],
+          "all_callees": [
+            "src::incremental_reasoner-py::_StdoutTee::flush",
+            "src::incremental_reasoner-py::_StdoutTee::write"
+          ]
+        }
+      ]
+    }
+  ]
+}

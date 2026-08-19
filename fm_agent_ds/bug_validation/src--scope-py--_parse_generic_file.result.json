@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_parse_generic_file",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_parse_generic_file.py",
+  "function_name": "_parse_generic_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_parse_generic_file.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_parse_generic_file.md",
+  "probe_stdout": "CONFIRMED — KeyError raised for unknown lang_key \"fake_lang_xyz\" instead of returning (None, None, None): KeyError: 'fake_lang_xyz'\n",
+  "trigger_summary": "When LANG_CONFIG lacks the lang_key entry and _function_spans succeeds, LANG_CONFIG[lang_key] on line 659 raises an unguarded KeyError instead of returning (None, None, None)."
+}

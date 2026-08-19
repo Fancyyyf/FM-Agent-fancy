@@ -1,0 +1,5 @@
+{
+  "signature": "_LayeredSource.__init__(self, settings_cls, path: Path)",
+  "pre_condition": "settings_cls is a Pydantic BaseSettings subclass with model fields defined; path is a Path object that may or may not reference an existing regular file",
+  "post_condition": "After construction, invoking __call__() on this instance returns a dict whose keys are exactly the model field names of settings_cls. For each field, the value is resolved by the following precedence (highest first): (1) the value of any process environment variable mapped to that field via the environment-to-field mapping, (2) the value from the TOML file at path when path references an existing regular file containing valid TOML syntax, (3) the field's Pydantic default. An environment variable value, when present, overrides a TOML value for the same field regardless of the TOML value's type. If path does not reference an existing regular file, a message identifying the missing file is written to stderr and the TOML source is treated as empty."
+}

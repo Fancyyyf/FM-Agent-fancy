@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_is_metadata_sidecar",
+      "signature": "_is_metadata_sidecar(fname) -> bool",
+      "pre_condition": "fname is a filename string (basename only, not a full path) from a filesystem directory listing.",
+      "post_condition": "Returns True when fname matches the naming pattern of a metadata sidecar that accompanies an extracted function file (e.g., a .spec.json or .info.json suffix); returns False otherwise. The determination is based solely on the filename string and does not inspect file contents or filesystem metadata."
+    }
+  ]
+}

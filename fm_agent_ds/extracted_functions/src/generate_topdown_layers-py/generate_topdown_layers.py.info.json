@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "_load_phases",
+      "signature": "_load_phases(proj_dir) -> dict",
+      "pre_condition": "proj_dir is an existing directory containing a valid phases.json file with a 'phases' key whose value is a list.",
+      "post_condition": "Returns the parsed JSON content of proj_dir/phases.json as a Python dict. Raises an error if the file is missing, unreadable, or structurally invalid."
+    },
+    {
+      "name": "_collect_phase_files",
+      "signature": "_collect_phase_files(proj_dir, phase_data) -> list",
+      "pre_condition": "proj_dir is an existing directory. phase_data is an object from phases.json's 'phases' list containing information sufficient to locate extracted function files.",
+      "post_condition": "Returns a list of (file_path, module_name) pairs for every extracted function file belonging to the given phase, where each file_path is an absolute path to an existing file under proj_dir/extracted_functions/."
+    },
+    {
+      "name": "_file_to_fqn",
+      "signature": "_file_to_fqn(filepath, proj_dir) -> str",
+      "pre_condition": "filepath is an absolute path to an existing extracted function file under proj_dir/extracted_functions/. proj_dir is an existing directory.",
+      "post_condition": "Returns the fully-qualified name (FQN) string derived from filepath relative to proj_dir, with directory separators replaced by '::' and unsafe characters removed."
+    },
+    {
+      "name": "_build_call_graph",
+      "signature": "_build_call_graph(file_paths, proj_dir, global_stem_to_fqns, extra_call_edges=None) -> tuple",
+      "pre_condition": "file_paths is a list of (absolute_path, module_name) pairs for extracted function files. proj_dir is an existing directory. global_stem_to_fqns maps function-name stems to sets of FQN strings. extra_call_edges, when provided, is an iterable of supplemental edge records.",
+      "post_condition": "Returns a tuple whose elements include: callees_map (dict mapping caller FQN to list of callee FQN strings, sorted and deduplicated), callers_map (dict mapping callee FQN to list of caller FQN strings), all_callees_map (dict mapping FQN to list of all callee FQNs), file_map (dict mapping FQN to corresponding absolute file path), and module_map (dict mapping FQN to module name). All callee/caller lists are derived from static call-site detection within function bodies combined with any provided extra_call_edges."
+    },
+    {
+      "name": "_compute_layers",
+      "signature": "_compute_layers(phase_fqns, callees_map, callers_map) -> list",
+      "pre_condition": "phase_fqns is a non-empty set of FQN strings representing functions in a single phase. callees_map maps caller FQN strings to lists of callee FQN strings. callers_map maps callee FQN strings to lists of caller FQN strings.",
+      "post_condition": "Returns a list of layer-info dicts, each containing at minimum 'layer' (integer, 0-indexed and increasing) and 'functions' (a list of FQN strings belonging to that layer). Every FQN in phase_fqns appears in exactly one layer. For every callee-caller pair, the callee's layer index is strictly less than the caller's layer index unless the callee is not in phase_fqns. When the call graph contains a cycle among phase_fqns members, the cycle is broken and the layer dict for the affected layer includes a 'cycle_resolution': true flag."
+    }
+  ]
+}

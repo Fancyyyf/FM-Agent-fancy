@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_extraction_ident",
+      "signature": "_extraction_ident(name: str, qualified_name: str) -> str",
+      "pre_condition": "name and qualified_name are string values obtained from a codegraph nodes table row.",
+      "post_condition": "Returns a class-qualified, canonicalized function identifier string using '::' as the component separator."
+    },
+    {
+      "name": "_fqn_for",
+      "signature": "_fqn_for(file_path: str, deduped: str) -> str",
+      "pre_condition": "file_path is a relative source file path string. deduped is a canonicalized, deduplicated function identifier string.",
+      "post_condition": "Returns the fully-qualified name string for the function, combining the file-path-derived components and the deduplicated identifier with '::' separators."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "value = '  \"ab;\"  '",
+  "offending_statements": "Line 5: text = text.rstrip(\";\").strip()\nLine 8: return text.strip()",
+  "reason": "The returned string 'ab;' contains a trailing semicolon, violating the specification that the returned string has no trailing semicolon characters."
+}

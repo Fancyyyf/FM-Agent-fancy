@@ -1,0 +1,11 @@
+{
+  "id": "src--cli_backend-py--command_display",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/command_display.py",
+  "function_name": "command_display",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--command_display.py",
+  "detail_file": "fm_agent/bug_validation/src--cli_backend-py--command_display.md",
+  "probe_stdout": "CONFIRMED — result contains embedded newline: \"echo 'line1\\nline2'\"\n",
+  "trigger_summary": "Passing an argument containing a literal newline character to command_display causes shlex.join to preserve the newline in the output, violating the spec requirement of no embedded newline characters."
+}

@@ -1,0 +1,16 @@
+Programming language: Python
+
+Pre-condition:
+None.
+
+Code block:
+```python
+Line 1: def _metadata_body():
+Line 2:     return {"metadata": {"user_id": _stable_user_id()}}
+```
+
+Additional context:
+_stable_user_id() -> str
+Pre-condition: None.
+Post-condition: Returns a non-empty string that is stable across repeated calls within the same execution environment. The string serves as an identifier for the current user, enabling prompt-cache affinity in LLM API backends.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,622 @@
+{
+  "phase": 3,
+  "phase_name": "Pipeline Planning & Domain Knowledge",
+  "total_functions": 43,
+  "total_layers": 5,
+  "layers": [
+    {
+      "layer": 0,
+      "functions": [
+        {
+          "name": "src::domain_knowledge-py::collect_domain_knowledge_paths",
+          "file": "extracted_functions/src/domain_knowledge-py/collect_domain_knowledge_paths.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::domain_knowledge-py::_flatten_paths",
+            "src::domain_knowledge-py::_split_env_paths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::_flatten_paths",
+            "src::domain_knowledge-py::_split_env_paths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
+          ]
+        },
+        {
+          "name": "src::domain_knowledge-py::load_staged_domain_knowledge_text",
+          "file": "extracted_functions/src/domain_knowledge-py/load_staged_domain_knowledge_text.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths"
+          ]
+        },
+        {
+          "name": "src::domain_knowledge-py::stage_domain_knowledge_files",
+          "file": "extracted_functions/src/domain_knowledge-py/stage_domain_knowledge_files.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::domain_knowledge-py::_safe_staged_name",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::_safe_staged_name",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_collect_changed_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_collect_changed_phases.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_run_setup_extract",
+          "file": "extracted_functions/src/pipeline_setup-py/_run_setup_extract.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_post_process_phases",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::pipeline_setup-py::_setup_outputs_complete",
+            "src::plugin-py::PluginConfig::get_stage"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_post_process_phases",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::pipeline_setup-py::_setup_outputs_complete",
+            "src::plugin-py::PluginConfig::get_stage"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_sync_domain_context",
+          "file": "extracted_functions/src/pipeline_setup-py/_sync_domain_context.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::pipeline_setup-py::_build_domain_context_regen_prompt",
+            "src::pipeline_setup-py::_phase_source_files"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::pipeline_setup-py::_build_domain_context_regen_prompt",
+            "src::pipeline_setup-py::_phase_source_files"
+          ]
+        },
+        {
+          "name": "src::plugin-py::load_plugins",
+          "file": "extracted_functions/src/plugin-py/load_plugins.py",
+          "unit": "plugins",
+          "phase3_callers": [],
+          "phase3_callees": [
+            "src::plugin-py::validate_plugin"
+          ],
+          "all_callees": [
+            "src::plugin-py::validate_plugin"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "functions": [
+        {
+          "name": "src::domain_knowledge-py::_safe_staged_name",
+          "file": "extracted_functions/src/domain_knowledge-py/_safe_staged_name.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [
+            "src::domain_knowledge-py::stage_domain_knowledge_files"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::domain_knowledge-py::_split_env_paths",
+          "file": "extracted_functions/src/domain_knowledge-py/_split_env_paths.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [
+            "src::domain_knowledge-py::collect_domain_knowledge_paths"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::domain_knowledge-py::resolve_domain_knowledge_paths",
+          "file": "extracted_functions/src/domain_knowledge-py/resolve_domain_knowledge_paths.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [
+            "src::domain_knowledge-py::collect_domain_knowledge_paths",
+            "src::domain_knowledge-py::stage_domain_knowledge_files"
+          ],
+          "phase3_callees": [
+            "src::domain_knowledge-py::_flatten_paths"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::_flatten_paths"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_build_domain_context_regen_prompt",
+          "file": "extracted_functions/src/pipeline_setup-py/_build_domain_context_regen_prompt.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_sync_domain_context"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_phase_source_files",
+          "file": "extracted_functions/src/pipeline_setup-py/_phase_source_files.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_sync_domain_context"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_post_process_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_post_process_phases.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_setup_extract"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_clean_empty_phase_module",
+            "src::pipeline_setup-py::_collapse_phases_to_one",
+            "src::pipeline_setup-py::_collect_changed_modules",
+            "src::pipeline_setup-py::_deduplicate_phases",
+            "src::pipeline_setup-py::_ensure_source_files_in_phases",
+            "src::pipeline_setup-py::_filter_phases_to_submodules",
+            "src::pipeline_setup-py::_update_module_description"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_clean_empty_phase_module",
+            "src::pipeline_setup-py::_collapse_phases_to_one",
+            "src::pipeline_setup-py::_collect_changed_modules",
+            "src::pipeline_setup-py::_deduplicate_phases",
+            "src::pipeline_setup-py::_ensure_source_files_in_phases",
+            "src::pipeline_setup-py::_filter_phases_to_submodules",
+            "src::pipeline_setup-py::_update_module_description"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_run_generate_domain_context",
+          "file": "extracted_functions/src/pipeline_setup-py/_run_generate_domain_context.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_setup_extract"
+          ],
+          "phase3_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::pipeline_setup-py::_domain_context_complete",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::plugin-py::run_plugin_command"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::pipeline_setup-py::_domain_context_complete",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::plugin-py::run_plugin_command"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_run_generate_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_run_generate_phases.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_setup_extract"
+          ],
+          "phase3_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_phase_plan_schema_errors",
+            "src::pipeline_setup-py::_phases_cover_current_sources",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::plugin-py::run_plugin_command"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_phase_plan_schema_errors",
+            "src::pipeline_setup-py::_phases_cover_current_sources",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::plugin-py::run_plugin_command"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_setup_outputs_complete",
+          "file": "extracted_functions/src/pipeline_setup-py/_setup_outputs_complete.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_setup_extract"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_domain_context_complete",
+            "src::pipeline_setup-py::_phase_plan_complete"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_domain_context_complete",
+            "src::pipeline_setup-py::_phase_plan_complete"
+          ]
+        },
+        {
+          "name": "src::plugin-py::PluginConfig::get_stage",
+          "file": "extracted_functions/src/plugin-py/PluginConfig::get_stage.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_setup_extract"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::plugin-py::validate_plugin",
+          "file": "extracted_functions/src/plugin-py/validate_plugin.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::plugin-py::load_plugins"
+          ],
+          "phase3_callees": [
+            "src::plugin-py::_validate_plugin_json_content"
+          ],
+          "all_callees": [
+            "src::plugin-py::_validate_plugin_json_content"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 2,
+      "functions": [
+        {
+          "name": "src::domain_knowledge-py::_flatten_paths",
+          "file": "extracted_functions/src/domain_knowledge-py/_flatten_paths.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [
+            "src::domain_knowledge-py::collect_domain_knowledge_paths",
+            "src::domain_knowledge-py::resolve_domain_knowledge_paths"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_clean_empty_phase_module",
+          "file": "extracted_functions/src/pipeline_setup-py/_clean_empty_phase_module.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_clean_domain_context_files"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_clean_domain_context_files"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_collapse_phases_to_one",
+          "file": "extracted_functions/src/pipeline_setup-py/_collapse_phases_to_one.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_collect_changed_modules",
+          "file": "extracted_functions/src/pipeline_setup-py/_collect_changed_modules.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_deduplicate_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_deduplicate_phases.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_domain_context_complete",
+          "file": "extracted_functions/src/pipeline_setup-py/_domain_context_complete.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_setup_outputs_complete"
+          ],
+          "phase3_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_json_file_is_valid"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_ensure_source_files_in_phases",
+          "file": "extracted_functions/src/pipeline_setup-py/_ensure_source_files_in_phases.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_merge_descriptions"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_merge_descriptions"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_filter_phases_to_submodules",
+          "file": "extracted_functions/src/pipeline_setup-py/_filter_phases_to_submodules.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
+          ],
+          "phase3_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_under_submodules"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_phase_plan_complete",
+          "file": "extracted_functions/src/pipeline_setup-py/_phase_plan_complete.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::pipeline_setup-py::_setup_outputs_complete"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_phase_plan_schema_errors"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_phase_plan_schema_errors"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_phases_cover_current_sources",
+          "file": "extracted_functions/src/pipeline_setup-py/_phases_cover_current_sources.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_generate_phases"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_collect_project_source_files"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_under_submodules",
+            "src::pipeline_setup-py::_collect_project_source_files"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_prepare_workflow_file",
+          "file": "extracted_functions/src/pipeline_setup-py/_prepare_workflow_file.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases"
+          ],
+          "phase3_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_update_module_description",
+          "file": "extracted_functions/src/pipeline_setup-py/_update_module_description.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_post_process_phases"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_build_module_description_prompt"
+          ],
+          "all_callees": [
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced",
+            "src::pipeline_setup-py::_build_module_description_prompt"
+          ]
+        },
+        {
+          "name": "src::plugin-py::_validate_plugin_json_content",
+          "file": "extracted_functions/src/plugin-py/_validate_plugin_json_content.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::plugin-py::validate_plugin"
+          ],
+          "phase3_callees": [
+            "src::plugin-py::PluginStageConfig::from_dict",
+            "src::plugin-py::PluginStageConfig::validated"
+          ],
+          "all_callees": [
+            "src::plugin-py::PluginStageConfig::from_dict",
+            "src::plugin-py::PluginStageConfig::validated"
+          ]
+        },
+        {
+          "name": "src::plugin-py::run_plugin_command",
+          "file": "extracted_functions/src/plugin-py/run_plugin_command.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases"
+          ],
+          "phase3_callees": [
+            "src::plugin-py::_resolve_command"
+          ],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run",
+            "src::plugin-py::_resolve_command"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "functions": [
+        {
+          "name": "src::domain_knowledge-py::format_domain_knowledge_bullets",
+          "file": "extracted_functions/src/domain_knowledge-py/format_domain_knowledge_bullets.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+          "file": "extracted_functions/src/domain_knowledge-py/list_staged_domain_knowledge_relpaths.py",
+          "unit": "domain_knowledge",
+          "phase3_callers": [
+            "src::domain_knowledge-py::load_staged_domain_knowledge_text",
+            "src::domain_knowledge-py::stage_domain_knowledge_files",
+            "src::pipeline_setup-py::_prepare_workflow_file",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::pipeline_setup-py::_sync_domain_context"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_build_module_description_prompt",
+          "file": "extracted_functions/src/pipeline_setup-py/_build_module_description_prompt.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_update_module_description"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_clean_domain_context_files",
+          "file": "extracted_functions/src/pipeline_setup-py/_clean_domain_context_files.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_clean_empty_phase_module"
+          ],
+          "phase3_callees": [
+            "src::pipeline_setup-py::_clean_domain_context_files::types_path"
+          ],
+          "all_callees": [
+            "src::pipeline_setup-py::_clean_domain_context_files::types_path"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_collect_project_source_files",
+          "file": "extracted_functions/src/pipeline_setup-py/_collect_project_source_files.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_phases_cover_current_sources"
+          ],
+          "phase3_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_test_file",
+            "src::file_utils-py::_iter_project_source_files"
+          ]
+        },
+        {
+          "name": "src::pipeline_setup-py::_merge_descriptions",
+          "file": "extracted_functions/src/pipeline_setup-py/_merge_descriptions.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_ensure_source_files_in_phases"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::pipeline_setup-py::_phase_plan_schema_errors",
+          "file": "extracted_functions/src/pipeline_setup-py/_phase_plan_schema_errors.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_phase_plan_complete",
+            "src::pipeline_setup-py::_run_generate_phases"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::plugin-py::PluginStageConfig::from_dict",
+          "file": "extracted_functions/src/plugin-py/PluginStageConfig::from_dict.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::plugin-py::_validate_plugin_json_content"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::plugin-py::PluginStageConfig::validated",
+          "file": "extracted_functions/src/plugin-py/PluginStageConfig::validated.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::plugin-py::_validate_plugin_json_content"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::plugin-py::_resolve_command",
+          "file": "extracted_functions/src/plugin-py/_resolve_command.py",
+          "unit": "plugins",
+          "phase3_callers": [
+            "src::plugin-py::run_plugin_command"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 4,
+      "functions": [
+        {
+          "name": "src::pipeline_setup-py::_clean_domain_context_files::types_path",
+          "file": "extracted_functions/src/pipeline_setup-py/_clean_domain_context_files::types_path.py",
+          "unit": "pipeline_setup",
+          "phase3_callers": [
+            "src::pipeline_setup-py::_clean_domain_context_files"
+          ],
+          "phase3_callees": [],
+          "all_callees": []
+        }
+      ]
+    }
+  ]
+}

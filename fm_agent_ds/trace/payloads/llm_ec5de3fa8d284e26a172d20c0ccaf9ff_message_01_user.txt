@@ -1,0 +1,28 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _fmt_duration(seconds):
+Line 2:     if seconds is None:
+Line 3:         return "—"
+Line 4:     s = int(seconds)
+Line 5:     h, rem = divmod(s, 3600)
+Line 6:     m, s = divmod(rem, 60)
+Line 7:     if h:
+Line 8:         return f"{h}h {m:02d}m {s:02d}s"
+Line 9:     if m:
+Line 10:         return f"{m}m {s:02d}s"
+Line 11:     return f"{s}s"
+```
+
+Condition A (what the code actually does):
+If seconds is None, the result is the string "—". Otherwise, let s_int = int(seconds). Let (h, rem) = divmod(s_int, 3600) so h = s_int // 3600 and rem = s_int % 3600. Let (m, s) = divmod(rem, 60) so m = rem // 60 and s = rem % 60, with 0 ≤ m < 60 and 0 ≤ s < 60. The returned string is:
+- f"{h}h {m:02d}m {s:02d}s" if h ≠ 0
+- f"{m}m {s:02d}s" if h = 0 ∧ m ≠ 0
+- f"{s}s" otherwise.
+No exception is raised because the pre‑condition guarantees that int(seconds) succeeds.
+
+Condition B (what the specification requires):
+If seconds is None, returns the placeholder string "—". Otherwise returns a human-readable string decomposing the duration into hours (suffix "h"), minutes (suffix "m"), and seconds (suffix "s") components separated by single spaces. The representation starts from the most significant nonzero component: when the duration reaches at least one hour, all three components appear; when at least one minute but under one hour, only minutes and seconds appear; when under one minute, only seconds appear. When multiple components are present, all components after the first are zero-padded to two digits. Component values derive from integer-truncated seconds.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

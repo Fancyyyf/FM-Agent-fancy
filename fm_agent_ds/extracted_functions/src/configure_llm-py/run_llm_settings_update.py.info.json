@@ -1,0 +1,46 @@
+{
+  "callees": [
+    {
+      "name": "default_paths",
+      "signature": "default_paths(project_root: Path) -> WizardPaths",
+      "pre_condition": "project_root is a Path identifying an existing directory.",
+      "post_condition": "Returns a WizardPaths object whose toml_path, env_path, and opencode_config_path attributes refer to existing or creatable filesystem paths derived from project_root, following the platform conventions for fm-agent.toml, .env, and the OpenCode configuration file respectively. Each path is determined as: toml_path from the FM_AGENT_CONFIG environment variable when set, otherwise from <project_root>/fm-agent.toml; env_path as <project_root>/.env; opencode_config_path from OPENCODE_CONFIG when set, otherwise from the platform-specific OpenCode config directory."
+    },
+    {
+      "name": "_preview_llm_settings_update",
+      "signature": "_preview_llm_settings_update(updates: dict[str, str], toml_path: Path) -> str",
+      "pre_condition": "updates is a dict mapping TOML field paths to new values; toml_path is a Path identifying an existing TOML file.",
+      "post_condition": "Returns a human-readable string describing each key in updates, the current value of that field in the TOML file, and the new value that will be written if applied."
+    },
+    {
+      "name": "warn_dotenv_overrides_for_updates",
+      "signature": "warn_dotenv_overrides_for_updates(env_path: Path, updates: dict[str, str]) -> bool",
+      "pre_condition": "env_path is a Path to a .env file that may or may not exist; updates is a dict mapping LLM section field paths to new values.",
+      "post_condition": "For each key in updates, prints a warning to stdout if the corresponding process environment variable name maps to the same TOML field and a value for that variable is present in the .env file at env_path. Returns True when at least one override warning was printed; returns False when no overrides were found or the .env file is absent or unreadable."
+    },
+    {
+      "name": "warn_live_llm_environment_overrides",
+      "signature": "warn_live_llm_environment_overrides() -> None",
+      "pre_condition": "None required.",
+      "post_condition": "Prints a warning to stdout when any LLM-related environment variable (from the set of variables listed in _ENV_MAP whose target section is 'llm') is currently set in the process environment, indicating that the live environment value will take precedence over any value written to fm-agent.toml. If no such variables are set, prints nothing."
+    },
+    {
+      "name": "live_llm_environment_overrides",
+      "signature": "live_llm_environment_overrides() -> bool",
+      "pre_condition": "None required.",
+      "post_condition": "Returns True when at least one LLM-related environment variable (from the set of variables listed in _ENV_MAP whose target section is 'llm') is currently set in the process environment; returns False when no such variables are set. The result is determined solely by the current process environment; it does not examine any file."
+    },
+    {
+      "name": "_prompt_yes_no",
+      "signature": "_prompt_yes_no(message: str, *, default: bool = True) -> bool",
+      "pre_condition": "message is a non-empty string; default is True or False.",
+      "post_condition": "Prints message to stdout followed by a [Y/n] or [y/N] prompt reflecting the default value. Reads one line from stdin. Returns True when the user's response matches a yes-affirming pattern (case-insensitive 'y' or 'yes') or when the user provides an empty response and default is True. Returns False when the user's response matches a no-affirming pattern (case-insensitive 'n' or 'no') or when the user provides an empty response and default is False."
+    },
+    {
+      "name": "apply_llm_settings_update",
+      "signature": "apply_llm_settings_update(updates: dict[str, str], toml_path: Path) -> Path | None",
+      "pre_condition": "updates is a dict mapping valid LLM-section TOML field paths to new string or boolean values; toml_path identifies an existing, readable, and writable TOML file.",
+      "post_condition": "Writes the provided values to the corresponding fields in the TOML file at toml_path, preserving all other sections and fields unchanged. Before writing, copies the original file content to a backup file named with a timestamp suffix adjacent to toml_path. Returns the backup file path if the backup was successfully created; returns None when the file was updated without creating a backup. The file's TOML structure and formatting outside the modified fields are preserved to the extent the underlying serializer permits."
+    }
+  ]
+}

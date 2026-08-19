@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "filepath='test.py', src_path=Path('/valid/test.py'), issue='fix bug', signals={'traceback_funcs': set(), 'backtick_idents': set(), 'dotted_refs': set(), 'dotted_classes': set(), 'plain_idents': set(), 'exception_types': set(), 'all_words': set()}, top_k=10, llm_client=None, llm_model='', llm_trigger=10, llm_top_k=5, llm_confidence_threshold=0.7, proj_dir=None; file '/valid/test.py' exists and contains the single function 'def foo(): pass'.",
+  "offending_statements": "Line 21-40: The code block computes a preliminary ranked list and prints debug information, but never returns the required list of dicts with keys (file, name, lineno, end_lineno, score, reason). The function falls off the end and implicitly returns None, violating the specification's mandate to return a sorted list of dicts of length at most top_k.",
+  "reason": "The provided code block only implements the early stages (parsing, heuristic scoring, deduplication) and does not produce the final output required by the specification. For any input file that contains at least one function, the function exits without a return statement, implicitly returning None instead of the mandated list of dicts. This is a concrete violation of the post-condition B."
+}

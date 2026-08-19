@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/file_utils-py/_json_file_is_valid.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns True exactly when the file at file_path exists in the filesystem, can be opened for reading, and its entire contents constitute syntactically valid JSON. Returns False when the file does not exist, cannot be opened for reading, or its contents are not syntactically valid JSON. Never raises an exception; every error condition  including missing file, permission-denied read, and malformed JSON  is caught and results in a False return value.",
+    "actual_behavior": "After execution, the function returns a boolean. If True, the file at `path` existed at call time, was readable, and contained syntactically valid JSON; if False, either the file did not exist, was not readable, did not contain valid JSON, or another OS/JSON error occurred. The file is closed and unmodified. Formally: Let result = _json_file_is_valid(p). Then (result = True)  (exists_file(p)  readable(p)  valid_json(contents(p))), and (result = False)  (exists_file(p)  readable(p)  valid_json(contents(p)))  raised(OSError  JSONDecodeError). The valuation is snapshotted at the time of the call.",
+    "code_evidence": "Line 6:     except (OSError, json.JSONDecodeError):",
+    "trigger_condition": "The code only catches OSError and json.JSONDecodeError. Opening the file in text mode (line 3) may raise a UnicodeDecodeError if the file contents cannot be decoded by the default encoding. This exception is not caught, so the function raises an exception instead of returning False as required by the specification ('Never raises an exception; every error condition ... is caught and results in a False return value')."
+  }
+}

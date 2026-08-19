@@ -1,0 +1,36 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _score_class(cls: dict, signals: dict[str, set[str]]) -> float:
+Line 2:     """Score a class by how well it matches the developer-intent signals."""
+Line 3:     score = 0.0
+Line 4:     name_parts = _name_parts(cls['name'])
+Line 5:     # Class name overlap with backtick idents
+Line 6:     score += len(name_parts & signals['backtick_idents']) * W_BACKTICK_NAME
+Line 7:     # Class name overlap with plain idents
+Line 8:     score += len(name_parts & signals['plain_idents']) * W_CLASS_NAME_MATCH
+Line 9:     # Class name in all_words
+Line 10:     score += len(name_parts & signals['all_words']) * W_CLASS_NAME_MATCH
+Line 11:     # Class name explicitly mentioned in dotted refs
+Line 12:     score += len(name_parts & signals['dotted_classes']) * W_DOTTED_REF
+Line 13:     # Docstring word overlap with all_words
+Line 14:     if cls['docstring']:
+Line 15:         doc_words = {w for w in re.findall(r'\b([a-zA-Z]{4,})\b',
+Line 16:                                            cls['docstring'].lower())
+Line 17:                      if w not in _STOP}
+Line 18:         score += len(doc_words & signals['all_words']) * W_CLASS_DOC_MATCH
+Line 19:     return score
+```
+
+Condition A (what the code actually does):
+The function returns a non-negative float score computed as: let name = cls['name']; doc = cls['docstring']; name_parts = _name_parts(name). score = |name_parts ∩ signals['backtick_idents']| * W_BACKTICK_NAME + |name_parts ∩ signals['plain_idents']| * W_CLASS_NAME_MATCH + |name_parts ∩ signals['all_words']| * W_CLASS_NAME_MATCH + |name_parts ∩ signals['dotted_classes']| * W_DOTTED_REF + ( if doc ≠ '' then |{w | w ∈ re.findall(r'\b([a-zA-Z]{4,})\b', doc.lower()) ∧ w ∉ _STOP} ∩ signals['all_words']| * W_CLASS_DOC_MATCH else 0 ). The inputs cls and signals are not modified; no exceptions are raised.
+
+Condition B (what the specification requires):
+Returns a non-negative float. The score is the sum of the following weighted components: (a) for each token in the class name's constituent parts that matches a token in signals['backtick_idents'], a fixed backtick-name overlap weight; (b) for each token in the class name's constituent parts that matches a token in signals['plain_idents'], a fixed class-name overlap weight; (c) for each token in the class name's constituent parts that matches a token in signals['all_words'], the same fixed class-name overlap weight; (d) for each token in the class name's constituent parts that matches a token in signals['dotted_classes'], a fixed dotted-reference overlap weight; (e) when cls['docstring'] is non-empty and truthy: for each alphabetic word of four or more characters in the docstring that is not a stop word and matches a token in signals['all_words'], a fixed class-doc overlap weight. When cls['docstring'] is empty or falsy, component (e) contributes zero. The returned value is exactly zero when no name-part token and no qualifying docstring-word token overlaps any of the specified signal sets.
+
+Additional context:
+_name_parts(name: str) -> set[str]
+Pre-condition: name is a non-empty string representing a class identifier.
+Post-condition: Returns a set of lowercase string tokens obtained by splitting the class name on word boundaries — including underscore separators and transitions between lowercase and uppercase letters — such that each returned token is a semantic constituent part of the original identifier.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

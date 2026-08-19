@@ -1,0 +1,5 @@
+{
+  "signature": "_remove_func_comments(code) -> str",
+  "pre_condition": "code is a string containing source code",
+  "post_condition": "Returns a string consisting of the non-comment, non-blank content of code. Block comments delimited by /* and */ are excluded. Line comments introduced by // are excluded from the // to the end of the line. On any line, a # character appearing after at least one non-whitespace character is excluded along with all subsequent characters on that line. Any character sequence enclosed within matching single-quote or double-quote delimiters is preserved literally, including backslash-escaped characters and any content that would otherwise be interpreted as a comment delimiter. Lines that are empty or consist solely of whitespace after comment removal are excluded. The relative order of all remaining non-newline content and newline characters among non-blank lines is preserved."
+}

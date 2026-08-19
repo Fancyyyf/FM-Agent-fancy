@@ -1,0 +1,5 @@
+{
+  "signature": "_nonempty_string(value) -> bool",
+  "pre_condition": "value can be any type; no constraints on its value.",
+  "post_condition": "Returns True when value is of type str and contains at least one character that is not a whitespace character (according to Python's str.strip whitespace definition: spaces, tabs, newlines, carriage returns, vertical tabs, and form feeds). Returns False when value is not of type str, or when value is a str consisting entirely of zero or more whitespace characters with no non-whitespace content."
+}

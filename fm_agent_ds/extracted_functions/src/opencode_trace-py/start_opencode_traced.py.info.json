@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "new_event_id",
+      "signature": "new_event_id(prefix) -> str",
+      "pre_condition": "prefix is a non-empty string.",
+      "post_condition": "Returns a unique string in the format '{prefix}_{hex}' where hex is a random 32-character hexadecimal string."
+    },
+    {
+      "name": "utc_now_iso",
+      "signature": "utc_now_iso() -> str",
+      "pre_condition": "None.",
+      "post_condition": "Returns the current UTC time as an ISO 8601 datetime string ending in 'Z', with at least second precision."
+    },
+    {
+      "name": "_opencode_log_path",
+      "signature": "_opencode_log_path(work_dir, event_id) -> str",
+      "pre_condition": "work_dir is a valid directory path; event_id is a non-empty string.",
+      "post_condition": "Returns a filesystem path string within work_dir's trace directory that uniquely identifies a log file for the given event_id."
+    },
+    {
+      "name": "_opencode_trace_path",
+      "signature": "_opencode_trace_path(work_dir, event_id) -> str",
+      "pre_condition": "work_dir is a valid directory path; event_id is a non-empty string.",
+      "post_condition": "Returns a filesystem path string within work_dir's trace directory that uniquely identifies a trace file for the given event_id."
+    },
+    {
+      "name": "_start_opencode_process",
+      "signature": "_start_opencode_process(proj_dir, work_dir, event_id, command, trace_log_path) -> (subprocess.Popen, threading.Thread, threading.Thread | None)",
+      "pre_condition": "proj_dir is a valid directory path; work_dir is a valid directory path; event_id is a non-empty string; command is a non-empty list of strings; trace_log_path is a writable filesystem path.",
+      "post_condition": "Returns a 3-tuple (proc, log_thread, stdin_thread). proc is a running subprocess.Popen instance executing a CLI agent command in proj_dir with its environment configured for the given event_id. log_thread is a daemon thread that copies the subprocess's combined stdout/stderr to trace_log_path. stdin_thread is either a daemon thread feeding the subprocess's stdin with the prompt text, or None when no stdin is needed."
+    }
+  ]
+}

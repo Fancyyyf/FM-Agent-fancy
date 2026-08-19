@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_topdown_ordered_fqns",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_topdown_ordered_fqns.py",
+  "function_name": "_topdown_ordered_fqns",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_topdown_ordered_fqns.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_topdown_ordered_fqns.md",
+  "probe_stdout": "Fixture test: callers (max idx 1) precede callees (min idx 2) — ordering is caller-first\nReal-data test: caller@312 precedes callee@328\nNOT CONFIRMED — _topdown_ordered_fqns returns callers before callees (layer 0 before layer 1+), matching the specification. The MISMATCH claim of callee-first ordering is a false positive.",
+  "trigger_summary": "The verification system claimed callees precede callers, but the layer-generation algorithm places callers in lower layers, yielding caller-first order — a false positive."
+}

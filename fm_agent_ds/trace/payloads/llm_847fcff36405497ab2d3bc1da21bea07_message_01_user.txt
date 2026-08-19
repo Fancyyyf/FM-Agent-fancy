@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+self has been entered via __enter__ and has an active ELP subprocess. exc_type, exc, and tb follow Python's context-manager protocol: all three are None if the managed block exited without an exception; otherwise they hold the exception type, value, and traceback of the exception that caused exit.
+
+Code block:
+```python
+Line 1:     def __exit__(self, exc_type, exc, tb):
+Line 2:         self.close()
+Line 3:         return False
+```
+
+Additional context:
+ElpClient.close(self)
+Pre-condition: self has an active ELP subprocess referenced by self._proc and an active background reader referenced by self._reader.
+Post-condition: self._proc is terminated and its stdin/stdout pipes are closed. self._reader is stopped and no longer consuming from the subprocess stdout. All subprocess resources held by self are released.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

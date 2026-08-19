@@ -1,0 +1,3 @@
+{
+  "post_condition": "The return value is the substring of the input 'source' that lies between the byte offsets of lsp_range['start'] (inclusive) and lsp_range['end'] (exclusive), where the byte offsets are computed by the _SourceIndex built from 'source' using line boundaries and UTF-16 code unit positions. Formally, let start_offset be the byte offset in 'source' corresponding to lsp_range['start'], and end_offset be the byte offset corresponding to lsp_range['end']; then the function returns source[start_offset:end_offset]."
+}

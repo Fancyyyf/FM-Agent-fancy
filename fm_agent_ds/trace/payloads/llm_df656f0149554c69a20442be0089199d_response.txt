@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Suppose file_map.get('caller1') returns '/tmp/caller.py' which exists and has language determined. The sidecar '/tmp/caller.py.info.json' initially contains {\"callees\": [{\"name\": \"foo\", \"signature\": \"...\", \"pre_condition\": \"...\", \"post_condition\": \"...\"}]}. The updates list is [( \"bar\", {\"signature\": \"...\", \"pre_condition\": \"...\", \"post_condition\": \"...\"} )]. The LLM call for bar returns {\"info_updated\": true, \"new_info\": {\"callees\": [{\"name\": \"bar\", ...}]}} (i.e., it drops the existing entry for 'foo'). The specification requires that the resulting .info.json should have callee entries consistent with bar and all previously reconciled entries, which includes the pre-existing 'foo'; but the code overwrites with only bar, violating the spec.",
+  "offending_statements": "Line 35: with open(f\"{cpath}.info.json\", \"w\", encoding=\"utf-8\") as f:\nLine 36:     json.dump(_normalize_info_dict(c_new_info), f, indent=2, ensure_ascii=False)",
+  "reason": "The code replaces the entire sidecar file with the LLM's output verbatim, but the LLM's postcondition does not guarantee it retains all existing callee entries. This can cause loss of callee information that should remain unchanged according to the specification."
+}

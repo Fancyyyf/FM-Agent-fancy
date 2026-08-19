@@ -1,0 +1,26 @@
+Programming language: Python
+
+Pre-condition:
+source_path is an absolute path to an existing file. used_names is a set of strings representing already-reserved filenames.
+
+Code block:
+```python
+Line 1: def _safe_staged_name(source_path, used_names):
+Line 2:     basename = os.path.basename(source_path)
+Line 3:     stem, ext = os.path.splitext(basename)
+Line 4:     stem = re.sub(r"[^A-Za-z0-9._-]+", "_", stem).strip("._-") or "knowledge"
+Line 5:     ext = ext.lower()
+Line 6:     candidate = f"{stem}{ext}"
+Line 7:     if candidate not in used_names:
+Line 8:         used_names.add(candidate)
+Line 9:         return candidate
+Line 10:     index = 2
+Line 11:     while True:
+Line 12:         candidate = f"{stem}_{index}{ext}"
+Line 13:         if candidate not in used_names:
+Line 14:             used_names.add(candidate)
+Line 15:             return candidate
+Line 16:         index += 1
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

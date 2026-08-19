@@ -1,0 +1,11 @@
+{
+  "id": "src--llm_client-py--_messages_to_anthropic",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_messages_to_anthropic.py",
+  "function_name": "_messages_to_anthropic",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_messages_to_anthropic.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--_messages_to_anthropic.md",
+  "probe_stdout": "CONFIRMED -- actual: 'Hello  \\n\\n there' | expected: '  Hello  \\n\\n there '",
+  "trigger_summary": "Multiple system messages with leading/trailing whitespace in content have that whitespace stripped by the .strip() call on line 13, violating the spec requirement to preserve whitespace."
+}

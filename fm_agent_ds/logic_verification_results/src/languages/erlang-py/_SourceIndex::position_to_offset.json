@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/_SourceIndex::position_to_offset.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns an integer in the closed interval [0, len(self.source)] representing the byte offset within self.source that corresponds to the given position. When the line number is at or beyond the number of indexed lines, returns len(self.source). When the UTF-16 code-unit column offset meets or exceeds the number of UTF-16 code units on the target line, returns the byte offset of the first byte after that line. Characters with Unicode code points above U+FFFF advance the UTF-16 code-unit column by 2; characters at or below U+FFFF advance it by 1. For any two positions p1 and p2 where p1 does not follow p2 in document order relative to the indexed source, position_to_offset(self, p1) <= position_to_offset(self, p2).",
+    "actual_behavior": "The method returns an integer offset r with no side effects. Let line_number = max(0, int(position.get('line', 0))) and utf16_target = max(0, int(position.get('character', 0))). If line_number >= len(self.lines), then r = len(self.source). Otherwise, let base = self.line_offsets[line_number] and L = self.lines[line_number]. Define unit(c) = 2 if ord(c) > 0xFFFF else 1. Let index = max { k  [0, len(L)] | _{i=0}^{k-1} unit(L[i]) <= utf16_target }. Then r = base + index. The mapping from position to offset uses character-based indexing on a line, adding to a byte-offset base, which may not correspond to the true byte offset if source contains multi-byte characters.",
+    "code_evidence": "Line 16: return base + index",
+    "trigger_condition": "The code treats the offset as a character-based index added to a byte-offset base. This only yields correct byte offsets when all characters are singlebyte (ASCII). With multibyte characters, the return value is not the required byte offset within self.source. For a character above U+FFFF, such as U+1F600 (''), len(line)=1 but its byte length is 4, so base + index = 0 + 1 = 1, which violates the specification that expects 4."
+  }
+}

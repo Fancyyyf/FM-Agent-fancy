@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+raw_path is a string or None.
+
+Code block:
+```python
+Line 1: def _resolve_bug_validator_path(raw_path):
+Line 2:     """Resolve a custom bug-validator prompt path from the launch directory."""
+Line 3:     if not raw_path:
+Line 4:         return None
+Line 5:     path = os.path.abspath(os.path.expanduser(raw_path))
+Line 6:     if not os.path.isfile(path):
+Line 7:         raise ValueError(
+Line 8:             "--bug-validator must point to a file: "
+Line 9:             f"{raw_path}"
+Line 10:         )
+Line 11:     try:
+Line 12:         with open(path, "r"):
+Line 13:             pass
+Line 14:     except OSError as exc:
+Line 15:         raise ValueError(
+Line 16:             f"--bug-validator file is not readable: {exc}"
+Line 17:         ) from exc
+Line 18:     return path
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

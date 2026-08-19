@@ -1,0 +1,44 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _preview_llm_settings_update(updates: dict[str, str], toml_path: Path) -> str:
+Line 2:     labels = {
+Line 3:         "name": "Model ID",
+Line 4:         "provider": "Provider ID",
+Line 5:         "base_url": "Base URL",
+Line 6:         "backend": "Backend",
+Line 7:         "effort": "Reasoning effort",
+Line 8:         "api_style": "API protocol",
+Line 9:     }
+Line 10:     settings = [f"{labels[key]}: {value!r}" for key, value in updates.items()]
+Line 11:     return "\n".join(
+Line 12:         [
+Line 13:             "FM-Agent LLM settings update",
+Line 14:             "",
+Line 15:             *settings,
+Line 16:             "",
+Line 17:             "Only the following file will be updated:",
+Line 18:             f"  - {toml_path}",
+Line 19:             "",
+Line 20:             "This command does not change .env or the standalone OpenCode config.",
+Line 21:         ]
+Line 22:     )
+```
+
+Condition A (what the code actually does):
+The function returns a string formatted as follows:
+- First line: 'FM-Agent LLM settings update'
+- Second line: empty
+- Then, for each (key, value) pair in updates (in the order of updates.items()), a line of the form '{label}: {quoted_value}' where label is derived from key using the fixed mapping: 'name'->'Model ID', 'provider'->'Provider ID', 'base_url'->'Base URL', 'backend'->'Backend', 'effort'->'Reasoning effort', 'api_style'->'API protocol', and quoted_value is the repr of value (enclosed in single quotes and escaped).
+- Then an empty line
+- Then the line 'Only the following file will be updated:'
+- Then the line '  - {toml_path}' (with the path as a string)
+- Then an empty line
+- Then the line 'This command does not change .env or the standalone OpenCode config.'
+The returned string contains no other characters. No exceptions are raised. The function has no side effects: the input arguments are not mutated, the filesystem is unchanged, and no global or external state is modified.
+
+Condition B (what the specification requires):
+Returns a human-readable multi-line string. For each key in updates, the string contains a human-readable label identifying the field and both the field's current value as read from the TOML file at toml_path and the new value from updates. The string also lists toml_path as the sole file that will be modified under a section header to that effect.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

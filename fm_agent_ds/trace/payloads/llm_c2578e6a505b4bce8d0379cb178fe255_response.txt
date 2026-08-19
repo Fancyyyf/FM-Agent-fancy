@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function `_stable_user_id` is defined in the current namespace. It takes no arguments. When called, its return value is the result of evaluating `settings.inject.id or _DEFAULT_INJECT_USER_ID`."
+}

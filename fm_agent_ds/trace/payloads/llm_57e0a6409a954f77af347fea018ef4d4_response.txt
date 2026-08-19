@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "file_rel = 'Makefile', ext_to_lang = {'': 'makefile_lang'}",
+  "offending_statements": "Line 3: lang = ext_to_lang.get(ext, ext if ext else \"unknown\")",
+  "reason": "The specification states that when the file path has no extension, language_name must be 'unknown', regardless of whether the empty string is a key in ext_to_lang. The code first checks ext in ext_to_lang and, if the empty string is in ext_to_lang, uses its mapped value instead of 'unknown'. For file_rel='Makefile' (no dot), ext becomes '', causing the code to return 'makefile_lang' instead of 'unknown'."
+}

@@ -1,0 +1,5 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_StdoutTee::__getattr__.py",
+  "verdict": "MATCH",
+  "gaps": null
+}

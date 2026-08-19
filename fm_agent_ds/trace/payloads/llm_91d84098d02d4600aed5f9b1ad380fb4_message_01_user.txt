@@ -1,0 +1,51 @@
+Programming language: Python
+
+Pre-condition:
+file_path is a string path to a readable extracted function source file. Adjacent sidecar files <file_path>.spec.json and <file_path>.info.json may or may not exist.
+
+Code block:
+```python
+Line 1: def parse_input_function(file_path):
+Line 2:     """
+Line 3:     Parse an extracted source file and its adjacent JSON metadata sidecars.
+Line 4:     1. func: complete source file, with comments removed
+Line 5:     2. nl_spec: reasoner-facing text rebuilt from .spec.json
+Line 6:     3. knowledge: a map from .info.json callee entries
+Line 7:     Returns:
+Line 8:         tuple: (func, nl_spec, knowledge)
+Line 9:     """
+Line 10:     with open(file_path, 'r') as file:
+Line 11:         func = file.read()
+Line 12:     spec = _load_sidecar_json(file_path, ".spec.json")
+Line 13:     info = _load_sidecar_json(file_path, ".info.json")
+Line 14:     nl_spec = format_spec_for_reasoner(spec) if spec else ""
+Line 15:     knowledge = format_info_for_reasoner(info) if info else FunctionSpecMap()
+Line 16:     func = _remove_func_comments(func)
+Line 17:     # Add line numbers to each line in func
+Line 18:     func_lines = func.split('\n')
+Line 19:     numbered_lines = [f"Line {i+1}: {line}" for i, line in enumerate(func_lines)]
+Line 20:     func = '\n'.join(numbered_lines)
+Line 21:     return func, nl_spec, knowledge
+```
+
+Additional context:
+_load_sidecar_json(file_path, suffix) -> dict | None
+Pre-condition: file_path is a string path to an existing file; suffix is either ".spec.json" or ".info.json"
+Post-condition: Returns the parsed JSON dict from the sidecar file at <file_path><suffix>, or None if the sidecar file does not exist or contains data that cannot be parsed as valid JSON
+
+format_spec_for_reasoner(spec: dict) -> str
+Pre-condition: spec is a dict with keys "signature", "pre_condition", and "post_condition", each mapping to a string value
+Post-condition: Returns a multi-line string containing the signature on the first line, followed by a blank line, then the pre-condition text labeled "Pre-condition:", a blank line, and the post-condition text labeled "Post-condition:"
+
+format_info_for_reasoner(info: dict) -> FunctionSpecMap
+Pre-condition: info is a dict with a "callees" key whose value is a list of callee entry dicts, each with string-typed keys "name", "signature", "pre_condition", and "post_condition"
+Post-condition: Returns a FunctionSpecMap where each callee is stored as an entry whose key is the callee name, value is the callee's formatted pre-condition and post-condition text, and the signatures dict maps callee name to signature string
+
+_remove_func_comments(code: str) -> str
+Pre-condition: code is a string containing source code possibly containing comments
+Post-condition: Returns the code string with all block comments and line comments removed, while preserving all content that appears inside string literals (single-quoted and double-quoted)
+
+FunctionSpecMap() -> FunctionSpecMap
+Pre-condition: none
+Post-condition: Returns a new FunctionSpecMap instance with no entries and an empty signatures dict
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_check_oh_my_openagent() -> tuple[bool, str | None]",
+  "pre_condition": "None required — the function accepts no arguments and has no external state dependencies.",
+  "post_condition": "Returns (True, None) when oh-my-openagent is reachable via bunx and responds to its version flag within 10 seconds, indicating the tool is installed and executable. Returns (False, \"oh-my-openagent is not installed (bunx unavailable or timed out)\") when oh-my-openagent cannot be invoked via bunx for any reason, including bunx itself being unavailable, the tool not being installed, or the invocation exceeding 10 seconds. The function produces no side effects — it does not create, modify, or delete any files."
+}

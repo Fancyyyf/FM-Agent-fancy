@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for Java."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("java") if cg else None
+```
+
+Condition A (what the code actually does):
+The function returns the result of calling get_call_edges('java') on a valid CodeGraphExtractor instance obtained from proj_dir, if that instance is truthy; otherwise returns None.  Formally, let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is falsy (e.g., None or False), the result is None. Otherwise, cg is a valid CodeGraphExtractor and the result is d = cg.get_call_edges('java'), where d is a dict mapping each canonicalized fully-qualified caller name k (str, using '::' separator) to a set of canonicalized fully-qualified callee names (set of str, also using '::') for all call edges found among the Java source files in proj_dir.
+
+Condition B (what the specification requires):
+If the CodeGraph backend is available, returns a dict mapping each caller FQN (str) to a set of callee FQNs (set[str]) for every call edge discovered in Java source files under proj_dir. Both caller and callee keys are canonicalized fully-qualified names using '::' as the separator with path-unsafe characters translated. Returns None if the CodeGraph backend cannot be initialized, signaling that the caller must use regex-based fallback extraction for Java call edges.
+
+Additional context:
+from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string path to an existing project root directory with source files.
+Post-condition: Returns a CodeGraphExtractor instance initialized with the project's code graph index if the index exists and is valid; returns None or a falsy value if initialization fails.
+
+get_call_edges(language_key) -> dict
+Pre-condition: The receiver is a valid, initialized CodeGraphExtractor instance; language_key is a string identifying a supported language.
+Post-condition: Returns a dict mapping each caller FQN (str) to a set of callee FQNs (set[str]) for all call edges discovered in source files matching the given language key. Both keys and values use canonicalized fully-qualified names with '::' as the separator.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

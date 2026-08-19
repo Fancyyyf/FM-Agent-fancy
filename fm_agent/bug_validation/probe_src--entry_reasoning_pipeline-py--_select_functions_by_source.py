@@ -1,76 +1,83 @@
-"""Probe script for bug: _select_functions_by_source returns normally when entry_func is not found instead of raising ValueError.
+"""Probe for bug `src--entry_reasoning_pipeline-py--_select_functions_by_source`.
 
-Spec claims: Raises ValueError when entry_func is not found among extracted functions.
-Actual: Code returns normally with empty keep_by_source (buggy versions lacked the entry_func check).
+Attempt 3 — different inputs: entry_func='bar' is the BARE name of a real
+function in the fixture (baz.py defines bar), while extracted identities are
+FQNs ('baz-py::bar'), so 'bar' is not among the extracted functions; the
+strict-membership check must still raise ValueError. end_funcs is non-empty to
+prove the entry_func validation fires before any chain restriction.
+
+Spec claim under test: the pipeline MUST raise ValueError when entry_func is
+not among the extracted functions. Reported actual behavior: no validation —
+the function proceeds and either returns an empty keep_by_source or raises
+KeyError.
+
+FM-Agent self-validation guard: main.run_pipeline is stubbed with a recording
+no-op so no FM-Agent workflow (LLM/OpenCode) can start. All fixtures live in a
+fresh temporary directory owned by this probe.
 """
-import sys
 import os
-import tempfile
-import subprocess
 import shutil
+import sys
+import tempfile
 
-# This project uses a flat package layout (package=false in pyproject.toml).
-# src/ modules import from 'src.xxx', so the repo root must be on the path.
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
+_REPO_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
+probe_tmp = None
 try:
-    from src.entry_reasoning_pipeline import _select_functions_by_source
-except ImportError as e:
-    print(f"ERROR: Could not import _select_functions_by_source: {e}")
-    sys.exit(1)
+    import main
 
-tmpdir = tempfile.mkdtemp(dir="/tmp")
-try:
-    # Create a minimal Python project with a simple source file
-    with open(os.path.join(tmpdir, "example.py"), "w") as f:
-        f.write("def foo():\n    pass\n\ndef bar():\n    foo()\n")
+    workflow_calls = []
 
-    # Initialize git (required by _make_run_copy via shutil.copytree expecting a valid repo)
-    subprocess.run(["git", "init"], cwd=tmpdir, capture_output=True)
-    subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=tmpdir, capture_output=True)
-    subprocess.run(["git", "config", "user.name", "test"], cwd=tmpdir, capture_output=True)
-    subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
-    subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
+    def _workflow_stub(*args, **kwargs):
+        workflow_calls.append((args, kwargs))
+        return None
 
-    # Call with a non-existent entry_func that is NOT in the project.
-    # The spec requires ValueError; the bug is that it returns normally.
-    expected = "ValueError"
-    passed = False
-    actual = None
+    main.run_pipeline = _workflow_stub
 
-    try:
-        result = _select_functions_by_source(
-            tmpdir,
-            "nonexistent::example-py::foo",  # not found in the project
-            None,  # no end_funcs restriction
-        )
-        # Reached here means NO ValueError was raised -- bug reproduced.
-        actual = f"returned normally: all_by_source has {len(result[0])} key(s), keep_by_source has {len(result[1])} key(s)"
-        passed = True
-    except ValueError as e:
-        # Correct behavior: ValueError raised as spec requires.
-        actual = f"ValueError: {e}"
-        passed = False
-    except Exception as e:
-        actual = f"{type(e).__name__}: {e}"
-        passed = True  # Wrong exception type is also a bug
-
+    # Fresh fixture project: foo.py calls bar(), defined in baz.py.
+    probe_tmp = tempfile.mkdtemp(prefix="fm_probe_entry_select_")
+    proj_dir = os.path.join(probe_tmp, "proj")
+    os.makedirs(proj_dir)
+    with open(os.path.join(proj_dir, "foo.py"), "w") as f:
+        f.write("def foo():\n    return bar()\n")
+    with open(os.path.join(proj_dir, "baz.py"), "w") as f:
+        f.write("def bar():\n    return 42\n")
 except Exception as e:
-    print(f"ERROR: Setup failed: {e}")
+    print(f"ERROR: probe setup failed: {type(e).__name__}: {e}")
     sys.exit(1)
+
+expected = "ValueError stating entry_func is not among the extracted functions"
+passed = False
+outcome = None
+try:
+    result = main.run_entry_pipeline(
+        proj_dir, entry_func="bar", end_funcs=["foo-py::foo"]
+    )
+    outcome = (
+        f"returned normally: {result!r} "
+        f"(workflow stub invocations: {len(workflow_calls)})"
+    )
+    passed = True  # spec mandates ValueError; a plain return reproduces the bug
+except ValueError as e:
+    msg = str(e)
+    if "entry_func" in msg:
+        outcome = f"raised ValueError: {msg}"
+        passed = False  # spec-correct behavior
+    else:
+        print(f"ERROR: unrelated ValueError before reaching the check: {msg}")
+        shutil.rmtree(probe_tmp, ignore_errors=True)
+        sys.exit(1)
+except Exception as e:
+    outcome = f"raised {type(e).__name__} instead of ValueError: {e}"
+    passed = True  # spec mandates ValueError; any other outcome reproduces the bug
 finally:
-    # Clean up leftover .fm-entry-select directory if the function crashed mid-way
-    sel_dir = tmpdir + ".fm-entry-select"
-    if os.path.exists(sel_dir):
-        shutil.rmtree(sel_dir, ignore_errors=True)
-    shutil.rmtree(tmpdir, ignore_errors=True)
+    shutil.rmtree(probe_tmp, ignore_errors=True)
 
 if passed:
-    expected_str = str(expected)
-    actual_str = repr(actual)
-    print(f"CONFIRMED -- actual: {actual_str} | expected: {expected_str}")
+    print(f"CONFIRMED — actual: {outcome} | expected: {expected}")
 else:
-    actual_str = repr(actual)
-    print(f"NOT CONFIRMED -- actual matched expected: {actual_str}")
+    print(f"NOT CONFIRMED — actual matched expected: {outcome}")

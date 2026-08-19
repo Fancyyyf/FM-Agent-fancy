@@ -1,0 +1,5 @@
+{
+  "signature": "_load_phases(proj_dir) -> dict",
+  "pre_condition": "proj_dir is a string path to an existing directory. The file `phases.json` at proj_dir/phases.json exists, is readable, and contains valid JSON whose root value is a dict that includes a `phases` key.",
+  "post_condition": "Returns a Python dict representing the full parsed JSON content of proj_dir/phases.json, preserving all keys and nested values from the file. Raises a FileNotFoundError or OSError when the file does not exist or cannot be read. Raises a json.JSONDecodeError or ValueError when the file content is not structurally valid JSON. Does not return a partial or empty dict on failure — every execution path either returns the complete parsed content or raises an error."
+}

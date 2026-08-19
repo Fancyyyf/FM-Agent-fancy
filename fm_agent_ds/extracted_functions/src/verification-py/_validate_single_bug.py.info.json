@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "function_id_from_result_path",
+      "signature": "function_id_from_result_path(result_json_rel) -> str",
+      "pre_condition": "result_json_rel is a non-empty string representing a path to a reasoning verdict JSON file.",
+      "post_condition": "Returns a function identifier string derived from the result path, suitable for correlating verification results with their source function."
+    },
+    {
+      "name": "list_staged_domain_knowledge_relpaths",
+      "signature": "list_staged_domain_knowledge_relpaths(work_dir) -> list[str]",
+      "pre_condition": "work_dir is the FM-Agent work directory that may contain staged domain knowledge files.",
+      "post_condition": "Returns a list of relative paths (from work_dir) to all user-provided domain knowledge markdown files currently staged in the work directory. Returns an empty list when no domain knowledge files are staged."
+    },
+    {
+      "name": "format_domain_knowledge_bullets",
+      "signature": "format_domain_knowledge_bullets(paths) -> str",
+      "pre_condition": "paths is a list of relative file path strings.",
+      "post_condition": "Returns a markdown-formatted string containing a header section and a bullet list of the provided paths, suitable for embedding into a prompt as context references. When paths is empty, returns an empty string."
+    },
+    {
+      "name": "build_llm_cli_command",
+      "signature": "build_llm_cli_command(model, prompt, cwd, files) -> list[str]",
+      "pre_condition": "model is a non-empty string identifying the LLM model. prompt is a non-empty string. cwd is an existing directory. files is a list of file paths to attach.",
+      "post_condition": "Returns a list of CLI argument strings that, when executed as a subprocess, invokes the configured LLM backend with the given model, prompt, working directory, and attached files."
+    },
+    {
+      "name": "run_opencode_traced",
+      "signature": "run_opencode_traced(proj_dir, work_dir, command, stage, function_ids, input_files, output_files, summary, metadata) -> None",
+      "pre_condition": "proj_dir is an existing directory. command is a non-empty list of CLI argument strings. stage is a non-empty string identifying the pipeline stage. output_files is a non-empty list of relative paths (from proj_dir) that must exist after successful execution.",
+      "post_condition": "Executes command as a subprocess with proj_dir as the working directory. Produces a structured trace event recording the execution metadata, timing, input/output file references, and exit code. Raises a CalledProcessError when the subprocess exits with a non-zero code. The output files listed in output_files must be produced on disk after a successful run."
+    }
+  ]
+}

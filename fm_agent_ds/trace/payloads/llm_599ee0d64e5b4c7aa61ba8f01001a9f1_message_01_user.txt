@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+file_path is a string representing a filename with no directory component.
+
+Code block:
+```python
+Line 1: def _is_metadata_sidecar(file_path):
+Line 2:     """Return whether file_path is a function metadata sidecar."""
+Line 3:     return str(file_path).endswith(_METADATA_SIDECAR_SUFFIXES)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

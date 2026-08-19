@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_base_score",
+      "signature": "_base_score(name: str, idents: set[str], body_words: set[str], exc_types: set[str], body_lines: int, signals: dict[str, set[str]]) -> float",
+      "pre_condition": "name is a non-empty string. idents is a set of lowercase identifier strings extracted from the function. body_words is a set of lowercase word strings from the function body. exc_types is a set of lowercase exception-type name strings. body_lines is a positive integer representing the number of source lines in the function body. signals is a dict of pre-parsed signal token sets keyed by signal category (including 'traceback_funcs', 'backtick_idents', 'dotted_refs', 'plain_idents', 'exception_types', 'all_words').",
+      "post_condition": "Returns a non-negative float representing the weighted sum of signal match scores. The score incorporates: exact overlap of name with traceback-function signals, identifier overlap with backtick signals in the name and body, overlap with dotted-reference signals, name overlap with plain-identifier signals, exception-type signal tokens appearing in exc_types, word overlap between body_words and all-words signals scaled inversely by the square root of body_lines, and fuzzy substring matching between name and plain-identifier signals above a minimum character-length threshold. Each signal category carries a distinct weight."
+    },
+    {
+      "name": "_score_class",
+      "signature": "_score_class(cls: dict, signals: dict[str, set[str]]) -> float",
+      "pre_condition": "cls is a dict containing the class metadata, including its name string and a docstring text. signals is a dict of pre-parsed signal token sets keyed by signal category.",
+      "post_condition": "Returns a non-negative float representing the match score between the class and the intent signals. The score is the weighted sum of: per-token overlap between the class name tokens and the signal token sets, plus per-token overlap between the class docstring tokens and the signal token sets."
+    }
+  ]
+}

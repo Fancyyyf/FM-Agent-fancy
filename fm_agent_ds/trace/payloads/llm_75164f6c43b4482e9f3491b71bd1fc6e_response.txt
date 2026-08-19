@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "path = 'subdir/module.py'",
+  "offending_statements": "Line 2: base = os.path.basename(path)",
+  "reason": "The code only considers the base name of the path and discards directory components. The specification requires replacing all directory separators with '::' in the relative path. For the input 'subdir/module.py', the code returns 'module-py' instead of the required 'subdir::module-py'."
+}

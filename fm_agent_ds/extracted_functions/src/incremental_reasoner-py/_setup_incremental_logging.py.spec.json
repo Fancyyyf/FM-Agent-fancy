@@ -1,0 +1,5 @@
+{
+  "signature": "_setup_incremental_logging(work_dir: str) -> str",
+  "pre_condition": "work_dir is a string path to a directory that either exists and is writable or can be created including any missing parent directories.",
+  "post_condition": "The Python root logger is configured to emit all records at the INFO level and above to two destinations: a timestamped log file at work_dir/incremental_<YYYYmmdd_HHMMSS>.log (the timestamp is captured at the moment of call) and stdout, both using the format \"%(asctime)s %(levelname)s %(name)s: %(message)s\". Any handlers previously attached to the root logger are removed before the new ones are installed, so repeated invocations do not duplicate log entries. sys.stdout is replaced with an object that writes every string received via its write method (including all output from print()) to both the original stdout stream and the same log file. The wrapping is idempotent: if a prior call already wrapped sys.stdout, the original stdout is recovered before wrapping, so repeated calls produce exactly one copy of each printed line in both destinations. Returns the absolute path of the created log file."
+}

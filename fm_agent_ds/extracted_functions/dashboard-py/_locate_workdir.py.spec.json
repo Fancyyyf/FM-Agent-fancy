@@ -1,0 +1,5 @@
+{
+  "signature": "_locate_workdir(proj_dir: str) -> Path",
+  "pre_condition": "proj_dir is a string naming a directory that exists on the filesystem.",
+  "post_condition": "Returns an absolute, resolved Path object. If the resolved path of proj_dir itself contains a subdirectory named trace/, returns that resolved path directly. Otherwise, returns the resolved path of proj_dir with fm_agent/ appended."
+}

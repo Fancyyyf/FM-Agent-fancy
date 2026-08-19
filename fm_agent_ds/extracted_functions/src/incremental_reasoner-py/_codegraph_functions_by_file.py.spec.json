@@ -1,0 +1,5 @@
+{
+  "signature": "_codegraph_functions_by_file(proj_dir, lang_keys) -> dict | None",
+  "pre_condition": "proj_dir is a valid directory path. lang_keys is a collection of language key strings recognized by CodeGraph.",
+  "post_condition": "Returns a dict mapping each normalized relative file path string to a dict of {function_identifier: function_source_text} for all files under proj_dir whose language matches any key in lang_keys and whose functions are indexed by CodeGraph. Function identifiers use class-qualified names for C++ methods. If no usable CodeGraph index is available at proj_dir, returns None."
+}

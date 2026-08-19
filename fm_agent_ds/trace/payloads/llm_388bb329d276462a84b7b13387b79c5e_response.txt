@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "results_dir='/path/to/nonexistent_directory'",
+  "offending_statements": "Line 8: for root, _dirs, files in os.walk(results_dir):",
+  "reason": "Specification requires returning 0 when results_dir does not exist as a directory, but the code allows os.walk to raise an uncaught OSError (e.g., FileNotFoundError) instead of returning 0."
+}

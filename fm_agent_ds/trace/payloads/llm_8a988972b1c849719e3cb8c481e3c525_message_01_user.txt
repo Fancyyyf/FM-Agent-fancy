@@ -1,0 +1,66 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+Line 2:     parser = argparse.ArgumentParser(
+Line 3:         description="Configure FM-Agent's LLM provider or update individual LLM settings."
+Line 4:     )
+Line 5:     subcommands = parser.add_subparsers(dest="command")
+Line 6:     set_parser = subcommands.add_parser(
+Line 7:         "set",
+Line 8:         help="update only the specified non-secret [llm] settings in fm-agent.toml",
+Line 9:     )
+Line 10:     set_parser.add_argument("--name", help="LLM model ID (LLM_MODEL)")
+Line 11:     set_parser.add_argument("--provider", help="OpenCode provider ID (OPENCODE_MODEL_PROVIDER)")
+Line 12:     set_parser.add_argument("--base-url", dest="base_url", help="API base URL (LLM_API_BASE_URL)")
+Line 13:     set_parser.add_argument(
+Line 14:         "--backend",
+Line 15:         choices=_BACKENDS,
+Line 16:         help="model backend: opencode, auto, codex-cli, or claude-cli",
+Line 17:     )
+Line 18:     set_parser.add_argument(
+Line 19:         "--effort",
+Line 20:         choices=_EFFORTS,
+Line 21:         help="reasoning effort: empty, low, medium, or high",
+Line 22:     )
+Line 23:     set_parser.add_argument(
+Line 24:         "--api-style",
+Line 25:         dest="api_style",
+Line 26:         choices=("openai", "anthropic"),
+Line 27:         help="OpenCode adapter API style",
+Line 28:     )
+Line 29:     set_parser.add_argument(
+Line 30:         "--yes",
+Line 31:         action="store_true",
+Line 32:         help="write without asking for confirmation",
+Line 33:     )
+Line 34:     args = parser.parse_args(argv)
+Line 35:     if args.command == "set":
+Line 36:         updates = {
+Line 37:             key: getattr(args, key)
+Line 38:             for key in _LLM_TOML_KEYS
+Line 39:             if getattr(args, key) is not None
+Line 40:         }
+Line 41:         if not updates:
+Line 42:             set_parser.error("provide at least one setting to update")
+Line 43:         args.updates = updates
+Line 44:     return args
+```
+
+Condition A (what the code actually does):
+If the function returns normally, then the input `argv` (or `sys.argv[1:]` if `argv` is `None`) was a valid sequence of arguments for the configured argument parser, and the return value `result` is an `argparse.Namespace` object such that:
+- `result.command` is either the string `"set"` (if the subcommand was given) or `None` (or the parser's default) otherwise.
+- For every optional flag defined at the parser level (e.g., `--name`, `--provider`, `--base-url`, `--backend`, `--effort`, `--api-style`, `--yes`), `result` has an attribute with the destination name and the value provided in the arguments, or the default value if the flag was absent (e.g., `None` for most, `False` for `--yes` which uses `store_true`).
+- If `result.command == "set"`, then `result` has an additional attribute `updates` that is a dictionary containing exactly the mappings `(key, getattr(result, key))` for those `key` in `_LLM_TOML_KEYS` for which `getattr(result, key) is not None`, and this dictionary is non‑empty. (If it would be empty, `set_parser.error(...)` is called instead, causing a `SystemExit(2)` exception and process termination; thus the function never returns in that case.)
+- If `result.command != "set"`, the `updates` attribute is not present.
+If the function does not return normally, it raises a `SystemExit` exception with exit code `2`. This occurs when `argv` contains unrecognized arguments, missing required arguments, invalid choice values, or when the `"set"` subcommand is used but no update flags are supplied (i.e., `getattr(args, key) is None` for every `key` in `_LLM_TOML_KEYS`). In that case, an error message and usage information are printed to standard error and the process exits with code 2 (unless the exception is caught by an outer handler).
+
+Condition B (what the specification requires):
+Returns an argparse.Namespace with a 'command' attribute. When argv is None, arguments are parsed from sys.argv. When the first positional argument is 'set', the 'command' attribute equals 'set' and the Namespace additionally carries: an 'updates' attribute — a non-empty dict mapping each explicitly provided setting name (from the set of recognized TOML field names: name, provider, base-url, backend, effort, api-style) to its argument string value; and a 'yes' attribute — a bool that is True when --yes was present, False otherwise. When the first positional argument is absent or is any value other than 'set', 'command' holds the argparse default value and no 'updates' attribute is present. If the 'set' subcommand is specified but none of the recognized setting flags are provided with a non-None value, the process terminates with a non-zero exit code and an error message written to stderr. On any unrecognized flag, invalid argument choice (a value not in the allowed set), or argparse-detected parse error, the process terminates with a non-zero exit code.
+
+Additional context:
+parse_args(argv: list[str] | None) -> argparse.Namespace
+Pre-condition: The ArgumentParser has been configured with a subparser for the 'set' command carrying defined argument flags before this call
+Post-condition: Returns a Namespace whose attribute names correspond to the defined argument destinations. When argv is None, sys.argv[1:] is used as the argument sequence. Positional subcommand selection sets the 'command' attribute to the chosen subparser name or to the argparse default when no subcommand is selected. Optional flag arguments set their corresponding attributes to the provided value or to a store-true/store-false default when the flag is absent. On unrecognized flags, missing required arguments, or invalid argument choice values, prints a usage message and error description to stderr and terminates the process with exit code 2.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

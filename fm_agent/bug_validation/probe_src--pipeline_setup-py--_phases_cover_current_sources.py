@@ -1,98 +1,94 @@
-"""Probe script for bug: _phases_cover_current_sources accepts empty-string source_file paths.
+#!/usr/bin/env python3
+"""Probe for bug `src--pipeline_setup-py--_phases_cover_current_sources`.
 
-Bug ID: src--pipeline_setup-py--_phases_cover_current_sources
+Spec claim (paraphrased): `_phases_cover_current_sources` "never raises for a
+missing or malformed phases.json" and "Returns False in every other case,
+including when phases_json cannot be read or parsed."
 
-The specification requires every listed source file path to be a normalized
-forward-slash path. The code only replaces backslashes with forward slashes and
-does not reject non-normalized paths like empty strings, allowing an empty string
-to pass the existence check (os.path.join(proj_dir, "") == proj_dir, which exists).
+Bug: a phases_json file containing valid JSON that is NOT a dict (e.g. `null`)
+parses successfully with json.load (no ValueError), but the subsequent
+`data.get("phases", [])` raises AttributeError because None has no `.get`
+method. That exception is not caught by `except (OSError, ValueError)`, so it
+propagates instead of the spec-required `return False`.
 
-This probe creates a temporary directory with a valid .py source file, writes a
-phases.json that includes both the valid file AND an empty string source_file, then
-calls _phases_cover_current_sources to check whether the function incorrectly
-returns True despite the non-normalized empty-string path.
+FM-Agent self-validation guard: we test ONLY the smallest relevant unit
+(`_phases_cover_current_sources`) loaded via the `src.pipeline_setup` package
+import. We do NOT start any FM-Agent workflow (no run_pipeline /
+run_incremental_pipeline / main.py / CLI / OpenCode / subprocess). All fixtures
+live in a fresh temporary directory owned by this probe.
 """
 
-import json
 import os
 import sys
 import tempfile
+import shutil
 
-# Add repo root to path so 'config' and 'src' are importable
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _REPO_ROOT)
+# --- Locate the repo root (two levels above this probe file) and make the
+# --- package importable via the standard import mechanism.
+_PROBE_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(os.path.dirname(_PROBE_DIR))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 try:
     from src.pipeline_setup import _phases_cover_current_sources
-except ImportError as e:
-    print(f"ERROR: Could not import _phases_cover_current_sources: {e}")
+except Exception as e:
+    print("ERROR: failed to import src.pipeline_setup: %r" % (e,))
     sys.exit(1)
 
 
-def run_probe():
-    """Create temp fixtures and test the bug."""
-    tmpdir = tempfile.mkdtemp(prefix="bug_validator_probe_")
-
+def main():
+    # Fresh temporary workspace owned by the probe. Never the active repo, its
+    # isolation snapshot, the current working directory, or its fm_agent/ dir.
+    work = tempfile.mkdtemp(prefix="fm_phases_cover_probe_")
     try:
-        # 1. Create a dummy .py source file so _collect_project_source_files
-        #    discovers it via _iter_project_source_files (which filters by
-        #    EXT_TO_LANG from src.extract).
-        dummy_py = os.path.join(tmpdir, "dummy.py")
-        with open(dummy_py, "w") as f:
-            f.write("# dummy source file for bug probe\n")
+        proj_dir = os.path.join(work, "proj")
+        os.makedirs(proj_dir, exist_ok=True)
 
-        # 2. Create phases.json that lists:
-        #    - the valid source file "dummy.py"
-        #    - an empty string "" as a non-normalized path
-        phases_path = os.path.join(tmpdir, "phases.json")
-        phases_data = {
-            "phases": [
-                {
-                    "phase": 1,
-                    "name": "Test Phase",
-                    "description": "Probe phase",
-                    "modules": [
-                        {
-                            "name": "test_module",
-                            "description": "Probe module with buggy empty-string source_file",
-                            "source_files": ["dummy.py", ""]
-                        }
-                    ],
-                    "depends_on_phases": []
-                }
-            ]
-        }
-        with open(phases_path, "w") as f:
-            json.dump(phases_data, f, indent=2)
+        phases_json = os.path.join(work, "phases.json")
+        # Valid JSON that is NOT a dict: the four bytes 'null'. json.load parses
+        # this without raising; the bug is what happens next inside the function.
+        with open(phases_json, "w") as f:
+            f.write("null")
 
-        # 3. Call _phases_cover_current_sources
-        #    Spec says: returns False because "" is not a normalized path
-        #    Code bug:  returns True because "" passes all checks
-        actual = _phases_cover_current_sources(phases_path, tmpdir)
+        expected = False  # spec-correct: return False, and never raise
 
-        # 4. Determine expected (spec-correct) value
-        #    Per spec condition (2): "every source file path listed under
-        #    'phases' is a normalized forward-slash path that corresponds to
-        #    an existing file relative to proj_dir"
-        #    An empty string is NOT a normalized forward-slash path.
-        expected = False
+        raised = None
+        actual = None
+        try:
+            actual = _phases_cover_current_sources(phases_json, proj_dir)
+        except Exception as e:
+            raised = e
 
-        # Bug is CONFIRMED if actual != expected (code behaves against spec)
-        passed = actual != expected
+        if raised is not None:
+            # Spec requires returning False without raising; raising any
+            # exception here reproduces the reported bug (AttributeError on
+            # None.get). This is the deviation under test.
+            print(
+                "CONFIRMED — raised %s instead of returning False "
+                "(no exception + return %r). actual=<raised %s: %s> | expected=%r"
+                % (type(raised).__name__, expected, type(raised).__name__, raised, expected)
+            )
+            return
 
-    except Exception as e:
-        print(f"ERROR: {e}")
-        sys.exit(1)
+        # No exception was raised: check the return value against the spec.
+        if actual == expected:
+            print(
+                "NOT CONFIRMED — function returned %r without raising, which "
+                "satisfies the spec for a malformed (non-dict) phases.json" % (actual,)
+            )
+        else:
+            print(
+                "CONFIRMED — returned %r but spec requires %r for a malformed "
+                "(non-dict) phases.json | expected=%r" % (actual, expected, expected)
+            )
     finally:
-        # Clean up temp directory
-        import shutil
-        shutil.rmtree(tmpdir, ignore_errors=True)
-
-    if passed:
-        print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
-    else:
-        print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+        shutil.rmtree(work, ignore_errors=True)
 
 
 if __name__ == "__main__":
-    run_probe()
+    try:
+        main()
+    except Exception as e:
+        print("ERROR: unhandled exception in probe: %r" % (e,))
+        sys.exit(1)

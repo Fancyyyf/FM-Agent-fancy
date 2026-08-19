@@ -1,0 +1,5 @@
+{
+  "signature": "format_info_for_reasoner(info) -> FunctionSpecMap",
+  "pre_condition": "info is a dict containing a \"callees\" key whose value is a list of dicts, where each dict has exactly the string-typed keys \"name\", \"signature\", \"pre_condition\", and \"post_condition\"",
+  "post_condition": "Returns a FunctionSpecMap containing one entry per callee in the input list. Each entry maps the callee's \"name\" value to a two-line string of the form \"Pre-condition: <pre_condition>\\nPost-condition: <post_condition>\". The signatures attribute of the returned FunctionSpecMap is a dict mapping each callee's \"name\" value to its \"signature\" value. Returns an empty FunctionSpecMap (containing no entries and an empty signatures dict) when the input list is empty."
+}

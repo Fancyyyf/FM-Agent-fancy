@@ -1,0 +1,5 @@
+{
+  "signature": "_info_line_mentions_name(first_line: str, name: str) -> bool",
+  "pre_condition": "first_line is a str. name is a str.",
+  "post_condition": "Returns False when name is empty or falsy. Returns True when name is non-empty and first_line contains a mention of name, False otherwise. When name contains the substring '::', a mention is recognized when name appears as a literal substring anywhere in first_line. When name does not contain '::', a mention is recognized when name appears in first_line at a position not immediately preceded by an alphanumeric character or underscore, and is immediately followed by either an opening parenthesis '(' (possibly with intervening whitespace) or a word boundary (a non-alphanumeric, non-underscore character, or end of string). The match is case-sensitive."
+}

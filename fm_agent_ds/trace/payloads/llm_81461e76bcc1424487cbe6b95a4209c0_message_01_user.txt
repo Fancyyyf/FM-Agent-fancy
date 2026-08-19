@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def default_paths(project_root: Path) -> WizardPaths:
+Line 2:     return WizardPaths(
+Line 3:         project_root=project_root,
+Line 4:         env_path=project_root / ".env",
+Line 5:         toml_path=_fm_agent_config_path(project_root),
+Line 6:         opencode_config_path=detect_opencode_config_path(),
+Line 7:     )
+```
+
+Condition A (what the code actually does):
+If project_root is a Path identifying an existing directory, then calling default_paths(project_root) returns a new WizardPaths instance w such that w.project_root == project_root, w.env_path == project_root / '.env', w.toml_path equals the result of _fm_agent_config_path(project_root) (i.e., the Path given by the FM_AGENT_CONFIG environment variable if set, otherwise project_root / 'fm-agent.toml'), and w.opencode_config_path equals the result of detect_opencode_config_path() (i.e., the Path given by the OPENCODE_CONFIG environment variable if set, otherwise the Path to the existing opencode.jsonc in the platform‑specific OpenCode configuration directory, or if that file does not exist, the Path to opencode.json in that same directory). No other part of the program state is modified. Formally:
+∀ w, w = default_paths(project_root) → w.project_root = project_root ∧ w.env_path = project_root / ".env" ∧ (let f = os.environ.get("FM_AGENT_CONFIG") in (f ≠ None → w.toml_path = Path(f)) ∧ (f = None → w.toml_path = project_root / "fm-agent.toml")) ∧ (let o = os.environ.get("OPENCODE_CONFIG") in (o ≠ None → w.opencode_config_path = Path(o)) ∧ (o = None → (let dir = platform_opencode_config_dir in (isfile(dir / "opencode.jsonc") → w.opencode_config_path = dir / "opencode.jsonc") ∧ (¬ isfile(dir / "opencode.jsonc") → w.opencode_config_path = dir / "opencode.json")))).
+
+Condition B (what the specification requires):
+Returns a WizardPaths object whose toml_path, env_path, and opencode_config_path attributes each refer to an existing or creatable filesystem path. toml_path is the value of the FM_AGENT_CONFIG environment variable when set, otherwise <project_root>/fm-agent.toml. env_path is <project_root>/.env. opencode_config_path is the value of the OPENCODE_CONFIG environment variable when set, otherwise the path to the OpenCode configuration file (opencode.jsonc when present, otherwise opencode.json) in the platform-specific OpenCode configuration directory.
+
+Additional context:
+_fm_agent_config_path(project_root: Path) -> Path
+Pre-condition: project_root is a Path identifying an existing directory.
+Post-condition: Returns a Path: the value of the FM_AGENT_CONFIG environment variable when set, otherwise <project_root>/fm-agent.toml.
+
+detect_opencode_config_path() -> Path
+Pre-condition: No caller guarantees required.
+Post-condition: Returns a Path to the OpenCode configuration file: the value of the OPENCODE_CONFIG environment variable when set; otherwise, opencode.jsonc when it exists in the platform-specific OpenCode configuration directory, or opencode.json otherwise.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

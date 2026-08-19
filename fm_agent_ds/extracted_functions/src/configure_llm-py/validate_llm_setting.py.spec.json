@@ -1,0 +1,5 @@
+{
+  "signature": "validate_llm_setting(key: str, value: str) -> None",
+  "pre_condition": "key is a non-empty string; value is a string.",
+  "post_condition": "Raises ConfigWizardError when key is not a recognized LLM configuration setting key. When key is recognized, raises ConfigWizardError when value fails the validation constraint associated with that key: a constraint requiring a non-empty trimmed string (value is empty or consists only of whitespace after stripping); a constraint requiring a syntactically valid absolute URL with http or https scheme (value does not satisfy it); a constraint requiring membership in a fixed set of recognized identifiers (value is absent from that set); or a constraint delegating to an API style adapter (the adapter rejects value). Returns with no effect when key is recognized and value satisfies all constraints associated with that key."
+}

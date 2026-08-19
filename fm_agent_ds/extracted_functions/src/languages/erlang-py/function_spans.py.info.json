@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_analysis_or_empty",
+      "signature": "_analysis_or_empty(proj_dir: str) -> object",
+      "pre_condition": "proj_dir is a non-empty string identifying the project root directory.",
+      "post_condition": "Returns an ELP analysis object whose .spans attribute is a dict mapping absolute file paths to lists of (func_name, start_idx, end_idx) tuples. Returns an object with an empty .spans dict when the ELP backend is unavailable or no analysis data exists for proj_dir."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_trace_dir",
+      "signature": "_trace_dir(work_dir) -> str",
+      "pre_condition": "work_dir is a valid directory path",
+      "post_condition": "Returns a filesystem path string to the trace directory under work_dir"
+    }
+  ]
+}

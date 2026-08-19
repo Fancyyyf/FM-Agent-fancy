@@ -1,0 +1,49 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def load_call_edges(path: str | os.PathLike | None) -> list[CallEdge]:
+Line 2:     """Load supplemental call edges from a JSON file or directory."""
+Line 3:     if path is None:
+Line 4:         return []
+Line 5:     edge_path = Path(path)
+Line 6:     if edge_path.is_dir():
+Line 7:         edges = []
+Line 8:         for file_path in sorted(edge_path.rglob("*")):
+Line 9:             if file_path.is_file() and _is_edge_file(file_path):
+Line 10:                 edges.extend(_load_call_edge_file(file_path))
+Line 11:         return _dedupe_edges(edges)
+Line 12:     return _dedupe_edges(_load_call_edge_file(edge_path))
+```
+
+Condition A (what the code actually does):
+Natural language: If `path` is `None`, the return value is an empty list. Otherwise, let `p = Path(path)`. If `p` is a directory, the function recursively collects files via `p.rglob('*')`, selects those for which `is_file()` and `_is_edge_file()` return `True`, sorts them lexicographically, loads the `CallEdge` list from each via `_load_call_edge_file`, concatenates them in that order, deduplicates by caller/callee specification while preserving first occurrence, and returns the resulting list. If `p` is a file, the function loads the `CallEdge` list from that file via `_load_call_edge_file`, deduplicates it, and returns the result. If any step raises an exception (e.g., `Path` construction, filesystem traversal, file reading, or JSON parsing), that exception propagates and no value is returned.
+
+Formal logic:
+Let `ret` denote the return value after successful execution.
+- If `path is None`: `ret = []`.
+- Else define `p = Path(path)`.
+  - If `p.is_dir()`:
+    `files = [f for f in sorted(p.rglob('*')) if f.is_file() and _is_edge_file(f)]`
+    `edges = concatenation of [(_load_call_edge_file(f)) for f in files]`
+    `ret = dedupe(edges)` where `dedupe` ensures `∀ i<j, ¬(ret[i].caller == ret[j].caller ∧ ret[i].callee == ret[j].callee)` and each element appears at its earliest occurrence index in `edges`.
+  - If `p.is_file()`:
+    `ret = dedupe(_load_call_edge_file(p))`.
+If any operation above raises an exception `E`, the function exits with exception `E` and `ret` is not produced.
+
+Condition B (what the specification requires):
+When path is None, returns an empty list. When path identifies a single file, returns the CallEdge objects parsed from that file with all duplicate edges removed. When path identifies a directory, returns the CallEdge objects from every qualifying edge file found recursively under that directory, combined into a single list with all duplicate edges removed. In all non-None cases, each returned element is a CallEdge, and for any distinct pair of caller and callee specifications at most one CallEdge appears. Results derived from a directory walk are returned in a stable order consistent with the filesystem walk ordering.
+
+Additional context:
+_is_edge_file(path: Path) -> bool
+Pre-condition: path refers to a file on disk.
+Post-condition: Returns True when the file is recognized as containing supplemental call edge data; False otherwise.
+
+_load_call_edge_file(path: Path) -> list[CallEdge]
+Pre-condition: path refers to a file containing valid supplemental call edge data matching the expected JSON schema.
+Post-condition: Returns the list of CallEdge objects parsed from the file, in the order they appear in the file.
+
+_dedupe_edges(edges: list[CallEdge]) -> list[CallEdge]
+Pre-condition: edges is a list of CallEdge objects, possibly containing entries with identical caller and callee specifications.
+Post-condition: Returns a list of CallEdge objects where no two entries share the same caller specification and callee specification. The relative order of first occurrences is preserved.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,22 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _compose_stdin(prompt, files):
+Line 2:     if not files:
+Line 3:         return prompt
+Line 4:     file_list = "\n".join(f"- {path}" for path in files)
+Line 5:     return (
+Line 6:         "Read these file(s) before acting:\n"
+Line 7:         f"{file_list}\n\n"
+Line 8:         f"{prompt}"
+Line 9:     )
+```
+
+Condition A (what the code actually does):
+The function returns a string `result`. If `files` is empty, `result` equals `prompt`. Otherwise, `result` equals the concatenation: `"Read these file(s) before acting:\n"` + `"\n".join(f"- {p}" for p in files)` + `"\n\n"` + `prompt`. Neither `prompt` nor `files` are modified. Formally: (files == [] => result = prompt) ∧ (files != [] => result = "Read these file(s) before acting:\n" + "\n".join("- " + p for p in files) + "\n\n" + prompt).
+
+Condition B (what the specification requires):
+When files is empty, returns prompt unchanged. When files is non-empty, returns a string consisting of the literal prefix 'Read these file(s) before acting:\n', followed by one line per element of files in input order where each line has the form '- <path>' and <path> is the element's string value, followed by '\n\n' and the prompt string. Every element of files appears exactly once in the returned string. The returned string contains no characters beyond those derived from these components.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

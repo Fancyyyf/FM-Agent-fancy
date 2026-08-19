@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def phase_callee_info_names_key(func: dict, phase: int) -> Optional[str]:
+Line 2:     target = f"phase{phase}_callee_info_names_by_caller"
+Line 3:     if target in func:
+Line 4:         return target
+Line 5:     for key in func.keys():
+Line 6:         if key.endswith("_callee_info_names_by_caller") and key.startswith("phase"):
+Line 7:             return key
+Line 8:     return None
+```
+
+Condition A (what the code actually does):
+func is unchanged from its pre-state (the dictionary is not modified). The return value r is of type None or str, and it satisfies: (r is None) if and only if for every key k in func, either not k.startswith("phase") or not k.endswith("_callee_info_names_by_caller"). If there exists at least one key k in func with k.startswith("phase") and k.endswith("_callee_info_names_by_caller"), then r is such a key; moreover, if the specific key "phase{phase}_callee_info_names_by_caller" (where {phase} is the given positive integer) is present in func, then r equals that key. No exceptions are raised; the function terminates normally.
+
+Condition B (what the specification requires):
+Returns the string key in func whose name is the concatenation of "phase", the decimal string representation of phase, and "_callee_info_names_by_caller" when such a key exists. Returns None when func does not contain a key formed by this concatenation.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

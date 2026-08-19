@@ -1,0 +1,42 @@
+Programming language: Python
+
+Pre-condition:
+text is a string from which JSONC comment syntax (// through end-of-line and /* through */) has already been removed.
+
+Code block:
+```python
+Line 1: def _remove_trailing_commas(text: str) -> str:
+Line 2:     out: list[str] = []
+Line 3:     in_string = False
+Line 4:     escape = False
+Line 5:     i = 0
+Line 6:     while i < len(text):
+Line 7:         ch = text[i]
+Line 8:         if in_string:
+Line 9:             out.append(ch)
+Line 10:             if escape:
+Line 11:                 escape = False
+Line 12:             elif ch == "\\":
+Line 13:                 escape = True
+Line 14:             elif ch == '"':
+Line 15:                 in_string = False
+Line 16:             i += 1
+Line 17:             continue
+Line 18:         if ch == '"':
+Line 19:             in_string = True
+Line 20:             out.append(ch)
+Line 21:             i += 1
+Line 22:             continue
+Line 23:         if ch == ",":
+Line 24:             j = i + 1
+Line 25:             while j < len(text) and text[j] in " \t\r\n":
+Line 26:                 j += 1
+Line 27:             if j < len(text) and text[j] in "}]":
+Line 28:                 i += 1
+Line 29:                 continue
+Line 30:         out.append(ch)
+Line 31:         i += 1
+Line 32:     return "".join(out)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

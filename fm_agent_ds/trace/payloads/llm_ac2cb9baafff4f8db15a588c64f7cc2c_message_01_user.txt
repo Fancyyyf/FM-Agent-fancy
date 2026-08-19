@@ -1,0 +1,31 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is an existing filesystem directory path.
+
+Code block:
+```python
+Line 1: def _enumerate_source_files(proj_dir):
+Line 2:     """List every supported, non-test source file under proj_dir (relative paths).
+Line 3:     Skips the fm_agent/ and .git/ directories and applies the same language and
+Line 4:     test-file filters run_extraction uses, so the returned files are exactly the
+Line 5:     ones that will yield extracted functions. The entry_func's source file is
+Line 6:     still included when it looks like a test, because run_entry_pipeline
+Line 7:     registers it as a test-file exemption before selection runs.
+Line 8:     """
+Line 9:     source_files = []
+Line 10:     for root, dirs, files in os.walk(proj_dir):
+Line 11:         dirs[:] = [d for d in dirs if d not in ("fm_agent", ".git")]
+Line 12:         for fname in files:
+Line 13:             src_rel = os.path.relpath(os.path.join(root, fname), proj_dir).replace(os.sep, "/")
+Line 14:             ext = fname.rsplit(".", 1)[-1] if "." in fname else ""
+Line 15:             if EXT_TO_LANG.get(ext) and not _is_test_file(src_rel):
+Line 16:                 source_files.append(src_rel)
+Line 17:     return sorted(source_files)
+```
+
+Additional context:
+_is_test_file(src_rel) -> bool
+Pre-condition: src_rel is a non-empty relative file path string using '/' as separator.
+Post-condition: Returns True when src_rel matches the project's test-file naming or path conventions; returns False otherwise.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

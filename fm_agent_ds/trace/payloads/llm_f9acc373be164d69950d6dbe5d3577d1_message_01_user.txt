@@ -1,0 +1,16 @@
+Programming language: Python
+
+Pre-condition:
+work_dir is an existing directory path and event_id is a non-empty string
+
+Code block:
+```python
+Line 1: def _opencode_trace_path(work_dir, event_id):
+Line 2:     return os.path.join(_trace_dir(work_dir), "opencode", f"{event_id}.jsonl")
+```
+
+Additional context:
+_trace_dir(work_dir) -> str
+Pre-condition: work_dir is a valid directory path
+Post-condition: Returns a filesystem path string to the trace directory under work_dir
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

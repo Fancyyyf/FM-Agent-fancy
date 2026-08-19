@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/python-py/batch_extract.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "Returns a dictionary whose keys are absolute file paths (str) for every Python source file discovered in proj_dir. The value for each key is a list of (func_name: str, func_body: str) 2-tuples, one tuple per function defined in that file. A file containing no function definitions yields an empty list. When the static-analysis backend cannot initialize, returns an empty dictionary.",
-    "actual_behavior": "After execution, if no exception occurs, the function returns a dictionary. Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is not None, the returned dictionary R equals cg.get_functions_by_file('python', proj_dir); i.e., for each absolute file path p of a Python source file under proj_dir, R[p] is a list of (func_name, func_body) tuples for all functions in that file. If cg is None, then R = {}. If an exception is raised during from_proj_dir or get_functions_by_file, the exception propagates and batch_extract returns no value.\n\nFormal logic:\nNormal termination: ( cg  {CodeGraphExtractor, None}. cg = CodeGraphExtractor.from_proj_dir(proj_dir)  ( (cg  None  R = cg.get_functions_by_file('python', proj_dir))  (cg = None  R = {}) ) ).\nAbnormal termination: An exception E is raised, and the function stack is unwound.",
-    "code_evidence": "Line 4: return cg.get_functions_by_file(\"python\", proj_dir) if cg else {}",
-    "trigger_condition": "The specification mandates that every Python file in the project is a key, with an empty list if no functions are present. The implementation relies on get_functions_by_file, which may only include files that contain at least one function, thus omitting files without functions."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/languages/python-py/batch_extract.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_verify_single_file",
+      "signature": "_verify_single_file(fpath: str, extracted_dir: str, output_dir: str, language: str, work_dir: str) -> tuple[str, str] | None",
+      "pre_condition": "fpath is an absolute path to an extracted function file whose sibling .spec.json and .info.json sidecars both exist and contain valid JSON. extracted_dir is the extracted_functions/ directory. output_dir is a writable directory for verdict output. language is a valid language identifier string. work_dir is the fm_agent/ work directory.",
+      "post_condition": "Returns a tuple (relative_path, verdict) where relative_path is the path of fpath relative to extracted_dir and verdict is 'MATCH' if block-level Hoare reasoning confirms the implementation satisfies the post-condition, or 'MISMATCH' if a violation is found. Writes the verdict JSON (containing verdict, counterexample, offending_statements, and reason fields) to output_dir/<relative_path_without_ext>.json. Returns None if the reasoner encounters a non-recoverable error before producing a verdict."
+    },
+    {
+      "name": "_validate_single_bug",
+      "signature": "_validate_single_bug(result_json_rel: str, proj_dir: str, work_dir: str, bug_validator_path: str | None) -> None",
+      "pre_condition": "result_json_rel is a relative path to a reasoner verdict JSON file in logic_verification_results/ containing a MISMATCH verdict with non-empty counterexample, offending_statements, and reason fields. proj_dir is the project root. work_dir is the fm_agent/ work directory. If provided, bug_validator_path is an existing markdown file overriding the default bug-validation prompt.",
+      "post_condition": "Dispatches a bug validation agent that builds a probe script from the MISMATCH verdict, executes it, and writes the validation outcome to bug_validation/<bug_id>.result.json with confirmation_status equal to 'confirmed' (the probe script reproduces the violation described by the verdict) or 'unconfirmed' (the probe script does not reproduce it). Also writes a detailed bug report to bug_validation/<bug_id>.md containing the specification claim, actual behavior, code evidence, trigger condition, reproduction steps, the probe script, and its raw output. Has no return value."
+    },
+    {
+      "name": "_generate_validation_summary",
+      "signature": "_generate_validation_summary(work_dir: str) -> None",
+      "pre_condition": "work_dir is the fm_agent/ work directory. The bug_validation/ subdirectory exists and may contain zero or more .result.json bug validation result files.",
+      "post_condition": "Writes an aggregate summary to bug_validation/summary.json containing counts of total reported bugs, confirmed bugs (confirmation_status == 'confirmed'), and not-confirmed bugs (confirmation_status != 'confirmed') across all .result.json files present. Has no return value."
+    }
+  ]
+}

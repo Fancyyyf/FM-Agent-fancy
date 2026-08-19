@@ -1,0 +1,55 @@
+Programming language: Python
+
+Pre-condition:
+extra_call_edges is an iterable of supplemental edge records (each with caller and callee attributes) or None/empty. phase_fqns is a collection of FQN strings for functions in the current phase. known_fqns is a collection of all known FQN strings.
+
+Code block:
+```python
+Line 1: def _resolve_extra_call_edges(extra_call_edges, phase_fqns, known_fqns):
+Line 2:     """Resolve supplemental edges into phase-local caller indexes."""
+Line 3:     by_caller_fqn = defaultdict(list)
+Line 4:     by_callsite = defaultdict(list)
+Line 5:     if not extra_call_edges:
+Line 6:         return by_caller_fqn, by_callsite
+Line 7:     phase_fqns = set(phase_fqns)
+Line 8:     known_fqns = set(known_fqns)
+Line 9:     for edge in extra_call_edges:
+Line 10:         callee_fqn = edge.callee.fqn
+Line 11:         if callee_fqn not in known_fqns:
+Line 12:             logging.warning(
+Line 13:                 "Skipping supplemental edge from %s: callee.fqn %r "
+Line 14:                 "was not found among extracted functions.",
+Line 15:                 edge.source or "edge file",
+Line 16:                 callee_fqn,
+Line 17:             )
+Line 18:             continue
+Line 19:         resolved = _ResolvedExtraEdge(
+Line 20:             callee_fqn=callee_fqn,
+Line 21:             info_names=tuple(edge.callee.info_names),
+Line 22:             source=edge.source,
+Line 23:         )
+Line 24:         if edge.caller.fqn:
+Line 25:             caller_fqn = edge.caller.fqn
+Line 26:             if caller_fqn in phase_fqns:
+Line 27:                 by_caller_fqn[caller_fqn].append(resolved)
+Line 28:             else:
+Line 29:                 logging.debug(
+Line 30:                     "Skipping supplemental edge from %s in current phase: "
+Line 31:                     "caller FQN %r is not in phase.",
+Line 32:                     edge.source or "edge file",
+Line 33:                     caller_fqn,
+Line 34:                 )
+Line 35:         for callsite in edge.caller.callsite_names:
+Line 36:             if not re.fullmatch(r"[A-Za-z_]\w*", callsite):
+Line 37:                 logging.warning(
+Line 38:                     "Skipping supplemental edge callsite selector %r from %s: "
+Line 39:                     "the current scanner only matches identifier callsites.",
+Line 40:                     callsite,
+Line 41:                     edge.source or "edge file",
+Line 42:                 )
+Line 43:                 continue
+Line 44:             by_callsite[callsite].append(resolved)
+Line 45:     return by_caller_fqn, by_callsite
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

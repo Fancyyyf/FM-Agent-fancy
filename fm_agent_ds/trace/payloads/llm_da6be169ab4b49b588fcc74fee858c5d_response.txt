@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "path/to/file.c::func",
+  "offending_statements": "Line 3: return _normalize_endpoint_label(label)",
+  "reason": "The code only replaces a dot immediately followed by '::' (substring '.::'). For an input like 'path/to/file.c::func', after '/' replacement, the string becomes 'path::to::file.c::func' which does not contain '.::', so the file-extension dot is not replaced. The specification requires that the file-extension dot (e.g., before 'c') be replaced by a hyphen, producing 'path::to::file-c::func'. The output 'path::to::file.c::func' contains a dot, violating the spec."
+}

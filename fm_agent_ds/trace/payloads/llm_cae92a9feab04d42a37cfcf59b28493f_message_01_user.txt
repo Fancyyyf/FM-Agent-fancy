@@ -1,0 +1,32 @@
+Programming language: Python
+
+Pre-condition:
+self is an ElpClient instance with an active connection to an ELP server and the attributes self.root_uri (a valid URI string), self.proj_dir (a valid directory path string), self._status (tracks server status), and self._send (a callable for sending JSON-RPC responses). message is a dict representing a parsed JSON-RPC message received from the ELP server.
+
+Code block:
+```python
+Line 1:     def _handle_server_message(self, message: dict):
+Line 2:         method = message.get("method")
+Line 3:         params = message.get("params")
+Line 4:         if params is None:
+Line 5:             params = {}
+Line 6:         if method == "elp/status":
+Line 7:             self._status = params.get("status")
+Line 8:         if "id" not in message or not method:
+Line 9:             return
+Line 10:         if method == "workspace/configuration":
+Line 11:             result = [None for _ in params.get("items", [])]
+Line 12:         elif method == "workspace/workspaceFolders":
+Line 13:             result = [{"uri": self.root_uri, "name": os.path.basename(self.proj_dir)}]
+Line 14:         elif method == "workspace/applyEdit":
+Line 15:             result = {"applied": False}
+Line 16:         else:
+Line 17:             result = None
+Line 18:         self._send({"jsonrpc": "2.0", "id": message["id"], "result": result})
+```
+
+Additional context:
+self._send(message: dict) -> None
+Pre-condition: message is a JSON-RPC 2.0 response dict containing 'jsonrpc', 'id', and 'result' keys with values conforming to the JSON-RPC 2.0 specification.
+Post-condition: The JSON-RPC response represented by message is transmitted to the ELP server via the active connection.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

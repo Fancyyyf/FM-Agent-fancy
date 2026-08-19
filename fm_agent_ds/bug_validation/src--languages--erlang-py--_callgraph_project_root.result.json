@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_callgraph_project_root",
+  "source_file": "fm_agent/extracted_functions/src/languages/erlang-py/_callgraph_project_root.py",
+  "function_name": "_callgraph_project_root",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_callgraph_project_root.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_callgraph_project_root.md",
+  "probe_stdout": "CONFIRMED — actual: '/tmp/probe_callgraph_root_e2yt7cf1/erlang_project' | expected: '/tmp/probe_callgraph_root_e2yt7cf1'\n",
+  "trigger_summary": "_callgraph_project_root uses _iter_project_files which skips _SKIP_DIRS-excluded directories; .erl files inside excluded directories are invisible causing the function to return root instead of parent."
+}

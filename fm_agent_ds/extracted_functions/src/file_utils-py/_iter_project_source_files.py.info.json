@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_is_under_submodules",
+      "signature": "_is_under_submodules(rel_path, submodules) -> bool",
+      "pre_condition": "rel_path is a string representing a file path relative to proj_dir with forward-slash separators. submodules is either None or a non-empty list of subdirectory name strings.",
+      "post_condition": "Returns True when submodules is None, or when rel_path begins with one of the directory names in submodules. Returns False when submodules is not None and rel_path does not begin with any of the submodule directory names."
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns command.stdin if isinstance(command, AgentCommand) is True, otherwise it returns None. Formal logic: (command is an instance of AgentCommand) ⇒ result = command.stdin ∧ (¬(command is an instance of AgentCommand)) ⇒ result = None"
+}

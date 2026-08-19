@@ -1,0 +1,5 @@
+{
+  "signature": "_clean_empty_phase_module(work_dir)",
+  "pre_condition": "work_dir is a string path to a directory containing a valid phases.json file",
+  "post_condition": "Returns a dict with keys 'removed_phases' and 'renumbered'. 'removed_phases' is a list of phase numbers for phases that were removed. 'renumbered' is a dict mapping each original phase number to its final phase number, where an unchanged phase maps to itself. After return, phases.json under work_dir reflects these guarantees: every module in every phase has at least one source file, every phase has at least one module, phase numbers are contiguous integers starting from 1 preserving original ordering, and each phase's depends_on_phases contains only valid phase numbers that exist in the rewritten file. Domain-context types files at work_dir/spec_prompts/domain_context/ are synchronized with the new phase numbering."
+}

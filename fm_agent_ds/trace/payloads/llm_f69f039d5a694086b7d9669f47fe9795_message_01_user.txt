@@ -1,0 +1,70 @@
+Programming language: Python
+
+Pre-condition:
+block is a non-empty string. post_condition and spec_post_condition are non-empty strings. language is a non-empty string identifying the programming language of block. knowledge is a string (may be empty). trace_dir is a valid writable directory path or a falsy value.
+
+Code block:
+```python
+Line 1: def _check_post_implies_spec(block, post_condition, spec_post_condition, knowledge, language,
+Line 2:                              trace_dir=None, trace_meta=None):
+Line 3:     info_str = f"\nAdditional context:\n{knowledge}" if knowledge else ""
+Line 4:     lang_expertise = _LANGUAGE_EXPERTISE.get(language.lower(), f"You are an expert in logic, formal verification, and {language} programming. ")
+Line 5:     messages = [
+Line 6:         {"role": "system", "content": (
+Line 7:             lang_expertise +
+Line 8:             "Given a code block, its post-condition A (what the code actually does), and a specification post-condition B (what the code should do), "
+Line 9:             "determine whether there exists a concrete valid input where the code's behavior (A) violates the specification (B). "
+Line 10:             "Focus on finding CONCRETE COUNTEREXAMPLES: specific input values where the code produces an output that does not satisfy the specification. "
+Line 11:             "Check these common violation patterns:\n"
+Line 12:             "  1. The code rejects/filters out inputs that the specification says should be accepted (missing cases). "
+Line 13:             "Enumerate all required cases from the specification and the relevant language standard, and check each one against what the code handles.\n"
+Line 14:             "  2. The code accepts inputs that the specification says should be rejected.\n"
+Line 15:             "  3. The code produces a wrong output value for a valid input.\n"
+Line 16:             "For each potential violation, construct a specific input, trace what the code does (A), and check if the specification (B) is satisfied.\n"
+Line 17:             "Return only a valid JSON object. Do not include markdown, tags, or prose. "
+Line 18:             "Use exactly this schema: "
+Line 19:             "{\"verdict\": \"MATCH|MISMATCH\", \"counterexample\": string|null, "
+Line 20:             "\"offending_statements\": string|null, \"reason\": string}. "
+Line 21:             "For MISMATCH, counterexample, offending_statements, and reason must be non-empty strings; "
+Line 22:             "offending_statements must preserve any 'Line N:' prefixes from the code block. "
+Line 23:             "For MATCH, counterexample and offending_statements must be null or empty, and reason may be empty."
+Line 24:         )},
+Line 25:         {"role": "user", "content": (
+Line 26:             f"Programming language: {language}\n\n"
+Line 27:             f"Code block:\n```{language.lower()}\n{block}\n```\n\n"
+Line 28:             f"Condition A (what the code actually does):\n{post_condition}\n\n"
+Line 29:             f"Condition B (what the specification requires):\n{spec_post_condition}\n"
+Line 30:             f"{info_str}\n"
+Line 31:             "Is there a concrete valid input where the code's behavior violates the specification? "
+Line 32:             "Enumerate all cases required by condition B and check if condition A covers each one. "
+Line 33:             "Provide a specific counterexample if any case is missing. Return only the JSON object."
+Line 34:         )}
+Line 35:     ]
+Line 36:     trace_meta = trace_meta or {}
+Line 37:     for attempt in range(1, MAX_SPC_ITER + 1):
+Line 38:         event_id = new_event_id("llm")
+Line 39:         started = utc_now_iso()
+Line 40:         response = None
+```
+
+Additional context:
+new_event_id(prefix) -> str
+Pre-condition: prefix is a string.
+Post-condition: Returns a globally unique string identifier beginning with prefix, separated by an underscore from a random hex component.
+
+utc_now_iso() -> str
+Pre-condition: None.
+Post-condition: Returns the current UTC date and time as an ISO 8601 formatted string.
+
+_retry_create(client_callable, model, messages) -> tuple
+Pre-condition: client_callable is a callable accepting the LLM API request. model is a non-empty string identifying the LLM model. messages is a list of message dicts with 'role' and 'content' keys.
+Post-condition: Returns a 2-tuple (text_response, usage_dict). text_response is a string containing the LLM output. usage_dict is a dict with token usage information. Raises an exception if the API call fails after all retry attempts.
+
+_parse_spec_check_json(response) -> tuple
+Pre-condition: response is a string containing an LLM output that may include a JSON object.
+Post-condition: Returns (has_mismatch, offending_statements, reason, data) where has_mismatch is a bool, offending_statements and reason are strings, and data is a dict containing the full parsed JSON. Raises ValueError if the response does not contain valid JSON matching the spec-check schema (required fields: verdict, counterexample, offending_statements, reason).
+
+record_llm_exchange(trace_dir, event_id, event, messages, response=None) -> None
+Pre-condition: event_id is a non-empty string. event is a dict with event metadata. messages is a list of message dicts. response is a string or None. trace_dir may be a writable directory path or falsy.
+Post-condition: Writes the event record and message/response payloads to trace_dir when trace_dir is truthy. No side effects when trace_dir is falsy.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

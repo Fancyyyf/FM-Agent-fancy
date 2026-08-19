@@ -1,0 +1,76 @@
+{
+  "callees": [
+    {
+      "name": "load_call_edges",
+      "signature": "load_call_edges(extra_call_edges_path: str | None) -> list",
+      "pre_condition": "If not None, extra_call_edges_path points to a JSON file conforming to the extra-edges schema (containing an 'edges' list of {caller, callee} objects).",
+      "post_condition": "Returns the parsed supplemental call-edge records as a list. When extra_call_edges_path is None or the file is absent, returns an empty list."
+    },
+    {
+      "name": "check_last_run_existence",
+      "signature": "check_last_run_existence(proj_dir: str, submodules: list | None) -> bool",
+      "pre_condition": "proj_dir is the project root directory; submodules optionally constrains the scope to specific subdirectories.",
+      "post_condition": "Returns True if phases.json exists and the extracted_functions directory contains function files for all expected phases; returns False if a previous full run cannot be verified, indicating the incremental pipeline must fall back to a full run."
+    },
+    {
+      "name": "run_pipeline",
+      "signature": "run_pipeline(proj_dir: str, domain_knowledge_files: list | None, submodules: list | None, one_phase: bool, extra_call_edges_path: str | None, bug_validator_path: str | None, plugin_config: dict | None) -> None",
+      "pre_condition": "proj_dir is an existing git repository root with a valid fm-agent.toml configuration and an accessible LLM backend.",
+      "post_condition": "Completes the full 6-stage pipeline: configuration validation, function extraction, phase planning, topdown layer generation, batch spec generation with streaming verification, and bug validation aggregation. Writes .spec.json/.info.json sidecars, verification verdicts, and bug reports to fm_agent/."
+    },
+    {
+      "name": "_run_setup_extract",
+      "signature": "_run_setup_extract(proj_dir: str, work_dir: str, script_dir: str, is_incremental: bool, submodules: list | None, one_phase: bool, plugin_config: dict | None) -> None",
+      "pre_condition": "proj_dir contains the project source files and fm-agent.toml. script_dir is the FM-Agent source directory containing phase templates. is_incremental is True when called from the incremental pipeline.",
+      "post_condition": "Generates or regenerates phases.json in work_dir, mapping project modules to processing phases according to the phase configuration templates. Registers extracted functions with the file tracking system."
+    },
+    {
+      "name": "_collect_changed_functions",
+      "signature": "_collect_changed_functions(proj_dir: str, old_commit_id: str, submodules: list | None) -> dict",
+      "pre_condition": "old_commit_id is a valid commit identifier in the git repository at proj_dir. submodules optionally restricts analysis to specified subdirectory paths.",
+      "post_condition": "Returns a dict mapping changed source file paths to their change records. Each record distinguishes added, modified, and removed function names relative to old_commit_id, restricted to the submodule scope when provided."
+    },
+    {
+      "name": "_remove_stale_extracted",
+      "signature": "_remove_stale_extracted(proj_dir: str, changed_functions: dict) -> None",
+      "pre_condition": "changed_functions is a dict mapping source file paths to {added, modified, removed} function lists, as produced by _collect_changed_functions.",
+      "post_condition": "Removes extracted-function files from extracted_functions/ for every function listed as removed, and for every source file that has no remaining functions. Does not modify files for added or modified functions."
+    },
+    {
+      "name": "collect_file_names",
+      "signature": "collect_file_names(input_dir: str, file_list_path: str) -> list[str]",
+      "pre_condition": "input_dir is the root of the extracted_functions tree containing function files with recognized language extensions.",
+      "post_condition": "Returns a sorted, extension-filtered list of relative paths to extracted function files under input_dir. Writes the list to file_list_path in JSON format."
+    },
+    {
+      "name": "_get_all_phase_files",
+      "signature": "_get_all_phase_files(phases_data: dict, input_dir: str) -> list[str]",
+      "pre_condition": "phases_data conforms to the phases.json schema with a 'phases' key containing per-phase module and source-file lists. input_dir is the extracted_functions root.",
+      "post_condition": "Returns the union of all extracted function file paths that belong to at least one configured phase, resolved against input_dir."
+    },
+    {
+      "name": "generate_topdown_layers",
+      "signature": "generate_topdown_layers(work_dir: str, extra_call_edges: list) -> None",
+      "pre_condition": "work_dir contains an extracted_functions directory with function files and a phases.json with phase definitions.",
+      "post_condition": "Computes dependency-ordered layers from the call graph (callees ordered before callers) and writes per-layer metadata files to work_dir. Layer ordering respects the constraint that a function's callees all belong to earlier (lower-numbered) layers."
+    },
+    {
+      "name": "collect_relevent_function_scope",
+      "signature": "collect_relevent_function_scope(proj_dir: str, developer_intent: str, changed_functions: dict) -> list[str]",
+      "pre_condition": "developer_intent is a non-empty string describing the modification goal. changed_functions is a dict of changed file paths to {added, modified, removed} function lists.",
+      "post_condition": "Returns a list of function-identifying strings judged relevant to developer_intent. Relevance is determined by scoring functions through multi-tier signal matching (traceback patterns, backtick identifiers, class-method references, exception types) and intra-file call-graph score propagation."
+    },
+    {
+      "name": "_update_specs_for_intent",
+      "signature": "_update_specs_for_intent(proj_dir: str, work_dir: str, developer_intent: str, changed_functions: dict, spec_files: list[str], extra_call_edges: list) -> list[str]",
+      "pre_condition": "developer_intent describes the modification goal. changed_functions lists changed functions. spec_files lists functions judged relevant to the intent. extra_call_edges contains supplemental call-graph edges.",
+      "post_condition": "Returns a list of file paths for which .spec.json and .info.json sidecars were updated. Updates specs for functions that satisfy either condition: (1) the function itself changed relative to the base commit, or (2) the function was judged relevant to the developer intent. Updated specs reflect the new intended correct behavior in light of the modification intent."
+    },
+    {
+      "name": "_verify_incremental_functions",
+      "signature": "_verify_incremental_functions(proj_dir: str, work_dir: str, changed_functions: dict, updated_spec_files: list[str], submodules: list | None, bug_validator_path: str | None) -> list[str]",
+      "pre_condition": "changed_functions records which functions changed. updated_spec_files lists functions whose specs were regenerated. submodules optionally constrains the verification scope. bug_validator_path optionally provides custom bug-validation instructions.",
+      "post_condition": "Returns a sorted list of relative paths to functions with confirmed bugs. A function is verified if: (1) it changed, (2) its spec was updated, or (3) any of its callees' specs were updated. For each verified function, runs the reasoner; on MISMATCH, dispatches bug validation to independently confirm the violation via a probe script. Only functions where bug validation confirms the MISMATCH are included in the returned list. Writes verification verdicts to logic_verification_results/ and confirmed bug reports to bug_validation/<bug_id>.md."
+    }
+  ]
+}

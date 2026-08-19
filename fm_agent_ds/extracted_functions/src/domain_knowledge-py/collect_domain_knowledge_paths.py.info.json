@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_split_env_paths",
+      "signature": "_split_env_paths(env_value)",
+      "pre_condition": "env_value is a string containing zero or more paths separated by the system path separator",
+      "post_condition": "Returns a list of individual path strings obtained by splitting env_value on the system path separator, with empty segments excluded"
+    },
+    {
+      "name": "_flatten_paths",
+      "signature": "_flatten_paths(cli_paths)",
+      "pre_condition": "cli_paths is an iterable that may contain strings and/or nested iterables of strings",
+      "post_condition": "Returns a flat list of all string elements from cli_paths, with any nested iterables recursively flattened"
+    },
+    {
+      "name": "resolve_domain_knowledge_paths",
+      "signature": "resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir=None)",
+      "pre_condition": "paths is a list of string path entries; base_dir is a string path to an existing directory; fallback_base_dir, if provided, is a string path to an existing directory",
+      "post_condition": "Returns a list of absolute file paths as strings. Each input path is first resolved against base_dir to an absolute path; if that path does not exist and fallback_base_dir is provided, the path is instead resolved against fallback_base_dir. Only paths that resolve to existing files are included in the result."
+    }
+  ]
+}

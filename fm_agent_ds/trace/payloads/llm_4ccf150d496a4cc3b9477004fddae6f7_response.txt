@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "../foo::func",
+  "offending_statements": "Line 5: path = path.lstrip(\"./\")",
+  "reason": "The specification requires removing only a leading './' prefix, but lstrip('./') removes all leading '.' and '/' characters, so '../foo::func' incorrectly becomes 'foo::func' instead of '..::foo::func'."
+}

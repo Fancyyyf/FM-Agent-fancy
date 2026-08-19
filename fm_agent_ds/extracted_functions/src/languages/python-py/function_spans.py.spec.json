@@ -1,0 +1,5 @@
+{
+  "signature": "function_spans(proj_dir: str, filepath: str)",
+  "pre_condition": "proj_dir is a directory path; filepath is a path to a Python source file contained within proj_dir",
+  "post_condition": "Returns a list of (name, start_idx, end_idx) tuples, one per top-level function defined in filepath, where start_idx and end_idx are 0-indexed inclusive line numbers bounding each function's body, if a CodeGraph index exists for proj_dir and covers the file. Returns None if CodeGraph is unavailable or the file is not indexed, signalling the caller to fall back to regex-based extraction"
+}

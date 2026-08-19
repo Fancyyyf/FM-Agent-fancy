@@ -1,0 +1,5 @@
+{
+  "signature": "_is_metadata_sidecar(file_path) -> bool",
+  "pre_condition": "file_path is a string representing a filename with no directory component.",
+  "post_condition": "Returns True when file_path ends with a filename suffix belonging to the set of function-metadata sidecar suffixes; returns False when file_path ends with any other suffix."
+}

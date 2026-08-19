@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "old_commit_id='abc123', rel_path='src/main.py', lang_key='python', ext='py', and the disk of the temporary directory is full when tmp.write(text) executes.",
+  "offending_statements": "Line 4:     with tempfile.NamedTemporaryFile(\"w\", suffix=f\".{ext}\", delete=False) as tmp:\nLine 5:         tmp.write(text)\nLine 6:         tmp_path = tmp.name",
+  "reason": "The specification requires that any temporary file created on disk during extraction is deleted before the function returns, regardless of whether extraction succeeds or raises an exception. In the code, if `tmp.write(text)` raises an exception (e.g., due to a full disk), the file is created but `tmp_path` is not assigned, so the `finally` block never executes, and the temporary file is left on disk."
+}

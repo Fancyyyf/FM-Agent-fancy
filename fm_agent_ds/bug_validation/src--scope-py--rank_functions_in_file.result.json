@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--rank_functions_in_file",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/rank_functions_in_file.py",
+  "function_name": "rank_functions_in_file",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--rank_functions_in_file.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--rank_functions_in_file.md",
+  "probe_stdout": "──────────────────────────────────────────────────────────────────────\\nFILE: /tmp/opencode/bug_validation_fixtures/test_module.py  (3 unique functions)\\n  rank     score  name\\n  ----   -------  ----\\n     1     9.342  validate_input  (L10-14)  <<\\n     2     8.577  format_output  (L16-18)  <<\\n     3     6.908  process_data  (L3-8)\\n  → selected (heuristic): validate_input (9.342), format_output (8.577)\\nNOT CONFIRMED — rank_functions_in_file returned valid list of 2 dict(s) with correct keys, scores sorted descending. The function correctly returns result (line 798 of src/scope.py).",
+  "trigger_summary": "Call rank_functions_in_file with a Python file containing functions and a matching issue with signals — the function correctly returns a list of dicts with all required keys rather than falling through to None."
+}

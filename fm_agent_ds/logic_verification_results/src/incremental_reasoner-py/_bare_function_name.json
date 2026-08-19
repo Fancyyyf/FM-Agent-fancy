@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_bare_function_name.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns the rightmost segment of identifier after splitting on any occurrence of '::' or '.', with any suffix matching the pattern _<digits> (underscore followed by one or more decimal digits at the end of that segment) removed. When identifier contains no '::' or '.' separators, the entire identifier is returned with any trailing _<digits> suffix stripped. The returned string is non-empty (empty-return is possible only when the input contains no characters beyond the stripped suffix).",
+    "actual_behavior": "The function returns a string formed by first splitting `identifier` with the regular expression `::|\\.` and taking the last element, then removing any trailing substring that matches the pattern `_\\d+$` (an underscore followed by one or more digits). Formally, if `parts = re.split(r'::|\\.', identifier)`, then the returned value equals `re.sub(r'_\\d+$', '', parts[-1])`.",
+    "code_evidence": "Line 3",
+    "trigger_condition": "The function returns an empty string for '::' because re.split yields [ '', '' ] and the last element is empty. This violates the specification, which states the returned string must be non-empty; empty is only permissible when the input contains no characters beyond the stripped suffix, but '::' includes non-stripped characters."
+  }
+}

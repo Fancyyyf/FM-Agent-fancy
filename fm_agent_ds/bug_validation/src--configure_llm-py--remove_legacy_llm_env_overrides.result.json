@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--remove_legacy_llm_env_overrides",
+  "source_file": "src/configure_llm.py",
+  "function_name": "remove_legacy_llm_env_overrides",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--remove_legacy_llm_env_overrides.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--remove_legacy_llm_env_overrides.md",
+  "probe_stdout": "CONFIRMED — actual: ('export LLM_MODEL\\n', ()) | expected: ('', ('LLM_MODEL',))",
+  "trigger_summary": "A line like 'export LLM_MODEL' without '=' has LLM_MODEL as the variable name after removing the export prefix, but env_key becomes empty string because no '=' separator exists, so the line is kept and the key is not recorded as removed."
+}

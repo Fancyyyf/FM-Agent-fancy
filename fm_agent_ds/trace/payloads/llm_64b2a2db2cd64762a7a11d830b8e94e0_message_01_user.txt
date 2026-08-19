@@ -1,0 +1,47 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None):
+Line 2:     """Collect markdown paths from CLI values plus FM_AGENT_DOMAIN_KNOWLEDGE."""
+Line 3:     paths = []
+Line 4:     paths.extend(_split_env_paths(settings.runtime.domain_knowledge_paths))
+Line 5:     paths.extend(_flatten_paths(cli_paths))
+Line 6:     return resolve_domain_knowledge_paths(
+Line 7:         paths,
+Line 8:         base_dir=base_dir,
+Line 9:         fallback_base_dir=fallback_base_dir,
+Line 10:     )
+```
+
+Condition A (what the code actually does):
+The function returns a list of absolute file paths. The list is built by first concatenating two sequences of path strings: (1) the result of splitting the string `settings.runtime.domain_knowledge_paths` on the system path separator (`os.pathsep`), with empty segments discarded; (2) the result of recursively flattening `cli_paths` into a flat list of strings. For each path string `s` in this concatenated list, in order, the function tries to resolve it to an existing file: it forms `candidate1 = os.path.join(base_dir, s)` and computes its absolute path. If `candidate1` exists as a file, its absolute path is added to the result. If `candidate1` does not exist and `fallback_base_dir` is not None, it forms `candidate2 = os.path.join(fallback_base_dir, s)` and computes its absolute path. If `candidate2` exists as a file, its absolute path is added to the result. Otherwise, `s` contributes nothing. The final list contains exactly the absolute paths of those candidates that exist as files, preserving the relative order of the input path strings. Formally:
+
+Let `env_paths = _split_env_paths(settings.runtime.domain_knowledge_paths)` (a list of strings).
+Let `cli_flat = _flatten_paths(cli_paths)` (a flat list of all string elements from `cli_paths`).
+Let `combined = env_paths ++ cli_flat` (list concatenation).
+Define `resolve_path(s)` as:
+  - Let `p1 = os.path.abspath(os.path.join(base_dir, s))`.
+  - If `os.path.isfile(p1)`, return `p1`.
+  - Else if `fallback_base_dir is not None`:
+      Let `p2 = os.path.abspath(os.path.join(fallback_base_dir, s))`.
+      If `os.path.isfile(p2)`, return `p2`.
+  - Otherwise, return `None`.
+Then the returned value is `[resolve_path(s) for s in combined if resolve_path(s) is not None]`, where the generator respects the order of `combined`. No side effects occur on the input arguments or global state. The pre-conditions for `_split_env_paths` and `_flatten_paths` must hold, and `base_dir` and `fallback_base_dir` (if provided) are existing directories.
+
+Condition B (what the specification requires):
+Returns a list of absolute file paths as strings. The result consists of all paths from the FM_AGENT_DOMAIN_KNOWLEDGE environment variable split by the system path separator, merged with all paths from cli_paths (flattened if nested). Each returned path is an absolute path on the filesystem, resolved against base_dir. When a path does not exist under base_dir and fallback_base_dir is provided, it is resolved against fallback_base_dir instead. Only paths that resolve to existing files are included.
+
+Additional context:
+_split_env_paths(env_value)
+Pre-condition: env_value is a string containing zero or more paths separated by the system path separator
+Post-condition: Returns a list of individual path strings obtained by splitting env_value on the system path separator, with empty segments excluded
+
+_flatten_paths(cli_paths)
+Pre-condition: cli_paths is an iterable that may contain strings and/or nested iterables of strings
+Post-condition: Returns a flat list of all string elements from cli_paths, with any nested iterables recursively flattened
+
+resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir=None)
+Pre-condition: paths is a list of string path entries; base_dir is a string path to an existing directory; fallback_base_dir, if provided, is a string path to an existing directory
+Post-condition: Returns a list of absolute file paths as strings. Each input path is first resolved against base_dir to an absolute path; if that path does not exist and fallback_base_dir is provided, the path is instead resolved against fallback_base_dir. Only paths that resolve to existing files are included in the result.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_LayeredSource.__init__",
+      "signature": "_LayeredSource.__init__(self, settings_cls, config_path)",
+      "pre_condition": "settings_cls is a Pydantic BaseSettings subclass with model fields defined; config_path is a string that may reference a non-existent file",
+      "post_condition": "Invoking __call__() on the instance returns a dict where each key is a model field name of settings_cls and each value is the value for that field resolved by merging TOML file contents with process environment variable overrides, falling back to the field's Pydantic default when no configuration source provides a value"
+    }
+  ]
+}

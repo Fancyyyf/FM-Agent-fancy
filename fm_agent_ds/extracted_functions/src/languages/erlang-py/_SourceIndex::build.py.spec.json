@@ -1,0 +1,5 @@
+{
+  "signature": "_SourceIndex.build(cls, source: str) -> _SourceIndex",
+  "pre_condition": "source is a non-empty string containing source code text.",
+  "post_condition": "Returns a _SourceIndex instance that indexes source by line boundaries. The returned instance contains the full source text verbatim (with all line-ending characters preserved) and a list of zero-indexed byte offsets where each line begins within source. The first offset is always 0. Successive offsets increase monotonically — each offset equals the sum of byte lengths of all preceding lines (including their line-ending characters). The number of offsets equals the number of newline-delimited lines in source. The returned instance enables callers to map any valid line index and character position to the corresponding byte offset within source, and to extract contiguous substrings spanning an inclusive start byte offset to an exclusive end byte offset."
+}

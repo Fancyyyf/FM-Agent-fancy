@@ -1,0 +1,5 @@
+{
+  "signature": "ElpClient.__init__(self, proj_dir: str) -> None",
+  "pre_condition": "proj_dir is a string representing an accessible project directory path. self is an ElpClient instance that has not been previously initialized.",
+  "post_condition": "self.proj_dir holds the resolved absolute path of proj_dir. self.root_uri holds a valid file:// URI string for the directory at self.proj_dir. self.timeout is a positive numeric value representing the maximum wait duration in seconds for ELP communication. The instance is in a state where subsequent method invocations that depend on the project directory, root URI, or timeout will operate on the values set by this initialization."
+}

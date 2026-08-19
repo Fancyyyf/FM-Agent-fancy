@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_collect_calls",
+      "signature": "_collect_calls(node: ast.AST) -> list[str]",
+      "pre_condition": "node is an AST node representing a function body subtree.",
+      "post_condition": "Returns a list of string function names that are called (directly or through attribute access) within the subtree rooted at node. Each element is the syntactic name appearing at the call site."
+    },
+    {
+      "name": "_collect_func_idents",
+      "signature": "_collect_func_idents(node: ast.FunctionDef | ast.AsyncFunctionDef, source_lines: list[str]) -> tuple[set[str], set[str], set[str]]",
+      "pre_condition": "node is a function definition AST node with a complete body. source_lines is the full file content as a list of strings, where line N corresponds to index N-1.",
+      "post_condition": "Returns a triple (idents, body_words, exc_types). idents is the set of lowercase identifier strings that appear as standalone names (Load or Store context) anywhere in the function body. body_words is the set of lowercase alphabetic word tokens extracted from the text of every line spanned by the function body. exc_types is the set of lowercase exception class names referenced in raise statements or except clauses within the function body."
+    },
+    {
+      "name": "_extract_classes",
+      "signature": "_extract_classes(tree: ast.Module, source_lines: list[str]) -> list[dict]",
+      "pre_condition": "tree is a valid AST module node produced by ast.parse. source_lines is the full file content as a list of strings where line N corresponds to index N-1.",
+      "post_condition": "Returns a list of dicts, one per top-level class definition found in the module. Each dict contains at minimum: 'name' (string, the class identifier), 'docstring' (string, the class docstring or empty string), and 'method_linenos' (list of int start line numbers of methods defined within the class). Returns an empty list when no top-level classes exist."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _extracted_func_dir(extracted_base, src_rel):
+Line 2:     """
+Line 3:     Map a source file (relative path, phases.json convention) to the directory holding its
+Line 4:     extracted-function files.
+Line 5:     Mirrors the `zzz.ext -> zzz-ext` derivation used by run_extraction and
+Line 6:     _collect_phase_files: source file <src_dir>/<base>.<ext> is extracted to
+Line 7:     <extracted_base>/<src_dir>/<base>-<ext>/, with one file per function named
+Line 8:     <func_name>.<ext>.
+Line 9:     """
+Line 10:     src_dir = os.path.dirname(src_rel)
+Line 11:     src_base = os.path.basename(src_rel)
+Line 12:     last_dot = src_base.rfind(".")
+Line 13:     if last_dot > 0:
+Line 14:         dir_name = src_base[:last_dot] + "-" + src_base[last_dot + 1:]
+Line 15:     else:
+Line 16:         dir_name = src_base
+Line 17:     if src_dir:
+Line 18:         return os.path.join(extracted_base, src_dir, dir_name)
+Line 19:     return os.path.join(extracted_base, dir_name)
+```
+
+Condition A (what the code actually does):
+The function returns a normalized path string that represents a directory. Let src_dir = os.path.dirname(src_rel) and src_base = os.path.basename(src_rel). Let k = src_base.rfind('.'). If k > 0 then new_base = src_base[:k] + '-' + src_base[k+1:]; else new_base = src_base. If src_dir is non-empty, the result is os.path.join(extracted_base, src_dir, new_base); otherwise, it is os.path.join(extracted_base, new_base). The returned path follows the naming convention: a source file at `<src_dir>/<stem>.<ext>` is mapped to the directory `<extracted_base>/<src_dir>/<stem>-<ext>/`. Formal logic: (k = rfind(src_base, '.')) ∧ (k > 0 → dir_name = src_base[0..k-1] + '-' + src_base[k+1..]) ∧ (k ≤ 0 → dir_name = src_base) ∧ (src_dir ≠ '' → result = join(extracted_base, src_dir, dir_name)) ∧ (src_dir = '' → result = join(extracted_base, dir_name)).
+
+Condition B (what the specification requires):
+Returns a directory path under extracted_base where extracted function files for the source file identified by src_rel are placed. The path is formed by joining extracted_base with the directory components of src_rel, then appending a directory name derived from the basename of src_rel: when the basename contains a '.' after the first character, the directory name replaces that last '.' with '-'; otherwise the directory name is the basename unchanged. The returned string preserves the directory hierarchy of src_rel relative to the project root.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

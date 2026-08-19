@@ -12,183 +12,281 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-Returns (True, None) when the configured version, after stripping a leading 'v' prefix and surrounding whitespace, is empty. Returns (True, None) when the configured version is non-empty and the codegraph binary located within the configured bin_dir reports a version string that, after stripping surrounding whitespace, exactly equals the configured version (comparing after stripping any leading 'v' from the configured version). Returns (False, error_message) when the configured version is non-empty and any of the following hold: the codegraph binary cannot be invoked (not found, not executable, or a subprocess-level error occurs), the binary produces empty or whitespace-only output, or the binary's reported version differs from the configured version. The error_message is a non-empty, human-readable string. The function does not modify config, the filesystem, or any external state.
+Returns a pair (ok, msg) as a non-blocking check. If the pinned version carries no substantive content after whitespace and the leading version-prefix character are disregarded, returns (True, None)  there is nothing to verify. Otherwise ok is True iff the version string reported by the locally installed codegraph binary equals the pinned version, where the comparison disregards whitespace and an insignificant leading version-prefix character on either side of the comparison; in that case msg is None. ok is False whenever the binary cannot produce a version report  because it is absent or not executable, or because the version query fails to complete within a bounded timeout  and msg is then a non-empty diagnostic string stating that the pinned codegraph build is not installed and where it is expected. ok is also False when the reported version differs from the pinned version, and msg then names both the installed version and the pinned version. The function never raises as a result of a missing or failing binary probe and performs no state modifications.
 
 ---
 
 ### Actual Behavior
 
-The function returns a tuple (ok, msg) where ok is a boolean and msg is either a string or None. Let want = config.settings.codegraph.version.strip(); if want starts with 'v' then want = want[1:]. If want is empty, the function returns (True, None) without further action. Otherwise, let cmd = _codegraph_cmd() and bin = os.path.expanduser(config.settings.codegraph.bin_dir). The function attempts to run subprocess.run([cmd, '--version'], capture_output=True, text=True, timeout=10). If the call raises OSError or subprocess.SubprocessError, let got = ''; otherwise let got = the stdout of the process stripped. If got is empty, the function returns (False, f'codegraph (pinned v{want}) is not installed at {bin}  run ./install.sh (C/C++ extraction falls back to the regex extractor otherwise).'). Else if got != want, the function returns (False, f'codegraph {got} is installed but v{want} is pinned in fm-agent.toml  re-run ./install.sh to install the pinned build.'). Else (got == want), it returns (True, None). No other side effects occur. If config.settings.codegraph.version is not a string or missing, an unhandled exception may propagate.
+The function _check_codegraph_version returns a 2-tuple (ok, msg) where ok is a bool and msg is either None or a diagnostic string. Exactly one of the following holds:
+
+1. (Version not pinned) If config.settings.codegraph.version.strip().removeprefix('v') evaluates to the empty string, the function returns (True, None) immediately without invoking any subprocess.
+
+2. (Codegraph not installed / unreachable) If the stripped-and-prefix-removed pinned version string is non-empty and either (a) executing [_codegraph_cmd(), '--version'] raises OSError or subprocess.SubprocessError, or (b) the captured stdout (stripped) is the empty string, the function returns (False, m) where m is a string of the form "codegraph (pinned v{want}) is not installed at {bin_dir}  run ./install.sh (C/C++ extraction falls back to the regex extractor otherwise)." with want being the cleaned version and bin_dir being os.path.expanduser(config.settings.codegraph.bin_dir).
+
+3. (Version mismatch) If the subprocess succeeds and its stripped stdout (got) is non-empty but got != want, the function returns (False, m) where m is a string of the form "codegraph {got} is installed but v{want} is pinned in fm-agent.toml  re-run ./install.sh to install the pinned build."
+
+4. (Version matches) If the subprocess succeeds, its stripped stdout is non-empty, and it equals want, the function returns (True, None).
+
+Formally: let want  config.settings.codegraph.version.strip().removeprefix('v'), bin_dir  os.path.expanduser(config.settings.codegraph.bin_dir). Then:
+  (want = '')  return (True, None)
+  (want  ''  (got = ''  subprocess_error))  return (False, not_installed_msg(want, bin_dir))
+  (want  ''  got  ''  got  want)  return (False, mismatch_msg(got, want))
+  (want  ''  got  ''  got = want)  return (True, None)
+
+The function is non-blocking: it never raises an exception to the caller for version-check failures; all subprocess errors (OSError, subprocess.SubprocessError) are caught internally. The subprocess invocation is bounded by a 10-second timeout. No mutation of config or global state occurs. The local imports of subprocess and _codegraph_cmd are scoped to this call.
 
 ---
 
 ## Code Evidence
 
-Line 11: cmd = _codegraph_cmd()  does not ensure the command references the binary inside the configured bin_dir. Line 14: [cmd, "--version"]  runs the binary without verifying its location against the bin_dir.
+Line 15: got = subprocess.run([cmd, "--version"], capture_output=True, text=True, timeout=10).stdout.strip()
+Line 24: if got != want:
 
 ---
 
 ## Trigger Condition
 
-The specification requires checking the codegraph binary located within the configured bin_dir. The code does not enforce that the executed binary is from that directory; it relies on whatever command _codegraph_cmd() returns, which may be a binary elsewhere on PATH. This allows a True return even when the binary in bin_dir is missing or broken, violating the condition that True must come from the binary in the specified bin_dir.
+The specification requires that the version comparison disregards an insignificant leading version-prefix character on EITHER side of the comparison. The code applies .removeprefix("v") only to the pinned version (want, Line 8) but not to the reported version (got, Line 15). Consequently, when the binary reports a version string with a leading 'v' (e.g., "v1.2.3") and the pinned version is "v1.2.3" (normalized to "1.2.3"), the code incorrectly reports a mismatch instead of recognizing them as equal. The fix would be to also apply .removeprefix("v") (or equivalent normalization) to got before the comparison on Line 24.
 
 ---
 
 ## How to trigger the bug
 
-`_codegraph_cmd()` at `src/languages/codegraph.py:474` falls back to bare `"codegraph"` (resolved from PATH) when `os.access(bin_dir/codegraph, os.X_OK)` is False — i.e., when the pinned binary in the configured `bin_dir` is missing or not executable. `_check_codegraph_version` then runs `subprocess.run(["codegraph", "--version"], ...)` which picks up whatever codegraph binary exists on PATH, without verifying that it came from the configured `bin_dir`. If a codegraph binary with the matching version happens to be on PATH (e.g., a system-installed one), the function returns `(True, None)` even though the binary in `bin_dir` is absent, violating the specification which requires `True` only when the binary **in the configured bin_dir** reports the pinned version.
+Pin the codegraph version in the config with a leading `v` (the normal form,
+e.g. `v1.2.3`) and have the installed codegraph binary report its version with
+a leading `v` as well (`codegraph --version` prints `v1.2.3`).
+`_check_codegraph_version` normalizes only the pinned version
+(`want = version.strip().removeprefix("v")` -> `"1.2.3"`) but leaves the
+reported version untouched (`got` -> `"v1.2.3"`), so the strict comparison
+`got != want` at `src/env_check.py:82` fires and the check returns
+`(False, "codegraph v1.2.3 is installed but v1.2.3 is pinned in fm-agent.toml — re-run ./install.sh to install the pinned build.")`.
+The specification requires the comparison to disregard an insignificant leading
+version-prefix character on either side, so the versions are equal and the
+check must return `(True, None)`.
+
+The probe exercises this through the same public entry point `main.py` uses
+(`from src.env_check import run as env_check_run; env_check_run(proj_dir, config)`).
+With `backend = "codex-cli"` that public pre-flight runs only the codegraph
+version check, and a fake `codegraph` binary living in a fresh temporary
+directory replies `v1.2.3` to `--version`. No FM-Agent workflow is started and
+no active-repo workspace is touched.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `config.settings.codegraph.version` | `"v0.1.0"` |
-| `config.settings.codegraph.bin_dir` | `/tmp/bugprobe_.../empty_bin` (empty — no codegraph binary inside) |
-| PATH (environment) | Includes a directory with a fake `codegraph` that outputs `"0.1.0"` |
+| `config.settings.codegraph.version` (pinned) | `v1.2.3` |
+| `config.settings.codegraph.bin_dir` | `<probe temp dir>/bin` |
+| `codegraph --version` output (fake binary) | `v1.2.3` |
+| LLM backend (`fm-agent.toml [llm].backend`) | `codex-cli` (isolates the codegraph check) |
 
 ### Expected (spec-correct) Output
 
-`(False, error_message)` — because the codegraph binary in the configured `bin_dir` does not exist / cannot be invoked.
+`(True, None)` — versions are equal once the leading `v` is disregarded on
+either side; the pre-flight passes with no warning.
 
 ### Actual (buggy) Output
 
-`(True, None)` — because `_codegraph_cmd()` falls back to bare `"codegraph"`, which resolves to the matching-version binary on PATH.
+`(False, "codegraph v1.2.3 is installed but v1.2.3 is pinned in fm-agent.toml — re-run ./install.sh to install the pinned build.")`
+— the pre-flight logs a false mismatch warning for the correctly pinned build.
 
 ### How to Reproduce
-
-Step-by-step instructions to trigger the bug manually:
 
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
 ```python
-import os
-import tempfile
+# Run from the repo root with stdin not attached to a terminal (< /dev/null).
+# Fixtures (fake binary + isolated toml) live in a fresh temp dir created here.
+import logging, os, subprocess, sys, tempfile
 
-# Create an empty directory for bin_dir
-tmp = tempfile.mkdtemp()
-empty_bin = os.path.join(tmp, "empty_bin")
-os.makedirs(empty_bin)
+tmp = tempfile.mkdtemp(prefix="repro_cgver_")
+bin_dir, proj = os.path.join(tmp, "bin"), os.path.join(tmp, "project")
+os.makedirs(bin_dir); os.makedirs(proj)
+fake = os.path.join(bin_dir, "codegraph")
+open(fake, "w").write("#!/bin/sh\nprintf 'v1.2.3\n'\n")
+os.chmod(fake, 0o755)
+open(os.path.join(tmp, "fm-agent.toml"), "w").write(
+    '[llm]\nbackend = "codex-cli"\n[codegraph]\nversion = "v1.2.3"\nbin_dir = "%s"\n' % bin_dir)
 
-# Create a fake codegraph on PATH that outputs "0.1.0"
-fake_bin = os.path.join(tmp, "fake_bin")
-os.makedirs(fake_bin)
-with open(os.path.join(fake_bin, "codegraph"), "w") as f:
-    f.write("#!/bin/sh\necho '0.1.0'\n")
-os.chmod(os.path.join(fake_bin, "codegraph"), 0o755)
-os.environ["PATH"] = fake_bin + os.pathsep + os.environ["PATH"]
+os.environ["FM_AGENT_CONFIG"] = os.path.join(tmp, "fm-agent.toml")
+os.environ["CODEGRAPH_VERSION"] = "v1.2.3"
+os.environ["CODEGRAPH_BIN_DIR"] = bin_dir
+os.environ["FM_AGENT_MODEL_BACKEND"] = "codex-cli"
 
-# Force _codegraph_cmd to return bare "codegraph" (simulating fallback)
-import src.languages.codegraph as cg
-orig = cg._codegraph_cmd
-cg._codegraph_cmd = lambda: "codegraph"
+import config
+from src.env_check import run as env_check_run  # same pre-flight entry as main.py
 
-class C:
-    class settings:
-        class codegraph:
-            version = "v0.1.0"
-            bin_dir = empty_bin
+captured = []
+h = logging.Handler(); h.emit = lambda r: captured.append(r.getMessage())
+logging.getLogger().addHandler(h)
 
-from src.env_check import _check_codegraph_version
-print(_check_codegraph_version(C()))
-# actual (buggy) output: (True, None)
-# expected (correct) output: (False, "...")
+env_check_run(proj, config)
+print([m for m in captured if "is installed but" in m])
+# actual (buggy) output: ['  [!] codegraph pinned build installed: codegraph v1.2.3 is installed but v1.2.3 is pinned in fm-agent.toml — re-run ./install.sh to install the pinned build.']
+# expected (correct) output: []  (no warning — versions match modulo the leading 'v')
 ```
 
 ---
 
 ## Probe Script
 
-```python
-"""
-Probe for bug: _check_codegraph_version returns True when bin_dir binary is
-missing but PATH has a matching codegraph version.
+```py
+#!/usr/bin/env python3
+"""Probe: src--env_check-py--_check_codegraph_version
 
-Spec requires True only when the binary IN BIN_DIR reports the right version.
-Bug: _codegraph_cmd() falls back to bare "codegraph" (PATH) when bin_dir
-binary is missing, and _check_codegraph_version doesn't verify the location.
+Spec claim: the pinned-version check in the environment pre-flight must compare
+versions while disregarding whitespace and an insignificant leading
+version-prefix character on EITHER side; equal versions (modulo a leading 'v')
+must yield ok=True, msg=None (no warning).
+
+Suspected bug: src/env_check.py applies .removeprefix("v") only to the pinned
+version (`want`, line 64) but not to the binary's reported version (`got`,
+lines 70-72), then compares strictly (line 82). A binary that reports its
+version with a leading 'v' (e.g. "v1.2.3") against a pinned "v1.2.3"
+(normalized to "1.2.3") is therefore falsely reported as a mismatch.
+
+Exercise path (public entry point, FM-Agent self-validation guard compliant):
+main.py:441 invokes `from src.env_check import run as env_check_run;
+env_check_run(proj_dir, config)` as the pre-flight check. With the CLI model
+backend selected, that public function runs ONLY the codegraph version check
+(no LLM key check, no bunx/OpenCode subprocess) — the smallest public unit
+that reaches the buggy comparison. No FM-Agent pipeline/workflow is started;
+every fixture lives under a fresh probe-owned temporary directory.
+
+Expected (spec-correct): check passes silently -> env_check.run returns True
+with no warning logged.
+Actual (buggy): a warning "codegraph v1.2.3 is installed but v1.2.3 is pinned
+in fm-agent.toml ..." is logged.
 """
 
-import sys
+import logging
 import os
+import subprocess
+import sys
 import tempfile
-import shutil
 
-# Ensure the repo root is on sys.path so "src" is importable
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
+PINNED = "v1.2.3"    # pinned version, written WITH leading 'v' (normal case)
+REPORTED = "v1.2.3"  # what the installed binary reports: same version, same prefix
 
-# ── 1. Create a temporary workspace ──────────────────────────────────────────
-tmpdir = tempfile.mkdtemp(prefix="bugprobe_")
+# Repo root: this probe lives at <repo>/fm_agent/bug_validation/
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
-# ── 2. Create a fake codegraph binary on PATH that outputs "0.1.0" ──────────
-fake_bin_dir = os.path.join(tmpdir, "fake_bin")
-os.makedirs(fake_bin_dir, exist_ok=True)
-fake_cg_path = os.path.join(fake_bin_dir, "codegraph")
-with open(fake_cg_path, "w") as f:
-    f.write("#!/bin/sh\necho '0.1.0'\n")
-os.chmod(fake_cg_path, 0o755)
-os.environ["PATH"] = fake_bin_dir + os.pathsep + os.environ.get("PATH", "")
+# ---- fresh probe-owned workspace (never the active repo / its fm_agent dir) ----
+WORK = tempfile.mkdtemp(prefix="probe_cgver_")
+BIN_DIR = os.path.join(WORK, "bin")
+PROJ_DIR = os.path.join(WORK, "project")
+TOML_PATH = os.path.join(WORK, "fm-agent.toml")
+FAKE_BIN = os.path.join(BIN_DIR, "codegraph")
 
-# ── 3. Create an EMPTY bin_dir (where codegraph should be per config) ───────
-empty_bin_dir = os.path.join(tmpdir, "empty_bin")
-os.makedirs(empty_bin_dir, exist_ok=True)
+os.makedirs(BIN_DIR, exist_ok=True)
+os.makedirs(PROJ_DIR, exist_ok=True)
 
-# ── 4. Build a mock config matching the fake codegraph version ──────────────
-class FakeCodegraphSettings:
-    version = "v0.1.0"       # pinned version (matching what fake codegraph outputs)
-    bin_dir = empty_bin_dir   # THIS dir has NO codegraph binary
+# Fake codegraph binary: answers --version with a leading-'v' version string.
+with open(FAKE_BIN, "w") as f:
+    f.write("#!/bin/sh\nprintf '%s\\n' '" + REPORTED + "'\n")
+os.chmod(FAKE_BIN, 0o755)
 
-class FakeSettings:
-    codegraph = FakeCodegraphSettings()
+# Isolated config file so the probe never reads the active repo's fm-agent.toml.
+with open(TOML_PATH, "w") as f:
+    f.write(
+        '[llm]\n'
+        'backend = "codex-cli"\n'
+        '\n'
+        '[codegraph]\n'
+        'version = "%s"\n'
+        'bin_dir = "%s"\n' % (PINNED, BIN_DIR)
+    )
 
-class FakeConfig:
-    settings = FakeSettings()
-    LLM_API_KEY = "sk-test-dummy-key"  # needed to avoid import-side effects
+# Overrides must be set BEFORE `import config` (settings are built at import).
+# Env vars have highest precedence; the isolated toml is set too (belt & braces).
+os.environ["FM_AGENT_CONFIG"] = TOML_PATH
+os.environ["CODEGRAPH_VERSION"] = PINNED
+os.environ["CODEGRAPH_BIN_DIR"] = BIN_DIR
+os.environ["FM_AGENT_MODEL_BACKEND"] = "codex-cli"
 
-# ── 5. Monkey-patch _codegraph_cmd to simulate the fallback-to-PATH case ────
-# When bin_dir/codegraph is missing, _codegraph_cmd() returns bare "codegraph",
-# which resolves from PATH.  We force that behavior.
-import src.languages.codegraph as cg_module
-_original_cg_cmd = cg_module._codegraph_cmd
-cg_module._codegraph_cmd = lambda: "codegraph"
+sys.path.insert(0, REPO_ROOT)
 
-# ── 6. Call the function under test ─────────────────────────────────────────
-from src.env_check import _check_codegraph_version
+captured = []
 
-exit_code = 0
-try:
-    ok, msg = _check_codegraph_version(FakeConfig())
 
-    # Per spec:  binary in bin_dir is missing → must return (False, error_msg)
-    # Per code:  PATH has matching version → returns (True, None) ← BUG
-    spec_expected_ok = False   # spec says "False when binary not in bin_dir"
+class _Capture(logging.Handler):
+    def emit(self, record):
+        try:
+            captured.append(record.getMessage())
+        except Exception:
+            pass
 
-    if ok == spec_expected_ok:
+
+def main():
+    root = logging.getLogger()
+    handler = _Capture(level=logging.WARNING)
+    root.addHandler(handler)
+    root.setLevel(logging.WARNING)
+
+    # Fixture sanity: the fake binary must report exactly REPORTED.
+    out = subprocess.run([FAKE_BIN, "--version"], capture_output=True, text=True, timeout=10)
+    if out.stdout.strip() != REPORTED:
+        print("ERROR: fixture sanity failed: fake binary reported %r" % out.stdout)
+        sys.exit(1)
+    print("[fixture] pinned=%r binary_reports=%r bin_dir=%s" % (PINNED, REPORTED, BIN_DIR))
+
+    import config
+    from src.env_check import run as env_check_run  # same entry used by main.py:440-441
+
+    if config.settings.codegraph.version != PINNED:
+        print("ERROR: config override not applied: version=%r" % config.settings.codegraph.version)
+        sys.exit(1)
+    if config.settings.codegraph.bin_dir != BIN_DIR:
+        print("ERROR: config override not applied: bin_dir=%r" % config.settings.codegraph.bin_dir)
+        sys.exit(1)
+
+    # Public pre-flight entry point. With backend=codex-cli it runs ONLY the
+    # codegraph pinned-build check; PROJ_DIR is probe-owned (work dir
+    # <PROJ_DIR>/fm_agent is created inside the probe's temp workspace).
+    proceeded = env_check_run(PROJ_DIR, config)
+
+    print("[probe] env_check.run returned %r; captured warnings: %r" % (proceeded, captured))
+
+    mismatch = [m for m in captured if "is installed but" in m]
+    not_installed = [m for m in captured if "is not installed" in m]
+
+    if not_installed:
+        # The check could not see the fixture at all (wiring problem), so no
+        # verdict about the comparison logic is possible.
+        print("ERROR: fixture not visible to the check: %r" % not_installed)
+        sys.exit(1)
+
+    if mismatch:
+        # Buggy path: same version modulo leading 'v' was flagged as a mismatch.
         print(
-            f"NOT CONFIRMED — actual: ({ok}, {msg!r}) | expected: ({spec_expected_ok}, error_message)"
+            "CONFIRMED — env check reported a version mismatch for identical "
+            "versions modulo the leading 'v' prefix | actual warnings: %r | "
+            "expected per spec: no warning, check passes (leading 'v' must be "
+            "disregarded on either side)" % mismatch
         )
     else:
         print(
-            f"CONFIRMED — actual: ({ok}, {msg!r}) | expected: ({spec_expected_ok}, error_message); "
-            f"bug: True returned despite codegraph missing in bin_dir '{empty_bin_dir}'"
+            "NOT CONFIRMED — the check passed silently (no mismatch warning), "
+            "matching the specification"
         )
-except Exception as e:
-    print(f"ERROR: {e}")
-    import traceback
-    traceback.print_exc()
-    exit_code = 1
-finally:
-    # ── 7. Restore original state ───────────────────────────────────────────
-    cg_module._codegraph_cmd = _original_cg_cmd
-    shutil.rmtree(tmpdir, ignore_errors=True)
 
-sys.exit(exit_code)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:
+        print("ERROR: %s: %s" % (type(exc).__name__, exc))
+        sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — actual: (True, None) | expected: (False, error_message); bug: True returned despite codegraph missing in bin_dir '/tmp/bugprobe_7p3r4_7c/empty_bin'
+[fixture] pinned='v1.2.3' binary_reports='v1.2.3' bin_dir=/tmp/probe_cgver__o4m3tj6/bin
+[probe] env_check.run returned True; captured warnings: ['', '==============================================================', '  FM-Agent environment check — potential issues found:', '==============================================================', '  [!] codegraph pinned build installed: codegraph v1.2.3 is installed but v1.2.3 is pinned in fm-agent.toml — re-run ./install.sh to install the pinned build.', '==============================================================', '', 'Non-interactive session — proceeding with warnings. Fix the issues above for best results.']
+CONFIRMED — env check reported a version mismatch for identical versions modulo the leading 'v' prefix | actual warnings: ['  [!] codegraph pinned build installed: codegraph v1.2.3 is installed but v1.2.3 is pinned in fm-agent.toml — re-run ./install.sh to install the pinned build.'] | expected per spec: no warning, check passes (leading 'v' must be disregarded on either side)
 ```

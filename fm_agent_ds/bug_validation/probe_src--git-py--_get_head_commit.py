@@ -1,0 +1,57 @@
+"""Probe script for bug: _get_head_commit does not catch FileNotFoundError when
+git binary is not found, causing exception propagation instead of returning None
+as the specification requires."""
+
+import sys
+from unittest.mock import patch
+
+
+def main():
+    try:
+        from src.git import _get_head_commit
+    except ImportError as e:
+        print(f"ERROR: cannot import _get_head_commit: {e}")
+        sys.exit(1)
+
+    # Test the trigger condition: simulate git binary not found.
+    # subprocess.run raises FileNotFoundError (subclass of OSError) when the
+    # executable is not found. This is NOT caught by the current
+    # except subprocess.CalledProcessError handler, so the exception should
+    # propagate instead of returning None.
+    bug_confirmed = False
+    try:
+        with patch("src.git.subprocess.run",
+                   side_effect=FileNotFoundError("[Errno 2] No such file: 'git'")):
+            result = _get_head_commit("/tmp/nonexistent_repo_for_test")
+            # If we reach here, the exception was caught somehow (bug not confirmed)
+            expected = None
+            if result is not None:
+                bug_confirmed = True
+                print(f"CONFIRMED — actual: {result!r} | expected: {expected!r}")
+            else:
+                print(f"NOT CONFIRMED — returned None as expected (FileNotFoundError was handled)")
+    except FileNotFoundError:
+        # The bug is confirmed: FileNotFoundError propagated past the function
+        # instead of being caught and returning None per spec.
+        print("CONFIRMED — FileNotFoundError raised instead of returning None "
+              "(spec: 'returns None' for any git command failure)")
+        sys.exit(0)
+    except OSError:
+        # FileNotFoundError is a subclass of OSError. Catch OSError too in
+        # case FileNotFoundError gets re-wrapped.
+        print("CONFIRMED — OSError raised instead of returning None "
+              "(spec: 'returns None' for any git command failure)")
+        sys.exit(0)
+    except Exception as e:
+        print(f"ERROR: unexpected exception: {type(e).__name__}: {e}")
+        sys.exit(1)
+
+    if bug_confirmed:
+        sys.exit(0)
+    else:
+        print("NOT CONFIRMED — exception was caught, bug not reproducible")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

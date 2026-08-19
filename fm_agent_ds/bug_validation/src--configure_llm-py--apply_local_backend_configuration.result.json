@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--apply_local_backend_configuration",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/apply_local_backend_configuration.py",
+  "function_name": "apply_local_backend_configuration",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--apply_local_backend_configuration.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--apply_local_backend_configuration.md",
+  "probe_stdout": "CONFIRMED — spec requires ConfigWizardError for an unreadable toml file, but code raised PermissionError (uncaught): PermissionError: [Errno 13] Permission denied: '/tmp/tmpbiyujys_/project/fm-agent.toml'\n",
+  "trigger_summary": "When paths.toml_path points to an existing fm-agent.toml with no read permissions, _read_text_if_exists raises PermissionError that is not caught and wrapped as ConfigWizardError."
+}

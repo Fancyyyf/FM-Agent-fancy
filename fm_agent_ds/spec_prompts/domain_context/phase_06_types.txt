@@ -1,0 +1,319 @@
+# Phase 06 — Reasoning & Verification Engine
+
+## Core Types
+
+### Call Graph & Topdown Layers (`generate_topdown_layers.py`)
+
+**Call Graph:** `dict[str, list[str]]`
+Maps `caller_fqn_string → [callee_fqn_strings]` (sorted, deduplicated).
+Built from three sources:
+1. Static regex analysis of function bodies (call-site detection)
+2. CodeGraph SQLite index call edges
+3. Supplemental `CallEdge` records from `--extra-edge` JSON files
+
+**Topdown Layers:** ordered list of layer metadata, where each layer contains
+functions whose callees all belong to previous layers (or external/leaf functions).
+
+**Key Functions:**
+```python
+def _load_phases(proj_dir) → dict:
+    """Load phases.json from project root."""
+
+def _collect_phase_files(proj_dir, phase_data) → list[tuple]:
+    """For a phase, collect (file_path, module_name) for all extracted functions."""
+
+def _file_to_fqn(filepath, proj_dir) → str:
+    """Convert extracted function file path → FQN.
+    extracted_functions/src/core/util-cpp/doThing.cpp → src::core::util-cpp::doThing"""
+
+def _build_call_graph(file_paths, proj_dir, extra_edges=None) → dict:
+    """Build full call graph from extracted functions + supplemental edges.
+    Returns {caller_fqn: [callee_fqns]}."""
+
+def _detect_lang_from_ext(filepath) → str:
+    """Detect language key from file extension. Returns REGISTRY key or None."""
+
+def generate_topdown_layers(proj_dir, work_dir, extra_call_edges_path=None) → None:
+    """Generate layered dependency ordering and write layer metadata files."""
+```
+
+**Language Keyword Filtering (`_COMMON_EXTRA_KEYWORDS`):**
+A set of ~150 common library function names (C stdlib, Python builtins, Go/JS/Rust
+builtins) that are excluded from call-site detection to prevent spurious edges.
+
+### Scope Analysis (`scope.py`)
+
+**Function Ranking Result:**
+```python
+# Each function scored and ranked:
+{"file": str, "name": str, "lineno": int, "end_lineno": int,
+ "score": float, "reason": str}  # "reason" is "heuristic" or "llm"
+```
+
+**Signal Weights (multi-tier heuristic):**
+```python
+W_TRACEBACK        = 10.0  # "  in func_name" traceback patterns
+W_BACKTICK_NAME    =  5.0  # backtick/code-block identifiers in name
+W_BACKTICK_BODY    =  2.0  # backtick identifiers in body (weaker)
+W_DOTTED_REF       = 15.0  # Class.method explicit dotted references
+W_PLAIN_NAME       =  3.0  # CamelCase/snake_case identifiers in prose
+W_NAME_ALL_WORDS   =  1.5  # name parts ∩ intent all-words (prose nouns)
+W_FUZZY_NAME       =  1.4  # typo-tolerant match (SequenceMatcher ≥ 0.75, min len 5)
+W_EXCEPTION_MATCH  =  4.0  # exception type found in function body
+W_BODY_WORDS       =  1.0  # multiplied by overlap / √(body_lines)
+```
+
+**Call-Graph Propagation:**
+```python
+CALLEE_INHERIT = 0.30  # callee inherits 30% of each caller's score
+CALLER_INHERIT = 0.20  # caller inherits 20% of each callee's score
+```
+
+**Class-Scope Narrowing (Python only):**
+```python
+W_CLASS_NAME_MATCH   = 6.0   # per token overlap between class name and intent
+W_CLASS_DOC_MATCH    = 2.0   # per token overlap between docstring and intent
+CLASS_METHOD_INHERIT = 0.40  # fraction of class score passed to each method
+CLASS_BOOST_CAP      = 8.0   # hard cap on per-method class bonus
+```
+
+**LLM Re-ranking Triggers:**
+- File has ≥ `LLM_TRIGGER_FUNCS` (default 5) unique functions after dedup, OR
+- Top heuristic score < `LLM_CONFIDENCE_THRESHOLD` (default 8.0)
+
+**Key Functions:**
+```python
+def rank_functions_in_file(file_path, issue, proj_dir=None) → list[dict]:
+    """Score and rank functions within a scoped file against an intent.
+    Returns list of {file, name, lineno, end_lineno, score, reason} dicts,
+    sorted by descending score, capped at TOP_K."""
+
+def _parse_issue_signals(issue_text: str) → dict:
+    """Parse intent text into signal dictionaries:
+    traceback_funcs, backtick_idents, backtick_bodies,
+    dotted_refs, plain_names, exn_types."""
+
+def _extract_backtick_idents(issue_text: str) → set[str]:
+    """Extract identifiers from backticks and code blocks, filtering keywords."""
+```
+
+### Reasoner (`reasoner.py`)
+
+**Block Splitting:**
+```python
+def _split_into_blocks(func: str) → list[str]:
+    """Split function body into GRANULARITY-sized blocks.
+    Last block gets remainder (when remaining ≤ GRANULARITY*2)."""
+
+def _split_into_blocks_braced(func: str, language: str) → list[str]:
+    """Brace-depth-aware block splitting for C-like languages.
+    Uses _compute_brace_depth_per_line to find safe split points
+    where brace depth returns to entry depth.
+    Python falls back to _split_into_blocks directly."""
+```
+
+**Brace Depth:**
+```python
+def _compute_brace_depth_per_line(lines: list[str]) → list[int]:
+    """Compute brace depth after each line, skipping strings, char literals,
+    line comments (//), and block comments (/* */)."""
+```
+
+**Key Functions:**
+```python
+def reasoner(file_path, proj_dir, work_dir) → dict | None:
+    """Run Hoare-style block reasoning on one function.
+    1. Parse function code + spec/info sidecars
+    2. Split into brace-depth-aware blocks (GRANULARITY-sized)
+    3. Generate block post-conditions via LLM
+    4. Check if block post-conditions jointly imply function post-condition
+    5. Return verdict dict or None on error."""
+
+def _parse_spec_conditions(spec: dict) -> tuple[str, str]:
+    """Extract pre_condition, post_condition from spec dict."""
+
+def _sanitize_strings(text: str) -> str:
+    """Sanitize text for safe inclusion in prompts."""
+```
+
+### Verification (`verification.py`)
+
+**Streaming Reasoner:**
+```python
+def streaming_reasoner(input_dir, output_dir, file_list=None, proj_dir=None,
+                       work_dir=None, poll_interval=2, spec_procs=None,
+                       already_processed=None, resume=False,
+                       bug_validator_path=None) → None:
+    """Continuously poll input_dir for ready files, verify them concurrently.
+    - Uses ThreadPoolExecutor (MAX_WORKERS workers)
+    - Watches for .spec.json + .info.json readiness via is_file_ready()
+    - Runs _verify_single_file for each ready function
+    - Dispatches _validate_single_bug on MISMATCH detection
+    - Runs concurrently with spec generation (spec_procs)"""
+```
+
+**Bug Validation:**
+```python
+def _verify_single_file(file_path, proj_dir, work_dir) → dict | None:
+    """Run reasoner on one function. Returns verdict dict or None."""
+
+def _validate_single_bug(file_path, verdict, proj_dir, work_dir,
+                         bug_validator_path=None) → dict:
+    """Validate one MISMATCH finding.
+    Dispatches bug validation agent to build and run probe script.
+    Produces bug_validation/<bug_id>.md report."""
+
+def _generate_validation_summary(work_dir) -> dict:
+    """Produce aggregate bug_validation/summary.json."""
+```
+
+**Extension-to-Language Mapping (verification.py's own copy):**
+```python
+EXT_TO_LANG = {
+    ".rs": "Rust", ".c": "C", ".cpp": "C++", ".py": "Python",
+    ".erl": "Erlang", ".java": "Java", ".go": "Go",
+    ".js": "JavaScript", ".ts": "TypeScript", ".ets": "ArkTS",
+    ".cu": "CUDA", ".cs": "C#", ".kt": "Kotlin", ".swift": "Swift",
+    ".php": "PHP", ".rb": "Ruby", ".scala": "Scala", ".dart": "Dart",
+    ...
+}
+```
+
+### Spec Orchestrator (`spec_generation_and_verification.py`)
+
+```python
+def run_spec_generation_and_verification(proj_dir, work_dir, resume=False,
+                                         only_spec=False, bug_validator_path=None) → None:
+    """Orchestrate batch spec generation + streaming verification across all phases.
+    1. For each phase: generate topdown layers
+    2. For each layer: generate batch prompts, run spec batches concurrently
+    3. Run streaming_reasoner to verify functions as specs become available
+    4. Aggregate bug validation results
+    Uses ThreadPoolExecutor with MAX_WORKERS workers."""
+
+def _run_spec_generation_batch(proj_dir, work_dir, attempt, phase_num,
+                               layer_idx, batch_rel_dir, batch_info) → int:
+    """Run one LLM batch for spec generation. Returns subprocess exit code."""
+
+def _get_pending_batches(batches, proj_dir) → list:
+    """Return batches that still have unspecced functions."""
+```
+
+### Entry Pipeline (`entry_reasoning_pipeline.py`)
+
+```python
+def run_entry_pipeline(proj_dir, entry_func, end_funcs=None, work_dir=None,
+                       intent_file=None, domain_knowledge_files=None,
+                       bug_validator_path=None) → None:
+    """Entry-point-driven focused reasoning.
+    1. Extracts functions from proj_dir
+    2. Builds call graph, finds entry_func by FQN
+    3. Restricts call graph to chains entry_func → end_funcs
+    4. Surgically trims source files to selected functions
+    5. Runs run_pipeline on the trimmed copy
+    6. Restores original sources from snapshot."""
+
+def _restrict_to_chains(call_graph, entry_func, end_funcs) → dict:
+    """Keep only functions on paths from entry_func to some end_func.
+    Uses reverse BFS from end_funcs to find on-chain nodes."""
+
+def _select_functions_by_source(proj_dir, call_graph, keep_fqns) → dict:
+    """Map selected FQNs back to their source files."""
+```
+
+### Incremental Pipeline (`incremental_reasoner.py`)
+
+```python
+def run_incremental_pipeline(proj_dir, intent_file, work_dir,
+                             domain_knowledge_files=None, submodules=None,
+                             extra_call_edges_path=None,
+                             bug_validator_path=None) → int:
+    """Incremental reasoning for modified codebases.
+    1. Load intent file, diff against version.log commit
+    2. Identify changed functions and affected callers
+    3. Scope analysis: rank functions within changed files by relevance to intent
+    4. Re-extract only changed files
+    5. Regenerate specs only for changed scope
+    6. Re-verify impacted call chains
+    Returns exit code: 0 on success, 1 on failure."""
+
+def collect_relevent_function_scope(proj_dir, issue, changed_files) → list[dict]:
+    """Run scope analysis on changed files to identify intent-relevant functions."""
+```
+
+### Orchestration (`main.py`)
+
+```python
+def run_pipeline(proj_dir, resume=False, required_source_files=None,
+                 domain_knowledge_files=None, submodules=None,
+                 one_phase=False, extra_call_edges_path=None,
+                 only_spec=False, bug_validator_path=None,
+                 plugin_config=None) → None:
+    """Full 6-stage pipeline orchestration.
+    1. Env checks → configuration → git snapshot (if --isolate)
+    2. Phase plan generation → domain context generation
+    3. Function extraction (CodeGraph + regex)
+    4. File list collection → topdown layering
+    5. Spec generation (batched LLM) + streaming verification
+    6. Bug validation aggregation"""
+
+def _clean_previous_run(work_dir) → None:
+    """Remove fm_agent/ from previous pipeline run."""
+
+def _normalize_submodules(proj_dir, submodules) → list[str]:
+    """Validate and collapse --submodule paths."""
+```
+
+## Invariants
+
+1. **Topdown ordering**: A function MUST NOT be reasoned until ALL its callees
+   have been reasoned and their specs written to `.spec.json` sidecars.
+2. **Granularity constraint**: Block splitting respects `GRANULARITY` (default 40 lines)
+   as the base unit. Last 2×GRANULARITY lines go to final block to avoid tiny fragments.
+3. **Brace-depth safety**: For C-like languages, split points only at lines where
+   brace depth returns to entry depth — never split inside a compound statement.
+4. **is_file_ready gating**: Both `.spec.json` AND `.info.json` must be valid before
+   the streaming reasoner picks up a function — partial specs are silently skipped.
+5. **Thread safety**: The streaming reasoner uses `ThreadPoolExecutor` with configurable
+   `MAX_WORKERS` (default 10). All state mutation (processed set, submitted set) is
+   thread-safe through the executor's concurrent.futures guarantees.
+6. **Bug validation idempotency**: Each bug gets a unique `bug_id` and is written
+   to `bug_validation/<bug_id>.md` atomically. Duplicate validations of the same
+   function produce distinct bug IDs.
+7. **Incremental mode safety**: The incremental pipeline diffs against the recorded
+   commit in `version.log`. If that file doesn't exist, it falls back to a full run.
+   Changed callers are detected by scanning the full call graph for any edge ending
+   at a changed function.
+8. **Entry pipeline isolation**: Source files are trimmed in a detached worktree copy,
+   never in the original project directory. The original is restored from a git snapshot.
+
+## Entry Point Function Signatures
+
+```python
+def generate_topdown_layers(proj_dir, work_dir, extra_call_edges_path=None) → None:
+
+def reasoner(file_path, proj_dir, work_dir) → dict | None:
+
+def streaming_reasoner(input_dir, output_dir, file_list=None, proj_dir=None,
+                       work_dir=None, poll_interval=2, spec_procs=None,
+                       already_processed=None, resume=False,
+                       bug_validator_path=None) → None:
+
+def run_spec_generation_and_verification(proj_dir, work_dir, resume=False,
+                                         only_spec=False, bug_validator_path=None) → None:
+
+def run_entry_pipeline(proj_dir, entry_func, end_funcs=None, work_dir=None,
+                       intent_file=None, domain_knowledge_files=None,
+                       bug_validator_path=None) → None:
+
+def run_incremental_pipeline(proj_dir, intent_file, work_dir,
+                             domain_knowledge_files=None, submodules=None,
+                             extra_call_edges_path=None,
+                             bug_validator_path=None) → int:
+
+def run_pipeline(proj_dir, resume=False, required_source_files=None,
+                 domain_knowledge_files=None, submodules=None,
+                 one_phase=False, extra_call_edges_path=None,
+                 only_spec=False, bug_validator_path=None,
+                 plugin_config=None) → None:
+```

@@ -1,0 +1,5 @@
+{
+  "signature": "_is_path_function_label(label: str) -> bool",
+  "pre_condition": "label is a string.",
+  "post_condition": "Returns True when label contains the substring '::', the substring before the last '::' contains the character '/', and the final POSIX-path component of that substring (the portion following the last '/') contains the character '.'. Returns False otherwise."
+}

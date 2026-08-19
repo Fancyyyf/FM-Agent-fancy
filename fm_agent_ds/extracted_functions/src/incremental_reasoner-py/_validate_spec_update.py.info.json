@@ -1,0 +1,28 @@
+{
+  "callees": [
+    {
+      "name": "_is_valid_spec_json",
+      "signature": "_is_valid_spec_json(spec_dict)",
+      "pre_condition": "spec_dict is a dict that claims to conform to the .spec.json schema.",
+      "post_condition": "Returns True when spec_dict is a dict with exactly the keys 'signature', 'pre_condition', 'post_condition' and the value of each key is a string. Returns False when any key is missing or any value is not a string."
+    },
+    {
+      "name": "_is_valid_info_json",
+      "signature": "_is_valid_info_json(info_dict)",
+      "pre_condition": "info_dict is a dict that claims to conform to the .info.json schema.",
+      "post_condition": "Returns True when info_dict is a dict containing a 'callees' key. Returns False when the 'callees' key is missing."
+    },
+    {
+      "name": "_normalize_spec_dict",
+      "signature": "_normalize_spec_dict(spec_dict)",
+      "pre_condition": "spec_dict is a dict with 'signature', 'pre_condition', 'post_condition' keys whose values are all strings.",
+      "post_condition": "Returns a dict with strictly the three keys 'signature', 'pre_condition', 'post_condition' and their corresponding string values. Any keys present in spec_dict beyond those three are not present in the returned dict."
+    },
+    {
+      "name": "_normalize_info_dict",
+      "signature": "_normalize_info_dict(info_dict)",
+      "pre_condition": "info_dict is a dict containing a 'callees' key.",
+      "post_condition": "Returns a dict with strictly the key 'callees' and its corresponding value. Any keys present in info_dict beyond 'callees' are not present in the returned dict."
+    }
+  ]
+}

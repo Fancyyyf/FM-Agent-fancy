@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/_escape_component.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string where every character in value that is an ASCII alphanumeric (a-z, A-Z, 0-9) or underscore is preserved at its original relative position, and every other character is replaced by an underscore followed by its Unicode code point expressed as a zero-padded two-digit hexadecimal number. The output is deterministic: identical input strings always produce identical output strings. Every character in the output belongs to the set [a-zA-Z0-9_].",
+    "actual_behavior": "The function returns a string obtained by iterating over each character `c` in `value` (in order) and appending either `c` itself (if `c` is an ASCII character and either `c.isalnum()` is `True` or `c` equals `'_'`) or the string _ followed by the lowercase zeropadded (minimum width 2) hexadecimal representation of `ord(c)`. Formally: let `process(c) = c` if `c.isascii() and (c.isalnum() or c == '_')` else `'_' + f'{ord(c):02x}'`. Then the returned string equals `''.join(process(c) for c in value)`. The output is always nonempty because at least one character contributes at least one character.",
+    "code_evidence": "Line 7: result.append(f\"_{ord(char):02x}\")",
+    "trigger_condition": "For the input string '' (U+03C0), the code returns '_3c0', which uses three hexadecimal digits. The specification requires an underscore followed by a zero-padded two-digit hexadecimal number for every non-alphanumeric-underscore character. Because 0x3C0 needs three digits, the output violates the 'two-digit' requirement."
+  }
+}

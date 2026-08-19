@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "A function definition with a decorator containing a call, for example:\n\n@decorator()\ndef foo():\n    pass\n\nWhen parsed, the resulting ast.FunctionDef node has a decorator_list with an ast.Call whose func is ast.Name(id='decorator').",
+  "offending_statements": "Line 3: for n in ast.walk(node):",
+  "reason": "The specification requires collecting only call-site names that occur within the function body. The code walks the entire ast.FunctionDef/AsyncFunctionDef node, which includes decorators (decorator_list). Calls inside decorators are not part of the function body but are nevertheless collected, adding extra names to the returned set."
+}

@@ -1,0 +1,14 @@
+Programming language: Python
+
+Pre-condition:
+command is a non-None value that is either an AgentCommand instance or an iterable of strings.
+
+Code block:
+```python
+Line 1: def command_stdin(command):
+Line 2:     if isinstance(command, AgentCommand):
+Line 3:         return command.stdin
+Line 4:     return None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

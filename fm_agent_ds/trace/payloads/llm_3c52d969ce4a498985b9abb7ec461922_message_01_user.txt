@@ -1,0 +1,17 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _symbol_range(symbol: dict):
+Line 2:     if "range" in symbol:
+Line 3:         return symbol["range"]
+Line 4:     return (symbol.get("location") or {}).get("range")
+```
+
+Condition A (what the code actually does):
+The function returns the 'range' value from the LSP symbol response: if the top-level dictionary contains the key 'range', returns symbol['range']; otherwise, if the 'location' key is present and its value is a dictionary containing 'range' (as guaranteed by the precondition), returns symbol['location']['range']; otherwise returns None. The input dictionary is not modified. Formally, let result = _symbol_range(symbol). Then result = (symbol['range'] if 'range' in symbol else (symbol['location']['range'] if 'location' in symbol and 'range' in symbol['location'] else None)).
+
+Condition B (what the specification requires):
+Returns the 'range' sub-dict from symbol when symbol has a 'range' key. Otherwise, returns the 'range' sub-dict from symbol['location'] when symbol has a 'location' key that maps to a truthy dict containing a 'range' key. Returns None when neither path yields a range.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

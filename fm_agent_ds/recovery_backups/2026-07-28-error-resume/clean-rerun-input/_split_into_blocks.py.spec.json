@@ -1,0 +1,5 @@
+{
+  "signature": "_split_into_blocks(func: str) -> list[str]",
+  "pre_condition": "func is a non-empty string containing one or more lines of source code separated by newline characters.",
+  "post_condition": "Returns an ordered list of block strings. The concatenation of all blocks in returned order, joined by newline characters, reconstructs the original func with its leading and trailing whitespace stripped. When the total line count of func does not exceed GRANULARITY, the result is a single-element list containing func.strip(). When the total line count exceeds GRANULARITY, each block except possibly the last contains exactly GRANULARITY lines. When the number of remaining unassigned lines is at most 2 * GRANULARITY, all remaining lines form a single final block. No returned block is empty."
+}

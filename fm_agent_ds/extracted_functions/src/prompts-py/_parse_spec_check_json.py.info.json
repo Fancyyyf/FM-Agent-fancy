@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_load_spec_check_json",
+      "signature": "_load_spec_check_json(response) -> dict",
+      "pre_condition": "response is a string containing an LLM output that may include a JSON object.",
+      "post_condition": "Returns a dict containing the parsed JSON object from response. Raises json.JSONDecodeError when response does not contain valid JSON or the parsed result is not a JSON object."
+    }
+  ]
+}

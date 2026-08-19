@@ -1,0 +1,34 @@
+Programming language: Python
+
+Pre-condition:
+path is None, or identifies a file containing supplemental call edges in JSON format, or identifies a directory whose recursive contents may include JSON call-edge files.
+
+Code block:
+```python
+Line 1: def load_call_edges(path: str | os.PathLike | None) -> list[CallEdge]:
+Line 2:     """Load supplemental call edges from a JSON file or directory."""
+Line 3:     if path is None:
+Line 4:         return []
+Line 5:     edge_path = Path(path)
+Line 6:     if edge_path.is_dir():
+Line 7:         edges = []
+Line 8:         for file_path in sorted(edge_path.rglob("*")):
+Line 9:             if file_path.is_file() and _is_edge_file(file_path):
+Line 10:                 edges.extend(_load_call_edge_file(file_path))
+Line 11:         return _dedupe_edges(edges)
+Line 12:     return _dedupe_edges(_load_call_edge_file(edge_path))
+```
+
+Additional context:
+_is_edge_file(path: Path) -> bool
+Pre-condition: path refers to a file on disk.
+Post-condition: Returns True when the file is recognized as containing supplemental call edge data; False otherwise.
+
+_load_call_edge_file(path: Path) -> list[CallEdge]
+Pre-condition: path refers to a file containing valid supplemental call edge data matching the expected JSON schema.
+Post-condition: Returns the list of CallEdge objects parsed from the file, in the order they appear in the file.
+
+_dedupe_edges(edges: list[CallEdge]) -> list[CallEdge]
+Pre-condition: edges is a list of CallEdge objects, possibly containing entries with identical caller and callee specifications.
+Post-condition: Returns a list of CallEdge objects where no two entries share the same caller specification and callee specification. The relative order of first occurrences is preserved.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

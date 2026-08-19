@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "info = {'callees': [{'name': 'foo', 'signature': '()', 'pre_condition': 'a', 'post_condition': 'b'}, {'name': 'foo', 'signature': '(int)', 'pre_condition': 'c', 'post_condition': 'd'}]}",
+  "offending_statements": "Line 4: for callee in info.get(\"callees\", []):\nLine 9: knowledge_map.add_entry(\nLine 10:     callee.get(\"name\", \"\"),\nLine 11:     callee.get(\"signature\", \"\"),\nLine 12:     callee_spec,\nLine 13: )",
+  "reason": "The specification requires one entry per callee in the input list, but the code uses a mapping keyed by name and overwrites duplicates. For the counterexample with two callees both named 'foo', the resulting FunctionSpecMap has only one entry (the second callee's spec and signature) instead of preserving entries for each callee as required."
+}

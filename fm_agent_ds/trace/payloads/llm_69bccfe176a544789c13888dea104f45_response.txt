@@ -1,0 +1,3 @@
+{
+  "post_condition": "After successful execution, the function creates or overwrites the file at path = _memory_path(work_dir). The file is closed, and its contents are the lines formed by each element of the input set `ignored` sorted in ascending order, each followed by a newline character, with no additional characters. Formally: let path = _memory_path(work_dir); then file_exists(path) ∧ ∀ line ∈ (readlines(path)) → line = x + \"\\n\" for some x ∈ sorted(ignored) ∧ length(readlines(path)) = |ignored| ∧ closed(file_descriptor). If `ignored` is empty, the file is empty. The set `ignored` and the directory `work_dir` remain unchanged."
+}

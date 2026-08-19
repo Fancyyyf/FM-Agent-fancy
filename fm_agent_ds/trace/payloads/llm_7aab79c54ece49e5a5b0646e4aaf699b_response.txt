@@ -1,0 +1,3 @@
+{
+  "post_condition": "After execution, exactly one of the following holds: (1) the subprocess.run(...) call succeeds without raising CalledProcessError, returns a CompletedProcess with some stdout string s, and the function returns s.strip(); no side effect occurs. (2) the call raises subprocess.CalledProcessError, a logging.info message is emitted containing proj_dir, and the function returns None. (3) the call raises any other exception (e.g., OSError), that exception is propagated and the function does not return normally. proj_dir is not modified in any case."
+}

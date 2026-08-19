@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--_extract_functions_indent",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/src/extract-py/_extract_functions_indent.py",
+  "function_name": "_extract_functions_indent",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--_extract_functions_indent.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--_extract_functions_indent.md",
+  "probe_stdout": "CONFIRMED — function body truncated. Extracted source: 'def foo(a,\\n'",
+  "trigger_summary": "Multi-line function signature continuation lines not starting with ')' cause premature function span termination at line 562 of src/extract.py."
+}

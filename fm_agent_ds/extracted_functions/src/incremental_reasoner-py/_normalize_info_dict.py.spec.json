@@ -1,0 +1,5 @@
+{
+  "signature": "_normalize_info_dict(info) -> dict",
+  "pre_condition": "info is a dict.",
+  "post_condition": "Returns a dict with exactly one key 'callees' mapping to a list of dicts. Each output dict in that list contains exactly the four keys 'name', 'signature', 'pre_condition', 'post_condition'. For each dict entry in the input callees list, the corresponding output entry preserves any provided values for these four keys and substitutes an empty string for any key that is absent from the input callee dict. Non-dict entries in the input callees list are silently excluded from the output list. When the input dict has no 'callees' key, the output callees list is empty. Raises ValueError when the input callees value is present and is not a list. Extra keys present in the input info dict beyond 'callees' are absent from the returned dict."
+}

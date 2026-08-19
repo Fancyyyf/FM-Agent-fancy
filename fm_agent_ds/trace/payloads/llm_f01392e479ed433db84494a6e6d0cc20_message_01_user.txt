@@ -1,0 +1,93 @@
+Programming language: Python
+
+Pre-condition:
+After the code block is executed, the interpreter raises a SyntaxError exception because line 33 contains an incomplete f-string literal. The result is that the function _opencode_generate_spec is not defined in the current namespace, and no further code in the block is executed. Formally: for any initial state satisfying the pre-condition, the execution leads to an exceptional state where a SyntaxError is raised and the def statement fails to create the function.
+
+Code block:
+```python
+Line 41:     callee_hint = ", ".join(sorted(callee_names)) if callee_names else "(none)"
+Line 42:     user_knowledge_paths = list_staged_domain_knowledge_relpaths(work_dir)
+Line 43:     if user_knowledge_paths:
+Line 44:         user_knowledge_step = (
+Line 45:             "2. Read these user-provided domain knowledge Markdown files and use "
+Line 46:             "them as additional context:\n"
+Line 47:             f"{format_domain_knowledge_bullets(user_knowledge_paths)}\n"
+Line 48:         )
+Line 49:         step_offset = 1
+Line 50:     else:
+Line 51:         user_knowledge_step = ""
+Line 52:         step_offset = 0
+Line 53:     info_step_number = 3 + step_offset
+Line 54:     if callee_names:
+Line 55:         info_step = (
+Line 56:             f"{info_step_number}. Because this function has callees, also produce a .info.json "
+Line 57:             "object recording the expected behavioral spec of each callee it depends on, with "
+Line 58:             "exactly the callees field, and "
+Line 59:             "list the names of the callees you recorded.\n"
+Line 60:         )
+Line 61:     else:
+Line 62:         info_step = (
+Line 63:             f"{info_step_number}. This function has no callees, so produce a .info.json object "
+Line 64:             'with {"callees": []}.\n'
+Line 65:         )
+Line 66:     prompt_content = (
+Line 67:         "# Generate Function Specification\n\n"
+Line 68:         "A modification has been applied to a codebase to achieve the developer intent below, "
+Line 69:         "adding a function that has no behavioral specification yet. Generate its "
+Line 70:         "specification from scratch.\n\n"
+Line 71:         f"- Function fully-qualified name: `{fqn}` (language: `{lang_key}`).\n"
+Line 72:         f"- Known callees of this function: {callee_hint}.\n\n"
+Line 73:         "## Developer intent\n\n"
+Line 74:         f"{developer_intent}\n\n"
+Line 75:         "## Function source\n\n"
+Line 76:         f"```{lang_key}\n{source.strip()}\n```\n\n"
+Line 77:         f"{caller_section}"
+Line 78:         "## Steps\n\n"
+Line 79:         "1. Read `fm_agent/spec_prompts/system_prompt.md` for the exact .spec.json/.info.json format "
+Line 80:         "rules used by this project.\n"
+Line 81:         f"{user_knowledge_step}"
+Line 82:         f"{2 + step_offset}. Produce the COMPLETE .spec.json object describing this "
+Line 83:         "function's behavior, with exactly signature, pre_condition, and post_condition, "
+Line 84:         "and NO source code.\n"
+Line 85:         f"{info_step}"
+Line 86:         f"{4 + step_offset}. Write your answer to `{result_relpath}` as a JSON object with keys:\n"
+Line 87:         '   - "spec_updated": boolean — true because you produced a .spec.json object.\n'
+Line 88:         '   - "new_spec": object — the full .spec.json object.\n'
+Line 89:         '   - "info_updated": boolean — true because you produced a .info.json object.\n'
+Line 90:         '   - "new_info": object — the full .info.json object.\n'
+Line 91:         '   - "updated_callees": array of callee name strings recorded in .info.json, or [].\n'
+Line 92:         "   Write ONLY that JSON file; do not modify any other project files.\n"
+Line 93:     )
+Line 94:     result = _opencode_select_json(
+Line 95:         proj_dir,
+Line 96:         work_dir,
+Line 97:         prompt_relpath,
+Line 98:         prompt_content,
+Line 99:         result_relpath,
+Line 100:         stage="generate_function_spec",
+Line 101:         input_files=[
+Line 102:             prompt_relpath,
+Line 103:             "fm_agent/spec_prompts/system_prompt.md",
+Line 104:             *user_knowledge_paths,
+Line 105:         ],
+Line 106:     )
+Line 107:     return _validate_spec_update(result) if result is not None else None
+```
+
+Additional context:
+list_staged_domain_knowledge_relpaths(work_dir)
+Pre-condition: work_dir is a valid directory path.
+Post-condition: Returns a list of relative file path strings to domain knowledge markdown files that have been staged under work_dir for the current run. Returns an empty list when no domain knowledge files are staged.
+
+format_domain_knowledge_bullets(paths)
+Pre-condition: paths is a list of file path strings.
+Post-condition: Returns a string where each path is formatted as a markdown bullet item line, suitable for embedding as a numbered reading step in a prompt.
+
+_opencode_select_json(proj_dir, work_dir, prompt_relpath, prompt_content, result_relpath, stage, input_files)
+Pre-condition: proj_dir and work_dir are valid directory paths; prompt_relpath and result_relpath are relative file paths under work_dir; prompt_content is a non-empty string; stage is a recognized pipeline stage identifier; input_files is a list of relative file paths to contextual files that opencode may read.
+Post-condition: Writes prompt_content to prompt_relpath on disk, then invokes opencode with that prompt and the listed input_files as readable context. When opencode succeeds, reads and returns the parsed JSON content from result_relpath. Returns None when opencode exits with a non-zero code, result_relpath does not exist or is empty after execution, or the file content is not valid JSON.
+
+_validate_spec_update(result)
+Pre-condition: result is a dict potentially produced by an opencode spec generation or spec-update run.
+Post-condition: When result contains the expected keys with the expected types (spec_updated is bool; new_spec, when spec_updated is true, is a dict with 'signature', 'pre_condition', 'post_condition' string values; info_updated is bool; new_info is a dict with a 'callees' key; updated_callees is a list of strings), returns result unchanged. Returns None when any key is missing, has an unexpected type, or the value of a boolean key is not a boolean.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

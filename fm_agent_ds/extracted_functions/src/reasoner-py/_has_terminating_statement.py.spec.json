@@ -1,0 +1,5 @@
+{
+  "signature": "_has_terminating_statement(block: str, language: str) -> bool",
+  "pre_condition": "block is a string containing source code. language is a non-empty string identifying the programming language.",
+  "post_condition": "Returns True when the block contains at least one statement that unconditionally terminates or transfers control flow (such as a return, break, continue, raise, exit, or the language-equivalent) in the given language, so that statements after the block would not execute along that path. Returns False when no such terminating statement is present in the block."
+}

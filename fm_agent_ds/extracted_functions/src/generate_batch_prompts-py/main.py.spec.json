@@ -1,0 +1,5 @@
+{
+  "signature": "main() -> int",
+  "pre_condition": "The process is invoked from a valid FM-Agent working directory containing phases.json and spec_prompts/phase_NN_topdown_layers.json for the requested phase number.",
+  "post_condition": "Returns 0. On dry-run: prints the batch plan (phase, layer range, function/batch counts with per-batch details) to stdout without writing any files. On non-dry-run: writes batch prompt .txt files under the output directory, one per batch of functions for the specified phase and layer range, each containing code, signatures, and callee specs for every function in that batch; writes a manifest.json describing all batches (including already-specced functions on resume); removes stale batch files from the output directory that do not belong to the current run. On resume, functions whose .spec.json and .info.json are both ready are excluded from prompt generation. Raises ValueError if batch_size is not strictly positive or if the requested layer range is outside [0, total_layers - 1]."
+}

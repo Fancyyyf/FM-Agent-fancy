@@ -1,0 +1,46 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _make_run_copy(proj_dir, run_dir):
+Line 2:     """Copy proj_dir (everything except .git) into a fresh ``run_dir``.
+Line 3:     Includes an existing ``fm_agent/`` workspace so a resumed pipeline finds the
+Line 4:     prior run's state. Any leftover run directory from an interrupted run is
+Line 5:     discarded first: the pristine sources always live in proj_dir, so the copy
+Line 6:     can be remade cleanly.
+Line 7:     """
+Line 8:     for stale in (run_dir, run_dir + ".tmp"):
+Line 9:         if os.path.exists(stale):
+Line 10:             shutil.rmtree(stale)
+Line 11:     tmp_dir = run_dir + ".tmp"
+Line 12:     shutil.copytree(
+Line 13:         proj_dir, tmp_dir,
+Line 14:         ignore=shutil.ignore_patterns(*_SKIP_DIRS),
+Line 15:         symlinks=True,
+Line 16:     )
+Line 17:     os.replace(tmp_dir, run_dir)
+```
+
+Condition A (what the code actually does):
+Post-condition (normal termination): The directory `run_dir` exists and is a copy of `proj_dir` (the state of `proj_dir` at the start of the function) with the following properties:
+- All files and directories from `proj_dir` are present in `run_dir` except those whose names match any pattern in `_SKIP_DIRS` (e.g., '.git').
+- Symbolic links are copied as symbolic links (their targets are not resolved).
+- The temporary directory `run_dir + '.tmp'` and any previous `run_dir` (or `run_dir + '.tmp'`) that existed before the call have been removed; hence no `.tmp` directory remains.
+
+Formally (for normal termination):
+  let src = proj_dir, dst = run_dir, skip = _SKIP_DIRS.
+  (1) is_dir(dst) ∧ is_dir(src)
+  (2) ∀ name ∈ listdir(src) : if ¬ matches_any(name, skip) then 
+        exists child at dst/name such that:
+          - if is_symlink(src/name) then is_symlink(dst/name) and link_target(dst/name) == link_target(src/name)
+          - else if is_file(src/name) then is_file(dst/name) and content(dst/name) == content(src/name)
+          - else if is_dir(src/name) then is_dir(dst/name) and recursive_copy_holds(src/name, dst/name, skip)
+  (3) ∀ name ∈ listdir(dst) : exists corresponding name in src (i.e., no extra files).
+  (4) ¬ exists(dst + '.tmp')
+
+If the function raises an exception, the filesystem state is unspecified and may be partially modified.
+
+Condition B (what the specification requires):
+run_dir exists and contains a complete replica of proj_dir's file tree, excluding version-control metadata directories. If run_dir existed before the call, any prior contents are removed. Symbolic links in proj_dir are preserved as symbolic links in the copy. proj_dir is unmodified.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

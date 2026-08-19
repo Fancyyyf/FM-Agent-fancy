@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_llm_status_style.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a deterministic tuple (color, label) where color is one of the Rich-compatible style names 'green', 'yellow', or 'red' and label is a string. The mapping from (code, status) input pairs to (color, label) output pairs is a pure function: identical inputs always produce identical outputs. The label carries the input status information: it equals the string representation of whichever of code or status is non-None, or '?' if both are None, except when the outcome classifies as successful  in that case the label is forced to '200'. An outcome is classified as successful when its code equals '200' (as a string) or its status is 'success' or 'mismatch', yielding color 'green'. An outcome is classified as a client-side or format-level issue when status is 'format_error', or the string representation of the non-None input begins with the digit '4', or the string representation is exactly 'FMT', yielding color 'yellow'. All other outcomes yield color 'red'.",
+    "actual_behavior": "Let t = str(code) if code is truthy else (str(status) if status is truthy else '?'). The function returns (c, l) as follows:\n- If t == '200' or status in {'success', 'mismatch'}, then c = 'green' and l = '200'.\n- Else if status == 'format_error' or t.startswith('4') or t == 'FMT', then c = 'yellow' and l = t.\n- Else c = 'red' and l = t.\nHere truthiness follows Python's boolean rules (None, False, 0, 0.0, empty string, empty list/dict are falsy; all other values are truthy). The returned label is always a string, and c is one of 'green', 'yellow', 'red'.",
+    "code_evidence": "Line 2: text = str(code or status or \"?\")",
+    "trigger_condition": "The specification requires the label to be the string representation of whichever of code or status is non-None, but the code uses truthiness with 'or', causing falsy non-None values like 0 to be ignored and fall back to '?'. For code=0 and status=None, the code returns ('red', '?') while the specification demands ('red', '0')."
+  }
+}

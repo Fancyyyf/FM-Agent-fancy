@@ -1,0 +1,15 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _memory_path(work_dir):
+Line 2:     return os.path.join(work_dir, ".env_check_memory")
+```
+
+Condition A (what the code actually does):
+The function returns a string representing the file path obtained by joining `work_dir` and `'.env_check_memory'` using `os.path.join`. Formally: `\result = os.path.join(work_dir, '.env_check_memory')`. No exceptions are raised, and the returned path is syntactically valid for the current operating system.
+
+Condition B (what the specification requires):
+Returns the path to the file named '.env_check_memory' under work_dir, where the returned path is a descendant of or equal to work_dir in the filesystem hierarchy. The function has no side effects — it does not create, modify, or delete any file or directory.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

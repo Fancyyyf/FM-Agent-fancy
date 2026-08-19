@@ -1,0 +1,11 @@
+{
+  "id": "src--env_check-py--_save_ignored",
+  "source_file": "src/env_check-py/_save_ignored.py",
+  "function_name": "_save_ignored",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--env_check-py--_save_ignored.py",
+  "detail_file": "fm_agent/bug_validation/src--env_check-py--_save_ignored.md",
+  "probe_stdout": "CONFIRMED — _save_ignored propagated FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmpyp3o7war/nonexistent/.env_check_memory'\n",
+  "trigger_summary": "Pass a non-existent work_dir path; _save_ignored propagates FileNotFoundError from open() instead of silently handling the failure."
+}

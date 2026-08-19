@@ -1,0 +1,26 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def parse_args() -> argparse.Namespace:
+Line 2:     parser = argparse.ArgumentParser(description="Generate spec batch prompts for one phase/layer range.")
+Line 3:     parser.add_argument("--phase", type=int, required=True, help="Phase number, e.g. 3")
+Line 4:     parser.add_argument("--layers", required=True, help="Layer index or inclusive range, e.g. 0 or 0-5")
+Line 5:     parser.add_argument("--batch-size", type=int, default=2, help="Functions per prompt file")
+Line 6:     parser.add_argument("--output-dir", default=None, help="Output directory for batch prompt files")
+Line 7:     parser.add_argument("--dry-run", action="store_true", help="Show plan without writing files")
+Line 8:     parser.add_argument(
+Line 9:         "--resume",
+Line 10:         action="store_true",
+Line 11:         help="Skip functions already specced (file_utils.is_file_ready) when building batches",
+Line 12:     )
+Line 13:     return parser.parse_args()
+```
+
+Condition A (what the code actually does):
+After the function call, either the process exits via SystemExit (due to argparse requesting help or encountering a parsing error such as an unrecognized argument, a non-integer --batch-size, or a missing required argument if the pre-condition were not met) or the function returns an argparse.Namespace object 'res' with attributes: res.phase (int, from the --phase argument), res.layers (str, from the --layers argument), res.batch_size (int, default 2 if --batch-size not given, else the integer provided), res.output_dir (str or None, default None if --output-dir not given, else the string provided), res.dry_run (bool, True if --dry-run flag present else False), res.resume (bool, True if --resume flag present else False). Formally: (SystemExit is raised) ∨ (result ∈ argparse.Namespace ∧ result.phase ∈ ℤ ∧ result.layers ∈ Σ* ∧ result.batch_size ∈ ℤ ∧ result.output_dir ∈ (Σ* ∪ {None}) ∧ result.dry_run ∈ {True, False} ∧ result.resume ∈ {True, False} ∧ (--batch-size ∈ sys.argv → result.batch_size = int(--batch-size)) ∧ (--batch-size ∉ sys.argv → result.batch_size = 2) ∧ (--output-dir ∈ sys.argv → result.output_dir = str(--output-dir)) ∧ (--output-dir ∉ sys.argv → result.output_dir = None) ∧ (--dry-run ∈ sys.argv ↔ result.dry_run = True) ∧ (--resume ∈ sys.argv ↔ result.resume = True)).
+
+Condition B (what the specification requires):
+Returns a Namespace object with attributes: phase (int) — the value of --phase parsed as an integer; layers (str) — the value of --layers; batch_size (int) — the value of --batch-size, defaulting to 2 if omitted; output_dir (str or None) — the value of --output-dir, defaulting to None if omitted; dry_run (bool) — True if --dry-run flag is present, False otherwise; resume (bool) — True if --resume flag is present, False otherwise. Each attribute reflects the corresponding command-line argument value after standard argparse parsing. If --phase or --layers is absent, argparse causes the process to exit with a non-zero exit code before parse_args returns.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

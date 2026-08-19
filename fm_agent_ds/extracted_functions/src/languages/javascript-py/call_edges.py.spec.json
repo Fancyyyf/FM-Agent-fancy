@@ -1,0 +1,5 @@
+{
+  "signature": "call_edges(proj_dir: str) -> dict | None",
+  "pre_condition": "proj_dir is a string path to an existing directory containing JavaScript source files and whose CodeGraph index may or may not have been previously initialized for a prior language handler.",
+  "post_condition": "When a CodeGraph extractor could be initialized for proj_dir, returns a dict whose keys are canonicalized caller FQNs and whose values are collections of canonicalized callee FQNs, representing all direct call relationships discovered in JavaScript source files. When CodeGraph initialization fails for proj_dir, returns None."
+}

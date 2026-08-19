@@ -1,0 +1,11 @@
+{
+  "id": "src--env_check-py--_check_oh_my_openagent",
+  "source_file": "src/env_check.py",
+  "function_name": "_check_oh_my_openagent",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--env_check-py--_check_oh_my_openagent.py",
+  "detail_file": "fm_agent/bug_validation/src--env_check-py--_check_oh_my_openagent.md",
+  "probe_stdout": "CONFIRMED — Bug reproduced: function returned (True, None) even though subprocess exited with code 1. Spec requires (False, 'oh-my-openagent is not installed (bunx unavailable or timed out)') when the tool cannot be invoked.\n",
+  "trigger_summary": "subprocess.run() without check=True does not raise on non-zero exit codes; when bunx exits non-zero, the function returns (True, None) instead of (False, error_message)."
+}

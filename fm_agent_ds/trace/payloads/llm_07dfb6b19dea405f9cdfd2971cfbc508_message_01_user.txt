@@ -1,0 +1,15 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _quote_toml_string(value: str) -> str:
+Line 2:     return json.dumps(value, ensure_ascii=False)
+```
+
+Condition A (what the code actually does):
+The function returns a string that is the JSON representation of the input string `value`. All necessary JSON escaping (e.g., for quotes, backslashes, control characters) is applied, but non-ASCII characters are not escaped due to `ensure_ascii=False`. No exceptions are raised because any Python string is JSON-serializable. The input `value` is not modified. Formally: let `r` be the return value; then `r` is a string and `r == json.dumps(value, ensure_ascii=False)` holds.
+
+Condition B (what the specification requires):
+Returns a double-quoted string such that, when the returned string is placed verbatim after an equals sign in a TOML key-value pair, a TOML-compliant parser recovers value as the parsed value of that key. Characters in value that would otherwise break TOML basic-string syntax — including double-quote characters, backslashes, and Unicode control characters in the range U+0000–U+001F — are escape-encoded in the returned string. Non-ASCII characters in value are preserved as literal code points rather than being encoded as escape sequences.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Set max_retries=1 and provide an LLM response that fails JSON parsing (e.g., plain text without JSON). The validator is never reached because _parse_json_response raises ValueError. The loop exhausts all attempts and the function returns None (line 73), but the specification says it must raise an exception when all attempts fail.",
+  "offending_statements": "Line 73: return None",
+  "reason": "The specification explicitly states: \"When all max_retries attempts yield responses that either fail JSON parsing or fail validator, raises an exception.\" The code instead silently returns None, which violates this requirement."
+}

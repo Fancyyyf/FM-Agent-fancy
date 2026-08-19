@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "validate_plugin",
+      "signature": "validate_plugin(plugin_dir: Path) -> Optional[PluginConfig]",
+      "pre_condition": "plugin_dir is a pathlib.Path pointing to an existing directory whose name does not start with '.' and is not '__pycache__'.",
+      "post_condition": "Returns None if plugin_dir does not contain a valid plugin.json whose parsed configuration satisfies all PluginConfig validation rules (non-empty name, valid version, valid stage type and configuration for each declared stage). Otherwise returns a PluginConfig whose name attribute is non-empty and serves as the plugin's registration key."
+    }
+  ]
+}

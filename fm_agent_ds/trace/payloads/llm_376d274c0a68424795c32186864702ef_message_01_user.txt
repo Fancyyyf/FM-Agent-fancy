@@ -1,0 +1,67 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _extract_functions_indent(lines, lang_cfg):
+Line 2:     """Extract functions from an indent-delimited language (Python)."""
+Line 3:     functions = []
+Line 4:     i = 0
+Line 5:     while i < len(lines):
+Line 6:         line = lines[i]
+Line 7:         stripped = line.lstrip()
+Line 8:         # Look for 'def ' at any indentation level
+Line 9:         m = re.match(r'^(\s*)def\s+(\w+)\s*\(', line)
+Line 10:         if not m:
+Line 11:             i += 1
+Line 12:             continue
+Line 13:         indent = len(m.group(1))
+Line 14:         name = m.group(2)
+Line 15:         func_start = i
+Line 16:         # Handle decorators — walk backwards to include them
+Line 17:         while func_start > 0 and lines[func_start - 1].strip().startswith('@'):
+Line 18:             func_start -= 1
+Line 19:         # Find end of function body: subsequent lines with greater indentation
+Line 20:         # (or blank lines interspersed)
+Line 21:         j = i + 1
+Line 22:         while j < len(lines):
+Line 23:             l = lines[j]
+Line 24:             if l.strip() == '':
+Line 25:                 j += 1
+Line 26:                 continue
+Line 27:             line_indent = len(l) - len(l.lstrip())
+Line 28:             if line_indent == indent and re.match(r'\)\s*(:|->)', l.lstrip()):
+Line 29:                 j += 1
+Line 30:                 continue
+Line 31:             if line_indent <= indent:
+Line 32:                 break
+Line 33:             j += 1
+Line 34:         # j is now the first line after the function body
+Line 35:         func_end = j - 1
+Line 36:         # Trim trailing blank lines
+Line 37:         while func_end > i and lines[func_end].strip() == '':
+Line 38:             func_end -= 1
+Line 39:         functions.append((name, func_start, func_end))
+Line 40:         i = j
+Line 41:     return functions
+```
+
+Condition A (what the code actually does):
+The function returns a list `functions` of tuples `(name, start, end)`, where each tuple corresponds to a top-level function definition found in `lines`. A function definition is a line matching the pattern `def name(` (with any indentation). `start` is the index of the first line of the function, including any preceding decorator lines (lines starting with '@'). `end` is the index of the last non-blank line of the function body. The body consists of lines after the definition with indentation greater than the definition's indentation, blank lines, and lines that have exactly the definition's indentation but start with a closing parenthesis followed by ':' or '->' (continuation of a multi-line signature). The body ends just before the first line that is not blank, has indentation less than or equal to the definition's indentation, and is not a signature continuation. Functions are extracted in the order their `def` lines appear, skipping any `def` lines that lie within the body of a previously extracted function (i.e., only outermost functions are extracted). The input `lines` and `lang_cfg` are not modified.
+
+Formally, let `n = len(lines)` and define:
+- `is_blank(l) ≡ l.strip() == ''`
+- `is_decorator(l) ≡ l.strip().startswith('@')`
+- `is_func_def(l) ≡ re.match(r'^(\s*)def\s+(\w+)\s*\(', l) is not None`; if true, let `name(l)` be the captured name and `indent(l) = len(leading_whitespace)`.
+- `is_sig_cont(l, ind) ≡ len(l) - len(l.lstrip()) == ind` and `re.match(r'\)\s*(:|->)', l.lstrip()) is not None`.
+
+Then `functions` = `[(N_0, S_0, E_0), ..., (N_{m-1}, S_{m-1}, E_{m-1})]` for some `m ≥ 0`, with strictly increasing `def` positions `D_0 < D_1 < ... < D_{m-1}` such that:
+1. `is_func_def(lines[D_k])` holds, `N_k = name(lines[D_k])`, `I_k = indent(lines[D_k])`.
+2. `S_k` is the smallest index `s ≤ D_k` where every line in `[s, D_k-1]` is a decorator, and either `s=0` or `lines[s-1]` is not a decorator.
+3. Let `B_k` be the smallest index `b ≥ D_k+1` such that `b == n` or (`not is_blank(lines[b])` and `indent(lines[b]) ≤ I_k` and `not is_sig_cont(lines[b], I_k)`). Then `E_k` is the largest index `e` with `D_k ≤ e < B_k` where `e == D_k` or `not is_blank(lines[e])`.
+4. For each `k`, `D_{k+1} > E_k` (if `k < m-1`), and for any index `d` with `is_func_def(lines[d])` not among `{D_k}`, either `d` lies in some interval `[S_k, E_k]` or `d` would produce a `B_k ≤ d` but that case is excluded by the scanning order.
+5. No other tuples are in `functions`.
+
+Condition B (what the specification requires):
+Returns a list of (name, start_idx, end_idx) tuples, one per top-level function definition found in lines. start_idx and end_idx are 0-based inclusive line indices. The span from start_idx to end_idx covers the entire function: any preceding decorator lines, the function definition header (which may span multiple lines), and the function body — but excludes trailing blank lines that follow the last non-blank body line. name is the identifier token appearing immediately after the function-definition keyword on the definition line. Functions are returned in the order they appear in lines. Returns an empty list when no function definitions are found.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,154 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _verify_single_file(file_path, input_dir, output_dir, language, work_dir=None, resume=False):
+Line 2:     """Verify a single file and write the result JSON."""
+Line 3:     # Skip if resuming and a valid result already exists
+Line 4:     rel = os.path.relpath(file_path, input_dir)
+Line 5:     output_path = os.path.join(output_dir, os.path.splitext(rel)[0] + ".json")
+Line 6:     if resume and os.path.exists(output_path):
+Line 7:         try:
+Line 8:             with open(output_path) as f:
+Line 9:                 existing = json.load(f)
+Line 10:             verdict = existing.get("verdict", "ERROR")
+Line 11:             logging.info(f"Already verified, skipping: {file_path} (verdict={verdict})")
+Line 12:             return file_path, verdict
+Line 13:         except (json.JSONDecodeError, OSError):
+Line 14:             pass  
+Line 15:     os.makedirs(os.path.dirname(output_path), exist_ok=True)
+Line 16:     try:
+Line 17:         func, spec, knowledge = parse_input_function(file_path)
+Line 18:         if not spec:
+Line 19:             return file_path, "SKIPPED"
+Line 20:         _, spec_post = _parse_spec_conditions(spec)
+Line 21:         trace_context = None
+Line 22:         if work_dir:
+Line 23:             rel_function = os.path.relpath(file_path, input_dir)
+Line 24:             trace_context = {
+Line 25:                 "trace_dir": os.path.join(work_dir, "trace"),
+Line 26:                 "function_id": os.path.splitext(rel_function)[0].replace(os.sep, "::"),
+Line 27:                 "function_file": os.path.join("extracted_functions", rel_function).replace(os.sep, "/"),
+Line 28:             }
+Line 29:         domain_knowledge = load_staged_domain_knowledge_text(work_dir) if work_dir else ""
+Line 30:         if domain_knowledge:
+Line 31:             knowledge = f"{knowledge}\n\n{domain_knowledge}" if knowledge else domain_knowledge
+Line 32:         result = reasoner(func, spec, knowledge, language, trace_context=trace_context)
+Line 33:         if "passes the verification" in result:
+Line 34:             output = {"function": file_path, "verdict": "MATCH", "gaps": None}
+Line 35:         elif result.startswith("Failed to "):
+Line 36:             output = {"function": file_path, "verdict": "ERROR", "gaps": None, "error": result}
+Line 37:         else:
+Line 38:             stmts = post_cond = reason_text = ""
+Line 39:             stmts_match = re.search(
+Line 40:                 r"Statements triggering the violation:\n(.*?)\n\nPost-condition:", result, re.DOTALL
+Line 41:             )
+Line 42:             post_match = re.search(
+Line 43:                 r"Post-condition:\n(.*?)\n\nReason for violation:", result, re.DOTALL
+Line 44:             )
+Line 45:             reason_match = re.search(r"Reason for violation:\n(.*)", result, re.DOTALL)
+Line 46:             if stmts_match:
+Line 47:                 stmts = stmts_match.group(1).strip()
+Line 48:             if post_match:
+Line 49:                 post_cond = post_match.group(1).strip()
+Line 50:             if reason_match:
+Line 51:                 reason_text = reason_match.group(1).strip()
+Line 52:             output = {
+Line 53:                 "function": file_path,
+Line 54:                 "verdict": "MISMATCH",
+Line 55:                 "gaps": {
+Line 56:                     "spec_claim": spec_post or "",
+Line 57:                     "actual_behavior": post_cond,
+Line 58:                     "code_evidence": stmts,
+Line 59:                     "trigger_condition": reason_text,
+Line 60:                 },
+Line 61:             }
+Line 62:     except Exception as exc:
+Line 63:         logging.exception(f"Verification failed for {file_path}")
+Line 64:         output = {"function": file_path, "verdict": "ERROR", "gaps": None, "error": str(exc)}
+Line 65:     output = _sanitize_strings(output)
+Line 66:     with open(output_path, "w") as f:
+Line 67:         json.dump(output, f, indent=2, ensure_ascii=False)
+Line 68:     return file_path, output["verdict"]
+```
+
+Condition A (what the code actually does):
+Upon normal termination (no unhandled exception), the function returns a tuple (file_path, verdict).
+
+Define:
+rel = relpath(file_path, input_dir)
+output_path = join(output_dir, splitext(rel)[0] + '.json')
+
+Case 1. resume = True  ∧  isfile(output_path)  ∧  open(output_path) as valid JSON (no JSONDecodeError, OSError)
+    → no directory creation, no file write; return (file_path, v_load) where v_load = loaded['verdict'] or 'ERROR'.
+
+Case 2. otherwise, and os.makedirs(dirname(output_path)) fails → OSError propagates, no return, no file written.
+
+Case 3. otherwise (makedirs succeeds):
+    parse_input_function(file_path) → (func, spec, knowledge)
+    If spec is falsy (None or empty) → return (file_path, "SKIPPED") ∧ no output file written (but directory exists).
+    If spec is truthy:
+        spec_post = parse_spec_conditions(spec).post (possibly "")
+        trace_ctx = { ... } if work_dir else None
+        dk = load_staged_domain_knowledge_text(work_dir) if work_dir else ""
+        knowledge = knowledge + "\n\n" + dk if knowledge and dk else (knowledge or dk)
+        result = reasoner(func, spec, knowledge, language, trace_ctx)
+        Within a try/except:
+            verdict = 'MATCH' if "passes the verification" in result
+            else 'ERROR' if result.startswith("Failed to ")
+            else 'MISMATCH' (with regex-extracted gaps details, spec_claim=spec_post)
+        On any exception in try block, verdict = 'ERROR' and output['error'] = str(exc).
+        output = { "function": file_path, "verdict": verdict, ... }
+        output = sanitize_strings(output)
+        write JSON output to output_path
+        return (file_path, verdict)
+
+Post-condition formally:
+If ∃ ex ∈ OSError raised by os.makedirs → ⬆ exception, no post-state.
+Else ∃ (r1, r2) such that:
+  r1 = file_path
+  (Cached) (resume ∧ exists(output_path) ∧ valid_JSON(output_path)) → r2 = cached_verdict ∧ output_path unchanged.
+  (Skipped) (¬Cached ∧ (spec = None ∨ spec = {})) → r2 = "SKIPPED" ∧ directory exists ∧ ¬exists(output_path).
+  (Processed) (¬Cached ∧ spec ≠ None ∧ spec ≠ {}) → directory exists ∧ exists(output_path) ∧ r2 ∈ {"MATCH","MISMATCH","ERROR"} ∧
+    (r2 = "MATCH" ⇔ result contains "passes the verification") ∧
+    (r2 = "ERROR" ⇔ (result starts with "Failed to " ∨ exception in try block)) ∧
+    (r2 = "MISMATCH" ⇔ (result does not contain pass phrase ∧ result does not start with "Failed to " ∧ no exception)) ∧
+    output file contains sanitized JSON with 'function'=file_path and 'verdict'=r2.
+
+All paths where the function returns normally guarantee the return tuple's first element is the original file_path argument.
+
+Condition B (what the specification requires):
+Returns a pair (first, second) where first equals the input file_path unchanged and second is a verdict string from the set {"MATCH", "MISMATCH", "SKIPPED", "ERROR"}. The source function file and its .spec.json/.info.json sidecars are NOT modified. A JSON result file is written to output_dir at a path derived from the function's relative path under input_dir, with the original extension replaced by .json.
+
+Resume shortcut: When resume is True and a well-formed result file (valid JSON containing a 'verdict' key) already exists at the computed output path, the function returns immediately with second equal to the existing verdict string and does not re-run verification.
+
+Missing-spec path: When the function's .spec.json or .info.json sidecar is absent or malformed such that no behavioral spec can be extracted, the function returns (file_path, "SKIPPED") and writes no result file.
+
+Verification paths (when spec is available):
+- MATCH: The LLM-driven Hoare-style block reasoning confirms that the function's implementation satisfies its behavioral specification — every observable effect under the pre-condition is consistent with the post-condition. The result file contains {"function": file_path, "verdict": "MATCH", "gaps": null}.
+- MISMATCH: The block reasoning detects a condition under which the function's observable behavior can diverge from what its specification guarantees. The result file contains {"function": file_path, "verdict": "MISMATCH", "gaps": {"spec_claim": <post-condition from spec>, "actual_behavior": <the behavior the code actually implements>, "code_evidence": <offending code statements>, "trigger_condition": <description of the condition that triggers the violation>}}.
+- ERROR: The verification infrastructure encounters an unrecoverable failure — the LLM reasoner returns an error message (output that does not indicate pass or violation), or an exception is raised during verification. The result file contains {"function": file_path, "verdict": "ERROR", "gaps": null, "error": <error description>}.
+
+The domain knowledge provided to the reasoner includes any text from the function's associated .info.json knowledge field plus any staged domain-knowledge files found under work_dir. All strings in the written result JSON are sanitized to remove content that could interfere with downstream processing.
+
+Additional context:
+parse_input_function(file_path: str) -> tuple[str | None, dict | None, str]
+Pre-condition: file_path is an absolute path to an extracted function file. Adjacent .spec.json and .info.json sidecar files exist alongside the function file.
+Post-condition: Returns a 3-tuple (func, spec, knowledge). func is the function source code as a string, or None if the function file cannot be read. spec is the parsed .spec.json content as a dict (with 'signature', 'pre_condition', 'post_condition' keys), or None if the sidecar is missing or malformed. knowledge is context text extracted from the .info.json sidecar, or an empty string if none is available. The function file and its sidecars are not modified.
+
+_parse_spec_conditions(spec: dict) -> tuple[str, str]
+Pre-condition: spec is a dict with string-valued 'pre_condition' and 'post_condition' keys.
+Post-condition: Returns a pair (pre, post) where pre is the pre_condition string from the spec dict (or an empty string if absent) and post is the post_condition string from the spec dict (or an empty string if absent).
+
+reasoner(func: str, spec: dict, knowledge: str, language: str, trace_context: dict | None = None) -> str
+Pre-condition: func is the source code of a single function as a string. spec is a dict containing 'signature', 'pre_condition', and 'post_condition' keys with string values. knowledge is contextual text augmenting the reasoning (may be empty). language is a non-empty string identifying the programming language of func. trace_context is an optional dict with keys 'trace_dir', 'function_id', and 'function_file' providing tracing metadata; it may be None.
+Post-condition: Returns a string result. When the implementation satisfies the specification, the result contains the substring "passes the verification". When the reasoner itself fails to produce a conclusion, the result starts with "Failed to ". Otherwise, the result describes a spec violation and is expected to contain the substrings "Statements triggering the violation:", "Post-condition:", and "Reason for violation:" demarcating the code evidence, the violated post-condition, and the explanation respectively.
+
+load_staged_domain_knowledge_text(work_dir: str) -> str
+Pre-condition: work_dir is a path to the FM-Agent workspace directory that may contain staged domain-knowledge files under its spec_prompts/domain_context/ subdirectory.
+Post-condition: Returns a string containing the concatenated text content of all staged domain-knowledge Markdown files found under work_dir's domain context directory. Returns an empty string when work_dir does not contain any staged domain-knowledge files.
+
+_sanitize_strings(obj: any) -> any
+Pre-condition: obj is an arbitrary Python object, typically a dict or str.
+Post-condition: Returns a deep copy of obj in which every string value has been transformed to remove or escape content that could interfere with downstream processing (e.g., control characters, injection patterns). Non-string values and the structure of the object are preserved unchanged.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "CodeGraphExtractor.get_function_spans(self, lang_key: str, abs_filepath: str) -> list[tuple[str, int, int]] | None",
+  "pre_condition": "self is an initialized CodeGraphExtractor with a valid project index; lang_key is a string language identifier; abs_filepath is an absolute path to a source file",
+  "post_condition": "When the file at abs_filepath contains one or more function or method definitions indexed under a code analysis backend recognized for lang_key: returns a non-empty list of (identifier, start_idx, end_idx) tuples — one per definition — where identifier is a class-qualified name for methods or a bare function name for free functions, start_idx and end_idx are zero-indexed inclusive line numbers bounding the function's body span within the file, and tuples are ordered by start_idx ascending. Returns None when lang_key is unrecognized or the file contains no indexed function or method definitions."
+}

@@ -1,0 +1,131 @@
+Programming language: Python
+
+Pre-condition:
+After the code block finishes execution (i.e., after the function _check_post_implies_spec returns or raises), one of the following mutually exclusive outcomes occurs:
+
+1. Exception outcome: An exception is raised. This can be any exception propagated from the helper functions _retry_create (e.g., due to LLM API failures after all retries) or _parse_spec_check_json (e.g., ValueError if the LLM response cannot be parsed according to the required schema after all attempts). In this case, no return value is produced and no trace files are written beyond those already written for earlier attempts.
+
+2. Normal return outcome: The function returns a value, which is guaranteed to be a dictionary (let it be R). R contains exactly the keys 'verdict', 'counterexample', 'offending_statements', and 'reason'. The following invariants hold:
+   - R.verdict is a string equal to "MATCH" or "MISMATCH".
+   - If R.verdict == "MATCH", then R.counterexample is an empty string and R.offending_statements is an empty string. R.reason may be any string (possibly empty).
+   - If R.verdict == "MISMATCH", then R.counterexample, R.offending_statements, and R.reason are all non-empty strings. Additionally, R.offending_statements contains at least one occurrence of the pattern "Line N:" where N is a line number that appears in the original code block (block parameter).
+   Furthermore, if the input parameter trace_dir is truthy (i.e., a valid writable directory path), then for each LLM interaction attempt that occurred (including the one that produced the final valid response), a corresponding trace file has been created inside trace_dir recording the event metadata, the messages sent, and the LLM's raw response. When trace_dir is falsy, no trace files are written.
+   No other side effects occur (the global state is otherwise unchanged).
+
+Formal logic:
+Let R be the function's return value and exc an exception raised.
+(post-execution state): (∃ exc: Raised(exc)) ∨ 
+(∃ R: Returned(R) ∧ 
+  R is a dict ∧ 
+  {'verdict', 'counterexample', 'offending_statements', 'reason'} ⊆ keys(R) ∧
+  ( (R.verdict = 'MATCH' → R.counterexample = '' ∧ R.offending_statements = '') ∧
+    (R.verdict = 'MISMATCH' →
+      R.counterexample ≠ '' ∧ R.offending_statements ≠ '' ∧ R.reason ≠ '' ∧
+      (∃ n ∈ ℕ, s ∈ substrings(R.offending_statements): s matches 'Line ' + str(n) + ':')
+    )
+  ) ∧
+  (trace_dir ≠ falsy → (∀ attempt ∈ [1, k] where k ≤ MAX_SPC_ITER: 
+    ∃ f ∈ files(trace_dir): f records the LLM exchange of that attempt))
+  ∧
+  (trace_dir = falsy → no new files written)
+)
+
+Code block:
+```python
+Line 41:         usage = {}
+Line 42:         try:
+Line 43:             response, usage = _retry_create(_llm_provider_client, REASONER_SPEC_CHECK_MODEL, messages)
+Line 44:         except Exception as exc:
+Line 45:             event = {
+Line 46:                 "event_id": event_id,
+Line 47:                 "type": "llm_call",
+Line 48:                 "stage": "verification",
+Line 49:                 "status": "error",
+Line 50:                 "start_time": started,
+Line 51:                 "end_time": utc_now_iso(),
+Line 52:                 "summary": f"LLM implication check failed: {exc}",
+Line 53:                 "metadata": {
+Line 54:                     **trace_meta,
+Line 55:                     "purpose": "check_post_implies_spec",
+Line 56:                     "model": REASONER_SPEC_CHECK_MODEL,
+Line 57:                     "attempt": attempt,
+Line 58:                     "error": str(exc),
+Line 59:                 },
+Line 60:             }
+Line 61:             record_llm_exchange(trace_dir, event_id, event, messages)
+Line 62:             raise
+Line 63:         parsed_result = None
+Line 64:         parse_error = None
+Line 65:         try:
+Line 66:             has_violation, stmts, reason, parsed_result = _parse_spec_check_json(response)
+Line 67:             status = "mismatch" if has_violation else "success"
+Line 68:         except ValueError as exc:
+Line 69:             has_violation = None
+Line 70:             stmts = reason = None
+Line 71:             parse_error = str(exc)
+Line 72:             status = "format_error"
+Line 73:         event = {
+Line 74:             "event_id": event_id,
+Line 75:             "type": "llm_call",
+Line 76:             "stage": "verification",
+Line 77:             "status": status,
+Line 78:             "start_time": started,
+Line 79:             "end_time": utc_now_iso(),
+Line 80:             "summary": "Checked whether actual post-condition implies the spec",
+Line 81:             "metadata": {
+Line 82:                 **trace_meta,
+Line 83:                 "purpose": "check_post_implies_spec",
+Line 84:                 "model": REASONER_SPEC_CHECK_MODEL,
+Line 85:                 "attempt": attempt,
+Line 86:                 "usage": usage,
+Line 87:                 "parsed_json": parsed_result,
+Line 88:                 "parse_error": parse_error,
+Line 89:             },
+Line 90:         }
+Line 91:         record_llm_exchange(trace_dir, event_id, event, messages, response)
+Line 92:         if has_violation is not None:
+Line 93:             if has_violation:
+Line 94:                 stmts = stmts or "(unable to extract)"
+Line 95:                 reason = reason or "(unable to extract)"
+Line 96:                 return False, stmts, post_condition, reason
+Line 97:             else:
+Line 98:                 return True, None, None, None
+Line 99:         messages = messages + [
+Line 100:             {"role": "assistant", "content": response or ""},
+Line 101:             {
+Line 102:                 "role": "user",
+Line 103:                 "content": (
+Line 104:                     "Return only valid JSON with schema: "
+Line 105:                     "{\"verdict\": \"MATCH|MISMATCH\", "
+Line 106:                     "\"counterexample\": string|null, "
+Line 107:                     "\"offending_statements\": string|null, "
+Line 108:                     "\"reason\": string}. "
+Line 109:                     "For MISMATCH, all evidence fields must be non-empty strings. "
+Line 110:                     "For MATCH, counterexample and offending_statements must be null or empty, and reason may be empty."
+Line 111:                 ),
+Line 112:             }
+Line 113:         ]
+Line 114:     raise ValueError("Could not parse a valid structured JSON verdict from spec-check response.")
+```
+
+Additional context:
+new_event_id(prefix) -> str
+Pre-condition: prefix is a string.
+Post-condition: Returns a globally unique string identifier beginning with prefix, separated by an underscore from a random hex component.
+
+utc_now_iso() -> str
+Pre-condition: None.
+Post-condition: Returns the current UTC date and time as an ISO 8601 formatted string.
+
+_retry_create(client_callable, model, messages) -> tuple
+Pre-condition: client_callable is a callable accepting the LLM API request. model is a non-empty string identifying the LLM model. messages is a list of message dicts with 'role' and 'content' keys.
+Post-condition: Returns a 2-tuple (text_response, usage_dict). text_response is a string containing the LLM output. usage_dict is a dict with token usage information. Raises an exception if the API call fails after all retry attempts.
+
+_parse_spec_check_json(response) -> tuple
+Pre-condition: response is a string containing an LLM output that may include a JSON object.
+Post-condition: Returns (has_mismatch, offending_statements, reason, data) where has_mismatch is a bool, offending_statements and reason are strings, and data is a dict containing the full parsed JSON. Raises ValueError if the response does not contain valid JSON matching the spec-check schema (required fields: verdict, counterexample, offending_statements, reason).
+
+record_llm_exchange(trace_dir, event_id, event, messages, response=None) -> None
+Pre-condition: event_id is a non-empty string. event is a dict with event metadata. messages is a list of message dicts. response is a string or None. trace_dir may be a writable directory path or falsy.
+Post-condition: Writes the event record and message/response payloads to trace_dir when trace_dir is truthy. No side effects when trace_dir is falsy.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

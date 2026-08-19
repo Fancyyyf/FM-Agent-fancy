@@ -1,0 +1,53 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _generate_block_post_condition(block, pre_condition, knowledge, language,
+Line 2:                                    trace_dir=None, trace_meta=None):
+Line 3:     info_str = f"\nAdditional context:\n{knowledge}" if knowledge else ""
+Line 4:     messages = [
+Line 5:         {"role": "system", "content": (
+Line 6:             f"You are an expert in formal verification of {language} programs. "
+Line 7:             f"Given a {language} code block and its pre-condition, generate the post-condition "
+Line 8:             "that describes the program state after the code block finishes execution. "
+Line 9:             "Cover all execution paths including early returns, exceptions, and normal flow-through. "
+Line 10:             f"Apply {language}-specific semantics (ownership, lifetimes, error handling, etc.) as appropriate. "
+Line 11:             "Be precise and unambiguous. Express the post-condition in natural language and formal logic."
+Line 12:         )},
+Line 13:         {"role": "user", "content": (
+Line 14:             f"Programming language: {language}\n\n"
+Line 15:             f"Pre-condition:\n{pre_condition}\n\n"
+Line 16:             f"Code block:\n```{language.lower()}\n{block}\n```\n"
+Line 17:             f"{info_str}\n"
+Line 18:             "Generate the post-condition. Return only a valid JSON object with this "
+Line 19:             "required field: {\"post_condition\": \"...\"}. Do not include Markdown, "
+Line 20:             "tags, or prose outside the JSON object."
+Line 21:         )}
+Line 22:     ]
+Line 23:     meta = {
+Line 24:         "purpose": "generate_block_post_condition",
+Line 25:         "summary": "Generated post-condition for code block",
+Line 26:         **(trace_meta or {}),
+Line 27:     }
+Line 28:     return _llm_json_call(
+Line 29:         _llm_provider_client,
+Line 30:         REASONER_POST_CONDITION_MODEL,
+Line 31:         messages,
+Line 32:         _parse_post_condition_json,
+Line 33:         '{"post_condition": "non-empty string"}',
+Line 34:         trace_dir=trace_dir,
+Line 35:         trace_meta=meta,
+Line 36:     )
+```
+
+Condition A (what the code actually does):
+If the function returns normally, the return value is a dictionary with exactly one key 'post_condition' whose value is a non-empty string, representing the generated post-condition. This dictionary is the parsed JSON response from the LLM, validated against the schema `{"post_condition": "non-empty string"}`. If the underlying LLM API call fails (e.g., network error, authentication failure, model unavailable) or if the response cannot be parsed to valid JSON matching that schema, an exception is raised instead of returning. Formally: (ret_val is not None) → (isinstance(ret_val, dict) ∧ 'post_condition' in ret_val ∧ isinstance(ret_val['post_condition'], str) ∧ len(ret_val['post_condition']) > 0); otherwise, an exception is raised (either from _llm_json_call or its parser).
+
+Condition B (what the specification requires):
+Returns a dict with key 'post_condition' whose value is a non-empty string describing the program state after block finishes execution, covering all execution paths including early returns, exceptions, and normal flow-through, using semantics appropriate to language. Produces trace event records when trace_dir is truthy; produces no trace side effects when trace_dir is falsy.
+
+Additional context:
+_llm_json_call(client, model, messages, parser, expected_schema_desc, trace_dir=None, trace_meta=None) -> dict
+Pre-condition: client is an LLM API client callable. model is a non-empty string naming the LLM model. messages is a list of message dicts with 'role' and 'content' keys. parser is a callable that accepts a string and returns a dict. expected_schema_desc is a non-empty string describing the expected JSON schema.
+Post-condition: Returns a dict containing the parsed JSON response from the LLM, validated against the schema described by expected_schema_desc. Raises an exception if the LLM call fails or the response cannot be parsed to valid JSON matching the expected schema.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

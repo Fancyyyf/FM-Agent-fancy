@@ -1,0 +1,150 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _llm_json_call(client, model, messages, validator, schema_description,
+Line 2:                    max_retries=MAX_SPC_ITER, trace_dir=None, trace_meta=None):
+Line 3:     """Call an LLM until it returns structured JSON accepted by ``validator``.
+Line 4:     ``validator`` receives the parsed JSON value and must either return the
+Line 5:     desired Python value or raise ``ValueError`` with a schema error. Keeping
+Line 6:     JSON parsing and retry handling in one place makes every direct structured
+Line 7:     LLM call follow the same protocol.
+Line 8:     """
+Line 9:     trace_meta = trace_meta or {}
+Line 10:     for attempt in range(1, max_retries + 1):
+Line 11:         event_id = new_event_id("llm")
+Line 12:         started = utc_now_iso()
+Line 13:         response = None
+Line 14:         usage = {}
+Line 15:         try:
+Line 16:             response, usage = _retry_create(client, model, messages)
+Line 17:         except Exception as exc:
+Line 18:             event = {
+Line 19:                 "event_id": event_id,
+Line 20:                 "type": "llm_call",
+Line 21:                 "stage": "verification",
+Line 22:                 "status": "error",
+Line 23:                 "start_time": started,
+Line 24:                 "end_time": utc_now_iso(),
+Line 25:                 "summary": f"LLM call failed: {exc}",
+Line 26:                 "metadata": {
+Line 27:                     **trace_meta,
+Line 28:                     "model": model,
+Line 29:                     "attempt": attempt,
+Line 30:                     "error": str(exc),
+Line 31:                 },
+Line 32:             }
+Line 33:             record_llm_exchange(trace_dir, event_id, event, messages)
+Line 34:             raise
+Line 35:         parsed_json = None
+Line 36:         result = None
+Line 37:         parse_error = None
+Line 38:         try:
+Line 39:             parsed_json = _parse_json_response(response)
+Line 40:             result = validator(parsed_json)
+Line 41:             status = "success"
+Line 42:         except ValueError as exc:
+Line 43:             parse_error = str(exc)
+Line 44:             status = "format_error"
+Line 45:         event = {
+Line 46:             "event_id": event_id,
+Line 47:             "type": "llm_call",
+Line 48:             "stage": "verification",
+Line 49:             "status": status,
+Line 50:             "start_time": started,
+Line 51:             "end_time": utc_now_iso(),
+Line 52:             "summary": trace_meta.get("summary", "LLM JSON call"),
+Line 53:             "metadata": {
+Line 54:                 **trace_meta,
+Line 55:                 "model": model,
+Line 56:                 "attempt": attempt,
+Line 57:                 "usage": usage,
+Line 58:                 "parsed_json": parsed_json,
+Line 59:                 "parse_error": parse_error,
+Line 60:             },
+Line 61:         }
+Line 62:         record_llm_exchange(trace_dir, event_id, event, messages, response)
+Line 63:         if status == "success":
+Line 64:             return result
+Line 65:         messages = messages + [
+Line 66:             {"role": "assistant", "content": response or ""},
+Line 67:             {"role": "user", "content": (
+Line 68:                 f"Your previous response was invalid: {parse_error}. "
+Line 69:                 f"Return only valid JSON matching this schema: {schema_description}. "
+Line 70:                 "Do not include Markdown, tags, or prose."
+Line 71:             )},
+Line 72:         ]
+Line 73:     return None
+```
+
+Condition A (what the code actually does):
+After execution, exactly one of the following outcomes holds, preserving immutability of the input `messages` list and, when `trace_dir` is not None, leaving a trace of each attempt:
+
+1. **Exception**: The function raises an exception produced by `_retry_create`. Let `n` be the attempt number (1 ≤ n ≤ max_retries) at which the exception occurred. If `trace_dir` is not None, an atomic trace event was written with:
+   - `event_id` = `new_event_id("llm")`
+   - `type` = "llm_call"
+   - `status` = "error"
+   - `metadata` containing `model`, `attempt`=n, and `error` = `str(exc)`
+   The original `messages` argument is unchanged.
+
+2. **Successful return**: The function returns a valid Python value `result`. There exists an attempt number `n` (1 ≤ n ≤ max_retries) such that:
+   - The LLM response on attempt `n` was parsed into a JSON value `parsed_json` and passed to `validator`.
+   - `result = validator(parsed_json)` and no `ValueError` was raised, meaning the output satisfied the schema described by `schema_description`.
+   - For every attempt `k < n`, the attempt failed with a `ValueError` and a trace event with status `"format_error"` was recorded (conditional on `trace_dir ≠ None`).
+   - For attempt `n`, a trace event with status `"success"` was recorded (conditional on `trace_dir ≠ None`).
+   - The input `messages` list is unchanged.
+
+3. **None return**: The function returns `None` after exhausting `max_retries` attempts. For each attempt `k ∈ {1,...,max_retries}`:
+   - The attempt ended with a `ValueError` (invalid JSON or validator rejection).
+   - A trace event with status `"format_error"` was recorded (conditional on `trace_dir ≠ None`).
+   - The `messages` list used inside the function was extended with an assistant message (containing the raw response) and a user feedback message (including the parse error and schema description), but the original `messages` argument passed by the caller is unchanged.
+
+Formal logic:
+Let `M0` be the original `messages` list, `Traces(attempts)` be the set of trace events recorded iff `trace_dir ≠ None`. The post‑condition is:
+```
+(  (function raised exception E)                                                        
+ ∧ ∃ n ∈ [1, max_retries] :                                                         
+     ( if trace_dir ≠ None →                                                       
+         Traces = { ⟨event_id=genre("llm"), status="error", attempt=n, error=str(E)⟩ } )  
+ ∧ M0 unchanged )
+ ∨
+(  (function returned r)                                                              
+ ∧ r ≠ None                                                                        
+ ∧ ∃ n ∈ [1, max_retries], j, p :                                                  
+     ( on attempt n: _parse_json_response(resp_n)=p ∧ validator(p)=r )              
+     ∧ ∀ k < n : on attempt k, ValueError occurred ∧                                 
+         ( trace_dir ≠ None → Traces includes status="format_error" for k )       
+     ∧ ( trace_dir ≠ None → Traces includes status="success" for n )            
+ ∧ M0 unchanged )
+ ∨
+(  (function returned None)                                                          
+ ∧ ∀ n ∈ [1, max_retries] :                                                          
+     on attempt n, ValueError occurred ∧                                             
+     ( trace_dir ≠ None → Traces includes status="format_error" for n )           
+ ∧ M0 unchanged )
+```
+
+Condition B (what the specification requires):
+Invokes the LLM to obtain a structured JSON response. When the LLM returns a response that parses as valid JSON and passes validation via validator without raising ValueError, returns the value produced by validator on the first such attempt within max_retries attempts. If the underlying LLM API call raises an exception, that exception is propagated. When all max_retries attempts yield responses that either fail JSON parsing or fail validator, raises an exception. When trace_dir is truthy, each attempt produces a trace event record containing the full message exchange, the model identifier, the attempt number, timing metadata, and a status of 'success' or 'format_error'; when trace_dir is falsy, no trace side effects are produced.
+
+Additional context:
+new_event_id(prefix) -> str
+Pre-condition: prefix is a non-empty string
+Post-condition: returns a unique string identifier beginning with the given prefix
+
+utc_now_iso() -> str
+Pre-condition: none
+Post-condition: returns the current UTC time as an ISO 8601 formatted string
+
+_retry_create(client, model, messages) -> tuple
+Pre-condition: client is a callable LLM API client; model is a non-empty string; messages is a list of message dicts with 'role' and 'content' keys
+Post-condition: returns (response_text: str, usage_dict: dict) representing the LLM response text and token usage; raises an exception on persistent API communication failure after exhausting retries
+
+_parse_json_response(response) -> dict | list
+Pre-condition: response is a string that may contain bare JSON, markdown-fenced code blocks, or prose-wrapped JSON
+Post-condition: returns the first valid JSON object or array extracted from the response; raises ValueError if no valid JSON can be extracted
+
+record_llm_exchange(trace_dir, event_id, event, messages, response) -> None
+Pre-condition: event_id is a non-empty string; event is a dict with required trace fields; messages is a list of message dicts
+Post-condition: when trace_dir is truthy, atomically writes the full LLM message exchange and response to trace payload files keyed by event_id; when trace_dir is falsy, is a no-op
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

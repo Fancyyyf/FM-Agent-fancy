@@ -1,0 +1,5 @@
+{
+  "signature": "_merge_descriptions(target_desc, source_desc) -> str",
+  "pre_condition": "target_desc is a string; source_desc is a string",
+  "post_condition": "Returns a string formed by appending the stripped text of source_desc to target_desc. When the stripped text of source_desc is empty, returns target_desc unchanged. When target_desc already contains the full stripped text of source_desc, returns target_desc unchanged. When target_desc is empty and stripped source_desc is non-empty, returns stripped source_desc. Otherwise, returns the concatenation of target_desc and stripped source_desc with a separator between them."
+}

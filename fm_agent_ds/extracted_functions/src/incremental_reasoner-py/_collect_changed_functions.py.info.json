@@ -1,0 +1,46 @@
+{
+  "callees": [
+    {
+      "name": "_is_test_file",
+      "signature": "_is_test_file(file_path)",
+      "pre_condition": "file_path is a relative or absolute file path string.",
+      "post_condition": "Returns True when the file is classified as a test file based on its path or name; returns False otherwise."
+    },
+    {
+      "name": "_is_under_submodules",
+      "signature": "_is_under_submodules(file_path, submodules)",
+      "pre_condition": "file_path is a relative file path string. submodules is a list of subdirectory path strings, or None.",
+      "post_condition": "Returns True when submodules is None or file_path resides within at least one of the given submodule directories; returns False otherwise."
+    },
+    {
+      "name": "_codegraph_functions_by_file",
+      "signature": "_codegraph_functions_by_file(proj_dir, codegraph_langs)",
+      "pre_condition": "proj_dir is a valid directory path. codegraph_langs is an iterable of language key strings recognized by CodeGraph.",
+      "post_condition": "Returns a dict mapping each normalized relative file path string to a dict of {function_name: function_source} extracted by CodeGraph static analysis for all supported files in proj_dir."
+    },
+    {
+      "name": "_codegraph_legacy_coverage",
+      "signature": "_codegraph_legacy_coverage(proj_dir, current_codegraph, codegraph_file_languages)",
+      "pre_condition": "proj_dir is a valid directory path. current_codegraph is the dict returned by _codegraph_functions_by_file. codegraph_file_languages maps relative file paths to language keys.",
+      "post_condition": "Returns a dict mapping each normalized relative file path to a boolean indicating whether CodeGraph successfully indexed that file in the current revision."
+    },
+    {
+      "name": "_codegraph_functions_at_revision",
+      "signature": "_codegraph_functions_at_revision(proj_dir, old_commit_id, codegraph_file_languages)",
+      "pre_condition": "proj_dir is a valid directory path within a git repository. old_commit_id is a valid commit identifier. codegraph_file_languages maps relative file paths to language keys.",
+      "post_condition": "Returns a tuple of (codegraph_dict, coverage_dict) for the given revision if CodeGraph can index it; returns None when indexing the revision fails."
+    },
+    {
+      "name": "extract_functions_from_file",
+      "signature": "extract_functions_from_file(file_path, lang_key)",
+      "pre_condition": "file_path is an absolute path to an existing source file. lang_key is a recognized language key string.",
+      "post_condition": "Returns an iterable of (function_name, function_source) tuples for every function found in the source file, using language-specific extraction logic for the given lang_key."
+    },
+    {
+      "name": "_normalized_relative_path",
+      "signature": "_normalized_relative_path(proj_dir, rel_path)",
+      "pre_condition": "proj_dir is a directory path. rel_path is a relative file path string.",
+      "post_condition": "Returns a normalized relative path string with forward-slash separators and no leading dots or redundant separators."
+    }
+  ]
+}

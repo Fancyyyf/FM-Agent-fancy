@@ -1,0 +1,5 @@
+{
+  "signature": "_caller_module(file_path: str) -> str",
+  "pre_condition": "file_path is an absolute path to a file located within the analyzed Erlang project tree, and the project root directory is known to the calling context.",
+  "post_condition": "Returns a module identifier string formed from file_path's components relative to the project root. Directory separators in the relative path are replaced with '::', and the final '.' (extension separator) in the filename component is replaced with '-'. When the filename contains no '.', the filename is included unchanged. The returned string is a valid FM-Agent FQN-compatible module identifier that uniquely identifies the module within the call graph."
+}

@@ -1,0 +1,15 @@
+Programming language: Python
+
+Pre-condition:
+block is a string containing source code. language is a non-empty string identifying the programming language.
+
+Code block:
+```python
+Line 1: def _has_terminating_statement(block, language):
+Line 2:     pattern = _TERMINATING_PATTERNS.get(language.lower())
+Line 3:     if not pattern:
+Line 4:         pattern = r'\b(return\b|exit\s*\(|raise\s|throw\s|abort\s*\()'
+Line 5:     return re.search(pattern, block) is not None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

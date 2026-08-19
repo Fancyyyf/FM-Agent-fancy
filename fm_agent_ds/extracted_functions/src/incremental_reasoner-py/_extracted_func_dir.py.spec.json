@@ -1,0 +1,5 @@
+{
+  "signature": "_extracted_func_dir(extracted_base, src_rel) -> str",
+  "pre_condition": "extracted_base is the root directory of extracted functions. src_rel is a non-empty string identifying a source file by its path relative to the project root, following phases.json directory conventions.",
+  "post_condition": "Returns a directory path under extracted_base where extracted function files for the source file identified by src_rel are placed. The path is formed by joining extracted_base with the directory components of src_rel, then appending a directory name derived from the basename of src_rel: when the basename contains a '.' after the first character, the directory name replaces that last '.' with '-'; otherwise the directory name is the basename unchanged. The returned string preserves the directory hierarchy of src_rel relative to the project root."
+}

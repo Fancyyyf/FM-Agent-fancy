@@ -1,0 +1,5 @@
+{
+  "signature": "_llm_select_json(work_dir, prompt_content, stage, validator, schema_description, trace_meta=None) -> Any | None",
+  "pre_condition": "work_dir is a valid directory path. prompt_content is a non-empty string. stage is a non-empty string. validator is a callable that accepts a parsed value and returns a (bool, str | None) tuple where the bool indicates validity. schema_description is a non-empty string describing the expected output shape. If provided, trace_meta is a dict whose keys are strings and values are JSON-serializable.",
+  "post_condition": "Sends prompt_content to the configured LLM. Returns the parsed and validated result when the LLM produces output that can be parsed as JSON, conforms to schema_description, and passes validator. Returns None when the LLM produces no output, output that cannot be parsed as JSON, output that does not conform to schema_description, or output that fails validator. The exchange is traced under work_dir with stage and trace_meta as identifying labels. On return with None, an error-level log entry is produced noting the stage."
+}

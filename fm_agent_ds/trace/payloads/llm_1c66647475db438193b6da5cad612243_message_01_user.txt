@@ -1,0 +1,74 @@
+Programming language: Python
+
+Pre-condition:
+The process is invoked from a valid FM-Agent working directory containing phases.json and spec_prompts/phase_NN_topdown_layers.json for the requested phase number.
+
+Code block:
+```python
+Line 1: def main() -> int:
+Line 2:     args = parse_args()
+Line 3:     if args.batch_size <= 0:
+Line 4:         raise ValueError("--batch-size must be > 0")
+Line 5:     # work_dir is the fm_agent/ directory (parent of spec_prompts/ where this script lives)
+Line 6:     work_dir = Path(__file__).resolve().parent.parent
+Line 7:     # fm_agent_prefix is the relative path from the project root to work_dir
+Line 8:     repo_root = work_dir.parent
+Line 9:     fm_agent_prefix = str(work_dir.relative_to(repo_root)) + "/"
+Line 10:     phases_json = read_json(work_dir / "phases.json")
+Line 11:     project = phases_json["project"]
+Line 12:     languages = phases_json.get("languages", [])
+Line 13:     exts = phases_json.get("file_extensions", [])
+Line 14:     ext_to_lang = {ext.lower().lstrip("."): lang for ext, lang in zip(exts, languages)}
+Line 15:     topdown_path = work_dir / "spec_prompts" / f"phase_{args.phase:02d}_topdown_layers.json"
+Line 16:     topdown = read_json(topdown_path)
+Line 17:     layers = topdown.get("layers", [])
+Line 18:     total_layers = len(layers)
+Line 19:     start_layer, end_layer = parse_layers_spec(args.layers)
+Line 20:     if start_layer < 0 or end_layer >= total_layers:
+Line 21:         raise ValueError(f"layer range {args.layers} out of bounds [0, {total_layers - 1}]")
+Line 22:     output_dir = Path(args.output_dir) if args.output_dir else (
+Line 23:         work_dir / "spec_prompts" / f"batch_prompts_{project}_phase{args.phase:02d}"
+Line 24:     )
+Line 25:     func_to_layer: Dict[str, int] = {}
+Line 26:     all_funcs: Dict[str, dict] = {}
+Line 27:     for layer in layers:
+Line 28:         li = layer["layer"]
+Line 29:         for fn in layer.get("functions", []):
+Line 30:             # Normalize: strip fm_agent/ prefix if already present (LLM-generated
+Line 31:             # topdown scripts sometimes include it, causing double-prefix)
+Line 32:             if fn["file"].startswith(fm_agent_prefix):
+Line 33:                 fn["file"] = fn["file"][len(fm_agent_prefix):]
+Line 34:             func_to_layer[fn["name"]] = li
+Line 35:             all_funcs[fn["name"]] = fn
+Line 36:     manifest_batches = []
+Line 37:     total_functions = 0
+Line 38:     skipped_functions = 0
+Line 39:     batch_index = 0
+Line 40:     write_targets: List[Tuple[Path, str]] = []
+```
+
+Additional context:
+parse_args() -> Namespace
+Pre-condition: The process is invoked with command-line arguments including --phase, --layers, --batch-size, --output-dir, --resume, and --dry-run.
+Post-condition: Returns a Namespace object whose attributes include phase (int), layers (str), batch_size (int), output_dir (str or None), resume (bool), and dry_run (bool), each reflecting the corresponding command-line argument.
+
+read_json(filepath) -> dict
+Pre-condition: filepath is a path to an existing, syntactically valid JSON file on the filesystem.
+Post-condition: Returns the fully parsed content of the JSON file as a Python dict. Raises an error if the file does not exist or contains invalid JSON.
+
+parse_layers_spec(layers_spec) -> tuple[int, int]
+Pre-condition: layers_spec is a string in one of two forms: a single non-negative integer N, or a range N-M where N and M are non-negative integers.
+Post-condition: Returns a (start, end) tuple of two ints representing the inclusive layer range. For a single integer N, returns (N, N). Raises if the format is invalid or if start > end.
+
+is_file_ready(file_path) -> bool
+Pre-condition: file_path is a path to an extracted function file.
+Post-condition: Returns True when both an adjacent .spec.json file (with exactly the fields signature, pre_condition, post_condition, all strings) and an adjacent .info.json file (with exactly the field callees, containing an array of dicts each with name, signature, pre_condition, post_condition, all strings) exist; returns False otherwise.
+
+chunked(iterable, chunk_size) -> Iterator[list]
+Pre-condition: iterable is a finite iterable. chunk_size is a positive integer.
+Post-condition: Yields consecutive, non-overlapping sub-lists of the input iterable, each of length exactly chunk_size except the final sub-list which may be shorter. Element order within and across sub-lists matches the original iterable order.
+
+build_prompt(phase, layer_idx, is_cycle, prompt_funcs, func_to_layer, all_funcs, work_dir, fm_agent_prefix, ext_to_lang) -> str
+Pre-condition: phase is a positive integer. layer_idx is a non-negative integer. is_cycle is a boolean. prompt_funcs is a list of function metadata dicts, each containing at least 'file' and 'name' keys. func_to_layer and all_funcs are dicts keyed by function name. work_dir is a Path to the fm_agent/ root. fm_agent_prefix is a relative path string for prefix-stripping. ext_to_lang maps lowercase file extensions to language names.
+Post-condition: Returns a string containing the full batch prompt text, including domain context (engine overview, phase types), per-function extracted source code (read from work_dir), per-function signatures, and callee specifications drawn from earlier-layer .info.json files for each function's callers. The prompt text is self-contained and ready for LLM consumption.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

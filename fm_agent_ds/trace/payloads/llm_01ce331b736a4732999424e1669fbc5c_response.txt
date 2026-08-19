@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "argv = ['--invalid-flag']",
+  "offending_statements": "Line 3: args = _parse_args(argv)",
+  "reason": "The specification requires that if the operation fails due to invalid inputs, main returns 2. Passing an invalid argument (e.g., '--invalid-flag') causes _parse_args to terminate the process via sys.exit with a non-zero exit code, preventing main from returning at all. Therefore, main does not return 2 as required."
+}

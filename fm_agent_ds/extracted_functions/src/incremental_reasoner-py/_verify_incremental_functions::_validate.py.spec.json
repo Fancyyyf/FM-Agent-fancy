@@ -1,0 +1,5 @@
+{
+  "signature": "_validate(rel) -> str",
+  "pre_condition": "rel is a filesystem path (relative to the batch output directory) to a file whose reasoning verdict has been produced. The enclosing scope provides output_dir (the directory tree containing reasoning result JSON files), proj_dir (the project root directory), work_dir (the FM-Agent work directory), and bug_validator_path (an optional path to a custom bug-validator prompt file; None when the built-in validator is used).",
+  "post_condition": "Returns rel unchanged. Invokes the bug-validation machinery on the reasoning result whose JSON verdict is derived from rel by replacing its file extension with '.json' and resolving it relative to proj_dir. The validation process either produces a confirmed-bug report at <work_dir>/bug_validation/<bug_id>.md (containing specification claim, actual behavior, code evidence, trigger condition, reproduction steps, probe script, and probe output) or determines that no exploitable bug exists. Returns before the validation report is produced."
+}

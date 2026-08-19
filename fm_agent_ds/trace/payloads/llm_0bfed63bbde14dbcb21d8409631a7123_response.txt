@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "config.provider_id = \"example\"",
+  "offending_statements": "Line 6: return _private_opencode_secret_dir() / (\nLine 7:     f\"fm-agent-opencode-api-key.{safe_provider_id}.{digest}\"\nLine 8: )",
+  "reason": "Specification requires the returned Path to be within the platform‑specific user configuration directory, but the code builds the path inside _private_opencode_secret_dir(), which is only defined as a directory for secret keys and is not guaranteed to be a subdirectory of (or identical to) the user configuration directory. For example, on a typical Linux system the user configuration directory is ~/.config, while _private_opencode_secret_dir() may return ~/.opencode/secrets, which is outside the required directory."
+}

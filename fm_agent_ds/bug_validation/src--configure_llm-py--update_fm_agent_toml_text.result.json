@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--update_fm_agent_toml_text",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/update_fm_agent_toml_text.py",
+  "function_name": "update_fm_agent_toml_text",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--update_fm_agent_toml_text.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--update_fm_agent_toml_text.md",
+  "probe_stdout": "NOT CONFIRMED — function successfully added [llm] section even without one in input. Output TOML keys under [llm]: ['name', 'provider', 'base_url', 'backend', 'api_style']",
+  "trigger_summary": "Input TOML text without an [llm] section was expected to cause failure, but update_llm_settings_toml_text (lines 427-434) explicitly appends [llm] when none exists, so the function handles it correctly."
+}

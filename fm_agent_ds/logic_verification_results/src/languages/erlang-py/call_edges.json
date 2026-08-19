@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/call_edges.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a dictionary mapping each caller FQN string to a set of callee FQN strings for all Erlang functions in the project. Both caller and callee FQNs follow the same canonicalized, module-qualified naming convention used throughout the pipeline. Returns an empty dict when the Erlang Language Platform backend is unavailable or when no call edges can be extracted from the project.",
+    "actual_behavior": "The function returns a dictionary containing module-qualified Erlang call edges in registry format derived from the project directory `proj_dir`. If `proj_dir` does not exist, contains no analyzable Erlang sources, or an internal error occurs, an empty dictionary is returned. No exceptions propagate and no mutable global state is modified. Formally:  proj_dir  str, let result = call_edges(proj_dir); then isinstance(result, dict)  (filesystem_contains_analyzable_erlang(proj_dir)  result = edges(analysis_or_empty(callgraph_project_root(proj_dir))))  (filesystem_contains_analyzable_erlang(proj_dir)  result = {})  execution terminates normally.",
+    "code_evidence": "Line 3",
+    "trigger_condition": "The code unconditionally returns an empty dictionary when any internal error occurs (via _analysis_or_empty), but the specification restricts returning an empty dictionary only to the specific cases where the backend is unavailable or no call edges can be extracted. For a valid project with callable functions and an available backend, an internal error causes the code to violate the specification by returning {} instead of the expected call-edge dictionary."
+  }
+}

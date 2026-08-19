@@ -1,0 +1,50 @@
+Programming language: Python
+
+Pre-condition:
+src_path is an absolute path to an existing, readable regular file with a '.py' extension.
+
+Code block:
+```python
+Line 1: def _parse_python_file(src_path: Path) -> tuple[list[dict], list[str], list[dict]] | tuple[None, None, None]:
+Line 2:     """Parse a Python source file with the ast module (richest signal extraction)."""
+Line 3:     try:
+Line 4:         content = src_path.read_text(errors='replace')
+Line 5:         tree = ast.parse(content)
+Line 6:         source_lines = content.splitlines()
+Line 7:     except Exception as exc:
+Line 8:         logger.warning("Could not parse %s: %s", src_path, exc)
+Line 9:         return None, None, None
+Line 10:     funcs = []
+Line 11:     for node in ast.walk(tree):
+Line 12:         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+Line 13:             continue
+Line 14:         calls = _collect_calls(node)
+Line 15:         idents, body_words, exc_types = _collect_func_idents(node, source_lines)
+Line 16:         docstring = ast.get_docstring(node) or ''
+Line 17:         funcs.append({
+Line 18:             'name':       node.name,
+Line 19:             'start':      node.lineno,
+Line 20:             'end':        node.end_lineno,
+Line 21:             'calls':      calls,
+Line 22:             'idents':     idents,
+Line 23:             'body_words': body_words,
+Line 24:             'exc_types':  exc_types,
+Line 25:             'docstring':  docstring,
+Line 26:         })
+Line 27:     classes = _extract_classes(tree, source_lines)
+Line 28:     return funcs, source_lines, classes
+```
+
+Additional context:
+_collect_calls(node: ast.AST) -> list[str]
+Pre-condition: node is an AST node representing a function body subtree.
+Post-condition: Returns a list of string function names that are called (directly or through attribute access) within the subtree rooted at node. Each element is the syntactic name appearing at the call site.
+
+_collect_func_idents(node: ast.FunctionDef | ast.AsyncFunctionDef, source_lines: list[str]) -> tuple[set[str], set[str], set[str]]
+Pre-condition: node is a function definition AST node with a complete body. source_lines is the full file content as a list of strings, where line N corresponds to index N-1.
+Post-condition: Returns a triple (idents, body_words, exc_types). idents is the set of lowercase identifier strings that appear as standalone names (Load or Store context) anywhere in the function body. body_words is the set of lowercase alphabetic word tokens extracted from the text of every line spanned by the function body. exc_types is the set of lowercase exception class names referenced in raise statements or except clauses within the function body.
+
+_extract_classes(tree: ast.Module, source_lines: list[str]) -> list[dict]
+Pre-condition: tree is a valid AST module node produced by ast.parse. source_lines is the full file content as a list of strings where line N corresponds to index N-1.
+Post-condition: Returns a list of dicts, one per top-level class definition found in the module. Each dict contains at minimum: 'name' (string, the class identifier), 'docstring' (string, the class docstring or empty string), and 'method_linenos' (list of int start line numbers of methods defined within the class). Returns an empty list when no top-level classes exist.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

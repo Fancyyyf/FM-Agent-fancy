@@ -1,0 +1,31 @@
+Programming language: Python
+
+Pre-condition:
+cmd is a non-empty string representing a codegraph executable path; the configuration key codegraph.version is set.
+
+Code block:
+```python
+Line 1: def _warn_on_codegraph_version_mismatch(cmd: str) -> None:
+Line 2:     """Warn (never fail) when the codegraph about to run is not the version pinned
+Line 3:     in ``fm-agent.toml``'s ``[codegraph].version`` — e.g. a stale build shadowing
+Line 4:     it. install.sh is what guarantees the pinned version; this is a runtime heads-up.
+Line 5:     """
+Line 6:     want = settings.codegraph.version.strip().removeprefix("v")
+Line 7:     if not want:
+Line 8:         return
+Line 9:     try:
+Line 10:         got = subprocess.run(
+Line 11:             [cmd, "--version"], capture_output=True, text=True, timeout=10
+Line 12:         ).stdout.strip()
+Line 13:     except (OSError, subprocess.SubprocessError):
+Line 14:         return
+Line 15:     if got and got != want:
+Line 16:         logging.warning(
+Line 17:             "codegraph %r does not match the pinned %r "
+Line 18:             "(fm-agent.toml [codegraph].version); re-run install.sh to update.",
+Line 19:             got,
+Line 20:             want,
+Line 21:         )
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

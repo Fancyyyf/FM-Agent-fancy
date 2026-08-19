@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+entry_func is a non-empty string whose components are delimited by '::', representing a fully-qualified function name. The FQN corresponds to a function whose source file was extracted into extracted_functions/ and whose extracted-file path (formed by replacing every '::' with the platform path separator) can be resolved by _extracted_file_to_source_rel.
+
+Code block:
+```python
+Line 1: def _entry_func_source_rel(entry_func):
+Line 2:     """Map an entry_func FQN back to its source file (project-relative path).
+Line 3:     ``src::engine::loader-cpp::loadData`` -> ``src/engine/loader.cpp``;
+Line 4:     ``src::storage-cpp::LocalStorage::Flush`` -> ``src/storage.cpp``. Reuse the
+Line 5:     extracted-file inverse mapping by treating the ``::``-joined FQN as an
+Line 6:     extracted-file path; _extracted_file_to_source_rel finds the ``<base>-<ext>``
+Line 7:     directory regardless of any class components after it.
+Line 8:     """
+Line 9:     extracted_rel = os.path.join(*entry_func.split("::"))
+Line 10:     return _extracted_file_to_source_rel(extracted_rel).replace(os.sep, "/")
+```
+
+Additional context:
+_extracted_file_to_source_rel(extracted_rel: str) -> str
+Pre-condition: extracted_rel is a string formed by joining the '::'-separated components of a valid FQN with the platform's path separator, producing a relative path that corresponds to an extracted function file path beneath the extracted_functions/ directory tree.
+Post-condition: Returns the project-relative path (using platform-native path separators) of the original source file from which the function at the path represented by extracted_rel was extracted. The mapping respects the <base>-<ext> directory convention, such that multiple function paths extracted from the same source file (including class-qualified member functions from the same module) resolve to the same returned path.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

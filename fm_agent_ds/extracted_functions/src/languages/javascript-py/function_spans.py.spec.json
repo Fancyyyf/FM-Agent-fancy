@@ -1,0 +1,5 @@
+{
+  "signature": "function_spans(proj_dir: str, filepath: str) -> list | None",
+  "pre_condition": "proj_dir is a string path to an existing project directory; filepath is a string path to a JavaScript source file within that project whose FunctionName column, start line, and end line are available in the project's CodeGraph index.",
+  "post_condition": "When a CodeGraph extractor could be initialized and the file is indexed, returns a list of (name, start_idx, end_idx) tuples — one per function in the file — where name is the function's canonicalized identifier, start_idx is the 0-indexed inclusive start line of the function body, and end_idx is the 0-indexed inclusive end line of the function body. When CodeGraph initialization fails or the file is not indexed, returns None."
+}

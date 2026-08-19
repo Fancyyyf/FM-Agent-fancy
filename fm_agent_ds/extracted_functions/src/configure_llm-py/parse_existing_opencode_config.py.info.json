@@ -1,0 +1,1 @@
+{"callees": [{"name": "_strip_jsonc", "signature": "_strip_jsonc(text: str) -> str", "pre_condition": "text is a string.", "post_condition": "Returns a string with all JSONC comment syntax removed (single-line // comments and block /* */ comments), preserving every other character, whitespace, and line structure unchanged from the input text."}]}

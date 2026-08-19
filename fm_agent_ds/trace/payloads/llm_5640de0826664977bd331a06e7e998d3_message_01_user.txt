@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+results_dir is a filesystem path.
+
+Code block:
+```python
+Line 1: def _count_mismatches(results_dir):
+Line 2:     """Count MISMATCH verdicts in a logic_verification_results/ tree.
+Line 3:     Each function's verdict is a JSON file nested under per-module directories;
+Line 4:     a ``"verdict"`` of ``"MISMATCH"`` marks a spec violation (a candidate bug).
+Line 5:     Unreadable or malformed files are skipped.
+Line 6:     """
+Line 7:     count = 0
+Line 8:     for root, _dirs, files in os.walk(results_dir):
+Line 9:         for fname in files:
+Line 10:             if not fname.endswith(".json"):
+Line 11:                 continue
+Line 12:             try:
+Line 13:                 with open(os.path.join(root, fname), "r") as f:
+Line 14:                     if json.load(f).get("verdict") == "MISMATCH":
+Line 15:                         count += 1
+Line 16:             except (OSError, ValueError):
+Line 17:                 continue
+Line 18:     return count
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

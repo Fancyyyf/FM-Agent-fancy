@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_json_file_is_valid",
+      "signature": "_json_file_is_valid(path)",
+      "pre_condition": "path is a string representing a filesystem path which may or may not correspond to an existing, readable file",
+      "post_condition": "Returns True if the file at path exists, is readable, and contains syntactically valid JSON. Returns False if the file does not exist, cannot be read, or its contents are not valid JSON. Does not modify the file or the filesystem."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_stable_user_id.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a non-empty string that identifies the current user. The returned value is stable: repeated calls within the same execution environment yield the same string. The value is the configured user identifier when set, or a built-in default identifier otherwise. The returned string is suitable for injection into LLM API request metadata for prompt-cache affinity.",
+    "actual_behavior": "The function `_stable_user_id` is defined in the current namespace. It takes no arguments. When called, its return value is the result of evaluating `settings.inject.id or _DEFAULT_INJECT_USER_ID`.",
+    "code_evidence": "Line 2:     return settings.inject.id or _DEFAULT_INJECT_USER_ID",
+    "trigger_condition": "The function does not store the initial user ID; it reevaluates the setting on each call. Therefore, if settings.inject.id changes between calls, the returned string is not stable, violating the specification."
+  }
+}

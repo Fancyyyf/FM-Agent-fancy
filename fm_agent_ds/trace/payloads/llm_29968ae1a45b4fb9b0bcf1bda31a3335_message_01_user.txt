@@ -1,0 +1,74 @@
+Programming language: Python
+
+Pre-condition:
+After the code block executes without exceptions, work_dir is proj_dir if the original work_dir was None, else remains its original value; output_dir exists as a directory; processed is a set that is a shallow copy of already_processed if already_processed was not None, otherwise an empty set; expected_files is None if file_list is None, otherwise a set of absolute paths input_dir/rel for each rel in file_list such that the file extension of rel is in EXT_TO_LANG; num_functions is an integer: when file_list is not None, it equals |expected_files \ processed|; when file_list is None, it equals the total count of regular files found by os.walk under input_dir whose extension is in EXT_TO_LANG. The concurrent.futures module has been imported but not yet used. The printing statements on lines 33 or 35 have output the number of pending functions to stdout. No subprocesses have been started, no verification or validation has been performed, and the function has not returned. Formal logic: (work_dir = proj_dir ∧ old(work_dir) = None) ∨ (work_dir = old(work_dir) ∧ old(work_dir) ≠ None). processed = (old(already_processed) if old(already_processed) ≠ None else ∅). (file_list = None → expected_files = None) ∧ (file_list ≠ None → expected_files = { input_dir ◦ rel | rel ∈ old(file_list) ∧ suffix(rel) ∈ EXT_TO_LANG }). (file_list ≠ None → num_functions = |expected_files \ processed|) ∧ (file_list = None → num_functions = Σ_{root,dirs,files ∈ walk(input_dir)} |{ f ∈ files | suffix(f) ∈ EXT_TO_LANG }|). is_directory(output_dir) holds. No other state mutations have occurred.
+
+Code block:
+```python
+Line 41:         )
+Line 42:         print(f"Functions pending verification: {num_functions}")
+Line 43:     logging.info(f"Watching {input_dir} for ready files (poll every {poll_interval}s)...")
+Line 44:     completed_count = 0
+Line 45:     try:
+Line 46:         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+Line 47:             reasoning_futures = {}
+Line 48:             validation_futures = {}
+Line 49:             submitted = set()
+Line 50:             while True:
+Line 51:                 # Scan for new ready files
+Line 52:                 for root, _, files in os.walk(input_dir):
+Line 53:                     for fname in files:
+Line 54:                         ext = os.path.splitext(fname)[1]
+Line 55:                         if ext not in EXT_TO_LANG:
+Line 56:                             continue
+Line 57:                         file_path = os.path.join(root, fname)
+Line 58:                         if expected_files is not None and file_path not in expected_files:
+Line 59:                             continue
+Line 60:                         if file_path in processed:
+Line 61:                             continue
+Line 62:                         if file_path in submitted:
+Line 63:                             continue
+Line 64:                         if not is_file_ready(file_path):
+Line 65:                             continue
+Line 66:                         # File is ready and not yet submitted or processed.
+Line 67:                         submitted.add(file_path)
+Line 68:                         language = EXT_TO_LANG.get(ext, "C")
+Line 69:                         future = executor.submit(
+Line 70:                             _verify_single_file, file_path, input_dir, output_dir, language, work_dir, resume
+Line 71:                         )
+Line 72:                         reasoning_futures[future] = file_path
+Line 73:                         logging.info(f"Submitted: {file_path}")
+Line 74:                 # Collect completed reasoning futures (non-blocking)
+Line 75:                 done = [f for f in reasoning_futures if f.done()]
+Line 76:                 for future in done:
+Line 77:                     fpath = reasoning_futures.pop(future)
+Line 78:                     submitted.discard(fpath)
+Line 79:                     try:
+Line 80:                         _, verdict = future.result()
+```
+
+Additional context:
+is_file_ready(file_path)
+Pre-condition: file_path is the path to an extracted function file.
+Post-condition: Returns True iff both a .spec.json and a .info.json sidecar file exist for the function at file_path and are valid; returns False otherwise.
+
+_verify_single_file(file_path, input_dir, output_dir, language, work_dir, resume)
+Pre-condition: file_path identifies an extracted function file with complete .spec.json and .info.json sidecars. input_dir is the extracted_functions/ directory. output_dir is the destination directory for verdict JSON. language is a string identifying the programming language. work_dir is the workspace directory. resume is a boolean.
+Post-condition: Returns a tuple of (return_code, verdict_dict) where verdict_dict contains a 'verdict' key with value MATCH, MISMATCH, or SKIPPED, and writes the verdict_dict as a JSON file to output_dir. Produces no side-effects on the function source file.
+
+_validate_single_bug(result_json_rel, proj_dir, work_dir, resume, bug_validator_path)
+Pre-condition: result_json_rel is a relative path to a verification result JSON file under output_dir whose 'verdict' is MISMATCH. proj_dir is the project root. work_dir is the workspace directory. resume is a boolean. bug_validator_path is a path to custom bug-validator instructions or None.
+Post-condition: Builds a probe script that exercises the claimed violation, executes it, and produces a bug_validation/<bug_id>.md report describing the specification claim, actual behavior, code evidence, trigger condition, and reproduction steps. Also writes a bug_validation/<bug_id>.result.json file whose 'confirmation_status' is 'confirmed' when the probe output corroborates the violation, or 'not_confirmed' when it does not.
+
+_generate_validation_summary(work_dir)
+Pre-condition: work_dir is the workspace directory containing a bug_validation/ subdirectory with .result.json files from prior bug validations.
+Post-condition: Writes bug_validation/summary.json containing counts of total reported bugs, confirmed bugs (where confirmation_status is 'confirmed'), and not-confirmed bugs, aggregated across all .result.json files found under bug_validation/.
+
+_spec_task_done(future)
+Pre-condition: future is a concurrent.futures.Future object or None.
+Post-condition: Returns True iff future is not None and has completed (is done or cancelled); returns False otherwise.
+
+_spec_task_exit_code(future)
+Pre-condition: future is a completed concurrent.futures.Future object representing a spec-generation subprocess.
+Post-condition: Returns the integer exit code of the subprocess.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

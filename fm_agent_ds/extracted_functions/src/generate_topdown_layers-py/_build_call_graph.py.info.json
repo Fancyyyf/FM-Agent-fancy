@@ -1,0 +1,46 @@
+{
+  "callees": [
+    {
+      "name": "_file_to_fqn",
+      "signature": "_file_to_fqn(filepath, proj_dir) -> str",
+      "pre_condition": "filepath is an absolute path to an existing extracted-function file. proj_dir is a valid directory path.",
+      "post_condition": "Returns the canonical FQN string derived from the file path relative to proj_dir, using '::' as the separator and canonicalizing unsafe characters."
+    },
+    {
+      "name": "_resolve_extra_call_edges",
+      "signature": "_resolve_extra_call_edges(extra_call_edges, phase_fqns, known_fqns) -> (dict, dict)",
+      "pre_condition": "extra_call_edges is an iterable of supplemental edge records or None. phase_fqns is a set of FQN strings from the current phase. known_fqns is a set of all known FQN strings.",
+      "post_condition": "Returns a pair (edges_by_caller_fqn, edges_by_callsite). edges_by_caller_fqn maps exact caller FQN to the list of matching edge records. edges_by_callsite maps callsite-name to the list of matching edge records. Only edges whose callee FQN is in known_fqns are returned. When extra_call_edges is None or empty, both returned dicts are empty."
+    },
+    {
+      "name": "_detect_lang_from_ext",
+      "signature": "_detect_lang_from_ext(filepath) -> str | None",
+      "pre_condition": "filepath is a string representing a filesystem path.",
+      "post_condition": "Returns a language key string if the file extension matches a registered language; returns None if no language is registered for the extension."
+    },
+    {
+      "name": "call_edges_all",
+      "signature": "call_edges_all(proj_dir, phase_langs) -> (dict, set)",
+      "pre_condition": "proj_dir is a valid directory path. phase_langs is an iterable of language key strings.",
+      "post_condition": "Returns a pair (edges, langs). edges maps caller FQN to the set of callee FQNs as resolved by the codegraph index. langs is the set of language keys for which codegraph edges were successfully retrieved. The edges dict may be empty when no codegraph index exists or no relevant edges are found."
+    },
+    {
+      "name": "_get_keywords_for_lang",
+      "signature": "_get_keywords_for_lang(lang_key) -> set",
+      "pre_condition": "lang_key is a language key string returned by _detect_lang_from_ext or an equivalent source.",
+      "post_condition": "Returns a non-empty set of strings (function names, keywords, builtins) that are to be excluded from call-site detection for the given language. The returned set is never None."
+    },
+    {
+      "name": "_find_call_sites",
+      "signature": "_find_call_sites(text, lang_key, stems_to_find, keywords) -> set",
+      "pre_condition": "text is a string containing source code. lang_key is a language key string. stems_to_find is a set of function-name strings to search for. keywords is a set of strings to exclude from results.",
+      "post_condition": "Returns the subset of stems_to_find whose members appear as bare-name call sites in text, excluding any member that also belongs to keywords. A call site is a position in source code where a name appears in a syntactic calling position for the given language (e.g., followed by '(' in C-like languages)."
+    },
+    {
+      "name": "_add_resolved_extra_edge",
+      "signature": "_add_resolved_extra_edge(caller_fqn, edge, phase_fqns, callees_map, callers_map, all_callees_map, edge_aliases_map) -> None",
+      "pre_condition": "caller_fqn is a canonical FQN string. edge is a supplemental edge record with a callee FQN and optional info_names. phase_fqns is a set of FQN strings. callees_map, callers_map, all_callees_map, edge_aliases_map are mutable dicts keyed by FQN strings.",
+      "post_condition": "If edge's callee FQN differs from caller_fqn: adds callee to all_callees_map[caller_fqn]; also adds callee to callees_map[caller_fqn] and adds caller to callers_map[callee_fqn] when the callee FQN is in phase_fqns; records edge's info_names under edge_aliases_map[callee_fqn][caller_fqn]. Self-edges (caller_fqn equals callee FQN) produce no mutation to any map."
+    }
+  ]
+}

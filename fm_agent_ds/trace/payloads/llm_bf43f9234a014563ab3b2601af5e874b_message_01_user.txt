@@ -1,0 +1,30 @@
+Programming language: Python
+
+Pre-condition:
+env_path is a Path to a .env file that may or may not exist; updates is a dict mapping LLM section field paths to new values.
+
+Code block:
+```python
+Line 1: def warn_dotenv_overrides_for_updates(
+Line 2:     env_path: Path,
+Line 3:     updates: dict[str, str],
+Line 4: ) -> bool:
+Line 5:     """Warn when the focused TOML update remains shadowed by project dotenv."""
+Line 6:     _updated_env, legacy_overrides = remove_legacy_llm_env_overrides(
+Line 7:         _read_text_if_exists(env_path)
+Line 8:     )
+Line 9:     shadowing = tuple(
+Line 10:         name
+Line 11:         for name in legacy_overrides
+Line 12:         if _TOML_KEY_BY_ENV_KEY[name] in updates
+Line 13:     )
+Line 14:     if not shadowing:
+Line 15:         return False
+Line 16:     print("Warning: these project .env variables still override this TOML update:")
+Line 17:     print(f"  {', '.join(shadowing)}")
+Line 18:     print("The set command does not modify .env. Remove those lines, or run the")
+Line 19:     print("interactive wizard to migrate legacy LLM overrides.")
+Line 20:     return True
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

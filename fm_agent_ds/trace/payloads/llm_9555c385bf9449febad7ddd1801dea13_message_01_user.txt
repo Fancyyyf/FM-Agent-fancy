@@ -1,0 +1,27 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is an existing filesystem directory.
+
+Code block:
+```python
+Line 1: def _make_run_copy(proj_dir, run_dir):
+Line 2:     """Copy proj_dir (everything except .git) into a fresh ``run_dir``.
+Line 3:     Includes an existing ``fm_agent/`` workspace so a resumed pipeline finds the
+Line 4:     prior run's state. Any leftover run directory from an interrupted run is
+Line 5:     discarded first: the pristine sources always live in proj_dir, so the copy
+Line 6:     can be remade cleanly.
+Line 7:     """
+Line 8:     for stale in (run_dir, run_dir + ".tmp"):
+Line 9:         if os.path.exists(stale):
+Line 10:             shutil.rmtree(stale)
+Line 11:     tmp_dir = run_dir + ".tmp"
+Line 12:     shutil.copytree(
+Line 13:         proj_dir, tmp_dir,
+Line 14:         ignore=shutil.ignore_patterns(*_SKIP_DIRS),
+Line 15:         symlinks=True,
+Line 16:     )
+Line 17:     os.replace(tmp_dir, run_dir)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

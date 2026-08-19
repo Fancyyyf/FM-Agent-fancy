@@ -1,0 +1,22 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a string path to an existing project directory.
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for Go."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("go") if cg else None
+```
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string path to an existing project directory.
+Post-condition: Returns a CodeGraphExtractor instance initialised against the project directory if the CodeGraph index can be created; returns None otherwise.
+
+get_call_edges(language: str) -> dict
+Pre-condition: Called on a valid CodeGraphExtractor instance. language is a string identifying the target programming language.
+Post-condition: Returns a dict mapping each caller FQN to a set of callee FQNs for the specified language.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

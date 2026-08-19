@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "position_to_offset",
+      "signature": "position_to_offset(self, lsp_position: dict) -> int",
+      "pre_condition": "self is a _SourceIndex instance whose source attribute is initialized. lsp_position is a dict with 'line' (non-negative integer) and 'character' (non-negative integer; UTF-16 code units) entries.",
+      "post_condition": "Returns the 0-indexed byte offset within self.source that corresponds to the given LSP position. Lines are zero-indexed, characters counted in UTF-16 code units (surrogate pairs consume 2 units). Out-of-range positions are clamped: a line beyond the last line resolves to the offset after the final character of the source; a character beyond the line length resolves to the offset after the last character of that line."
+    }
+  ]
+}

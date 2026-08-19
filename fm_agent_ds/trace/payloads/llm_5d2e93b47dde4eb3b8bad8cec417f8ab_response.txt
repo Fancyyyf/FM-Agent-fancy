@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/home/user', abs_src='/home/user/.env'",
+  "offending_statements": "Line 9: if last_dot > 0:",
+  "reason": "When the basename contains a period at the start (e.g., '.env'), last_dot equals 0, so the condition fails and the code takes the else branch, returning the original basename as dir_name and an empty ext. The specification, however, requires that any basename containing a period be transformed: the empty string before the last period and 'env' after should be joined with a hyphen, giving '-env', and ext should be 'env'. Thus the code's output violates the specification."
+}

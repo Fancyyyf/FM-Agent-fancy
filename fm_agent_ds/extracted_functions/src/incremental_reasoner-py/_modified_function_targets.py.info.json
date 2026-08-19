@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_src_rel_to_func_dir",
+      "signature": "_src_rel_to_func_dir(proj_dir, abs_src) -> tuple",
+      "pre_condition": "proj_dir is an existing directory. abs_src is an absolute path to a source file within proj_dir.",
+      "post_condition": "Returns a tuple of (func_dir, ext) where func_dir is the absolute path to the extracted-functions subdirectory corresponding to the source file's relative path within proj_dir/fm_agent/extracted_functions/, and ext is the source file's extension. The returned func_dir exists on disk."
+    },
+    {
+      "name": "_extracted_files_by_method",
+      "signature": "_extracted_files_by_method(func_dir) -> dict",
+      "pre_condition": "func_dir is an existing directory path containing extracted function files.",
+      "post_condition": "Returns a dict mapping each bare method tail string (the function name portion of each extracted function file name, excluding class qualifier and extension) to an iterable of absolute paths to the corresponding extracted function files in func_dir. When multiple classes define the same method name, the method tail maps to all matching file paths."
+    },
+    {
+      "name": "_file_to_fqn",
+      "signature": "_file_to_fqn(filepath, work_dir) -> str",
+      "pre_condition": "filepath is an absolute path to an extracted function file. work_dir is the fm_agent/ work directory under proj_dir.",
+      "post_condition": "Returns the fully-qualified function name (FQN) string derived from the extracted function file's path relative to work_dir/extracted_functions/, with path components joined by '::' and unsafe characters canonicalized. The returned FQN is the canonical identifier used across the pipeline to reference the function."
+    }
+  ]
+}

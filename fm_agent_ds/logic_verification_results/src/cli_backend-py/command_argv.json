@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/command_argv.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns the argument vector of command as a list of strings, preserving the order of arguments as they appear in command. Each element is a string exactly as provided by the argument representation. The returned list excludes any standard-input content associated with the command.",
+    "actual_behavior": "The function returns a list of strings representing the argument vector. If `command` is an instance of `AgentCommand`, the returned list is `command.argv`. Otherwise, the returned list is `list(command)`, a new list containing all items from `command`, which is an iterable of strings. No exceptions are raised and no side effects occur. Formal post-condition: (isinstance(command, AgentCommand)  result = command.argv  isinstance(result, list)   e  result, isinstance(e, str))  (isinstance(command, AgentCommand)  result = list(command)  isinstance(result, list)   e  result, isinstance(e, str)).",
+    "code_evidence": "Line 4: return list(command)",
+    "trigger_condition": "The specification requires that the function returns the argument vector of any command as a list of strings. A valid command object, such as an instance of a custom class with an 'argv' attribute but that is neither an AgentCommand nor iterable, causes the code to raise a TypeError because Line 4 attempts to call list() on a non-iterable. This violates the specification for such inputs."
+  }
+}

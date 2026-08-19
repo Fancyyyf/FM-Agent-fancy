@@ -1,0 +1,16 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir resolves to an existing directory.
+
+Code block:
+```python
+Line 1: def _erlang_files(proj_dir: str) -> list[str]:
+Line 2:     return sorted(_iter_project_files(proj_dir, {".erl"}))
+```
+
+Additional context:
+_iter_project_files(root: str, extensions: set[str]) -> Iterable[str]
+Pre-condition: root resolves to an existing directory. extensions is a non-empty set of file extension strings, each beginning with a dot.
+Post-condition: Yields the absolute path of every regular file under the directory tree rooted at root whose suffix matches an extension in extensions. The iteration order depends on the filesystem enumeration order.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

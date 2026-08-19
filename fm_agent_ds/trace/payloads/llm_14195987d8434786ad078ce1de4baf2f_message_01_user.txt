@@ -1,0 +1,50 @@
+Programming language: Python
+
+Pre-condition:
+text is a string containing source code in a language whose comment syntax is known to the system. lang_key is a string key identifying that language.
+
+Code block:
+```python
+Line 1: def _strip_comments_from_source(text, lang_key):
+Line 2:     """Strip comments from source text, replacing their content with spaces
+Line 3:     to preserve character positions. Returns the cleaned text."""
+Line 4:     result = list(text)
+Line 5:     i = 0
+Line 6:     lang_cfg = LANG_CONFIG.get(lang_key, {})
+Line 7:     comment_prefix = lang_cfg.get("comment_prefix", "//")
+Line 8:     is_hash_comment = comment_prefix == "#"
+Line 9:     while i < len(result):
+Line 10:         ch = result[i]
+Line 11:         # Mask string literals (including Python triple-quoted strings)
+Line 12:         if ch in ('"', "'"):
+Line 13:             quote = ch
+Line 14:             # Check for triple-quote
+Line 15:             if i + 2 < len(result) and result[i + 1] == quote and result[i + 2] == quote:
+Line 16:                 result[i] = " "
+Line 17:                 result[i + 1] = " "
+Line 18:                 result[i + 2] = " "
+Line 19:                 i += 3
+Line 20:                 while i < len(result):
+Line 21:                     if result[i] == "\\":
+Line 22:                         if result[i] != "\n":
+Line 23:                             result[i] = " "
+Line 24:                         if i + 1 < len(result) and result[i + 1] != "\n":
+Line 25:                             result[i + 1] = " "
+Line 26:                         i += 2
+Line 27:                         continue
+Line 28:                     if result[i] == quote and i + 2 < len(result) and result[i + 1] == quote and result[i + 2] == quote:
+Line 29:                         result[i] = " "
+Line 30:                         result[i + 1] = " "
+Line 31:                         result[i + 2] = " "
+Line 32:                         i += 3
+Line 33:                         break
+Line 34:                     if result[i] != "\n":
+Line 35:                         result[i] = " "
+Line 36:                     i += 1
+Line 37:                 continue
+Line 38:             if result[i] != "\n":
+Line 39:                 result[i] = " "
+Line 40:             i += 1
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

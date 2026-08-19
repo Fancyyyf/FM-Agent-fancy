@@ -1,0 +1,5 @@
+{
+  "signature": "_get_call_regex(lang_key) -> re.Pattern",
+  "pre_condition": "lang_key is a string key for which a call-site regex is defined in the system.",
+  "post_condition": "Returns a compiled regular expression. When applied to source text from which comments have been stripped, the first capture group of each match yields a bare-word identifier that precedes an opening parenthesis '(' at a syntactic call position for the language identified by lang_key. Any type-argument syntax (e.g., angle-bracket-delimited or square-bracket-delimited generic parameters) permitted by the language between the identifier and the parenthesis is tolerated. Whitespace is allowed between the identifier, optional type arguments, and the parenthesis."
+}

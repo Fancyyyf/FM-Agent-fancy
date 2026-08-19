@@ -1,0 +1,58 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir and work_dir are valid filesystem directory paths; event_id is a non-empty string; command is a non-empty list of strings; trace_log_path is a writable filesystem path
+
+Code block:
+```python
+Line 1: def _start_opencode_process(proj_dir, work_dir, event_id, command, trace_log_path):
+Line 2:     stdin_text = command_stdin(command)
+Line 3:     proc = subprocess.Popen(
+Line 4:         command_argv(command),
+Line 5:         cwd=proj_dir,
+Line 6:         env=_opencode_env(work_dir, event_id),
+Line 7:         stdin=subprocess.PIPE if stdin_text is not None else None,
+Line 8:         stdout=subprocess.PIPE,
+Line 9:         stderr=subprocess.STDOUT,
+Line 10:         text=True,
+Line 11:         encoding="utf-8",
+Line 12:         errors="replace",
+Line 13:     )
+Line 14:     stdin_thread = None
+Line 15:     if stdin_text is not None:
+Line 16:         stdin_thread = threading.Thread(
+Line 17:             target=_write_command_stdin,
+Line 18:             args=(proc.stdin, stdin_text),
+Line 19:             daemon=True,
+Line 20:         )
+Line 21:         stdin_thread.start()
+Line 22:     log_thread = threading.Thread(
+Line 23:         target=_copy_opencode_output,
+Line 24:         args=(proc.stdout, trace_log_path),
+Line 25:         daemon=True,
+Line 26:     )
+Line 27:     log_thread.start()
+Line 28:     return proc, log_thread, stdin_thread
+```
+
+Additional context:
+command_stdin(command) -> str | None
+Pre-condition: command is a non-empty list of strings
+Post-condition: Returns the stdin text to feed to the subprocess when the command includes stdin content; returns None when the command has no stdin component
+
+command_argv(command) -> list[str]
+Pre-condition: command is a non-empty list of strings
+Post-condition: Returns the full command-line argument list to execute, with any stdin component of the command excluded
+
+_opencode_env(work_dir, event_id) -> dict[str, str]
+Pre-condition: work_dir is a valid directory path and event_id is a non-empty string
+Post-condition: Returns an environment variable dictionary containing configuration injections derived from work_dir and event_id
+
+_write_command_stdin(stdin_pipe, stdin_text) -> None
+Pre-condition: stdin_pipe is a writable subprocess stdin pipe and stdin_text is a non-empty string
+Post-condition: Writes all of stdin_text to stdin_pipe and closes the pipe. Returns regardless of write outcome.
+
+_copy_opencode_output(stdout_pipe, trace_log_path) -> None
+Pre-condition: stdout_pipe is a readable subprocess stdout pipe and trace_log_path is a writable filesystem path
+Post-condition: Copies all output from stdout_pipe to the file at trace_log_path until the pipe is exhausted. Returns when the subprocess output stream is closed.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

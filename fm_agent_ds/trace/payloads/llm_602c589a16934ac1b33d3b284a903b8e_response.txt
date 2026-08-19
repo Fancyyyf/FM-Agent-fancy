@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "func = \"\\n\\nline1\\nline2\\n\\n\", GRANULARITY = 3. The code strips leading/trailing whitespace, returning [\"line1\\nline2\"], which reconstructs \"line1\\nline2\" instead of the original func.",
+  "offending_statements": "Line 2: lines = func.strip().split('\\n')",
+  "reason": "The specification requires that concatenation of blocks reconstructs func, but the code strips leading and trailing whitespace via func.strip(), altering the original string. For input '\\n\\nline1\\nline2\\n\\n', the code returns ['line1\\nline2'], missing the leading and trailing newlines, violating reconstruction."
+}

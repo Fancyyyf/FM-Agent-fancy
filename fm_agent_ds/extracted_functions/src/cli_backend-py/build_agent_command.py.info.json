@@ -1,0 +1,28 @@
+{
+  "callees": [
+    {
+      "name": "resolve_model_backend",
+      "signature": "resolve_model_backend() -> str",
+      "pre_condition": "The runtime configuration has been initialized.",
+      "post_condition": "Returns a non-empty string identifying the configured CLI backend."
+    },
+    {
+      "name": "_normalize_backend",
+      "signature": "_normalize_backend(backend) -> str",
+      "pre_condition": "backend is a non-empty string.",
+      "post_condition": "Returns the canonical backend name corresponding to the given alias. Unrecognized aliases are returned unchanged."
+    },
+    {
+      "name": "_compose_stdin",
+      "signature": "_compose_stdin(prompt, files) -> str",
+      "pre_condition": "prompt is a non-empty string. files is a list of string file paths (possibly empty).",
+      "post_condition": "Returns a single string composed from the prompt text and file paths, formatted as subprocess standard input for the CLI backend."
+    },
+    {
+      "name": "cli_effort",
+      "signature": "cli_effort() -> str",
+      "pre_condition": "The runtime configuration is initialized.",
+      "post_condition": "Returns the configured reasoning effort level as a non-empty string."
+    }
+  ]
+}

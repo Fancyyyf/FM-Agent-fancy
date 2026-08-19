@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_trace_value.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "For each field name in keys, in order, probes d for both the plain field name and its decorator-prefixed variants. Returns the value of the first field that has a truthy value in d. Returns None if no field named by keys has a truthy value under any recognized key form.",
+    "actual_behavior": "After the function executes, the returned value ret satisfies: if d is not a dict, ret = None; if d is a dict, let C be the concatenated sequence of candidate strings obtained by iterating over the input keys in the given order and, for each key k, appending k, then '+' + k, then '*' + k. If no candidate in C is a key of d, ret = None; otherwise, let c be the first candidate in C that is a key of d, and ret = d[c].",
+    "code_evidence": "Line 7: if candidate in d:\nLine 8: return d[candidate]",
+    "trigger_condition": "The code checks key existence in d, but the specification requires the field to have a truthy value. A falsy value for an existing key causes code to return that falsy value, while the specification expects it to be skipped."
+  }
+}

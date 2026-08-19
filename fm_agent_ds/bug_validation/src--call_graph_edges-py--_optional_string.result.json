@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_optional_string",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_optional_string.py",
+  "function_name": "_optional_string",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_optional_string.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_optional_string.md",
+  "probe_stdout": "CONFIRMED — isinstance() accepted str subclass, but spec requires exact type() check. Returned: 'hello'",
+  "trigger_summary": "Pass a str subclass instance as value — isinstance() accepts it but the spec requires exact type() check to raise ValueError."
+}

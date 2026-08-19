@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/_extraction_ident.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "Returns a canonicalized fully-qualified function identifier using '::' as the component separator. Each component of the qualified name is first stripped of tree-sitter decorations (type signatures, template bodies, and parameter lists) to yield the bare identifier, then transformed for filesystem and FQN safety by replacing every '/' character with '_'. The number of components equals the number of identifier segments after splitting qualified_name on '::' and '.' boundaries, preserving left-to-right order.",
-    "actual_behavior": "The function returns a string R that satisfies: Let C = _qualified_parts(name, qualified_name), a list of component strings obtained by splitting qualified_name on '::' and '.' boundaries, defaulting to [name] if no components arise. Then R = '::'.join(canonicalize(_bare_function_name(p)) for p in C). For each p, _bare_function_name(p) strips tree-sitter decorations, leaving the bare identifier, and canonicalize(s) replaces every '/' with '_'. Hence R is a class-qualified identifier with '::' separators, free of slashes and tree-sitter artifacts, and safe for filesystem use.",
-    "code_evidence": "Line 15: return \"::\".join(\nLine 16:     canonicalize(_bare_function_name(p))\nLine 17:     for p in _qualified_parts(name, qualified_name)\nLine 18: )",
-    "trigger_condition": "When qualified_name starts with '::' (e.g., '::foo'), _qualified_parts splits on '::' boundaries yielding an empty first component. The code includes this empty component in the joined result, producing '::foo'. The specification requires the number of components to equal the number of identifier segments (i.e., non-empty parts), so the expected result is 'foo'."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_extraction_ident.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

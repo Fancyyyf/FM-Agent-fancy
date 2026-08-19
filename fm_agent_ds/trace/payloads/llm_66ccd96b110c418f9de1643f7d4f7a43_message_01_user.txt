@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+self is a PluginConfig instance whose stages attribute is a mapping from stage name strings to PluginStageConfig values
+
+Code block:
+```python
+Line 1:     def get_stage(self, stage_name: str) -> Optional[PluginStageConfig]:
+Line 2:         """Return the stage config for *stage_name*, or None if not configured."""
+Line 3:         return self.stages.get(stage_name)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

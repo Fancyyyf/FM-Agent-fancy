@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_load_json_edges",
+      "signature": "_load_json_edges(text: str, source: str) -> list[CallEdge]",
+      "pre_condition": "text is a non-empty, non-whitespace-only string containing valid JSON whose top-level object has an 'edges' key whose value is a JSON array of valid edge objects.",
+      "post_condition": "Returns a list of CallEdge objects, one for each element in the 'edges' array, preserving the order of the elements as they appear in the array."
+    }
+  ]
+}

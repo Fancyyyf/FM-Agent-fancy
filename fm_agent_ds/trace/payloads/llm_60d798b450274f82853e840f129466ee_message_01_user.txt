@@ -1,0 +1,23 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _get_head_commit(proj_dir):
+Line 2:     """Return the latest git commit id of proj_dir, or None if not a git repo."""
+Line 3:     try:
+Line 4:         return subprocess.run(
+Line 5:             ["git", "-C", proj_dir, "rev-parse", "HEAD"],
+Line 6:             check=True, capture_output=True, text=True,
+Line 7:         ).stdout.strip()
+Line 8:     except subprocess.CalledProcessError:
+Line 9:         logging.info("_get_head_commit: %s is not a git repo.", proj_dir)
+Line 10:         return None
+```
+
+Condition A (what the code actually does):
+After execution, exactly one of the following holds: (1) the subprocess.run(...) call succeeds without raising CalledProcessError, returns a CompletedProcess with some stdout string s, and the function returns s.strip(); no side effect occurs. (2) the call raises subprocess.CalledProcessError, a logging.info message is emitted containing proj_dir, and the function returns None. (3) the call raises any other exception (e.g., OSError), that exception is propagated and the function does not return normally. proj_dir is not modified in any case.
+
+Condition B (what the specification requires):
+If proj_dir is a valid git repository with a HEAD commit reachable via rev-parse, returns the full hexadecimal SHA identifier of that commit as a non-empty string. If proj_dir is not a git repository or the git command fails for any reason (including a missing or corrupt HEAD), returns None.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

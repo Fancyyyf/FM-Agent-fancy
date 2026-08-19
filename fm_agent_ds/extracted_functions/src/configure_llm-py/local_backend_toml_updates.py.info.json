@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "validate_llm_setting",
+      "signature": "validate_llm_setting(key: str, value: str) -> None",
+      "pre_condition": "key is a non-empty string; value is a string.",
+      "post_condition": "Returns normally when value is a valid setting for key. Raises an exception when key or value fails the LLM setting validation criteria."
+    },
+    {
+      "name": "dotenv_values",
+      "signature": "dotenv_values(env_path: Path) -> dict[str, str | None]",
+      "pre_condition": "env_path is a Path.",
+      "post_condition": "When env_path identifies an existing, readable .env file, returns a dict mapping each defined variable name to its string value. When env_path does not identify an existing file, returns an empty dict."
+    }
+  ]
+}

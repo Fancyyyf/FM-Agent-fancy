@@ -1,0 +1,62 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is an existing directory containing the project source tree; work_dir is a writable directory for pipeline outputs; script_dir is an existing directory containing FM-Agent scripts; is_incremental and resume are booleans; submodules, if not None, is a sequence of subdirectory paths within proj_dir; plugin_stage is a PluginStageConfig or None; plugin_root is a Path or None
+
+Code block:
+```python
+Line 1: def _run_generate_phases(proj_dir, work_dir, script_dir, is_incremental=False,
+Line 2:                          resume=False, submodules=None, plugin_stage=None,
+Line 3:                          plugin_root=None):
+Line 4:     """Stage 1: generate phase.json — input target code, output phases.json."""
+Line 5:     if plugin_stage is not None:
+Line 6:         if plugin_stage.type == "pass":
+Line 7:             print("[Pipeline] Stage 1/6: Plugin stage 'generate_phase_plan' type=pass, skipping.")
+Line 8:             return
+Line 9:         if plugin_stage.type == "replace":
+Line 10:             print("[Pipeline] Stage 1/6: Plugin stage 'generate_phase_plan' type=replace, running plugin command.")
+Line 11:             from .plugin import run_plugin_command
+Line 12:             run_plugin_command(plugin_stage.replace_cmd, plugin_root, proj_dir, label="generate_phase_plan")
+Line 13:             return
+Line 14:     phases_json = os.path.join(work_dir, "phases.json")
+Line 15:     prev_mtime = os.path.getmtime(phases_json) if os.path.exists(phases_json) else None
+Line 16:     phase_plan_errors = (
+Line 17:         _phase_plan_schema_errors(phases_json)
+Line 18:         if os.path.exists(phases_json)
+Line 19:         else []
+Line 20:     )
+Line 21:     _resume_skip = resume and _phase_plan_complete(work_dir)
+Line 22:     if _resume_skip:
+Line 23:         print("[Pipeline] Stage 1/6: RESUME — phases.json found, skipping phase plan generation.")
+Line 24:     if plugin_stage is not None and plugin_stage.type == "modify" and plugin_stage.input_md:
+Line 25:         workflow_src = str(plugin_root / plugin_stage.input_md)
+Line 26:         workflow_dst = os.path.join(work_dir, "workflow_generate_phases.md")
+Line 27:         shutil.copy2(workflow_src, workflow_dst)
+Line 28:         user_knowledge_paths = list_staged_domain_knowledge_relpaths(work_dir)
+Line 29:         if user_knowledge_paths:
+Line 30:             with open(workflow_dst, "a") as _f:
+Line 31:                 _f.write(
+Line 32:                     "\n---\n\n"
+Line 33:                     "## User-Provided Domain Knowledge\n\n"
+Line 34:                     "The user supplied extra Markdown files with domain knowledge for this run. "
+Line 35:                     "Read these files before writing `phases.json` and the generated domain "
+Line 36:                     "context files. Use them only as contextual knowledge about intended "
+Line 37:                     "behavior, terminology, business rules, data encodings, and invariants; "
+Line 38:                     "do NOT include these Markdown files as project source files in "
+Line 39:                     "`phases.json`, and do NOT edit or summarize them in place.\n\n"
+Line 40:                     f"{format_domain_knowledge_bullets(user_knowledge_paths)}\n"
+```
+
+Additional context:
+build_llm_cli_command(model, prompt, cwd, files) -> str
+Pre-condition: model is a string identifying the LLM model to use; prompt is a string containing the natural-language instruction; cwd is a valid directory path; files is a list of absolute file paths that exist and are readable
+Post-condition: Returns a CLI command string that, when executed in the environment, invokes the configured LLM backend with the given model, prompt, and file attachments
+
+run_opencode_traced(proj_dir, work_dir, command, stage, input_files, output_files, summary, metadata)
+Pre-condition: proj_dir is an existing project directory; work_dir is a writable directory; command is a valid CLI command string; stage is a string identifying the pipeline stage; input_files is a list of file paths relative to proj_dir that exist and are readable; output_files is a list of file paths relative to proj_dir that the invoked process is expected to produce
+Post-condition: Returns normally when the command executes. Upon return, output_files are expected to exist at their specified paths under proj_dir if the LLM-based process completed successfully; structured trace events are written to the trace directory
+
+run_plugin_command(cmd, plugin_root, proj_dir, label)
+Pre-condition: cmd is a non-empty string specifying a shell command; plugin_root is a valid directory path; proj_dir is an existing directory; label is a string identifying the operation for log messages
+Post-condition: Executes the command with the working directory set to plugin_root and FM_AGENT_PLUGIN_ROOT set to plugin_root in the subprocess environment. If the command exits with a non-zero code, raises CalledProcessError
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

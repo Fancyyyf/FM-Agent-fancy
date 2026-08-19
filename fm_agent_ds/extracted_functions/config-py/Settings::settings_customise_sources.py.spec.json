@@ -1,0 +1,5 @@
+{
+  "signature": "settings_customise_sources(cls, settings_cls, init_settings, env_settings, dotenv_settings, file_secret_settings) -> tuple",
+  "pre_condition": "settings_cls is a Pydantic BaseSettings subclass whose model config enforces extra='forbid'; init_settings is a Pydantic InitSettingsSource instance; _CONFIG_PATH is accessible in this scope",
+  "post_condition": "Returns a tuple of two settings sources. The first element is init_settings unchanged. The second element is a new _LayeredSource instance. When Pydantic evaluates the returned sources in order, any field set in init_settings takes precedence over the same field in the _LayeredSource. No other Pydantic-specific settings sources (env_settings, dotenv_settings, file_secret_settings) appear in the returned tuple."
+}

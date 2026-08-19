@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "rel_path = 'fm_agent/..'",
+  "offending_statements": "Line 3: return norm == \"fm_agent\" or norm.startswith(\"fm_agent/\")",
+  "reason": "The code uses a simple string prefix check after replacing backslashes. For the input 'fm_agent/..', normalization yields 'fm_agent/..', which starts with 'fm_agent/', so the code returns True. However, the specification requires False when the path does not form a descendant path under fm_agent/, and '..' escapes the directory, making it a non‑descendant. The string prefix alone does not detect such escapes, violating the specification."
+}

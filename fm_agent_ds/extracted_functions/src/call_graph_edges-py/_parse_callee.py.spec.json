@@ -1,0 +1,5 @@
+{
+  "signature": "_parse_callee(value, source: str) -> CalleeTarget",
+  "pre_condition": "source is a string used for error provenance. value is expected to be a dict containing callee specification fields, but may be of any type including None.",
+  "post_condition": "When value is a dict, returns a CalleeTarget whose fqn is a required non-empty string from the dict and whose info_names is a tuple of string names from the dict (defaulting to an empty tuple when the corresponding field is absent or empty). When value is not a dict, raises ValueError with a message that includes source."
+}

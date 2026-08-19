@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_phase_plan_complete",
+      "signature": "_phase_plan_complete(work_dir) -> bool",
+      "pre_condition": "work_dir is a directory path",
+      "post_condition": "Returns True if and only if phases.json exists at its expected path under work_dir and contains a valid phases plan"
+    },
+    {
+      "name": "_domain_context_complete",
+      "signature": "_domain_context_complete(work_dir) -> bool",
+      "pre_condition": "work_dir is a directory path",
+      "post_condition": "Returns True if and only if engine_overview.txt exists at its expected path under work_dir and, for every phase number P defined in the current phases.json, a corresponding phase_P_types.txt exists at its expected path under work_dir"
+    }
+  ]
+}

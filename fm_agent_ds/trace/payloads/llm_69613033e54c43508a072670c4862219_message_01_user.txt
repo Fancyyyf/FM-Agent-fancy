@@ -1,0 +1,18 @@
+Programming language: Python
+
+Pre-condition:
+work_dir is a directory path (string or path-like object)
+
+Code block:
+```python
+Line 1: def _phase_plan_complete(work_dir):
+Line 2:     """Return True only if phases.json exists and matches the required schema."""
+Line 3:     phases_path = os.path.join(work_dir, "phases.json")
+Line 4:     return not _phase_plan_schema_errors(phases_path)
+```
+
+Additional context:
+_phase_plan_schema_errors(phases_path)
+Pre-condition: phases_path is a string path that may refer to any existing, missing, or unreadable file
+Post-condition: Returns a value that is falsy when and only when the file at phases_path exists, is readable, contains syntactically valid JSON, and the content conforms to the required phases plan schema. Returns a truthy value otherwise, indicating the file is missing, unreadable, contains malformed JSON, or does not conform to the required schema structure.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

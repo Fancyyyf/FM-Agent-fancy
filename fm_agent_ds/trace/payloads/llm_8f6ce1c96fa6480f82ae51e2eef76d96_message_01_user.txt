@@ -1,0 +1,25 @@
+Programming language: Python
+
+Pre-condition:
+state is a State instance whose recent_events attribute is an iterable collection of (when, stage, status, summary) tuples, where status is a string.
+
+Code block:
+```python
+Line 1: def render_recent(state):
+Line 2:     table = Table(show_header=True, header_style="bold", expand=True, pad_edge=False)
+Line 3:     table.add_column("time", style="dim", no_wrap=True)
+Line 4:     table.add_column("stage", style="cyan", no_wrap=True)
+Line 5:     table.add_column("status", no_wrap=True)
+Line 6:     table.add_column("summary", overflow="ellipsis", no_wrap=True)
+Line 7:     for when, stage, status, summary in list(state.recent_events):
+Line 8:         color = {
+Line 9:             "success": "green",
+Line 10:             "mismatch": "yellow",
+Line 11:             "error": "red",
+Line 12:             "format_error": "magenta",
+Line 13:         }.get(status, "white")
+Line 14:         table.add_row(when, stage, f"[{color}]{status}[/]", summary)
+Line 15:     return Panel(table, title="Recent Events", border_style="cyan")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

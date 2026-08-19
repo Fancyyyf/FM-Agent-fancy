@@ -1,0 +1,5 @@
+{
+  "signature": "_load_spec_check_json(response) -> dict",
+  "pre_condition": "response is a string containing LLM-generated text that may include a JSON object, represented as bare JSON, within markdown-fenced code blocks, or interleaved with prose.",
+  "post_condition": "Returns a dict containing the parsed JSON object extracted from response. Raises json.JSONDecodeError when no valid JSON object can be extracted and parsed from response, or when the extracted JSON value is not a dict (i.e., is a list, string, number, boolean, or null). The error's .doc attribute is set to the stripped response text."
+}

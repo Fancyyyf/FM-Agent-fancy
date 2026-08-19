@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_get_phase_files",
+      "signature": "_get_phase_files(phases_data, phase_num, input_dir) -> iterable",
+      "pre_condition": "phases_data is the full phases configuration dict, phase_num is an integer identifying a phase, input_dir is a directory path string.",
+      "post_condition": "Returns an iterable of file identifiers for all extracted function files belonging to the specified phase. Each file identifier is a value unique within the returned iterable."
+    }
+  ]
+}

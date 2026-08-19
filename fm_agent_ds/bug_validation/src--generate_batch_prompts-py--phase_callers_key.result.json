@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_batch_prompts-py--phase_callers_key",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_batch_prompts-py/phase_callers_key.py",
+  "function_name": "phase_callers_key",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_batch_prompts-py--phase_callers_key.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_batch_prompts-py--phase_callers_key.md",
+  "probe_stdout": "CONFIRMED — actual: 'phase2_callers' | expected: 'phase1_callers'",
+  "trigger_summary": "When the target phase key is missing but another phase's callers key exists, the function returns the unrelated key instead of the computed fallback target."
+}

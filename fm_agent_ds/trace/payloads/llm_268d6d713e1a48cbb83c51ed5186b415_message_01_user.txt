@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+label is a non-empty string in file-path notation representing a qualified function name (e.g., 'path/to/file.c::func').
+
+Code block:
+```python
+Line 1: def normalize_fqn_label(label: str) -> str:
+Line 2:     """Normalize ``path/to/file.c::func`` into an FM-Agent FQN when needed."""
+Line 3:     return _normalize_endpoint_label(label)
+```
+
+Additional context:
+_normalize_endpoint_label(label: str) -> str
+Pre-condition: label is a string in file-path notation representing a qualified function name.
+Post-condition: Returns the FM-Agent canonical FQN form: '/' characters are replaced by '::' and the file-extension dot before the function separator is replaced by a hyphen ('-').
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

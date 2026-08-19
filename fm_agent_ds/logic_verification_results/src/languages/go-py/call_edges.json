@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/go-py/call_edges.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "When the CodeGraph backend can index the project's Go code, returns a dict whose keys are canonicalized caller FQNs (using :: as the namespace separator) and whose values are sets of canonicalized callee FQNs, representing the call-graph edges for Go source files in the project. When the CodeGraph backend is unavailable, returns None.",
+    "actual_behavior": "If the CodeGraph index for the project directory can be created (i.e., CodeGraphExtractor.from_proj_dir(proj_dir) returns a non-None instance), the function returns a dictionary that maps each caller's fully qualified name (as a tuple of caller_stem and caller_module, or a single string depending on implementation) to a set of callee stems for the Go language. If the index cannot be created (from_proj_dir returns None), the function returns None. No external state is modified, and the function does not raise exceptions under normal operation. Formal logic: Let R = call_edges(proj_dir). Then (R = None)  (R  None   cg  None, cg = CodeGraphExtractor.from_proj_dir(proj_dir)  R = cg.get_call_edges('go')  R is a dict mapping caller FQNs to sets of callee FQNs for Go).",
+    "code_evidence": "Line 2: \"\"\"Return {(caller_stem, caller_module): {callee_stems}} for Go.\"\"\"\nLine 4: return cg.get_call_edges(\"go\") if cg else None",
+    "trigger_condition": "The code returns keys as tuples (caller_stem, caller_module) instead of canonicalized strings using '::' as the namespace separator, violating the specification's requirement for the dict key format."
+  }
+}

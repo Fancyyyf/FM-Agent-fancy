@@ -1,82 +1,83 @@
-"""Probe script for bug: src--pipeline_setup-py--_phase_plan_schema_errors
+"""Probe for bug src--pipeline_setup-py--_phase_plan_schema_errors.
 
-Bug: The try-except block only handles OSError and json.JSONDecodeError, but does
-not handle UnicodeDecodeError that may be raised when a file contains invalid
-UTF-8 bytes. The spec requires the function to always return a list of
-human-readable error strings, but the code allows UnicodeDecodeError to
-propagate uncaught.
+Spec claim (relevant part): "_phase_plan_schema_errors never raises for a
+missing, unreadable, unparseable, or schema-invalid artifact -- every such
+condition is reported exclusively through returned entries."
 
-Test: Create a temp file with invalid UTF-8 bytes, call _phase_plan_schema_errors,
-and check whether an uncaught UnicodeDecodeError propagates (bug confirmed) or
-a list of error strings is returned (bug not confirmed / already fixed).
+Reported bug: the function only catches OSError and json.JSONDecodeError.
+A phases.json file whose bytes are not valid in the default text encoding
+(e.g. starts with b'\\xff\\xfe') raises UnicodeDecodeError during fp.read()
+inside json.load(fp). UnicodeDecodeError is a subclass of ValueError -- not
+of OSError nor of json.JSONDecodeError -- so it escapes both except
+handlers and propagates to the caller, violating the spec's error contract.
+
+FM-Agent self-validation guard compliance: this probe imports the
+src.pipeline_setup module and calls ONLY the minimal unit under test. It
+does not start any FM-Agent workflow (no run_pipeline, no main.py, no CLI,
+no subprocess). All fixtures live under a fresh temporary directory owned
+by this probe; the probe never touches the active repository's fm_agent/
+runtime workspace.
 """
-import sys
+
+import locale
 import os
-import tempfile
 import shutil
+import sys
+import tempfile
 
+REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+sys.path.insert(0, REPO_ROOT)
 
-def main():
-    # Ensure the repo root is on sys.path so that 'src' is importable.
-    # The probe lives at fm_agent/bug_validation/probe_*.py under repo root.
-    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    if repo_root not in sys.path:
-        sys.path.insert(0, repo_root)
+import src.pipeline_setup as pipeline_setup  # noqa: E402
 
-    tmpdir = tempfile.mkdtemp(prefix="bug_probe_schema_errors_")
-    try:
-        from src.pipeline_setup import _phase_plan_schema_errors
+probe_dir = tempfile.mkdtemp(prefix="probe_phase_plan_schema_errors_")
 
-        # Create a file with invalid UTF-8 bytes.
-        # 0xFF is never valid in UTF-8 (it's not a valid start byte, not a valid
-        # continuation byte). When Python's text-mode reader encounters it with
-        # strict UTF-8 decoding, a UnicodeDecodeError is raised.
-        bad_path = os.path.join(tmpdir, "bad_phases.json")
-        with open(bad_path, "wb") as f:
-            f.write(b'\xff\xfe\x00\x00{"phases": "invalid utf-8 prefix"}')
+try:
+    func = pipeline_setup._phase_plan_schema_errors
 
-        # Per spec: function should always return a list of error strings.
-        # If UnicodeDecodeError propagates uncaught, the bug is confirmed.
-        exception_raised = False
-        exception_type = None
-        actual = None
-        try:
-            actual = _phase_plan_schema_errors(bad_path)
-        except UnicodeDecodeError as e:
-            exception_raised = True
-            exception_type = "UnicodeDecodeError"
-        except Exception as e:
-            exception_raised = True
-            exception_type = type(e).__name__
-
-        if exception_raised:
-            # Bug confirmed: uncaught exception instead of returning a list.
-            expected_desc = "a list of error strings (per spec)"
-            print(
-                f"CONFIRMED — actual: {exception_type} propagated uncaught "
-                f"| expected: {expected_desc}"
-            )
-        elif isinstance(actual, list):
-            # Function returned a list — bug is either not present or already fixed.
-            print(
-                f"NOT CONFIRMED — actual: returned list of {len(actual)} error(s): "
-                f"{actual!r} | expected: should always return a list"
-            )
-        else:
-            # Unexpected return type.
-            print(
-                f"NOT CONFIRMED — actual: returned {type(actual).__name__}: "
-                f"{actual!r} | expected: a list per spec"
-            )
-
-    except Exception as exc:
-        print(f"ERROR: {exc}")
-        import traceback
-        traceback.print_exc()
+    # Sanity check: the OSError path (missing file) returns a list instead
+    # of raising -- establishes that the error-reporting contract works for
+    # the cases the function DOES catch.
+    missing_path = os.path.join(probe_dir, "does_not_exist.json")
+    sanity = func(missing_path)
+    if not (isinstance(sanity, list) and sanity):
+        print(f"ERROR: sanity check failed, expected non-empty list, got {sanity!r}")
         sys.exit(1)
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
+    print(f"sanity: missing file -> returned {sanity!r} (no exception)")
 
+    # Trigger: a phases.json whose content is not valid in the default
+    # text encoding. 0xFF/0xFE are invalid start bytes for UTF-8 and are
+    # also above the ASCII range, so decoding fails under either common
+    # default encoding.
+    bad_path = os.path.join(probe_dir, "phases.json")
+    with open(bad_path, "wb") as f:
+        f.write(b'\xff\xfe\x00{"phases": []}')
 
-if __name__ == "__main__":
-    main()
+    preferred = locale.getpreferredencoding(False)
+    print(f"note: locale preferred encoding = {preferred}")
+
+    raised = None
+    result = None
+    try:
+        result = func(bad_path)
+    except Exception as exc:  # spec says: never raise for ANY bad artifact
+        raised = exc
+
+    if raised is not None:
+        print(
+            f"CONFIRMED — {type(raised).__name__} escaped the function: "
+            f"{raised} | spec requires a non-empty returned list instead "
+            f"of any exception"
+        )
+    elif isinstance(result, list) and result:
+        print(
+            f"NOT CONFIRMED — function returned {result!r} instead of "
+            f"raising (spec-compliant behavior)"
+        )
+    else:
+        print(f"ERROR: unexpected return value {result!r}")
+        sys.exit(1)
+finally:
+    shutil.rmtree(probe_dir, ignore_errors=True)

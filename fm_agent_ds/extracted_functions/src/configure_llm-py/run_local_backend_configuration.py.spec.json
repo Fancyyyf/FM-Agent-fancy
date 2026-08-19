@@ -1,0 +1,5 @@
+{
+  "signature": "run_local_backend_configuration(project_root: Path, backend: str) -> int",
+  "pre_condition": "project_root is a Path identifying a directory containing a readable fm-agent.toml file; backend is a non-empty string identifying a local CLI backend and is not 'opencode'.",
+  "post_condition": "Returns 0 when the fm-agent.toml file has been updated to set the LLM backend to the provided backend value, with a backup of the original file created. Returns non-zero when the fm-agent.toml file has not been modified. No API key, .env modification, or OpenCode provider configuration is performed."
+}

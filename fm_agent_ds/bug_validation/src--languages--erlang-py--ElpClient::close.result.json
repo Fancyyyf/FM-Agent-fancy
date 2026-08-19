@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--ElpClient::close",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::close.py",
+  "function_name": "close",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::close.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::close.md",
+  "probe_stdout": "CONFIRMED — _proc is None=True, _reader is alive=True, _reader is None=False\n",
+  "trigger_summary": "ElpClient::close() terminates the subprocess and closes its streams, but never stops, joins, or sets to None the background reader thread self._reader, leaving it alive and still referencing the closed subprocess stdout."
+}

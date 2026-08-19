@@ -1,0 +1,3 @@
+{
+  "post_condition": "For non-empty input, the function never terminates due to an infinite loop in the while loop when encountering any character that is not a single or double quote. For empty input (text = ''), the function returns None, result is an empty list, i is 0, and the variables lang_cfg, comment_prefix, is_hash_comment hold their computed values based on lang_key."
+}

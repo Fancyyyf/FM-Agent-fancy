@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Call close() on an instance where self._proc is a running subprocess.Popen object and self._reader is an active threading.Thread that loops reading from self._proc.stdout. After close() returns, self._proc is None and pipes are closed, but self._reader is still running and may still be consuming from the buffer of the closed stdout pipe.",
+  "offending_statements": "Line 1-30: the entire close() method does not contain any code to stop or join self._reader.",
+  "reason": "The specification requires the background reader thread self._reader to be stopped and no longer consuming from the subprocess stdout. The code only terminates the subprocess and closes its streams, leaving self._reader untouched and still active, which violates the specification."
+}

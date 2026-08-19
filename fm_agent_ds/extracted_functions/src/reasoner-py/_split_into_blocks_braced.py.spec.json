@@ -1,0 +1,5 @@
+{
+  "signature": "_split_into_blocks_braced(func: str, language: str) -> list[str]",
+  "pre_condition": "func is a non-empty string containing the source code of a single function. language is a non-empty string identifying the programming language of func.",
+  "post_condition": "Returns an ordered list of block strings, each a contiguous segment of func. The concatenation of all blocks in returned order reconstructs the original function body. No block contains an unclosed brace grouping — every opening brace inside a block has its matching closing brace also inside that same block. When the function body contains no detectable brace pairs, this constraint is vacuously satisfied and blocks are split by line count. Every block except possibly the last contains at least GRANULARITY lines. When the total line count of func does not exceed GRANULARITY, the result is a single-element list containing the function body. When fewer than 2*GRANULARITY lines remain at the end, the remaining lines form the final block."
+}

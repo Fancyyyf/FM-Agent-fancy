@@ -1,0 +1,5 @@
+{
+  "signature": "_parse_caller(value: dict | None, source: str) -> CallerSelector",
+  "pre_condition": "source is a non-empty provenance string used for diagnostic messages.",
+  "post_condition": "Returns a CallerSelector constructed from the caller data in value. Raises ValueError whose message contains source when value is None, is not a dict, or has both 'fqn' (empty or absent) and 'callsite_names' (empty or absent). When value is a valid dict: the 'fqn' key, if present and non-empty, is converted to FM-Agent canonical FQN form and used as the fqn field; the 'callsite_names' key, if present, is converted to a tuple of strings and used as the callsite_names field. At least one of the two fields in the returned CallerSelector is non-empty."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--plugin-py--_resolve_command",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/plugin-py/_resolve_command.py",
+  "function_name": "_resolve_command",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--plugin-py--_resolve_command.py",
+  "detail_file": "fm_agent/bug_validation/src--plugin-py--_resolve_command.md",
+  "probe_stdout": "CONFIRMED - actual: '/tmp/tmpg7ihe4nq/-testfile other_token' | expected: '-testfile other_token'",
+  "trigger_summary": "Token starting with '-' that exists as a file under plugin_root is replaced by its absolute path instead of being left unchanged"
+}

@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_llm_select_json.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Sends prompt_content to the configured LLM. Returns the parsed and validated result when the LLM produces output that can be parsed as JSON, conforms to schema_description, and passes validator. Returns None when the LLM produces no output, output that cannot be parsed as JSON, output that does not conform to schema_description, or output that fails validator. The exchange is traced under work_dir with stage and trace_meta as identifying labels. On return with None, an error-level log entry is produced noting the stage.",
+    "actual_behavior": "After execution of _llm_select_json, the function either terminates normally with a return value v, or raises an exception that propagates to the caller. \n\nNormal termination post-condition: \n(1) (v is None)  (v is not None  validator(v)[0] = True  v is a JSON-parsed object that conforms to schema_description). \n(2) The directory os.path.join(work_dir, 'trace') contains trace files from the LLM interaction(s), recorded with metadata {'stage': stage, 'summary': 'LLM ' + stage, **trace_meta}. \n(3) If v is None, a logging.error message containing stage is emitted. \n\nExceptional termination (exception raised by _llm_json_call): the exception propagates; there is no return value, and no guarantees are made about the completeness or existence of the trace data.",
+    "code_evidence": "Line 11: result = _llm_json_call(\n        _llm_provider_client,\n        LLM_MODEL,\n        messages,\n        validator,\n        schema_description,\n        trace_dir=os.path.join(work_dir, \"trace\"),\n        trace_meta=meta,\n    )",
+    "trigger_condition": "The specification states that the function returns None whenever the LLM does not produce a valid, conforming JSON result; there is no provision for raising exceptions. The code propagates any exception raised by _llm_json_call (e.g., a network or client error) directly to the caller, violating the expected contract."
+  }
+}

@@ -1,0 +1,22 @@
+Programming language: Python
+
+Pre-condition:
+target_desc is a string; source_desc is a string
+
+Code block:
+```python
+Line 1: def _merge_descriptions(target_desc, source_desc):
+Line 2:     """Append a removed module's description to the owning module's description.
+Line 3:     Avoids re-merging the same content if it is already present.
+Line 4:     """
+Line 5:     source_desc = (source_desc or "").strip()
+Line 6:     if not source_desc:
+Line 7:         return target_desc
+Line 8:     if source_desc in target_desc:
+Line 9:         return target_desc
+Line 10:     if not target_desc:
+Line 11:         return source_desc
+Line 12:     return f"{target_desc}\n\n{source_desc}"
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

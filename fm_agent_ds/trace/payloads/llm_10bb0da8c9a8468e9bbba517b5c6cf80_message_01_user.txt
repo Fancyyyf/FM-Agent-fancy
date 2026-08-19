@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _required_string(value, key: str, source: str) -> str:
+Line 2:     if not isinstance(value, str) or not value.strip():
+Line 3:         raise ValueError(f"{source}: missing non-empty string '{key}'")
+Line 4:     return _clean_label(value)
+```
+
+Condition A (what the code actually does):
+After execution, either a ValueError is raised or a cleaned string is returned. Specifically:
+- If `not isinstance(value, str)` or `not value.strip()` evaluates to True (i.e., `value` is not a string, or the stripped content is empty/whitespace-only), a `ValueError` is raised with message `f'{source}: missing non-empty string \'{key}\''`.
+- Otherwise (`isinstance(value, str)` and `value.strip()` is truthy), the function returns `_clean_label(value)`. The cleaned string has all leading and trailing whitespace removed, any trailing semicolons stripped, and surrounding matching single or double quotation marks removed.
+
+Formally:
+∀ value, key, source: (key ≠ "" ∧ source ≠ "") →
+   [ (¬(isinstance(value, str) ∧ value.strip() ≠ "")) ⇒ (raise ValueError with message = source + ": missing non-empty string '" + key + "'") ]
+ ∧
+   [ (isinstance(value, str) ∧ value.strip() ≠ "") ⇒ (result = _clean_label(value) ∧ result is a string with no leading/trailing whitespace, no trailing semicolons, and no surrounding matching quotes) ]
+
+Condition B (what the specification requires):
+When value is not of type str, or when value is a string consisting only of whitespace characters, raises ValueError whose message contains source and key. When value is a non-empty, non-whitespace-only string, returns a string with leading and trailing whitespace removed, trailing semicolons stripped, and surrounding matching single or double quotation marks removed.
+
+Additional context:
+_clean_label(value) -> str
+Pre-condition: value is a non-empty, non-whitespace-only string validated by _required_string.
+Post-condition: Returns the input string with leading and trailing whitespace removed, trailing semicolons stripped, and surrounding matching single or double quotation marks removed.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

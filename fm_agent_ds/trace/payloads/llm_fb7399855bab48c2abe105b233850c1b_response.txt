@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Path = 'extracted_functions/foo//bar.py'",
+  "offending_statements": "Line 2",
+  "reason": "The specification requires removing the prefix from a normalized form of the path, and then replacing path-component separators with '::'. Normalization typically includes collapsing consecutive separators. The code only replaces backslashes (Line 2) and does not collapse multiple slashes. For 'extracted_functions/foo//bar.py', the code returns 'foo::::bar', whereas the normalized form yields 'foo::bar'."
+}

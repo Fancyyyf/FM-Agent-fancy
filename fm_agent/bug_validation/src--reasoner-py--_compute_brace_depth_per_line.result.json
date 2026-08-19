@@ -1,1 +1,11 @@
-{"id": "src--reasoner-py--_compute_brace_depth_per_line", "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/reasoner-py/_compute_brace_depth_per_line.py", "function_name": "_compute_brace_depth_per_line", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_compute_brace_depth_per_line.py", "detail_file": "fm_agent/bug_validation/src--reasoner-py--_compute_brace_depth_per_line.md", "probe_stdout": "CONFIRMED — actual: [0, 1, 1] | expected: [0, 0, 0]\n", "trigger_summary": "Multi-line block comments are not tracked across lines, so braces inside /* ... */ spanning multiple lines are counted as real braces instead of being excluded."}
+{
+  "id": "src--reasoner-py--_compute_brace_depth_per_line",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_jx75d3w8/snapshot/fm_agent/extracted_functions/src/reasoner-py/_compute_brace_depth_per_line.py",
+  "function_name": "_compute_brace_depth_per_line",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_compute_brace_depth_per_line.py",
+  "detail_file": "fm_agent/bug_validation/src--reasoner-py--_compute_brace_depth_per_line.md",
+  "probe_stdout": "CONFIRMED — actual first-block lines: 41 | expected: 42 | block sizes: [41, 83] | partition_ok: True",
+  "trigger_summary": "A block comment opened on one line and closed on a later line (e.g. [\"/* {\", \"} */\"]) is not tracked across lines, so a closing brace on the comment-continuation portion of a later line is counted as ordinary code and shifts all subsequent depths by one, violating the spec-required [0, 0] depths for that input."
+}

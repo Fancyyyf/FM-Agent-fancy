@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "parse_input_function",
+      "signature": "parse_input_function(file_path: str) -> tuple[str | None, dict | None, str]",
+      "pre_condition": "file_path is an absolute path to an extracted function file. Adjacent .spec.json and .info.json sidecar files exist alongside the function file.",
+      "post_condition": "Returns a 3-tuple (func, spec, knowledge). func is the function source code as a string, or None if the function file cannot be read. spec is the parsed .spec.json content as a dict (with 'signature', 'pre_condition', 'post_condition' keys), or None if the sidecar is missing or malformed. knowledge is context text extracted from the .info.json sidecar, or an empty string if none is available. The function file and its sidecars are not modified."
+    },
+    {
+      "name": "_parse_spec_conditions",
+      "signature": "_parse_spec_conditions(spec: dict) -> tuple[str, str]",
+      "pre_condition": "spec is a dict with string-valued 'pre_condition' and 'post_condition' keys.",
+      "post_condition": "Returns a pair (pre, post) where pre is the pre_condition string from the spec dict (or an empty string if absent) and post is the post_condition string from the spec dict (or an empty string if absent)."
+    },
+    {
+      "name": "reasoner",
+      "signature": "reasoner(func: str, spec: dict, knowledge: str, language: str, trace_context: dict | None = None) -> str",
+      "pre_condition": "func is the source code of a single function as a string. spec is a dict containing 'signature', 'pre_condition', and 'post_condition' keys with string values. knowledge is contextual text augmenting the reasoning (may be empty). language is a non-empty string identifying the programming language of func. trace_context is an optional dict with keys 'trace_dir', 'function_id', and 'function_file' providing tracing metadata; it may be None.",
+      "post_condition": "Returns a string result. When the implementation satisfies the specification, the result contains the substring \"passes the verification\". When the reasoner itself fails to produce a conclusion, the result starts with \"Failed to \". Otherwise, the result describes a spec violation and is expected to contain the substrings \"Statements triggering the violation:\", \"Post-condition:\", and \"Reason for violation:\" demarcating the code evidence, the violated post-condition, and the explanation respectively."
+    },
+    {
+      "name": "load_staged_domain_knowledge_text",
+      "signature": "load_staged_domain_knowledge_text(work_dir: str) -> str",
+      "pre_condition": "work_dir is a path to the FM-Agent workspace directory that may contain staged domain-knowledge files under its spec_prompts/domain_context/ subdirectory.",
+      "post_condition": "Returns a string containing the concatenated text content of all staged domain-knowledge Markdown files found under work_dir's domain context directory. Returns an empty string when work_dir does not contain any staged domain-knowledge files."
+    },
+    {
+      "name": "_sanitize_strings",
+      "signature": "_sanitize_strings(obj: any) -> any",
+      "pre_condition": "obj is an arbitrary Python object, typically a dict or str.",
+      "post_condition": "Returns a deep copy of obj in which every string value has been transformed to remove or escape content that could interfere with downstream processing (e.g., control characters, injection patterns). Non-string values and the structure of the object are preserved unchanged."
+    }
+  ]
+}

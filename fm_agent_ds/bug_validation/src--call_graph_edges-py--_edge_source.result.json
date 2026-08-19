@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_edge_source",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_edge_source.py",
+  "function_name": "_edge_source",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_edge_source.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_edge_source.md",
+  "probe_stdout": "CONFIRMED — actual (str-converted evidence): '1; 2; 3' | expected (fallback, evidence entries are not strings): should end with :edges[1]",
+  "trigger_summary": "Pass an evidence list containing non-string values (e.g. [1, 2, 3]) — the code converts them via str() instead of returning the fallback"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_normalize_endpoint_label",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_normalize_endpoint_label.py",
+  "function_name": "_normalize_endpoint_label",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_normalize_endpoint_label.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_normalize_endpoint_label.md",
+  "probe_stdout": "CONFIRMED — actual: 'foo-c::func' | expected: '..::foo-c::func'",
+  "trigger_summary": "lstrip(\"./\") strips all leading '.' and '/' characters, so '../foo.c::func' loses the '..' parent component and becomes 'foo-c::func' instead of '..::foo-c::func'."
+}

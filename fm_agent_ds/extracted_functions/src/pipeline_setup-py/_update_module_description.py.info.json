@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_build_module_description_prompt",
+      "signature": "_build_module_description_prompt(modified_modules, phases_path) -> str | None",
+      "pre_condition": "modified_modules is a non-empty list of module identifiers; phases_path points to a valid phases.json file",
+      "post_condition": "Returns a string prompt instructing the LLM agent to rewrite the description field for each module in modified_modules based on that module's current source_files entries in phases.json. Returns None if no module in the list still owns any source files."
+    },
+    {
+      "name": "build_llm_cli_command",
+      "signature": "build_llm_cli_command(model, prompt, cwd) -> list[str]",
+      "pre_condition": "model is a string identifying an LLM model; prompt is a string; cwd is an existing directory",
+      "post_condition": "Returns a CLI command sequence that, when executed in the given working directory, invokes the specified LLM model with the given prompt."
+    },
+    {
+      "name": "run_opencode_traced",
+      "signature": "run_opencode_traced(proj_dir, work_dir, command, stage, input_files, output_files, summary, metadata) -> None",
+      "pre_condition": "proj_dir is an existing directory; work_dir is a writable directory; command is a valid CLI command sequence; stage is a string stage name; input_files and output_files are lists of file paths relative to the workspace",
+      "post_condition": "Executes the command via OpenCode subprocess. On success, every path in output_files exists at its expected location under work_dir with content reflecting the agent's output. On non-zero exit, raises subprocess.CalledProcessError."
+    }
+  ]
+}

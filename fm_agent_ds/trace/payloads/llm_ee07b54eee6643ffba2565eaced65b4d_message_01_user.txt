@@ -1,0 +1,18 @@
+Programming language: Python
+
+Pre-condition:
+value is any input; str(value) produces a string without raising an exception.
+
+Code block:
+```python
+Line 1: def _clean_label(value) -> str:
+Line 2:     text = str(value).strip()
+Line 3:     if not text:
+Line 4:         return ""
+Line 5:     text = text.rstrip(";").strip()
+Line 6:     if len(text) >= 2 and text[0] == text[-1] and text[0] in {"'", '"'}:
+Line 7:         text = text[1:-1]
+Line 8:     return text.strip()
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

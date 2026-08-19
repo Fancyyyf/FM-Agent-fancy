@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/cpp-py/call_edges.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "When a CodeGraph index can be initialized for the project, returns a dict mapping each caller's fully-qualified name to a set of callee fully-qualified names for C++ source files within the project. When CodeGraph initialization is not possible, returns None.",
+    "actual_behavior": "The result is None if CodeGraphExtractor.from_proj_dir(proj_dir) is None or if the returned extractor's get_call_edges('cpp') method returns None. Otherwise, the result is a dictionary mapping each caller identifier (represented as a tuple of (caller_stem, caller_module)) to a set of callee stems (strings). Formally, let cg = CodeGraphExtractor.from_proj_dir(proj_dir). Then (cg is None  (cg is not None  cg.get_call_edges('cpp') is None))  result is None. Otherwise, result = cg.get_call_edges('cpp') and is a dict where each key is a tuple[str, str] and each value is a set[str].",
+    "code_evidence": "Line 4: return cg.get_call_edges(\"cpp\") if cg else None",
+    "trigger_condition": "The specification requires a dict when CodeGraph initialization is successful. The code returns None if get_call_edges('cpp') returns None (e.g., C++ not indexed), violating the spec's guarantee of a dict in that case."
+  }
+}

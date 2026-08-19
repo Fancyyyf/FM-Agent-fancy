@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--record_opencode_call",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/record_opencode_call.py",
+  "function_name": "record_opencode_call",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--record_opencode_call.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--record_opencode_call.md",
+  "probe_stdout": "CONFIRMED — actual summary: 'OpenCode build' | expected: None",
+  "trigger_summary": "With summary=None, the Python expression `summary or f\"OpenCode {stage}\"` substitutes a generated string for the omitted None value instead of storing the empty default as the spec requires."
+}

@@ -1,0 +1,43 @@
+Programming language: Python
+
+Pre-condition:
+updates is a non-empty dict whose keys are dot-separated field paths within the [llm] section of the TOML document and whose values are non-empty strings or booleans representing new configuration values. toml_path identifies an existing, readable, and writable file whose content is valid TOML parseable by the standard library TOML parser.
+
+Code block:
+```python
+Line 1: def apply_llm_settings_update(
+Line 2:     updates: dict[str, str],
+Line 3:     toml_path: Path,
+Line 4: ) -> Path | None:
+Line 5:     toml_text = _read_text_if_exists(toml_path)
+Line 6:     if not toml_text:
+Line 7:         raise ConfigWizardError(
+Line 8:             f"fm-agent.toml not found at {toml_path}; refusing to guess a new project config."
+Line 9:         )
+Line 10:     updated_toml = update_llm_settings_toml_text(toml_text, updates)
+Line 11:     try:
+Line 12:         tomllib.loads(updated_toml)
+Line 13:     except tomllib.TOMLDecodeError as exc:  
+Line 14:         raise ConfigWizardError("Generated fm-agent.toml is invalid TOML.") from exc
+Line 15:     backup = backup_file(toml_path)
+Line 16:     atomic_write(toml_path, updated_toml)
+Line 17:     return backup
+```
+
+Additional context:
+_read_text_if_exists(path: Path) -> str
+Pre-condition: path is a Path object identifying a filesystem location.
+Post-condition: Returns the UTF-8 decoded text content of the file at path. Returns an empty string when no file exists at path.
+
+update_llm_settings_toml_text(toml_text: str, updates: dict[str, str]) -> str
+Pre-condition: toml_text is a non-empty string containing valid TOML with a parseable [llm] section. updates is a non-empty dict whose keys are dot-separated field paths within the [llm] section and whose values are strings.
+Post-condition: Returns TOML text where each field path key in updates has its value replaced with the corresponding update value in the [llm] section. All other sections, fields, and TOML structure outside the updated fields are preserved unchanged in the returned text.
+
+backup_file(path: Path) -> Path | None
+Pre-condition: path identifies an existing, readable file.
+Post-condition: Copies the file at path to a new file with a timestamp-suffixed name adjacent to path. Returns the Path of the new backup file when the copy succeeded, or None when a backup could not be created.
+
+atomic_write(path: Path, content: str) -> None
+Pre-condition: path is a writable filesystem location. content is a string.
+Post-condition: The file at path is overwritten with content such that the file never exists in a partially written state. After the call, the file content at path equals content.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

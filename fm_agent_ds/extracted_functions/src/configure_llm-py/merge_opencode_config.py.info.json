@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "adapter_for_api_style",
+      "signature": "adapter_for_api_style(api_style: str) -> str",
+      "pre_condition": "api_style is a non-empty string identifying a supported API style.",
+      "post_condition": "Returns the npm package name string of the OpenCode adapter corresponding to the given API style."
+    }
+  ]
+}

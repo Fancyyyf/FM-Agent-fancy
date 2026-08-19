@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/cli_effort.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string equal to the value of settings.llm.effort with leading and trailing whitespace removed. The returned string is non-empty.",
+    "actual_behavior": "The function returns a string that is the result of stripping leading and trailing whitespace from `settings.llm.effort`. The value of `settings.llm.effort` is unchanged and remains a non-empty string. The function raises no exceptions. Formally: `result = settings.llm.effort.strip()  settings.llm.effort = old(settings.llm.effort)  settings.llm.effort  \"\"`.",
+    "code_evidence": "Line 2:     return settings.llm.effort.strip()",
+    "trigger_condition": "For input '   ', code returns '' (empty string) after stripping, violating the specification requirement that the returned string is non-empty."
+  }
+}

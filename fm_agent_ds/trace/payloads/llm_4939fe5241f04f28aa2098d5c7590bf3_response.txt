@@ -1,0 +1,3 @@
+{
+  "post_condition": "After execution, the function returns a string `result` such that, letting `extracted_rel = os.path.join(*entry_func.split('::'))` and `source_rel = _extracted_file_to_source_rel(extracted_rel)`, we have `result = source_rel.replace(os.sep, '/')`. The returned string is the project-relative path of the original source file from which the function identified by `entry_func` was extracted, with all path separators normalized to forward slashes ('/'). The mapping respects the `<base>-<ext>` directory convention, so any two FQNs that belong to the same source file yield identical return values. Given the pre-condition, the call to `_extracted_file_to_source_rel` does not raise an exception, and the function terminates normally without side effects."
+}

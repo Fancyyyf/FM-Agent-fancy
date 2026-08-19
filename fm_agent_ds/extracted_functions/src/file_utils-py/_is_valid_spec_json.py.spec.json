@@ -1,0 +1,5 @@
+{
+  "signature": "_is_valid_spec_json(data) -> bool",
+  "pre_condition": "data is a dict parsed from a JSON file.",
+  "post_condition": "Returns True when data contains exactly the keys \"signature\", \"pre_condition\", and \"post_condition\" and every value is of type str. Returns False in all other cases: data is not a dict, data has keys other than or missing any of the three required keys, or any value is not of type str."
+}

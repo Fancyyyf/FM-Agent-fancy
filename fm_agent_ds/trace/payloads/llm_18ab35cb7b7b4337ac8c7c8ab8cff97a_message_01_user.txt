@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _info_json_path(filepath: Path) -> Path:
+Line 2:     """Return the info sidecar next to one extracted function file."""
+Line 3:     return Path(str(filepath) + ".info.json")
+```
+
+Condition A (what the code actually does):
+The function returns a Path object whose string representation is the string representation of filepath with '.info.json' appended. The input filepath is unchanged. Formally: return_value == Path(str(filepath) + '.info.json').
+
+Condition B (what the specification requires):
+Returns a Path whose string representation equals the string representation of filepath with the literal suffix '.info.json' appended. No characters are inserted between filepath's string representation and the suffix; the suffix is directly concatenated.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

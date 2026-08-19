@@ -1,0 +1,128 @@
+Programming language: Python
+
+Pre-condition:
+After the code block executes, the following bindings hold:
+
+- fqn_map: dict such that for every (filepath, module_name) in phase_files, fqn_map[filepath] = _file_to_fqn(filepath, proj_dir). No other keys exist.
+- stem_to_fqns: a collections.defaultdict(set) where for each fqn in the values of fqn_map, stem_to_fqns[fqn.split('::')[-1]] contains fqn. No other stems are present.
+- file_map: dict such that for every fqn in the values of fqn_map, file_map[fqn] = filepath where filepath is the unique key mapping to fqn in fqn_map.
+- module_map: dict such that for every fqn in the values of fqn_map, module_map[fqn] = module_name where (filepath, module_name) is the pair that produced fqn.
+- phase_fqns = set(fqn_map.values()) – the set of all FQNs derived from phase_files.
+- effective_stem_to_fqns = global_stem_to_fqns if global_stem_to_fqns is not None, else stem_to_fqns. If global_stem_to_fqns is provided, it is the same object passed in (unchanged).
+- known_fqns = { fqn for stemset in effective_stem_to_fqns.values() for fqn in stemset } – the union of all FQNs appearing in the values of effective_stem_to_fqns.
+
+No exceptions are raised; the loop processes all elements of phase_files exactly once. Formal expression:
+
+Let F = phase_files.
+∀ (fp, mn) ∈ F : fqn_map[fp] = _file_to_fqn(fp, proj_dir) ∧ file_map[fqn_map[fp]] = fp ∧ module_map[fqn_map[fp]] = mn.
+stem_to_fqns = λ s . { fqn | ∃ (fp, mn) ∈ F, fqn = fqn_map[fp] ∧ fqn.split("::")[-1] = s } (as a defaultdict).
+phase_fqns = { fqn | ∃ (fp, mn) ∈ F, fqn = fqn_map[fp] }.
+effective_stem_to_fqns = global_stem_to_fqns if global_stem_to_fqns ≠ None else stem_to_fqns.
+known_fqns = ∪_{stemset ∈ effective_stem_to_fqns.values()} stemset.
+
+Code block:
+```python
+Line 41:     extra_edges_by_caller_fqn, extra_edges_by_callsite = _resolve_extra_call_edges(
+Line 42:         extra_call_edges,
+Line 43:         phase_fqns=phase_fqns,
+Line 44:         known_fqns=known_fqns,
+Line 45:     )
+Line 46:     known_stems = set(effective_stem_to_fqns.keys()) | set(extra_edges_by_callsite.keys())
+Line 47:     callees_map = defaultdict(set)  
+Line 48:     callers_map = defaultdict(set)  
+Line 49:     all_callees_map = defaultdict(set)  
+Line 50:     edge_aliases_map = defaultdict(lambda: defaultdict(set))  
+Line 51:     phase_langs = {_detect_lang_from_ext(fp) for fp, _ in phase_files if _detect_lang_from_ext(fp)}
+Line 52:     registry_edges, registry_langs = call_edges_all(proj_dir, phase_langs)
+Line 53:     for filepath, module_name in phase_files:
+Line 54:         fqn = fqn_map[filepath]
+Line 55:         lang_key = _detect_lang_from_ext(filepath)
+Line 56:         if not lang_key:
+Line 57:             continue
+Line 58:         called_stems = set()
+Line 59:         if lang_key in registry_langs:
+Line 60:             # codegraph: edges are already precise caller_fqn -> callee_fqn (the
+Line 61:             # exact node codegraph resolved). Keep only callees that are extracted
+Line 62:             # functions; drop external/library targets.
+Line 63:             callee_fqns = {c for c in registry_edges.get(fqn, set())
+Line 64:                            if c != fqn and c in known_fqns}
+Line 65:             if extra_edges_by_callsite:
+Line 66:                 keywords = _get_keywords_for_lang(lang_key)
+Line 67:                 try:
+Line 68:                     with open(filepath, "r", errors="replace") as f:
+Line 69:                         text = f.read()
+Line 70:                 except OSError:
+Line 71:                     text = ""
+Line 72:                 called_stems = _find_call_sites(
+Line 73:                     text, lang_key, set(extra_edges_by_callsite.keys()), keywords
+Line 74:                 )
+Line 75:         else:
+Line 76:             # regex fallback: detect bare-name call sites, then resolve each stem
+Line 77:             # to every same-named FQN (an over-approximation — unchanged).
+Line 78:             keywords = _get_keywords_for_lang(lang_key)
+Line 79:             try:
+Line 80:                 with open(filepath, "r", errors="replace") as f:
+Line 81:                     text = f.read()
+Line 82:             except OSError:
+Line 83:                 continue
+Line 84:             called_stems = _find_call_sites(text, lang_key, known_stems, keywords)
+Line 85:             callee_fqns = {cf for stem in called_stems
+Line 86:                            for cf in effective_stem_to_fqns.get(stem, set()) if cf != fqn}
+Line 87:         for callee_fqn in callee_fqns:
+Line 88:             all_callees_map[fqn].add(callee_fqn)
+Line 89:             if callee_fqn in phase_fqns:
+Line 90:                 callees_map[fqn].add(callee_fqn)
+Line 91:                 callers_map[callee_fqn].add(fqn)
+Line 92:         for stem in called_stems:
+Line 93:             for edge in extra_edges_by_callsite.get(stem, ()):
+Line 94:                 _add_resolved_extra_edge(
+Line 95:                     fqn,
+Line 96:                     edge,
+Line 97:                     phase_fqns,
+Line 98:                     callees_map,
+Line 99:                     callers_map,
+Line 100:                     all_callees_map,
+Line 101:                     edge_aliases_map,
+Line 102:                 )
+Line 103:         for edge in extra_edges_by_caller_fqn.get(fqn, ()):
+Line 104:             _add_resolved_extra_edge(
+Line 105:                 fqn,
+Line 106:                 edge,
+Line 107:                 phase_fqns,
+Line 108:                 callees_map,
+Line 109:                 callers_map,
+Line 110:                 all_callees_map,
+Line 111:                 edge_aliases_map,
+Line 112:             )
+Line 113:     return callees_map, callers_map, all_callees_map, file_map, module_map, edge_aliases_map
+```
+
+Additional context:
+_file_to_fqn(filepath, proj_dir) -> str
+Pre-condition: filepath is an absolute path to an existing extracted-function file. proj_dir is a valid directory path.
+Post-condition: Returns the canonical FQN string derived from the file path relative to proj_dir, using '::' as the separator and canonicalizing unsafe characters.
+
+_resolve_extra_call_edges(extra_call_edges, phase_fqns, known_fqns) -> (dict, dict)
+Pre-condition: extra_call_edges is an iterable of supplemental edge records or None. phase_fqns is a set of FQN strings from the current phase. known_fqns is a set of all known FQN strings.
+Post-condition: Returns a pair (edges_by_caller_fqn, edges_by_callsite). edges_by_caller_fqn maps exact caller FQN to the list of matching edge records. edges_by_callsite maps callsite-name to the list of matching edge records. Only edges whose callee FQN is in known_fqns are returned. When extra_call_edges is None or empty, both returned dicts are empty.
+
+_detect_lang_from_ext(filepath) -> str | None
+Pre-condition: filepath is a string representing a filesystem path.
+Post-condition: Returns a language key string if the file extension matches a registered language; returns None if no language is registered for the extension.
+
+call_edges_all(proj_dir, phase_langs) -> (dict, set)
+Pre-condition: proj_dir is a valid directory path. phase_langs is an iterable of language key strings.
+Post-condition: Returns a pair (edges, langs). edges maps caller FQN to the set of callee FQNs as resolved by the codegraph index. langs is the set of language keys for which codegraph edges were successfully retrieved. The edges dict may be empty when no codegraph index exists or no relevant edges are found.
+
+_get_keywords_for_lang(lang_key) -> set
+Pre-condition: lang_key is a language key string returned by _detect_lang_from_ext or an equivalent source.
+Post-condition: Returns a non-empty set of strings (function names, keywords, builtins) that are to be excluded from call-site detection for the given language. The returned set is never None.
+
+_find_call_sites(text, lang_key, stems_to_find, keywords) -> set
+Pre-condition: text is a string containing source code. lang_key is a language key string. stems_to_find is a set of function-name strings to search for. keywords is a set of strings to exclude from results.
+Post-condition: Returns the subset of stems_to_find whose members appear as bare-name call sites in text, excluding any member that also belongs to keywords. A call site is a position in source code where a name appears in a syntactic calling position for the given language (e.g., followed by '(' in C-like languages).
+
+_add_resolved_extra_edge(caller_fqn, edge, phase_fqns, callees_map, callers_map, all_callees_map, edge_aliases_map) -> None
+Pre-condition: caller_fqn is a canonical FQN string. edge is a supplemental edge record with a callee FQN and optional info_names. phase_fqns is a set of FQN strings. callees_map, callers_map, all_callees_map, edge_aliases_map are mutable dicts keyed by FQN strings.
+Post-condition: If edge's callee FQN differs from caller_fqn: adds callee to all_callees_map[caller_fqn]; also adds callee to callees_map[caller_fqn] and adds caller to callers_map[callee_fqn] when the callee FQN is in phase_fqns; records edge's info_names under edge_aliases_map[callee_fqn][caller_fqn]. Self-edges (caller_fqn equals callee FQN) produce no mutation to any map.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

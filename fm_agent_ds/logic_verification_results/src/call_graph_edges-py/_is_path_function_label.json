@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_is_path_function_label.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns True when label contains the substring '::', the substring before the last '::' contains the character '/', and the final POSIX-path component of that substring (the portion following the last '/') contains the character '.'. Returns False otherwise.",
+    "actual_behavior": "The function returns a boolean. It returns True if and only if the string `label` contains '::' and the substring before the last occurrence of '::' contains '/' and the last component of that substring when treated as a Posix path (via `PurePosixPath`) contains a period ('.'). Otherwise it returns False. No side effects occur and no exceptions are raised. Formally: let `s = label`, `k = s.rfind('::')`. If `k == -1`, the result is `False`. Otherwise, let `p = s[:k]`; the result is `True` iff `'/' in p` and `'.' in PurePosixPath(p).name`.",
+    "code_evidence": "Line 4: path, _func = label.rsplit(\"::\", 1)\nLine 5: return \"/\" in path and \".\" in PurePosixPath(path).name",
+    "trigger_condition": "The specification requires checking the substring after the last '/' literally, which is empty for a trailing slash. The code uses PurePosixPath(path).name, which strips trailing slashes and returns the last nonempty component. For label='a/b.c/::func', the substring before '::' is 'a/b.c/', its final POSIXpath component per spec is '' (no '.'), so spec returns False. The code returns True because PurePosixPath('a/b.c/').name is 'b.c', which contains '.'. Thus a violation occurs."
+  }
+}

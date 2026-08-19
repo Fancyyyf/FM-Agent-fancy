@@ -1,0 +1,81 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _parse_issue_signals(issue_text: str) -> dict[str, set[str]]:
+Line 2:     """Extract multiple tiers of signals from the raw developer-intent text."""
+Line 3:     signals: dict[str, set[str]] = {
+Line 4:         'traceback_funcs': set(),
+Line 5:         'backtick_idents': set(),
+Line 6:         'dotted_refs':     set(),   
+Line 7:         'dotted_classes':  set(),   
+Line 8:         'plain_idents':    set(),
+Line 9:         'exception_types': set(),   
+Line 10:         'all_words':       set(),
+Line 11:     }
+Line 12:     # T1: function names from Python tracebacks
+Line 13:     signals['traceback_funcs'] = set(re.findall(r'\bin (\w+)\s*\n', issue_text))
+Line 14:     # T2: identifiers inside backticks or fenced code blocks
+Line 15:     signals['backtick_idents'] = _extract_backtick_idents(issue_text)
+Line 16:     # T3: explicit Class.method dotted references
+Line 17:     for cls, meth in re.findall(r'\b([A-Z][a-zA-Z0-9]+)\.([a-z_][a-z0-9_]+)\b',
+Line 18:                                 issue_text):
+Line 19:         signals['dotted_refs'].add(meth.lower())
+Line 20:         signals['dotted_classes'].add(cls.lower())
+Line 21:         # also add the method name parts
+Line 22:         for part in meth.lower().split('_'):
+Line 23:             if len(part) > 1:
+Line 24:                 signals['dotted_refs'].add(part)
+Line 25:     # T4: CamelCase / snake_case words in prose
+Line 26:     for w in re.findall(r'\b([a-zA-Z_][a-zA-Z0-9_]*(?:[A-Z_][a-zA-Z0-9_]+)+)\b',
+Line 27:                         issue_text):
+Line 28:         signals['plain_idents'].add(w.lower())
+Line 29:         for part in re.sub(r'([A-Z])', r'_\1', w).lower().strip('_').split('_'):
+Line 30:             if len(part) > 2:
+Line 31:                 signals['plain_idents'].add(part)
+Line 32:     # T5: exception types  (e.g. AssertionError, ImportError)
+Line 33:     for exc in re.findall(r'\b([A-Z][a-zA-Z]+(?:Error|Exception|Warning))\b',
+Line 34:                           issue_text):
+Line 35:         signals['exception_types'].add(exc.lower())
+Line 36:     # T6: all alphabetic words ≥ 4 chars that aren't stop words
+Line 37:     for w in re.findall(r'\b([a-zA-Z]{4,})\b', issue_text.lower()):
+Line 38:         if w not in _STOP:
+Line 39:             signals['all_words'].add(w)
+Line 40:     return signals
+```
+
+Condition A (what the code actually does):
+The function returns a dictionary with keys: traceback_funcs, backtick_idents, dotted_refs, dotted_classes, plain_idents, exception_types, all_words. It raises no exceptions and always returns normally. The dictionary satisfies the following detailed postconditions:
+
+- traceback_funcs: set of words captured by the pattern 'in <word>' followed by optional whitespace and a newline in issue_text. The words retain their original case.
+- backtick_idents: the result of _extract_backtick_idents(issue_text), a set of identifier strings from backtick-quoted or fenced code blocks, with programming keywords removed; case as in the original text.
+- dotted_refs: union of (a) all method names from matches of the pattern Class.method (where Class starts with uppercase letter, method starts with lowercase/underscore) after lowercasing; (b) any underscore-delimited parts of those method names that have length greater than 1.
+- dotted_classes: set of class names from those Class.method matches, lowercased.
+- plain_idents: union of (a) all words in issue_text that match the pattern for CamelCase or snake_case identifiers (i.e., words containing at least one uppercase letter or underscore), lowercased; (b) any parts obtained by inserting underscore before each uppercase letter in such a word, lowercasing, stripping leading/trailing underscores, splitting on underscore, and filtering for parts longer than 2 characters.
+- exception_types: set of words matching the pattern of exception names (capitalized word ending in Error, Exception, or Warning), lowercased.
+- all_words: set of alphabetic words of length >= 4 in issue_text (case-insensitive) that are not in the predefined stop word set _STOP.
+
+All values are sets of strings; any set may be empty. No external side effects.
+
+Condition B (what the specification requires):
+Returns a dict with seven fixed keys — 'traceback_funcs', 'backtick_idents', 'dotted_refs', 'dotted_classes', 'plain_idents', 'exception_types', 'all_words' — each mapping to a set of lowercase strings. All extracted tokens are lowercased.
+
+'traceback_funcs': function-name tokens appearing after the word "in" and immediately before a newline (Python traceback pattern).
+
+'backtick_idents': identifier tokens extracted from backtick-quoted spans and fenced code blocks in the text, excluding programming-language keywords.
+
+'dotted_refs': method-name tokens derived from Class.method references where the class part starts with an uppercase letter followed by alphanumerics and the method part starts with a lowercase letter or underscore followed by alphanumerics/underscores. The method name is lowercased and split on underscores; each constituent part of length greater than 1 is also included.
+
+'dotted_classes': the class-name tokens from those same Class.method references, lowercased.
+
+'plain_idents': CamelCase and snake_case identifier tokens appearing in prose text — contiguous alphanumeric/underscore tokens that contain at least one uppercase letter or underscore transition beyond the first character. Each match is lowercased and decomposed into constituent parts on CamelCase boundaries and underscores; parts of length 3 or greater are included.
+
+'exception_types': name tokens starting with an uppercase letter, consisting entirely of letters, and ending with one of the suffixes 'Error', 'Exception', or 'Warning'.
+
+'all_words': every distinct alphabetic word of 4 or more characters in the lowercased text that is not a member of a predefined stop-word set.
+
+Additional context:
+_extract_backtick_idents(issue_text: str) -> set[str]
+Pre-condition: issue_text is a non-empty string.
+Post-condition: Returns a set of identifier strings extracted from backtick-quoted spans and fenced code blocks within issue_text, with programming-language keywords filtered out. Each returned string is a valid identifier token from the text.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_record(rel_path, score)",
+  "pre_condition": "rel_path is a non-empty string identifying a function (a relative path to an extracted function file). score is a numeric value. The enclosing scope provides a dict scored that maps rel_path strings to numeric values; scored may or may not already contain rel_path.",
+  "post_condition": "If rel_path was not previously in scored, scored[rel_path] equals score. If rel_path was previously in scored with a value less than score, scored[rel_path] is updated to score. If rel_path was previously in scored with a value greater than or equal to score, scored[rel_path] is unchanged. No key other than rel_path is added to or removed from scored."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_split_env_paths(env_value) -> list[str]",
+  "pre_condition": "env_value is a string, possibly empty, containing zero or more paths separated by the system path separator or newline characters.",
+  "post_condition": "Returns a list of non-empty path strings with leading and trailing whitespace removed from each. Newline characters in env_value are treated as equivalent to the system path separator before splitting. The returned list contains every segment produced by splitting on the system path separator after newline normalization, with all empty or whitespace-only segments excluded. When env_value is falsy (empty string or None), an empty list is returned."
+}

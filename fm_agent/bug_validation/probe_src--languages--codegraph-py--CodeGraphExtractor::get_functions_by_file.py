@@ -1,93 +1,115 @@
-"""Probe script for bug: src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file
+"""Probe for bug: src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file
 
-The spec claims get_functions_by_file returns a dictionary mapping each absolute
-source file path (str) to a list of (function_name, body_text) tuples. The actual
-code uses ``os.path.join(proj_dir, file_path) if proj_dir else file_path``, so
-when proj_dir is None the dict keys are raw relative file_path values instead of
-absolute paths.
+Spec claim: each body_text is the function's exact source text — the slice of
+the file's lines covering precisely the indexed span, VERBATIM, in file order.
 
-Strategy: create a temp workspace with a test source file and a minimal codegraph
-SQLite database, call get_functions_by_file with proj_dir=None from that temp
-directory (so the relative path resolves), and check whether the returned dict
-keys are absolute paths.
+Trigger: a source file WITHOUT a trailing newline where the indexed function's
+end_line equals the file's last line. readlines() then yields a final line with
+no '\n', and the code unconditionally appends '\n'
+(`if not body.endswith("\n"): body += "\n"`), producing a body containing a
+character that does not exist in the original file.
+
+FM-Agent self-validation guard: this probe does NOT start any FM-Agent workflow
+(no run_pipeline / main.py / CLI / OpenCode). It loads only the smallest
+relevant unit (CodeGraphExtractor) and feeds it a mocked codegraph SQLite index
+plus fixture files, all confined to a fresh temporary directory.
 """
-import sys
-import os
-import sqlite3
-import tempfile
-import traceback
 
-# Probe is at <repo>/fm_agent/bug_validation/probe_*.py
-# Go up 3 levels to reach repo root
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _REPO_ROOT)
+import os
+import shutil
+import sqlite3
+import sys
+import tempfile
+
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+sys.path.insert(0, REPO_ROOT)
 
 try:
     from src.languages.codegraph import CodeGraphExtractor
+except Exception as e:
+    print(f"ERROR: failed to import src.languages.codegraph: {e}")
+    sys.exit(1)
 
-    # Create a self-contained temporary directory for all file I/O
-    tmpdir = tempfile.mkdtemp()
+tmp = tempfile.mkdtemp(prefix="cg_probe_get_functions_by_file_")
 
-    # Create a test source file in the temp dir with a simple function
-    test_file = os.path.join(tmpdir, "test_module.py")
-    with open(test_file, "w") as f:
-        f.write("def hello(name):\n    return f'Hello, {name}!'\n")
+try:
+    # ---- Fixture project (owned by the probe, inside the temp dir) ----
+    src_dir = os.path.join(tmp, "proj")
+    os.makedirs(src_dir)
 
-    # Create a minimal codegraph SQLite database
-    db_path = os.path.join(tmpdir, "codegraph.db")
+    # Source file WITHOUT a trailing newline; the function spans lines 1-2,
+    # and end_line (2) is the file's last line.
+    func_src = "def foo():\n    return 1"  # note: no trailing '\n'
+    src_path = os.path.join(src_dir, "fixture.py")
+    with open(src_path, "w") as f:
+        f.write(func_src)
+
+    # ---- Mocked codegraph index: proj/.codegraph/codegraph.db ----
+    cg_dir = os.path.join(src_dir, ".codegraph")
+    os.makedirs(cg_dir)
+    db_path = os.path.join(cg_dir, "codegraph.db")
     conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    cur.execute("""
+    conn.execute(
+        """
         CREATE TABLE nodes (
             id INTEGER PRIMARY KEY,
             name TEXT,
             qualified_name TEXT,
             file_path TEXT,
-            kind TEXT,
-            language TEXT,
             start_line INTEGER,
-            end_line INTEGER
+            end_line INTEGER,
+            kind TEXT,
+            language TEXT
         )
-    """)
-
-    # Insert a function node with a relative file_path (as codegraph stores)
-    rel_file = "test_module.py"
-    cur.execute(
-        "INSERT INTO nodes (name, qualified_name, file_path, kind, language, start_line, end_line) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
-        ("hello", "hello", rel_file, "function", "python", 1, 2),
+        """
+    )
+    # codegraph stores project-relative file paths; 1-indexed, end_line inclusive.
+    conn.execute(
+        "INSERT INTO nodes (id, name, qualified_name, file_path, start_line, end_line, kind, language)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (1, "foo", "foo", "fixture.py", 1, 2, "function", "python"),
     )
     conn.commit()
     conn.close()
 
-    extractor = CodeGraphExtractor(db_path)
+    # ---- Exercise the unit through its public factory ----
+    extractor = CodeGraphExtractor.from_proj_dir(src_dir)
+    if extractor is None:
+        print("ERROR: CodeGraphExtractor.from_proj_dir returned None (mock db not found)")
+        sys.exit(1)
 
-    # Change into the temp dir so that the relative file_path resolves
-    # correctly when proj_dir=None (the abs_path becomes just file_path,
-    # which is valid relative to CWD).
-    old_cwd = os.getcwd()
-    os.chdir(tmpdir)
-    try:
-        result = extractor.get_functions_by_file("python", proj_dir=None)
-    finally:
-        os.chdir(old_cwd)
+    result = extractor.get_functions_by_file("python", proj_dir=src_dir)
 
-    # The spec claims ALL keys MUST be absolute paths.
-    if not result:
-        print("NOT CONFIRMED — result was empty (no functions extracted)")
+    if src_path not in result or not result[src_path]:
+        print("ERROR: expected one extracted function for fixture.py, got: %r" % (result,))
+        sys.exit(1)
+
+    ident, body_actual = result[src_path][0]
+    # Spec-correct: verbatim slice of lines 1..2 of the file — identical bytes
+    # to the file itself, i.e. NO trailing newline.
+    body_expected = func_src
+
+    ok_identity = ident == "foo"
+    ok_verbatim = body_actual == body_expected
+
+    if ok_identity and not ok_verbatim:
+        print(
+            "CONFIRMED — bug reproduced: body_text contains a trailing newline not present in the source file"
+        )
+        print(f"  identifier: {ident!r}")
+        print(f"  actual   body_text: {body_actual!r}")
+        print(f"  expected body_text: {body_expected!r}")
+        print(f"  actual ends with newline: {body_actual.endswith(chr(10))} | expected ends with newline: {body_expected.endswith(chr(10))}")
+    elif not ok_identity:
+        print(f"ERROR: unexpected identifier: {ident!r} (expected 'foo')")
+        sys.exit(1)
     else:
-        abs_keys = [k for k in result.keys() if os.path.isabs(k)]
-        rel_keys = [k for k in result.keys() if not os.path.isabs(k)]
-        if rel_keys:
-            print(
-                f"CONFIRMED — returned dict keys are not all absolute: "
-                f"relative keys={rel_keys!r}, "
-                f"absolute keys={abs_keys!r}"
-            )
-        else:
-            print(f"NOT CONFIRMED — all {len(result)} returned keys are absolute paths")
-
+        print(
+            "NOT CONFIRMED — body_text matched the verbatim source exactly (no appended newline): "
+            f"{body_actual!r}"
+        )
 except Exception as e:
-    print(f"ERROR: {e}")
-    traceback.print_exc()
+    print(f"ERROR: {type(e).__name__}: {e}")
     sys.exit(1)
+finally:
+    shutil.rmtree(tmp, ignore_errors=True)

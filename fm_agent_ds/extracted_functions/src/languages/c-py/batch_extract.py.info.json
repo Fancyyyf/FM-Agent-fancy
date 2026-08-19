@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "CodeGraphExtractor.from_proj_dir",
+      "signature": "CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None",
+      "pre_condition": "proj_dir is a valid directory path",
+      "post_condition": "Returns a CodeGraphExtractor instance initialized from the given project directory, or None if initialization fails (e.g., CodeGraph binary not available, index build failed)."
+    },
+    {
+      "name": "CodeGraphExtractor.get_functions_by_file",
+      "signature": "get_functions_by_file(language: str, proj_dir: str) -> dict",
+      "pre_condition": "The CodeGraphExtractor instance is valid and successfully initialized; language is a recognized language key; proj_dir is the project directory path",
+      "post_condition": "Returns a dictionary mapping each absolute file path to a list of (func_name, body_text) tuples for all functions extracted from files of the specified language within proj_dir."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "A stream object whose close() method raises an exception (e.g., a custom class with close() that raises RuntimeError). Example: class FailingStream: write=lambda s,t: None; flush=lambda s: None; close=lambda s: raise RuntimeError; obj = FailingStream(); _write_command_stdin(obj, 'test')",
+  "offending_statements": "Line 6:         stream.close()",
+  "reason": "The specification requires the stream to be closed under all execution paths, including when an exception is raised during writing or flushing. However, if stream.close() itself raises an exception, the code does not guarantee that the stream is closed. The finally block attempts close but does not handle a failing close, potentially leaving the stream open, which violates the specification."
+}

@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "ArgumentParser.parse_args",
+      "signature": "parse_args(argv: list[str] | None) -> argparse.Namespace",
+      "pre_condition": "The ArgumentParser has been configured with a subparser for the 'set' command carrying defined argument flags before this call",
+      "post_condition": "Returns a Namespace whose attribute names correspond to the defined argument destinations. When argv is None, sys.argv[1:] is used as the argument sequence. Positional subcommand selection sets the 'command' attribute to the chosen subparser name or to the argparse default when no subcommand is selected. Optional flag arguments set their corresponding attributes to the provided value or to a store-true/store-false default when the flag is absent. On unrecognized flags, missing required arguments, or invalid argument choice values, prints a usage message and error description to stderr and terminates the process with exit code 2."
+    }
+  ]
+}

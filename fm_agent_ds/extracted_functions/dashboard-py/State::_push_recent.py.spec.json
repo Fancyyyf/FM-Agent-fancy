@@ -1,0 +1,5 @@
+{
+  "signature": "_push_recent(self, ts, stage, status, summary)",
+  "pre_condition": "ts is a datetime.datetime or None. stage, status, and summary are strings describing the event.",
+  "post_condition": "A new entry is added to self's in-memory recent-event timeline. The entry records the timestamp formatted as HH:MM:SS when ts is truthy, or an empty string when ts is None or falsy; and the stage, status, and summary arguments verbatim. The count of entries in the timeline increases by exactly one. All entries present before the call retain their values, and the relative ordering among those pre-existing entries is preserved. No value is returned."
+}

@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/python-py/function_spans.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "Returns a list of (name, start_idx, end_idx) tuples, one per top-level function defined in filepath, where start_idx and end_idx are 0-indexed inclusive line numbers bounding each function's body, if a CodeGraph index exists for proj_dir and covers the file. Returns None if CodeGraph is unavailable or the file is not indexed, signalling the caller to fall back to regex-based extraction",
-    "actual_behavior": "Given that proj_dir is a directory path and filepath is a path to a Python source file contained within proj_dir, the function may terminate normally or raise an exception. If it terminates normally, the return value R satisfies: ( ( cg : cg = CodeGraphExtractor.from_proj_dir(proj_dir)  cg is falsy)  R = None )  ( ( cg : cg = CodeGraphExtractor.from_proj_dir(proj_dir)  cg is truthy)  ( (cg.get_function_spans('python', filepath) = None)  R = None )  ( (cg.get_function_spans('python', filepath) = L where L is a list)  R = L ) ). Here L is a list of tuples (name, start_idx, end_idx) where name is a string, start_idx and end_idx are integers representing 0-indexed inclusive line indices of a function definition in filepath; the list may be empty. If an exception E is raised during the evaluation of CodeGraphExtractor.from_proj_dir(proj_dir) or during the call to cg.get_function_spans('python', filepath) when cg is truthy, the function raises E.",
-    "code_evidence": "Line 8: return cg.get_function_spans(\"python\", filepath) if cg else None",
-    "trigger_condition": "Specification requires only top-level functions, but the code returns whatever get_function_spans provides, which may include nested functions, violating the specification."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/languages/python-py/function_spans.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

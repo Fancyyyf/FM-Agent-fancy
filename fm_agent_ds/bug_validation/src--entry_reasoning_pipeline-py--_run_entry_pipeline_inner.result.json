@@ -1,0 +1,11 @@
+{
+  "id": "src--entry_reasoning_pipeline-py--_run_entry_pipeline_inner",
+  "source_file": "src/entry_reasoning_pipeline.py",
+  "function_name": "_run_entry_pipeline_inner",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--entry_reasoning_pipeline-py--_run_entry_pipeline_inner.py",
+  "detail_file": "fm_agent/bug_validation/src--entry_reasoning_pipeline-py--_run_entry_pipeline_inner.md",
+  "probe_stdout": "CONFIRMED — shutil.rmtree(work_dir) raised PermissionError, causing run_dir to persist at '/tmp/tmpgug6hwdr/proj.fm-entry-run'. Spec requires no temp files/dirs remain at that path.",
+  "trigger_summary": "shutil.rmtree(work_dir) raises PermissionError inside finally block, skipping shutil.rmtree(run_dir) cleanup on line 528, leaving .fm-entry-run directory behind"
+}

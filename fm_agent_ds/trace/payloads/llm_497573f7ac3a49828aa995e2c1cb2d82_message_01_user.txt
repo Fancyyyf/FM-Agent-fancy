@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _llm_status_style(code, status):
+Line 2:     text = str(code or status or "?")
+Line 3:     if text == "200" or status in ("success", "mismatch"):
+Line 4:         return "green", "200"
+Line 5:     if status == "format_error" or text.startswith("4") or text == "FMT":
+Line 6:         return "yellow", text
+Line 7:     return "red", text
+```
+
+Condition A (what the code actually does):
+Let t = str(code) if code is truthy else (str(status) if status is truthy else '?'). The function returns (c, l) as follows:
+- If t == '200' or status in {'success', 'mismatch'}, then c = 'green' and l = '200'.
+- Else if status == 'format_error' or t.startswith('4') or t == 'FMT', then c = 'yellow' and l = t.
+- Else c = 'red' and l = t.
+Here truthiness follows Python's boolean rules (None, False, 0, 0.0, empty string, empty list/dict are falsy; all other values are truthy). The returned label is always a string, and c is one of 'green', 'yellow', 'red'.
+
+Condition B (what the specification requires):
+Returns a deterministic tuple (color, label) where color is one of the Rich-compatible style names 'green', 'yellow', or 'red' and label is a string. The mapping from (code, status) input pairs to (color, label) output pairs is a pure function: identical inputs always produce identical outputs. The label carries the input status information: it equals the string representation of whichever of code or status is non-None, or '?' if both are None, except when the outcome classifies as successful — in that case the label is forced to '200'. An outcome is classified as successful when its code equals '200' (as a string) or its status is 'success' or 'mismatch', yielding color 'green'. An outcome is classified as a client-side or format-level issue when status is 'format_error', or the string representation of the non-None input begins with the digit '4', or the string representation is exactly 'FMT', yielding color 'yellow'. All other outcomes yield color 'red'.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

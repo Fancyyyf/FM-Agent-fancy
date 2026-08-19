@@ -1,0 +1,5 @@
+{
+  "signature": "_is_edge_file(path: Path) -> bool",
+  "pre_condition": "path refers to a file that exists on disk.",
+  "post_condition": "Returns True when the filename extension of path is '.json', using case-insensitive comparison; False otherwise."
+}

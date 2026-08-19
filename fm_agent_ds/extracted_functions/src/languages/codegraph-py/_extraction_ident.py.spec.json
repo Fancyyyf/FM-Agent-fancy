@@ -1,0 +1,5 @@
+{
+  "signature": "_extraction_ident(name: str, qualified_name: str) -> str",
+  "pre_condition": "name and qualified_name are strings from a codegraph nodes table row, where qualified_name is a module-qualified identifier using '::' or '.' as component separators.",
+  "post_condition": "Returns a canonicalized fully-qualified function identifier using '::' as the component separator. Each component of the qualified name is first stripped of tree-sitter decorations (type signatures, template bodies, and parameter lists) to yield the bare identifier, then transformed for filesystem and FQN safety by replacing every '/' character with '_'. The number of components equals the number of identifier segments after splitting qualified_name on '::' and '.' boundaries, preserving left-to-right order."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/home/user/project', work_dir=None, phases.json contains: { \"phases\": [ { \"modules\": [ { \"source_files\": [\"src/foo.py\"] } ] } ] }, src/foo.py contains function 'bar'. The code writes /home/user/project/extracted_functions/bar.py, but spec requires /home/user/project/extracted_functions/src/foo/bar.py.",
+  "offending_statements": "The code block does not include the lines that construct the output file path, but the overall behavior (condition A) writes `<work_dir>/extracted_functions/<safe_filename>` without subdirectories, violating the required path convention.",
+  "reason": "Every written file must follow the path convention <source_rel_dir>/<basename-ext>/<func_name>.<ext>, but the code generates only a safe filename placed directly under the output base, resulting in a flat structure."
+}

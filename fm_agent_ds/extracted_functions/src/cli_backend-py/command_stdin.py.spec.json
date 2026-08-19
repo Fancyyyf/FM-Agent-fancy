@@ -1,0 +1,5 @@
+{
+  "signature": "command_stdin(command) -> str | None",
+  "pre_condition": "command is a non-None value that is either an AgentCommand instance or an iterable of strings.",
+  "post_condition": "Returns the standard input text that should be fed to the command's subprocess, or None when no standard input is needed. When command is a plain argument list (not an AgentCommand), the return value is always None. When command is an AgentCommand, the return value equals its stdin attribute — a string if stdin was supplied, or None otherwise."
+}

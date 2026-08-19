@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "An HTTPError object whose read() method raises an exception (e.g., IOError from a closed connection). The function returns '' instead of None.",
+  "offending_statements": "Line 8: return \"\"\nLine 10: return \"\"",
+  "reason": "Condition A returns an empty string when reading raises an exception or the body is empty/falsey, but the specification requires returning None in all such cases (unreadable, empty, or exception)."
+}

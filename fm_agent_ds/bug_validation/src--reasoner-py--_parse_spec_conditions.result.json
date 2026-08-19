@@ -1,0 +1,11 @@
+{
+  "id": "src--reasoner-py--_parse_spec_conditions",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/reasoner-py/_parse_spec_conditions.py",
+  "function_name": "_parse_spec_conditions",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_parse_spec_conditions.py",
+  "detail_file": "fm_agent/bug_validation/src--reasoner-py--_parse_spec_conditions.md",
+  "probe_stdout": "CONFIRMED — actual: \"TypeError: expected string or bytes-like object, got 'dict'\" | expected: ('x>0', 'y>0')",
+  "trigger_summary": "Passing a dict to _parse_spec_conditions() causes TypeError because re.search expects a string, while the specification describes spec as a dict with pre_condition and post_condition keys."
+}

@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "FunctionSpecMap.add_entry",
+      "signature": "add_entry(function_name, signature, spec) -> None",
+      "pre_condition": "function_name and signature are strings; spec is a string containing formatted pre-condition and post-condition text",
+      "post_condition": "Stores function_name as a key in the FunctionSpecMap with spec as its value, and maps function_name to signature in the signatures dict"
+    }
+  ]
+}

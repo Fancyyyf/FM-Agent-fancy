@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_clean_label",
+      "signature": "_clean_label(value) -> str",
+      "pre_condition": "value is a non-empty, non-whitespace-only string validated by _required_string.",
+      "post_condition": "Returns the input string with leading and trailing whitespace removed, trailing semicolons stripped, and surrounding matching single or double quotation marks removed."
+    }
+  ]
+}

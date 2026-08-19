@@ -1,0 +1,5 @@
+{
+  "signature": "is_file_ready(file_path) -> bool",
+  "pre_condition": "file_path is a string representing a path to an extracted function file in the fm_agent/extracted_functions/ tree.",
+  "post_condition": "Returns True when, in the same directory as file_path, both a readable .spec.json sidecar (a JSON file whose top-level object contains exactly the string-valued keys \"signature\", \"pre_condition\", and \"post_condition\") and a readable .info.json sidecar (a JSON file whose top-level object contains exactly the key \"callees\" mapping to an array of objects each containing exactly the string-valued keys \"name\", \"signature\", \"pre_condition\", and \"post_condition\") exist. Returns False in all other cases: either sidecar does not exist, is not a regular file, cannot be read (OS error, encoding error), contains syntactically invalid JSON, or contains a top-level JSON object that does not conform to the required schema for that sidecar type."
+}

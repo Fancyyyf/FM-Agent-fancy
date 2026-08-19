@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "CodeGraphExtractor.from_proj_dir",
+      "signature": "CodeGraphExtractor.from_proj_dir(proj_dir: str)",
+      "pre_condition": "proj_dir is a string path to a directory that may contain a code indexing database.",
+      "post_condition": "Returns a CodeGraphExtractor instance initialized with the project's code index when the project can be indexed; returns a falsy value when indexing is not possible (e.g., database missing or incompatible)."
+    },
+    {
+      "name": "CodeGraphExtractor.get_functions_by_file",
+      "signature": "CodeGraphExtractor.get_functions_by_file(language: str, proj_dir: str) -> dict",
+      "pre_condition": "The receiver is an initialized CodeGraphExtractor instance. language is a language key string (e.g., 'javascript'). proj_dir is the project directory path string.",
+      "post_condition": "Returns a dict mapping each absolute filepath string to a list of (func_name: str, body_text: str) tuples for all functions defined in source files of the given language within the project — body_text is the function's complete source code."
+    }
+  ]
+}

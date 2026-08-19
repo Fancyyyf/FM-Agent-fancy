@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "is_file_ready",
+      "signature": "is_file_ready(fpath: str) -> bool",
+      "pre_condition": "fpath is an absolute path to an extracted function file within the extracted_functions/ directory.",
+      "post_condition": "Returns True iff both {{fpath}}.spec.json and {{fpath}}.info.json exist as valid JSON files containing the required spec and info schemas respectively. Returns False if either sidecar is missing, unparseable, or does not contain the expected structure."
+    },
+    {
+      "name": "_is_metadata_sidecar",
+      "signature": "_is_metadata_sidecar(fpath: str) -> bool",
+      "pre_condition": "fpath is a file path within the extracted_functions/ directory tree.",
+      "post_condition": "Returns True if the filename ends with .spec.json or .info.json; returns False otherwise."
+    },
+    {
+      "name": "_is_under_submodules",
+      "signature": "_is_under_submodules(rel: str, submodules: list[str]) -> bool",
+      "pre_condition": "rel is a forward-slash-separated relative path from the extracted_functions/ root. submodules is a list of non-empty project-relative subdirectory paths, none containing a trailing separator.",
+      "post_condition": "Returns True iff rel starts with one of the paths in submodules immediately followed by a path separator (e.g., '{submodule_path}/'). Returns False if rel does not begin with any submodule path in this way."
+    }
+  ]
+}

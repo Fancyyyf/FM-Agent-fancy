@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "text = 'title = \"My Document\"' (valid TOML without an [llm] section), config = LLMConfigInput(model_id='gpt-4', provider_id='openai', base_url='http://api.openai.com', backend='openai', api_style='openai')",
+  "offending_statements": "Lines 2-11: return update_llm_settings_toml_text(text, {\"name\": config.model_id, \"provider\": config.provider_id, \"base_url\": config.base_url, \"backend\": config.backend, \"api_style\": config.api_style,})",
+  "reason": "The specification requires that the output TOML contains an [llm] section with the specified fields set, which implies it must work even if the input lacks an [llm] section. However, update_llm_settings_toml_text has a pre-condition that text already contains an [llm] section. For the given counterexample text, the inner function will fail (e.g., raise KeyError or produce invalid output), so the code does not satisfy the specification."
+}

@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "CodeGraphExtractor.from_proj_dir",
+      "signature": "CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None",
+      "pre_condition": "proj_dir is a string path to a project directory",
+      "post_condition": "Returns a CodeGraphExtractor instance initialized with the project's source index when the project can be indexed, or None when indexing is unavailable"
+    },
+    {
+      "name": "CodeGraphExtractor.get_function_spans",
+      "signature": "CodeGraphExtractor.get_function_spans(language: str, filepath: str) -> list | None",
+      "pre_condition": "The CodeGraphExtractor instance is initialized and non-None; language is a valid language key string; filepath is a string path to a source file within the project",
+      "post_condition": "Returns a list of (name: str, start_idx: int, end_idx: int) tuples for every function definition in the specified file, with 0-indexed inclusive spans, or None when the file is not indexed for the given language"
+    }
+  ]
+}

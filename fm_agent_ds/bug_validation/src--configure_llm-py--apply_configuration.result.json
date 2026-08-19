@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--apply_configuration",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/apply_configuration.py",
+  "function_name": "apply_configuration",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--apply_configuration.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--apply_configuration.md",
+  "probe_stdout": "CONFIRMED — Return order does not match write order.\n  Spec (write order) : [fm-agent.toml, .env, fm-agent-opencode-api-key.test-provider.793b2b6e7c, opencode.json]\n  Actual (backup order): [fm-agent.toml, .env, opencode.json, fm-agent-opencode-api-key.test-provider.793b2b6e7c]\n  Mismatch at positions 2 and 3: spec expects secret before opencode_config",
+  "trigger_summary": "The returned list of backups is ordered by backup creation sequence (toml, env, opencode_config, secret) instead of file write sequence (toml, env, secret, opencode_config), swapping the last two entries."
+}

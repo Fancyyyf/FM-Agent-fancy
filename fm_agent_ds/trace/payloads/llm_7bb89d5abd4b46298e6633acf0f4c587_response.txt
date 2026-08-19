@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "lang_key = 'c'; lines = [' int main() {', ' return 0;', '}']. The code sees that line[0:1] is a space, so it skips this line entirely and never detects the function definition.",
+  "offending_statements": "Line 139-142: if lang_key in ('cpp', 'c'): if line[0:1].isspace(): i += 1; continue",
+  "reason": "The specification requires all top-level function definitions to be reported, regardless of leading whitespace. The indentation check excludes valid C/C++ function definitions that start with whitespace, causing the function to be missed."
+}

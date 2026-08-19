@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_strip_comments_from_source",
+      "signature": "_strip_comments_from_source(text, lang_key) -> str",
+      "pre_condition": "text is a string containing source code. lang_key is a string key identifying a supported source language whose comment syntax rules are known.",
+      "post_condition": "Returns the content of text with all comments removed according to the comment syntax rules of the language identified by lang_key. Source code tokens present in the original text appear in the returned string at the same relative positions; only comment-character ranges are elided."
+    },
+    {
+      "name": "_get_call_regex",
+      "signature": "_get_call_regex(lang_key) -> regex",
+      "pre_condition": "lang_key is a string key identifying a supported source language.",
+      "post_condition": "Returns a compiled regex pattern whose iteration over source text yields matches where the first capture group contains a bare-name function-call identifier recognized as a call expression in the language identified by lang_key."
+    }
+  ]
+}

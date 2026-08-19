@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "spec = {\"signature\": \"hello\\n\", \"pre_condition\": \"x\\n\", \"post_condition\": \"y\"}",
+  "offending_statements": "Line 4: f\"{spec.get('signature', '')}\\n\\n\"\nLine 5: f\"Pre-condition:\\n{spec.get('pre_condition', '')}\\n\\n\"",
+  "reason": "When spec values end with a newline, the fixed '\\n\\n' separators produce two blank lines between sections instead of exactly one as required by the specification."
+}

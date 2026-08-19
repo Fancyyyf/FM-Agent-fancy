@@ -1,0 +1,19 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _parse_spec_conditions(spec):
+Line 2:     pre_match = re.search(r'Pre-condition:\s*\n(.*?)(?=\nPost-condition:|\Z)', spec, re.DOTALL)
+Line 3:     post_match = re.search(r'Post-condition:\s*\n(.*)', spec, re.DOTALL)
+Line 4:     pre = pre_match.group(1).strip() if pre_match else None
+Line 5:     post = post_match.group(1).strip() if post_match else None
+Line 6:     return pre, post
+```
+
+Condition A (what the code actually does):
+The function call raises a TypeError exception because `re.search` expects a string, but `spec` is a dict. No normal return occurs. Formal: ¬(∃ pre, post · (pre, post) = _parse_spec_conditions(spec)) ∧ TypeRaised(TypeError)
+
+Condition B (what the specification requires):
+Returns a pair (pre, post) where pre is the string value associated with the 'pre_condition' key in spec (or an empty string when the key is absent) and post is the string value associated with the 'post_condition' key in spec (or an empty string when the key is absent).
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

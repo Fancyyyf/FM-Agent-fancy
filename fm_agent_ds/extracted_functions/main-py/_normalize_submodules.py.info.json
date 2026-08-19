@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_is_under_submodules",
+      "signature": "_is_under_submodules(rel: str, collapsed: list[str]) -> bool",
+      "pre_condition": "rel is a non-empty relative path string. collapsed is a non-empty list of non-empty relative path strings produced by the collapsing loop.",
+      "post_condition": "Returns True if rel is a descendant of any path in collapsed (i.e., any path in collapsed is a strict path-prefix of rel). Returns False otherwise."
+    }
+  ]
+}

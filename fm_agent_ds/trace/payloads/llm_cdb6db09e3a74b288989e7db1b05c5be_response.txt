@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a boolean indicating whether the task associated with `handle` is done. If `handle` is `None`, it returns `True`. If `handle` is a `subprocess.Popen` object, it returns `True` if and only if `handle.poll()` returns a non-None value (process has terminated), otherwise `False`. If `handle` is a `concurrent.futures.Future` object, it returns the result of `handle.done()`. The function never raises an exception under the given pre-condition. No side effects beyond the non-blocking queries `poll()` or `done()` occur. Formal: `(handle is None ⇒ result = True) ∧ (handle ∈ subprocess.Popen ⇒ result = (handle.poll() ≠ None)) ∧ (handle ∈ concurrent.futures.Future ⇒ result = handle.done())`"
+}

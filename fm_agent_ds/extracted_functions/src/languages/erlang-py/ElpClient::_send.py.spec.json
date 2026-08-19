@@ -1,0 +1,5 @@
+{
+  "signature": "_send(self, message: dict) -> None",
+  "pre_condition": "self holds an active connection to an ELP server process whose stdin stream is writable. self._write_lock is a lock that serializes concurrent writes to the server's stdin. message is a dict forming a JSON-RPC 2.0 message whose top-level values are JSON-serializable.",
+  "post_condition": "If the server process is not running or its stdin stream is not writable, raises RuntimeError. Otherwise: message is serialized to a UTF-8 JSON byte sequence with minimal separators (commas and colons without whitespace) and without ASCII-escaping non-ASCII characters; the serialized byte sequence is prepended with an LSP Content-Length header (Content-Length: <octet_count>\\r\\n\\r\\n) to form a complete frame; the complete frame is written to the server process's stdin under exclusive acquisition of the write lock and the stream is flushed, ensuring the frame is delivered to the server as a single atomic unit. Returns None after successful transmission. Raises an OSError (or subclass, such as BrokenPipeError) when the stdin write or flush operation fails."
+}

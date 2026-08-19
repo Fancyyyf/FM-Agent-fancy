@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--main",
+  "source_file": "src/configure_llm.py",
+  "function_name": "main",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--main.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--main.md",
+  "probe_stdout": "usage: probe_src--configure_llm-py--main.py [-h] {set} ...\nprobe_src--configure_llm-py--main.py: error: unrecognized arguments: --invalid-flag\nCONFIRMED — main() raised SystemExit(2) instead of returning 2\n",
+  "trigger_summary": "Passing an unrecognized argument causes argparse to raise SystemExit(2) instead of main() returning 2 as required by the specification."
+}

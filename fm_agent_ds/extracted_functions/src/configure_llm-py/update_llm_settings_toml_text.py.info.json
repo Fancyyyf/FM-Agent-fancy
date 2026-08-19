@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "validate_llm_setting",
+      "signature": "validate_llm_setting(key: str, value: str) -> None",
+      "pre_condition": "key is a string identifying an LLM configuration field name; value is a string representing the desired new value for that field.",
+      "post_condition": "Completes without error when key is a recognized LLM configuration field name and value conforms to the expected type and format for that field. Raises an error when key is not a recognized field name or value does not satisfy the field's type and format constraints."
+    }
+  ]
+}

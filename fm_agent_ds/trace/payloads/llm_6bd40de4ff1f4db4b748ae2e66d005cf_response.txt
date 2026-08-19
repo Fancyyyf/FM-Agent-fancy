@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "parts = {\"hello\", \"hallo\"}, signals = {'backtick_idents': set(), 'plain_idents': {\"hello\"}, 'dotted_refs': set(), 'all_words': set()}, with FUZZY_NAME_MIN_LEN=5, FUZZY_NAME_THRESHOLD=0.75, W_FUZZY_NAME=1.0, _STOP=set(), _PY_KEYWORDS=set(). The code returns 0.0, but the specification requires a positive score from the qualifying pair (\"hello\", \"hallo\").",
+  "offending_statements": "Line 19:         if token in name_tokens:\nLine 20:             continue",
+  "reason": "The specification states that each pairwise comparison between a signal token and a name part where the strings are not identical should contribute if conditions are met. The code, however, skips any signal token that appears identically in name_tokens entirely, thereby missing all comparisons of that token with other, non-identical name parts. This causes it to return 0 when a non-zero score is required."
+}

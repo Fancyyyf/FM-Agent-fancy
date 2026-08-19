@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::from_proj_dir.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a CodeGraphExtractor instance backed by a .codegraph/codegraph.db SQLite database when the file proj_dir/.codegraph/codegraph.db or <parent-of-proj_dir>/.codegraph/codegraph.db exists on the filesystem. Returns None when neither database file exists. A non-None return guarantees that the returned instance supports function-extraction, function-span, and call-edge queries for every language indexed in the database.",
+    "actual_behavior": "The method returns an instance of cls initialized with the path to an existing `.codegraph/codegraph.db` file found by checking first in `proj_dir` itself, and then in its parent directory (the directory of the absolute path of `proj_dir`). If neither location contains that file, it returns `None`. The filesystem is not altered. Formal logic: Let candidates = [proj_dir, os.path.dirname(os.path.abspath(proj_dir))] and define db_path(d) = os.path.join(d, '.codegraph', 'codegraph.db'). The return value R satisfies: if  d  candidates such that os.path.exists(db_path(d)), then R = cls(db_path(d)) where d is the first element of candidates with existing db_path; otherwise R = None.",
+    "code_evidence": "Line 9: if os.path.exists(db_path):\nLine 10: return cls(db_path)",
+    "trigger_condition": "The code only checks file existence and never validates that the database is a valid CodeGraph database supporting required queries. When the file exists but is invalid or empty, the returned instance violates the specification's required guarantee."
+  }
+}

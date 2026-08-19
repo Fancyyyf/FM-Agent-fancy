@@ -1,0 +1,5 @@
+{
+  "signature": "_module_from_uri(uri: str) -> str",
+  "pre_condition": "uri is a non-empty string representing an absolute file path for an Erlang source file.",
+  "post_condition": "Returns a deterministic string identifier for the module containing the source file at uri. The identifier is the filename component of the path extracted from uri, with the file extension removed. URL percent-decoding is applied to the path before extraction, and both forward-slash and backslash characters in the path are treated as path separators. The same uri always produces the same module identifier."
+}

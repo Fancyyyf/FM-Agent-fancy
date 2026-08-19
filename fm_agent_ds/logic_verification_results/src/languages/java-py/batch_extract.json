@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/java-py/batch_extract.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a dict mapping each absolute file path (str) to a list of (function_name: str, function_body: str) tuples for all discovered functions in Java source files under proj_dir. Each function_name is a canonicalized fully-qualified name using '::' as the separator with path-unsafe characters translated. Each function_body contains the complete source text of that function. Returns an empty dict if the CodeGraph backend cannot be initialized for the project.",
+    "actual_behavior": "If an exception is raised during CodeGraphExtractor.from_proj_dir(proj_dir), the function batch_extract terminates with that exception and no further state holds. Otherwise, the function returns normally. Let result be the returned value. If the call from_proj_dir(proj_dir) returned a falsy value (None or otherwise), result is the empty dict {}. If it returned a truthy CodeGraphExtractor instance cg, result is the dict produced by cg.get_functions_by_file('java', proj_dir). This dict maps each absolute file path (str) for a Java source file in proj_dir to a list of (function_name: str, function_body: str) tuples. Each function_name is a canonicalized fully-qualified name using '::' as separator. No other keys or values are present, and proj_dir remains unchanged.",
+    "code_evidence": "Line 3: cg = CodeGraphExtractor.from_proj_dir(proj_dir)",
+    "trigger_condition": "The specification requires that batch_extract returns an empty dict if the CodeGraph backend cannot be initialized, which implies graceful handling of any initialization failure, including exceptions. The code does not catch exceptions from from_proj_dir, so if that call raises an exception (e.g., FileNotFoundError for a nonexistent directory), the function propagates the exception instead of returning an empty dict, violating the specification."
+  }
+}

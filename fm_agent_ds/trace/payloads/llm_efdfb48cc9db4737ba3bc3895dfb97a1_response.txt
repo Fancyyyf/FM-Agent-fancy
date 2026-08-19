@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function either returns the stripped, non-empty string value of data['post_condition'] if data is a dict and data['post_condition'] is a non-empty string after stripping, or raises a ValueError with a specific message otherwise. Formally: (isinstance(data, dict) ∧ ∃s (data.get('post_condition') = s ∧ isinstance(s, str) ∧ s.strip() ≠ '')) ⇒ (return value = s.strip()); ¬(isinstance(data, dict) ∧ ∃s (data.get('post_condition') = s ∧ isinstance(s, str) ∧ s.strip() ≠ '')) ⇒ (raises ValueError)."
+}

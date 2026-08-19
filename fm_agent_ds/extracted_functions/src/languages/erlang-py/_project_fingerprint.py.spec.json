@@ -1,0 +1,5 @@
+{
+  "signature": "_project_fingerprint(proj_dir: str) -> tuple",
+  "pre_condition": "proj_dir is a non-empty string that, when resolved to an absolute path, refers to an existing directory containing an Erlang project structure with at least one source file present.",
+  "post_condition": "Returns a tuple that deterministically and uniquely identifies the current state of the Erlang project located at proj_dir. Two calls to _project_fingerprint with the same proj_dir return equal tuples if and only if no file relevant to Erlang analysis under proj_dir has changed between the two calls. A file change is any modification to the file's content, size in bytes, or last-modification timestamp. The returned tuple does not depend on filesystem enumeration order or other non-deterministic factors."
+}

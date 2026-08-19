@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_opencode_log_path",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_opencode_log_path.py",
+  "function_name": "_opencode_log_path",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_opencode_log_path.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_opencode_log_path.md",
+  "probe_stdout": "CONFIRMED — path traversal successful\n  work_dir:      /tmp/tmpbeyck_mv/run\n  trace_dir:     /tmp/tmpbeyck_mv/run/trace\n  expected_under: /tmp/tmpbeyck_mv/run/trace\n  actual_path:   /tmp/tmpbeyck_mv/run/malicious_opencode.log\n  event_id:      '../../malicious'\n  escaped trace directory",
+  "trigger_summary": "event_id='../../malicious' causes os.path.join to traverse out of the trace directory, writing the log outside the intended sandbox."
+}

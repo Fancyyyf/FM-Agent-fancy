@@ -1,0 +1,46 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _extracted_files_by_method(func_dir):
+Line 2:     """``{key: [abs_path, ...]}`` for every extracted-function file under
+Line 3:     ``func_dir``, walked recursively. Each file is registered under BOTH keys so a
+Line 4:     caller can look it up whichever kind of name it holds:
+Line 5:       - its bare stem (``Flush``) — the regex change detector reports names
+Line 6:         without a class, so a bare name matches every same-named member;
+Line 7:       - its class-qualified identifier (``LocalStorage::Flush``) — scope ranking
+Line 8:         gets qualified names from codegraph spans, so this gives an exact match.
+Line 9:     A free function (``func_dir/foo.ext``) has identical stem and identifier, so it
+Line 10:     is registered once."""
+Line 11:     index = defaultdict(list)
+Line 12:     if not os.path.isdir(func_dir):
+Line 13:         return index
+Line 14:     for root, _dirs, fnames in os.walk(func_dir):
+Line 15:         for fn in fnames:
+Line 16:             if _is_metadata_sidecar(fn):
+Line 17:                 continue
+Line 18:             abs_path = os.path.join(root, fn)
+Line 19:             # Flat layout: the filename stem is the full identifier, keeping any
+Line 20:             # "::" ("LocalStorage::Flush"). Register it under both the full
+Line 21:             # identifier and the bare tail ("Flush") so both codegraph's qualified
+Line 22:             # names and the regex detector's bare names resolve. (os.walk still
+Line 23:             # tolerates a legacy nested file, whose stem is already bare.)
+Line 24:             stem = fn[: fn.rfind(".")] if "." in fn else fn
+Line 25:             index[stem].append(abs_path)
+Line 26:             bare = stem.split("::")[-1]
+Line 27:             if bare != stem:
+Line 28:                 index[bare].append(abs_path)
+Line 29:     return index
+```
+
+Condition A (what the code actually does):
+The function returns a collections.defaultdict instance `index`, whose default factory is `list`. If an exception (e.g., FileNotFoundError, PermissionError) is raised during the call to `os.path.isdir(func_dir)` or during `os.walk(func_dir)`, the function propagates that exception and no return occurs. If execution completes normally: If `os.path.isdir(func_dir)` is False, then `index` is empty (i.e., for all keys k, `index[k] == []`). Otherwise, let `D` be the set of absolute paths of all regular files under the directory tree rooted at `func_dir` (recursively) whose basename `fn` satisfies `_is_metadata_sidecar(fn) == False`. Let `stem(f)` for a file `f` in `D` be defined as: `fn[:fn.rfind('.')]` if `'.'` is in the basename `fn` of `f`, else `fn`. Let `bare(f) = stem(f).split('::')[-1]`. Then `index` satisfies: for every key `k`, `index[k]` is a list containing exactly the absolute paths `f` in `D` such that `k == stem(f)` or (`k == bare(f)` and `bare(f) != stem(f)`). No other keys exist. The relative order of elements in each `index[k]` matches the order files are encountered by `os.walk` (depth-first, top-down). If `func_dir` is a directory but `D` is empty, all `index` values are empty lists.
+
+Condition B (what the specification requires):
+Returns a dict whose keys are function identifier strings and whose values are non-empty lists of absolute file path strings. When func_dir exists as a directory: for every extracted function file found in a recursive traversal of func_dir (excluding metadata sidecar files), the file's absolute path is registered under its full file-stem identifier — the filename without its extension, which may contain '::' class-qualifier separators; additionally, when a stem contains '::', the substring after the last '::' (the bare method tail) is registered as an additional key mapping to the same path list. A single bare method tail maps to all paths from different classes that share that tail. When func_dir does not exist or is not a directory: returns an empty dict.
+
+Additional context:
+_is_metadata_sidecar(filename) -> bool
+Pre-condition: filename is a non-empty string representing a file basename found during directory traversal.
+Post-condition: Returns True when filename identifies a generated FM-Agent metadata sidecar file — a specification or callee-information file that must be excluded from the extracted function file listing; returns False when filename identifies an extracted function source file or any other non-sidecar file.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

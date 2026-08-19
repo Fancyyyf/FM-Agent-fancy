@@ -1,0 +1,5 @@
+{
+  "signature": "_preview(config: LLMConfigInput, paths: WizardPaths) -> str",
+  "pre_condition": "config is an LLMConfigInput with non-empty provider_id, provider_name, api_style, base_url, model_id, and api_key fields. config.api_style is either 'openai' or 'anthropic'. config.backend is 'opencode'. paths is a WizardPaths whose attribute paths (toml_path, env_path, opencode_config_path) exist or can be created at their corresponding filesystem locations.",
+  "post_condition": "Returns a human-readable multi-line string. The string contains the provider_id, provider_name, api_style, base_url, and model_id values from config on individually labeled lines. The api_key from config appears on a labeled line in a masked form that does not expose the full plaintext key. The string also lists, under a section header stating they will be updated, the filesystem paths of: paths.toml_path, paths.env_path, paths.opencode_config_path, and the provider-specific secret key file path determined from config."
+}

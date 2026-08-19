@@ -1,0 +1,5 @@
+{
+  "signature": "_symbol_range(symbol: dict) -> dict | None",
+  "pre_condition": "symbol is a dict representing an LSP symbol response that may contain a 'range' key directly, or a 'location' key whose value is a dict containing a 'range' key; other keys may be present and are ignored",
+  "post_condition": "Returns the 'range' sub-dict from symbol when symbol has a 'range' key. Otherwise, returns the 'range' sub-dict from symbol['location'] when symbol has a 'location' key that maps to a truthy dict containing a 'range' key. Returns None when neither path yields a range."
+}

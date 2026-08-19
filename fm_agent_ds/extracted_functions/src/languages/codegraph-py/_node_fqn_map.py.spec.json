@@ -1,0 +1,5 @@
+{
+  "signature": "_node_fqn_map(cur, cg_langs: list[str]) -> dict",
+  "pre_condition": "cur is an active database cursor connected to a valid, uncorrupted codegraph database whose nodes table contains id, name, qualified_name, file_path, and start_line columns. cg_langs is a non-empty list of language key strings recognized by the codegraph database.",
+  "post_condition": "Returns a dict mapping each node ID (int) to its canonicalized fully-qualified name (str). The FQN uses '::' as the component separator. Every function and method node in the given languages is included. For multiple nodes sharing the same base identifier within the same file, the first occurrence by ascending file_path then start_line order receives the bare canonicalized name; each subsequent occurrence appends '_N' where N is the 1-based count of prior occurrences of that identifier in that file. Returns an empty dict when no function or method nodes exist for any of the given languages."
+}

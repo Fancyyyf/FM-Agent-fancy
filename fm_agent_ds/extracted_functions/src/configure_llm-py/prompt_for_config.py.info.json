@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_prompt",
+      "signature": "_prompt(prompt_text: str, default: str = \"\") -> str",
+      "pre_condition": "prompt_text is a non-empty string describing the requested input.",
+      "post_condition": "Displays prompt_text and an optional default value to stdout, reads a line from stdin, and returns the user's input as a non-empty string. Returns the default value when the user provides empty input. Re-prompts when the input does not satisfy the validation rule for the field being collected."
+    },
+    {
+      "name": "_prompt_yes_no",
+      "signature": "_prompt_yes_no(prompt_text: str, default: bool = True) -> bool",
+      "pre_condition": "prompt_text is a non-empty string describing the yes/no question.",
+      "post_condition": "Displays prompt_text to stdout, reads a line from stdin, and returns True when the user's response indicates affirmative, False when it indicates negative. Returns the default value when the user provides empty input."
+    }
+  ]
+}

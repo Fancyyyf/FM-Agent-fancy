@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_src_rel_to_func_dir",
+  "source_file": "src/incremental_reasoner.py",
+  "function_name": "_src_rel_to_func_dir",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_src_rel_to_func_dir.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_src_rel_to_func_dir.md",
+  "probe_stdout": "CONFIRMED — actual: dir_name='.env', ext='' | expected: dir_name='-env', ext='env'",
+  "trigger_summary": "When the basename of abs_src starts with a period (e.g., '.env'), last_dot equals 0 so the condition 'last_dot > 0' fails, causing the else branch to return the original basename unchanged instead of transforming it per spec."
+}

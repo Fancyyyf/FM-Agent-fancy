@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "LanguageHandler.batch_extract",
+      "signature": "batch_extract(proj_dir: str) -> dict",
+      "pre_condition": "proj_dir is a path to an existing directory containing source files.",
+      "post_condition": "Returns a dict mapping each absolute file path to a list of (func_name, body_text) tuples for all functions that the language backend can extract from the file. Returns an empty dict when the backend is unavailable or no functions are found."
+    }
+  ]
+}

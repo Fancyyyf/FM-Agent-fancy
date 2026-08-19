@@ -1,0 +1,15 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _inject_targets():
+Line 2:     return [s.strip() for s in (settings.inject.hosts or "").split(",") if s.strip()]
+```
+
+Condition A (what the code actually does):
+After execution, the function `_inject_targets` is defined in the current scope. When called, it accesses the loaded FM-Agent runtime configuration (`settings.inject.hosts`) and returns a list of non‑empty, whitespace‑stripped strings derived from splitting the value by commas. If the configuration value is falsy (`None` or empty), an empty list is returned. No exceptions are raised under normal configuration. Formal logic: `_inject_targets` is a function, and for any call, `_inject_targets() ⇒ l` where `l = [x.strip() for x in (settings.inject.hosts or '').split(',') if x.strip()]`.
+
+Condition B (what the specification requires):
+Returns a list of non-empty strings, each representing a host pattern for which user-identity metadata injection is enabled. Each returned string has no leading or trailing whitespace characters. When no host patterns are configured, returns an empty list.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

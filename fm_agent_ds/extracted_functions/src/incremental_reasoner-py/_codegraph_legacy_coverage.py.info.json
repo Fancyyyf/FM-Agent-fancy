@@ -1,0 +1,28 @@
+{
+  "callees": [
+    {
+      "name": "_normalized_relative_path",
+      "signature": "_normalized_relative_path(proj_dir, path) -> str",
+      "pre_condition": "proj_dir is a directory path. path is an absolute path or a path relative to proj_dir.",
+      "post_condition": "Returns the path normalized relative to proj_dir: collapses . and .. segments, normalizes path separators, and applies case normalization for case-insensitive filesystems. The result is a string with no leading directory separator."
+    },
+    {
+      "name": "extract_functions_from_file",
+      "signature": "extract_functions_from_file(filepath, lang_key) -> list[tuple[str, str]]",
+      "pre_condition": "filepath refers to an existing, readable file. lang_key is a language key present in the extraction configuration.",
+      "post_condition": "Returns a list of (func_name, source_text) tuples, one per function found in the file via language-specific extraction rules, appearing in source-code order. Each func_name is canonicalized: unsafe characters are translated and duplicates are deduplicated by a numeric suffix in order of first occurrence. Each source_text includes the full function body from start to end inclusive, with line endings normalized to '\\n' and a trailing newline."
+    },
+    {
+      "name": "_bare_function_name",
+      "signature": "_bare_function_name(identifier) -> str",
+      "pre_condition": "identifier is a string that may contain :: or . qualifier separators and a trailing _<digits> deduplication suffix.",
+      "post_condition": "Returns the rightmost segment of identifier after the last :: or . separator, with any trailing underscore followed by digits removed. When the identifier contains no qualifier separators, the identifier itself is returned with any trailing dedup suffix stripped."
+    },
+    {
+      "name": "_normalized_function_source",
+      "signature": "_normalized_function_source(source) -> str",
+      "pre_condition": "source is a string containing function source text.",
+      "post_condition": "Returns the source text with all line endings normalized to a single \\n character. Carriage-return–line-feed pairs (\\r\\n) and standalone carriage returns (\\r) are each replaced with \\n."
+    }
+  ]
+}

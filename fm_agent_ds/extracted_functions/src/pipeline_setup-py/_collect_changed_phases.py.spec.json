@@ -1,0 +1,5 @@
+{
+  "signature": "_collect_changed_phases(ensure_changes, *change_sets) -> set[int]",
+  "pre_condition": "ensure_changes is a dictionary. Each element in change_sets is a dictionary.",
+  "post_condition": "Returns a set of unique integer phase numbers aggregated from the provided change-tracking data structures. The returned set contains: (1) every non-None key from ensure_changes[\"augmented\"] (when that key exists), representing phase numbers whose source-file composition was force-augmented; and (2) every non-None value associated with the key \"phase\" in every entry of each change_set[\"modified_modules\"] list (when those keys exist), representing phase numbers whose module composition was modified. The returned set may be empty if no phase numbers are present in the input data structures. No element in the returned set equals None."
+}

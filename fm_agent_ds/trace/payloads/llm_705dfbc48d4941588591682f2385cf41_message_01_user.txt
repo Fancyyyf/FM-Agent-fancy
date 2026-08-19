@@ -1,0 +1,18 @@
+Programming language: Python
+
+Pre-condition:
+n is a non-negative integer.
+
+Code block:
+```python
+Line 1: def _fmt_tokens(n):
+Line 2:     if n is None:
+Line 3:         return "—"
+Line 4:     if n >= 1_000_000:
+Line 5:         return f"{n/1_000_000:.2f}M"
+Line 6:     if n >= 1_000:
+Line 7:         return f"{n/1_000:.1f}K"
+Line 8:     return str(n)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

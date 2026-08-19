@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/cpp-py/batch_extract.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a dictionary mapping absolute filesystem paths (str) to lists of (function_name: str, body_text: str) tuples for all C++ source files identified in proj_dir and its subdirectories. If the CodeGraph extraction backend is unavailable or fails to initialize for the project, returns an empty dictionary. Each key in the returned dictionary is an absolute path to a C++ source file that contains at least one function definition; each associated value is a non-empty list of (func_name, body) tuples extracted from that file.",
+    "actual_behavior": "If no exception occurs, the function returns a dictionary. Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is not None, the returned dictionary is cg.get_functions_by_file('cpp', proj_dir), which maps each absolute file path (str) of a C++ source file within proj_dir or its subdirectories to a list of (function_name: str, body_text: str) tuples. If cg is None, the function returns an empty dictionary {}. No side effects are produced, and the precondition that proj_dir is an existing directory is preserved.",
+    "code_evidence": "Line 4: return cg.get_functions_by_file(\"cpp\", proj_dir) if cg else {}",
+    "trigger_condition": "The specification requires each value in the returned dictionary to be a non-empty list of extracted function tuples and that each key corresponds to a file containing at least one function definition. The code returns the raw output of get_functions_by_file, which can include source files that have no function definitions with empty lists, violating the specification."
+  }
+}

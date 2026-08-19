@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _normalized_function_source(source):
+Line 2:     """Normalize line endings before comparing extractor output."""
+Line 3:     return source.replace("\r\n", "\n").replace("\r", "\n")
+```
+
+Condition A (what the code actually does):
+The function returns a new string equal to the original source with every occurrence of '\r\n' replaced by '\n', and then every remaining '\r' replaced by '\n'. The return type is string, and no exception is raised. Formally, let result be the returned value: result is str ∧ result == source.replace('\r\n', '\n').replace('\r', '\n'). The original source is unchanged.
+
+Condition B (what the specification requires):
+Returns a string free of carriage-return characters (\r). Every carriage-return line-feed pair (\r\n) in source is replaced with a single line-feed character (\n), and every standalone carriage-return character (\r) is replaced with a single line-feed character (\n). All line-feed characters (\n) originally present in source that are not part of a \r\n pair are preserved unchanged. The function is idempotent: applying it to its own output returns the same string.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

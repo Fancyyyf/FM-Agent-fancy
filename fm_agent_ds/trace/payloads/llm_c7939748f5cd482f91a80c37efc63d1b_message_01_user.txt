@@ -1,0 +1,62 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def initialize(self, bootstrap_path: str, bootstrap_source: str | None = None):
+Line 2:         result = self.request(
+Line 3:             "initialize",
+Line 4:             {
+Line 5:                 "processId": os.getpid(),
+Line 6:                 "clientInfo": {"name": "fm-agent", "version": "0.1.0"},
+Line 7:                 "rootUri": self.root_uri,
+Line 8:                 "workspaceFolders": [
+Line 9:                     {"uri": self.root_uri, "name": os.path.basename(self.proj_dir)}
+Line 10:                 ],
+Line 11:                 "capabilities": {
+Line 12:                     "experimental": {"serverStatusNotification": True},
+Line 13:                     "workspace": {"configuration": True, "workspaceFolders": True},
+Line 14:                     "textDocument": {
+Line 15:                         "documentSymbol": {
+Line 16:                             "dynamicRegistration": False,
+Line 17:                             "hierarchicalDocumentSymbolSupport": True,
+Line 18:                         }
+Line 19:                     },
+Line 20:                 },
+Line 21:             },
+Line 22:         )
+Line 23:         server_info = (result or {}).get("serverInfo") if isinstance(result, dict) else None
+Line 24:         self.notify("initialized")
+Line 25:         self.open_document(bootstrap_path, bootstrap_source)
+Line 26:         deadline = time.monotonic() + self.timeout
+Line 27:         while str(self._status).lower() != "running":
+Line 28:             self._handle_server_message(self._next_message(deadline))
+Line 29:         return server_info
+```
+
+Condition A (what the code actually does):
+If the method completes without raising an exception, it returns a value `server_info` equal to `(result.get('serverInfo') if isinstance(result, dict) else None)`, where `result` is the parsed JSON-RPC response of the 'initialize' request. The server connection remains active, the 'initialized' notification has been sent, the document at `bootstrap_path` has been opened (using `bootstrap_source` if not None, otherwise referencing the file on disk), and `str(self._status).lower() == 'running'` holds, meaning the server has reached the running state. The polling loop was bounded by a deadline of `time.monotonic() + self.timeout`. If any step fails (server unreachable, JSON-RPC error response, connection loss, message timeout, or malformed server message), an exception is raised and the method does not return; the state of the client and server may be inconsistent. Formally: Pre(self, bootstrap_path, bootstrap_source) ⇒ ((NormalReturn ⇒ (∃ server_info: return_value = server_info ∧ server_info = (resp['serverInfo'] if isinstance(resp, dict) else None) ∧ self.connection_active ∧ str(self._status).lower() = 'running' ∧ notified('initialized') ∧ doc_opened(bootstrap_path, bootstrap_source))) ∧ (Exception ⇒ ⊤)).
+
+Condition B (what the specification requires):
+The ELP server has received the LSP initialize request conveying: the workspace root URI, the workspace folder list (containing a single folder at self.root_uri named after the project directory), client identity 'fm-agent' version '0.1.0', and requested capabilities (server status notifications, workspace configuration, hierarchical document symbols with no dynamic registration). The ELP server has received the 'initialized' notification. The text document at bootstrap_path has been opened on the server — when bootstrap_source is not None, the server uses the provided source text; when bootstrap_source is None, the server reads the file from disk. The ELP server has reached the 'running' status after processing all server messages up to and including the status transition. When the initialize response is a dict, returns the value associated with the key 'serverInfo' from that dict, or None if the key is absent. When the initialize response is not a dict, returns None. Raises an exception when the server is unreachable, when the server does not reach running status before the message-processing deadline, or when a malformed server message is received.
+
+Additional context:
+ElpClient.request(self, method: str, params: dict) -> Any
+Pre-condition: self has an active connection to the ELP server. method is the LSP method name as a string. params is a dict of JSON-serializable parameters for the LSP request.
+Post-condition: Returns the 'result' field of the server's JSON-RPC response, parsed to the appropriate Python type for the method. Raises an exception when the server is unreachable, the server returns a JSON-RPC error response, or the connection is lost during the request.
+
+ElpClient.notify(self, method: str) -> None
+Pre-condition: self has an active connection to the ELP server. method is the LSP notification method name as a string.
+Post-condition: The notification has been delivered to the server. Does not wait for or return a server response. Raises an exception when the server is unreachable or the connection is lost during delivery.
+
+ElpClient.open_document(self, path: str, source: str | None) -> None
+Pre-condition: self has an active connection to the ELP server. path is a string representing a file URI. source is either None or a string containing source code text.
+Post-condition: The server has been notified that the text document at path is open. When source is not None, the server holds the provided text content for subsequent document symbol and call-hierarchy queries. When source is None, the server associates the URI with the file content on disk. Raises an exception when the server is unreachable, the connection is lost, or the server rejects the document-open notification.
+
+ElpClient._next_message(self, deadline: float) -> Any
+Pre-condition: self has an active connection to the ELP server. deadline is an absolute monotonic time value (as returned by time.monotonic()) representing the latest acceptable arrival time for the next message.
+Post-condition: Returns the next message received from the ELP server, parsed into the appropriate Python type. Blocks the caller until a message arrives. Raises an exception when no message arrives before deadline or when the server connection is lost.
+
+ElpClient._handle_server_message(self, msg: Any) -> None
+Pre-condition: msg is a parsed server message received from the ELP server, in the format produced by _next_message.
+Post-condition: The message has been processed. May update self._status and other internal server-state attributes on self. When the message indicates the server has reached the running status, subsequent checks of self._status reflect this. Raises an exception when the message is malformed or indicates a server error that cannot be handled.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

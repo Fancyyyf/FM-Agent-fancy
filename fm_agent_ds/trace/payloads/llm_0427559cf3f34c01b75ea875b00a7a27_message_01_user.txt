@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+cmd is a non-empty string containing a shell command; plugin_root is a pathlib.Path pointing to an existing directory.
+
+Code block:
+```python
+Line 1: def _resolve_command(cmd: str, plugin_root: Path) -> str:
+Line 2:     """Rewrite relative file paths in *cmd* to absolute paths under *plugin_root*.
+Line 3:     Each whitespace-delimited token in *cmd* is checked: if ``plugin_root / token``
+Line 4:     points to an existing file, the token is replaced with its absolute path.
+Line 5:     Tokens starting with ``/``, ``$``, or ``-`` are left unchanged.
+Line 6:     """
+Line 7:     tokens = cmd.split()
+Line 8:     resolved = []
+Line 9:     for token in tokens:
+Line 10:         if token.startswith("/") or token.startswith("$"):
+Line 11:             resolved.append(token)
+Line 12:             continue
+Line 13:         candidate = plugin_root / token
+Line 14:         if candidate.is_file():
+Line 15:             resolved.append(str(candidate))
+Line 16:         else:
+Line 17:             resolved.append(token)
+Line 18:     return " ".join(resolved)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

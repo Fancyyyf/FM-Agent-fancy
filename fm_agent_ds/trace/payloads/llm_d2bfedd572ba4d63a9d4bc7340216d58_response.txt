@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Two extracted-function files with the same base name but different extensions, e.g., 'src/module/foo.py' and 'src/module/foo.c', both present as verification targets (e.g., because both source files appear in changed_functions).",
+  "offending_statements": "Line 59: stale = os.path.join(output_dir, os.path.splitext(rel)[0] + '.json')",
+  "reason": "The code derives the verdict file path by stripping the entire extension, causing two targets with the same basename but different extensions to map to the same file (e.g., both 'foo.py' and 'foo.c' produce 'foo.json'). During processing, the second verdict overwrites the first, so one target loses its verdict file. This violates the specification's requirement that each verification target generates its own reasoner verdict written to logic_verification_results/<unique rel_without_ext>.json."
+}

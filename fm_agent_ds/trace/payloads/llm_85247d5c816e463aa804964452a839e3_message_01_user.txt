@@ -1,0 +1,89 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _prepare_workflow_file(proj_dir, work_dir, script_dir, workflow_filename):
+Line 2:     """Copy a workflow markdown into ``work_dir`` and rewrite the
+Line 3:     ``source_files`` instruction so it points at the concrete project root,
+Line 4:     telling the agent to record paths relative to it (and not prefixed with the
+Line 5:     project directory name).
+Line 6:     """
+Line 7:     workflow_src = os.path.join(script_dir, "md", workflow_filename)
+Line 8:     workflow_dst = os.path.join(work_dir, workflow_filename)
+Line 9:     shutil.copy2(workflow_src, workflow_dst)
+Line 10:     proj_dir_abs = os.path.abspath(proj_dir)
+Line 11:     proj_dir_name = os.path.basename(proj_dir_abs)
+Line 12:     with open(workflow_dst, "r") as _f:
+Line 13:         md = _f.read()
+Line 14:     old = ("- `phases[*].modules[*].source_files` — relative paths from repo root of all source files "
+Line 15:            "that belong to this module.")
+Line 16:     new = (f"- `phases[*].modules[*].source_files` — relative paths from the project root "
+Line 17:            f"`{proj_dir_abs}` of all source files that belong to this module. "
+Line 18:            f"For example, a file at `{proj_dir_abs}/path/to/file.ext` must be recorded as "
+Line 19:            f"`path/to/file.ext`, NOT as `{proj_dir_name}/path/to/file.ext`.")
+Line 20:     md = md.replace(old, new, 1)
+Line 21:     user_knowledge_paths = list_staged_domain_knowledge_relpaths(work_dir)
+Line 22:     if user_knowledge_paths:
+Line 23:         md += (
+Line 24:             "\n---\n\n"
+Line 25:             "## User-Provided Domain Knowledge\n\n"
+Line 26:             "The user supplied extra Markdown files with domain knowledge for this run. "
+Line 27:             "Read these files before writing `phases.json` and the generated domain "
+Line 28:             "context files. Use them only as contextual knowledge about intended "
+Line 29:             "behavior, terminology, business rules, data encodings, and invariants; "
+Line 30:             "do NOT include these Markdown files as project source files in "
+Line 31:             "`phases.json`, and do NOT edit or summarize them in place.\n\n"
+Line 32:             f"{format_domain_knowledge_bullets(user_knowledge_paths)}\n"
+Line 33:         )
+Line 34:     with open(workflow_dst, "w") as _f:
+Line 35:         _f.write(md)
+```
+
+Condition A (what the code actually does):
+If the function terminates normally, the file at `os.path.join(work_dir, workflow_filename)` exists and contains the result of copying the original workflow markdown from `os.path.join(script_dir, 'md', workflow_filename)`, then modifying its content. The modification replaces the first occurrence of the exact string:
+
+`- \`phases[*].modules[*].source_files\` — relative paths from repo root of all source files that belong to this module.`
+
+with a new string that incorporates the absolute path of `proj_dir` (`proj_dir_abs`) and its base name (`proj_dir_name`):
+
+`- \`phases[*].modules[*].source_files\` — relative paths from the project root \`{proj_dir_abs}\` of all source files that belong to this module. For example, a file at \`{proj_dir_abs}/path/to/file.ext\` must be recorded as \`path/to/file.ext\`, NOT as \`{proj_dir_name}/path/to/file.ext\`.`
+
+If `list_staged_domain_knowledge_relpaths(work_dir)` returns a non‑empty list `paths`, the final content additionally has the following appendix inserted at the end:
+
+```
+---
+
+## User-Provided Domain Knowledge
+
+The user supplied extra Markdown files with domain knowledge for this run. Read these files before writing `phases.json` and the generated domain context files. Use them only as contextual knowledge about intended behavior, terminology, business rules, data encodings, and invariants; do NOT include these Markdown files as project source files in `phases.json`, and do NOT edit or summarize them in place.
+
+{format_domain_knowledge_bullets(paths)}
+```
+
+If the list is empty, no such appendix is added. The original source file remains unmodified. No other files in the file system are altered. The function returns `None`. If any file I/O operation raises an exception, the function may terminate abruptly with that exception, potentially leaving a partially written destination file.
+
+Formal logic (assuming normal termination):
+
+Let `src = os.path.join(script_dir, 'md', workflow_filename)` and `dst = os.path.join(work_dir, workflow_filename)`. Let `proj_dir_abs = os.path.abspath(proj_dir)` and `proj_dir_name = os.path.basename(proj_dir_abs)`. Let `old` and `new` be the concrete strings defined above (with actual values of `proj_dir_abs` and `proj_dir_name`). Let `orig = content(src)` before the call.
+
+Then:
+- `exists(dst) = True`
+- `content(dst) = (if list_staged_domain_knowledge_relpaths(work_dir) = [] then md1 else md1 ++ "\n---\n\n## User-Provided Domain Knowledge\n\n..." ++ format_domain_knowledge_bullets(paths) ++ "\n")`
+   where `md1 = replace_first(orig, old, new)`
+   and `paths = list_staged_domain_knowledge_relpaths(work_dir)`
+- `content(src) = orig` (unchanged)
+- `∀ f ∈ Files : f ≠ src ∧ f ≠ dst ⇒ content(f) = content_before(f)`
+- Return value is `None`.
+
+Condition B (what the specification requires):
+A file named workflow_filename exists at <work_dir>/<workflow_filename> whose content is derived from the source file at <script_dir>/md/<workflow_filename>. The source_files instruction string in the workflow content is rewritten to reference the absolute path of proj_dir as the project root and to include a concrete example demonstrating that a file at <proj_dir_abs>/path/to/file.ext must be recorded as 'path/to/file.ext' without the project directory name prefix. If at least one user-provided domain knowledge markdown file is staged under the work_dir, a section titled 'User-Provided Domain Knowledge' is appended to the file containing: an instruction to read the staged files as contextual knowledge without including them as project source files in phases.json, followed by a bullet list of the relative workspace paths to each staged knowledge file. If no domain knowledge files are staged, the workflow file is written without the appended section. The source workflow file at <script_dir>/md/<workflow_filename> is not modified.
+
+Additional context:
+list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+Pre-condition: work_dir is a writable directory that may contain staged domain knowledge files under its spec_prompts/domain_context/user_knowledge/ subdirectory
+Post-condition: Returns a sorted list of relative path strings from the workspace root to every user-provided domain knowledge markdown file staged under work_dir. Returns an empty list if no files are staged.
+
+format_domain_knowledge_bullets(paths) -> str
+Pre-condition: paths is a non-empty list of relative path strings to markdown files
+Post-condition: Returns a string where each path in the input list is formatted as a bullet point with a workspace-relative prefix, suitable for injection into an agent instruction prompt.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_restrict_to_chains(call_graph, entry_func, end_funcs) -> dict",
+  "pre_condition": "call_graph is a dict mapping FQN strings to lists of callee FQN strings, representing a directed call graph. entry_func is an FQN string present as a key in call_graph.",
+  "post_condition": "When end_funcs is falsy, returns call_graph unchanged. When end_funcs is non-empty, returns a new dict with the same shape as call_graph (FQN keys mapping to lists of callee FQN strings) containing only functions that lie on at least one directed path from entry_func to any FQN in end_funcs within call_graph. For each such function, only callees that also lie on at least one such path are retained. Functions whose FQN appears in end_funcs have empty callee lists in the returned dict regardless of their original callees. The relative order of callees in each list is preserved from call_graph. The original call_graph is unmodified."
+}

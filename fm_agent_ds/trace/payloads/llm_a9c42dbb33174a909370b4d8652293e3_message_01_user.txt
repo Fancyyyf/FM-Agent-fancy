@@ -1,0 +1,46 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _llm_select_json(work_dir, prompt_content, stage, validator, schema_description,
+Line 2:                      trace_meta=None):
+Line 3:     """Run a direct LLM call and return validated structured JSON.
+Line 4:     This is for self-contained prompts whose context is already inlined. The
+Line 5:     shared JSON caller records the raw exchange, accepts exactly one JSON
+Line 6:     object or array (including a fenced or prose-wrapped one), validates the
+Line 7:     required fields, and retries on protocol failures.
+Line 8:     """
+Line 9:     messages = [{"role": "user", "content": prompt_content}]
+Line 10:     meta = {"stage": stage, "summary": f"LLM {stage}", **(trace_meta or {})}
+Line 11:     result = _llm_json_call(
+Line 12:         _llm_provider_client,
+Line 13:         LLM_MODEL,
+Line 14:         messages,
+Line 15:         validator,
+Line 16:         schema_description,
+Line 17:         trace_dir=os.path.join(work_dir, "trace"),
+Line 18:         trace_meta=meta,
+Line 19:     )
+Line 20:     if result is None:
+Line 21:         logging.error("%s: LLM produced no valid JSON response after retries.", stage)
+Line 22:     return result
+```
+
+Condition A (what the code actually does):
+After execution of _llm_select_json, the function either terminates normally with a return value v, or raises an exception that propagates to the caller. 
+
+Normal termination post-condition: 
+(1) (v is None) ∨ (v is not None ∧ validator(v)[0] = True ∧ v is a JSON-parsed object that conforms to schema_description). 
+(2) The directory os.path.join(work_dir, 'trace') contains trace files from the LLM interaction(s), recorded with metadata {'stage': stage, 'summary': 'LLM ' + stage, **trace_meta}. 
+(3) If v is None, a logging.error message containing stage is emitted. 
+
+Exceptional termination (exception raised by _llm_json_call): the exception propagates; there is no return value, and no guarantees are made about the completeness or existence of the trace data.
+
+Condition B (what the specification requires):
+Sends prompt_content to the configured LLM. Returns the parsed and validated result when the LLM produces output that can be parsed as JSON, conforms to schema_description, and passes validator. Returns None when the LLM produces no output, output that cannot be parsed as JSON, output that does not conform to schema_description, or output that fails validator. The exchange is traced under work_dir with stage and trace_meta as identifying labels. On return with None, an error-level log entry is produced noting the stage.
+
+Additional context:
+_llm_json_call(client, model, messages, validator, schema_description, trace_dir, trace_meta) -> Any | None
+Pre-condition: client is a configured LLM provider client. model is a valid model identifier. messages is a non-empty list of message dicts each with 'role' and 'content' string keys. validator is a callable that accepts a parsed value and returns (bool, str | None). schema_description is a non-empty string. trace_dir is a writable directory path. trace_meta is a dict whose keys are strings and values are JSON-serializable.
+Post-condition: Sends messages to the LLM via client. Returns the parsed and validated result when the LLM produces output parseable as JSON that conforms to schema_description and passes validator. Returns None when the LLM produces no valid output or validation fails. Handles retries on protocol-level failures. The raw exchange is traced to trace_dir with trace_meta as identifying metadata.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

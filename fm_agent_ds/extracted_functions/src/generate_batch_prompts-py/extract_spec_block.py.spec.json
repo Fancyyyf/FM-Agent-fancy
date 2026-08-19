@@ -1,0 +1,5 @@
+{
+  "signature": "extract_spec_block(filepath: Path) -> Optional[str]",
+  "pre_condition": "filepath is a Path object.",
+  "post_condition": "Returns a formatted string composed from the 'signature', 'pre_condition', and 'post_condition' fields of the adjacent .spec.json sidecar when that sidecar exists, parses to a JSON dict, and contains all three of those keys with string values. The returned string follows the form '<signature>\\n\\nPre-condition:\\n<pre_condition>\\n\\nPost-condition:\\n<post_condition>'. Returns None when the sidecar does not exist, cannot be opened or read as UTF-8 text, contains syntactically invalid JSON, parses to a non-dict JSON value, or lacks any of the three required keys with string values."
+}

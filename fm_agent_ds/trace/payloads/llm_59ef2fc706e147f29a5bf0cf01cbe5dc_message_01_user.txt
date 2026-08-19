@@ -1,0 +1,43 @@
+Programming language: Python
+
+Pre-condition:
+config provides access to codegraph.version (the pinned version string) and codegraph.bin_dir (the installation directory path).
+
+Code block:
+```python
+Line 1: def _check_codegraph_version(config):
+Line 2:     """Surface a missing or stale codegraph pinned build so the user knows to
+Line 3:     re-run ./install.sh — otherwise C/C++ extraction silently degrades to the
+Line 4:     regex fallback (or uses a wrong version). Non-blocking, like every check here.
+Line 5:     """
+Line 6:     import subprocess
+Line 7:     from src.languages.codegraph import _codegraph_cmd
+Line 8:     want = config.settings.codegraph.version.strip().removeprefix("v")
+Line 9:     if not want:
+Line 10:         return True, None  
+Line 11:     cmd = _codegraph_cmd()
+Line 12:     try:
+Line 13:         got = subprocess.run(
+Line 14:             [cmd, "--version"], capture_output=True, text=True, timeout=10
+Line 15:         ).stdout.strip()
+Line 16:     except (OSError, subprocess.SubprocessError):
+Line 17:         got = ""
+Line 18:     bin_dir = os.path.expanduser(config.settings.codegraph.bin_dir)
+Line 19:     if not got:
+Line 20:         return False, (
+Line 21:             f"codegraph (pinned v{want}) is not installed at {bin_dir} — run "
+Line 22:             "./install.sh (C/C++ extraction falls back to the regex extractor otherwise)."
+Line 23:         )
+Line 24:     if got != want:
+Line 25:         return False, (
+Line 26:             f"codegraph {got} is installed but v{want} is pinned in fm-agent.toml — "
+Line 27:             "re-run ./install.sh to install the pinned build."
+Line 28:         )
+Line 29:     return True, None
+```
+
+Additional context:
+_codegraph_cmd() -> cmd
+Pre-condition: None (no arguments required).
+Post-condition: Returns a command (string or sequence of strings) that, when invoked with the --version flag, locates and executes the codegraph binary and prints its version to stdout.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

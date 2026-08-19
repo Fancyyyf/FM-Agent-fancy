@@ -1,0 +1,5 @@
+{
+  "signature": "finish_opencode_trace(record)",
+  "pre_condition": "record is a TracedOpenCodeProcess struct whose proc subprocess has completed execution (proc.returncode is an integer). All record metadata fields — event_id, stage, started, command, work_dir, function_ids, input_files, output_files, summary, metadata, error, opencode_log_path, opencode_trace_path — hold values of their declared types or None.",
+  "post_condition": "A structured trace event is persisted to the trace events file under record.work_dir. The persisted event contains the exit code from the completed process, a start timestamp equal to record.started, a completion timestamp equal to the wall-clock time at finalization, and a status field whose value is 'error' when record.error is truthy or the process exited with a non-zero code, and 'success' otherwise. Every background thread responsible for capturing process output has terminated and flushed before the trace event is committed. All metadata fields present in record are included in the persisted event."
+}

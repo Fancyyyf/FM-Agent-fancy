@@ -1,0 +1,5 @@
+{
+  "signature": "_normalized_relative_path(proj_dir, path) -> str",
+  "pre_condition": "proj_dir is a directory path string. path is a file path string, either absolute or relative to proj_dir.",
+  "post_condition": "Returns a normalized relative path derived from path relative to proj_dir. If path is not an absolute path, it is first resolved to an absolute path by joining it with proj_dir. The absolute path is then converted to a path relative to proj_dir. The resulting relative path is further normalized: single-dot (.) segments are eliminated, parent-directory (..) segments are resolved against their ancestor components, consecutive path separators are collapsed to a single forward slash, and case normalization appropriate to the filesystem is applied (lowercased on case-insensitive filesystems, unchanged on case-sensitive filesystems). The returned string contains no leading path separator, no leading dot segments, and no redundant separators."
+}

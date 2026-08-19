@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "extract_spec_block",
+      "signature": "extract_spec_block(file_path)",
+      "pre_condition": "file_path is a Path object pointing to an extracted function file on disk.",
+      "post_condition": "Returns a dict with 'signature', 'pre_condition', and 'post_condition' keys describing the function's behavioral contract, or None when no valid specification sidecar exists for that file."
+    },
+    {
+      "name": "extract_info_block",
+      "signature": "extract_info_block(file_path)",
+      "pre_condition": "file_path is a Path object pointing to an extracted function file on disk.",
+      "post_condition": "Returns a dict with a 'callees' key containing callee expectation entries, or None when no valid info sidecar exists for that file."
+    },
+    {
+      "name": "extract_callee_spec_from_info",
+      "signature": "extract_callee_spec_from_info(info_dict, callee_fqn, aliases)",
+      "pre_condition": "info_dict is a dict with a 'callees' key; callee_fqn is a fully-qualified function name string; aliases is an iterable of alias name strings.",
+      "post_condition": "Returns the callee entry dict from info_dict['callees'] whose name matches callee_fqn or any string in aliases. Returns None when no entry matches any of those identifiers."
+    }
+  ]
+}

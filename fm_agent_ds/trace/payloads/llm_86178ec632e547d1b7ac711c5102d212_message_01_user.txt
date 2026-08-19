@@ -1,0 +1,36 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _load_json_edges(text: str, source_path: str) -> list[CallEdge]:
+Line 2:     try:
+Line 3:         data = json.loads(text)
+Line 4:     except json.JSONDecodeError as exc:
+Line 5:         raise ValueError(f"{source_path}: invalid JSON: {exc}") from exc
+Line 6:     if not isinstance(data, dict):
+Line 7:         raise ValueError(f"{source_path}: expected JSON object with an 'edges' list")
+Line 8:     if not isinstance(data.get("edges"), list):
+Line 9:         raise ValueError(f"{source_path}: expected an 'edges' list")
+Line 10:     edges = []
+Line 11:     for idx, item in enumerate(data["edges"], start=1):
+Line 12:         item_source = f"{source_path}:edges[{idx}]"
+Line 13:         if not isinstance(item, dict):
+Line 14:             raise ValueError(f"{item_source}: expected edge object")
+Line 15:         edges.append(_edge_from_mapping(item, item_source))
+Line 16:     return edges
+```
+
+Condition A (what the code actually does):
+On normal return, the function returns a list `R` of `CallEdge` objects. There exists a parsed JSON value `data` such that `data = json.loads(text)` (no JSON decode error) and `isinstance(data, dict)` and `isinstance(data.get('edges'), list)` hold. `len(R) == len(data['edges'])`. For each `i` in `range(len(R))`, let `item = data['edges'][i]`; then `isinstance(item, dict)` is true, and `R[i]` is the result of `_edge_from_mapping(item, source_path + ':edges[' + str(i+1) + ']')`. If any step fails, a `ValueError` is raised: if `json.loads(text)` raises `json.JSONDecodeError`, it is wrapped as `ValueError(f'{source_path}: invalid JSON: {exc}')`; if data is not a dict, raise `ValueError(...)`; if `data.get('edges')` is not a list, raise `ValueError(...)`; if any `item` is not a dict, raise `ValueError(f'{source_path}:edges[{idx}]...')`; exceptions from `_edge_from_mapping` propagate. Formally: { precondition: text is a non‑empty string, source_path is a string } 
+ post: (∃ edges ∈ list(CallEdge) ∙ return = edges ∧ (∀ i ∈ [0, len(edges)) ∙ edges[i] = _edge_from_mapping(data['edges'][i], source_path + ':edges[' + str(i+1) + ']')) 
+ ∨ (raised = ValueError ∧ msg contains source_path) 
+ ∨ (raised = exception from _edge_from_mapping).
+
+Condition B (what the specification requires):
+Returns a list of CallEdge objects in the same order as the elements appear in the 'edges' JSON array. Raises ValueError (with source_path included in the message) when text is not valid JSON (wrapping the underlying JSONDecodeError), when the parsed JSON is not a dict, when the 'edges' key is absent or its value is not a list, or when any element of the 'edges' array is not a dict convertible to a CallEdge.
+
+Additional context:
+_edge_from_mapping(item: dict, source: str) -> CallEdge
+Pre-condition: item is a dict containing the required fields for constructing a CallEdge with caller and callee selectors. source is a provenance string for error messages.
+Post-condition: Returns a CallEdge whose caller and callee fields are populated from item's corresponding sub-objects. The CallEdge's source field reflects the given source provenance.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

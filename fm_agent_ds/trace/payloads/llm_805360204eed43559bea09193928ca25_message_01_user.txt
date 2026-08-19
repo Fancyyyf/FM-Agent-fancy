@@ -1,0 +1,38 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _domain_context_complete(work_dir):
+Line 2:     """Return True only if all domain context files exist and match the phases in phases.json."""
+Line 3:     phases_path = os.path.join(work_dir, "phases.json")
+Line 4:     if not _json_file_is_valid(phases_path):
+Line 5:         return False
+Line 6:     domain_dir = os.path.join(work_dir, "spec_prompts", "domain_context")
+Line 7:     if not os.path.exists(os.path.join(domain_dir, "engine_overview.txt")):
+Line 8:         return False
+Line 9:     try:
+Line 10:         with open(phases_path, "r") as f:
+Line 11:             phases_data = json.load(f)
+Line 12:     except (OSError, json.JSONDecodeError):
+Line 13:         return False
+Line 14:     for phase in phases_data.get("phases", []):
+Line 15:         phase_num = phase.get("phase")
+Line 16:         if phase_num is None:
+Line 17:             return False
+Line 18:         types_path = os.path.join(domain_dir, f"phase_{phase_num:02d}_types.txt")
+Line 19:         if not os.path.exists(types_path):
+Line 20:             return False
+Line 21:     return True
+```
+
+Condition A (what the code actually does):
+The filesystem state is preserved exactly as it was before the call; no files are created, modified, or deleted, and no external resources are altered. The function either returns True or False without raising any exceptions (all internal exceptions are caught). The function returns True if and only if all of the following conditions are met, otherwise it returns False: (1) The file at path os.path.join(work_dir, 'phases.json') exists, is readable, and contains syntactically valid JSON (as determined by _json_file_is_valid). (2) The file at path os.path.join(work_dir, 'spec_prompts', 'domain_context', 'engine_overview.txt') exists. (3) After successfully opening and parsing the phases.json file, the resulting JSON object contains a key 'phases' whose value is iterable, and for every element in that sequence, the element has a non-None value under the key 'phase' (typically an integer), and the file at path os.path.join(work_dir, 'spec_prompts', 'domain_context', f'phase_{phase:02d}_types.txt') exists. Formally: (return_value = True) ↔ ( _json_file_is_valid(phases_path) ∧ os.path.exists(engine_overview_path) ∧ ∀ phase ∈ parse(json.load(open(phases_path))).get('phases', []), phase.get('phase') ≠ None ∧ os.path.exists(phase_types_path(phase.get('phase'))) ), where phases_path = os.path.join(work_dir, 'phases.json'), engine_overview_path = os.path.join(domain_dir, 'engine_overview.txt'), domain_dir = os.path.join(work_dir, 'spec_prompts', 'domain_context'), and phase_types_path(n) = os.path.join(domain_dir, f'phase_{n:02d}_types.txt'). If any of these conditions is not satisfied, the function returns False; for example, missing files, invalid JSON, a missing 'phases' key, a phase element missing the 'phase' key, or a missing phase types file all yield False. The return statement at line 21 is reached only when all checks pass.
+
+Condition B (what the specification requires):
+Returns True if and only if all of the following hold: (1) work_dir contains a valid phases.json file — a readable, parseable JSON file whose top-level object has a 'phases' array where each element has a non-None integer 'phase' key; (2) the file work_dir/spec_prompts/domain_context/engine_overview.txt exists; (3) for every phase number P present in the 'phases' array, the file work_dir/spec_prompts/domain_context/phase_P_types.txt exists, where P is formatted as a zero-padded two-digit integer. Returns False if any of these conditions is not met, including when phases.json is missing, unreadable, not valid JSON, or has a 'phases' array containing an element whose 'phase' key is missing or None. The function does not modify any files on the filesystem.
+
+Additional context:
+_json_file_is_valid(path)
+Pre-condition: path is a string representing a filesystem path which may or may not correspond to an existing, readable file
+Post-condition: Returns True if the file at path exists, is readable, and contains syntactically valid JSON. Returns False if the file does not exist, cannot be read, or its contents are not valid JSON. Does not modify the file or the filesystem.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

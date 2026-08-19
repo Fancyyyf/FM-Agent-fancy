@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Call get_functions_by_file with a recognized lang_key (e.g., 'python'), proj_dir=None, and a database containing a relative file_path (e.g., 'src/foo.py'). The file 'src/foo.py' exists and contains a function. The method returns a dictionary with the key 'src/foo.py' (relative path) instead of an absolute path.",
+  "offending_statements": "Line 32: abs_path = os.path.join(proj_dir, file_path) if proj_dir else file_path",
+  "reason": "The specification requires the returned dictionary to map absolute source file paths, but when proj_dir is None, the path used is the raw relative file_path, violating the absolute requirement."
+}

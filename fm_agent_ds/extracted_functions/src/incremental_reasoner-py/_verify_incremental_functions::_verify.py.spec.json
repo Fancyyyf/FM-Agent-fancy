@@ -1,0 +1,5 @@
+{
+  "signature": "_verify(rel: str) -> (str, dict | None)",
+  "pre_condition": "rel is a non-empty path relative to extracted_dir that identifies an existing extracted function file. The enclosing scope provides: extracted_dir (root of the extracted_functions tree), output_dir (writable directory for verification results), work_dir (FM-Agent workspace directory), and _VERIFY_EXT_TO_LANG (a dict mapping file extensions, including the leading dot, to canonical language identifiers, with a fallback default for unrecognized extensions).",
+  "post_condition": "Returns a pair (rel, verdict) where the first element equals the input argument unchanged, and verdict is the verification outcome for the function at extracted_dir/rel. When the function's .spec.json and .info.json sidecars both exist and are well-formed, verdict is a dict whose 'verdict' key is either 'MATCH' (the implementation satisfies the spec) or 'MISMATCH' (the implementation violates the spec); a MISMATCH verdict additionally contains non-empty 'counterexample' and 'offending_statements' strings. When required sidecar files are absent or malformed, verdict is None."
+}

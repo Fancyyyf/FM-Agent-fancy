@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_detect_lang_from_ext",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_topdown_layers-py/_detect_lang_from_ext.py",
+  "function_name": "_detect_lang_from_ext",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_detect_lang_from_ext.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_detect_lang_from_ext.md",
+  "probe_stdout": "CONFIRMED — actual: 'python' | expected: None",
+  "trigger_summary": "When EXT_TO_LANG has an empty-string key, dotless filenames return a language instead of None because the code delegates to EXT_TO_LANG.get('') instead of unconditionally returning None per spec."
+}

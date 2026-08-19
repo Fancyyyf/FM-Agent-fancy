@@ -1,0 +1,51 @@
+Programming language: Python
+
+Pre-condition:
+None required.
+
+Code block:
+```python
+Line 1: def prompt_for_config() -> tuple[LLMConfigInput, bool]:
+Line 2:     provider_id = _prompt("Provider ID", "openrouter")
+Line 3:     provider_name = _prompt("Provider name", provider_id.title())
+Line 4:     print()
+Line 5:     print("API protocol:")
+Line 6:     print("  1. OpenAI-compatible")
+Line 7:     print("  2. Anthropic-compatible")
+Line 8:     selected = _prompt("Select", "1")
+Line 9:     api_style: ApiStyle
+Line 10:     if selected == "2":
+Line 11:         api_style = "anthropic"
+Line 12:     elif selected == "1":
+Line 13:         api_style = "openai"
+Line 14:     else:
+Line 15:         raise ConfigWizardError("Protocol selection must be 1 or 2.")
+Line 16:     default_base = (
+Line 17:         "https://openrouter.ai/api/v1"
+Line 18:         if api_style == "openai"
+Line 19:         else "https://api.anthropic.com/v1"
+Line 20:     )
+Line 21:     base_url = _prompt("API base URL", default_base)
+Line 22:     model_id = _prompt("Model ID")
+Line 23:     api_key = getpass("API key: ").strip()
+Line 24:     validate = _prompt_yes_no("Validate generated configuration?", default=True)
+Line 25:     config = LLMConfigInput(
+Line 26:         provider_id=provider_id,
+Line 27:         provider_name=provider_name,
+Line 28:         api_style=api_style,
+Line 29:         base_url=base_url,
+Line 30:         model_id=model_id,
+Line 31:         api_key=api_key,
+Line 32:     )
+Line 33:     return config, validate
+```
+
+Additional context:
+_prompt(prompt_text: str, default: str = "") -> str
+Pre-condition: prompt_text is a non-empty string describing the requested input.
+Post-condition: Displays prompt_text and an optional default value to stdout, reads a line from stdin, and returns the user's input as a non-empty string. Returns the default value when the user provides empty input. Re-prompts when the input does not satisfy the validation rule for the field being collected.
+
+_prompt_yes_no(prompt_text: str, default: bool = True) -> bool
+Pre-condition: prompt_text is a non-empty string describing the yes/no question.
+Post-condition: Displays prompt_text to stdout, reads a line from stdin, and returns True when the user's response indicates affirmative, False when it indicates negative. Returns the default value when the user provides empty input.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

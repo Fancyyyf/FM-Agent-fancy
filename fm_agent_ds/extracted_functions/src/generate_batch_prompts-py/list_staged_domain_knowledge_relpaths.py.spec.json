@@ -1,0 +1,5 @@
+{
+  "signature": "list_staged_domain_knowledge_relpaths(work_dir, prefix=\"fm_agent\") -> list[str]",
+  "pre_condition": "work_dir is a Path object referring to an existing directory. prefix is a string.",
+  "post_condition": "Returns a sorted list of string paths, sorted in ascending lexicographic order. When the directory work_dir/spec_prompts/domain_context/user_knowledge/ exists, each returned string equals prefix with any trailing \"/\" removed, followed by \"/\", followed by the POSIX-style relative path from work_dir to a file under work_dir/spec_prompts/domain_context/user_knowledge/ whose filename suffix (case-insensitive) is \".md\" or \".markdown\", excluding any file named exactly \"manifest.json\". When the user_knowledge directory does not exist or contains no qualifying files, the returned list is empty."
+}

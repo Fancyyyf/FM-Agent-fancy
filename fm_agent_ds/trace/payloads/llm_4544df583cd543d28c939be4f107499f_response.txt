@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "After normal return, the code ensures path.parent exists, path is a regular file containing the UTF-8 encoding of text, and the atomic rename via os.replace (on the same filesystem) guarantees that no observer ever sees path in a partially written state—any read observes either the entire prior content or the entire new content. Parent directories are created if missing. The specification is fully satisfied by the code's successful execution paths."
+}

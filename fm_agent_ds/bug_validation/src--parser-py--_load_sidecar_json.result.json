@@ -1,0 +1,11 @@
+{
+  "id": "src--parser-py--_load_sidecar_json",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/parser-py/_load_sidecar_json.py",
+  "function_name": "_load_sidecar_json",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--parser-py--_load_sidecar_json.py",
+  "detail_file": "fm_agent/bug_validation/src--parser-py--_load_sidecar_json.md",
+  "probe_stdout": "CONFIRMED — UnicodeDecodeError propagated instead of returning None when loading a sidecar file with invalid UTF-8. (Spec: Returns None if the file contents are not valid JSON. Invalid UTF-8 is not valid JSON, so None is expected.)",
+  "trigger_summary": "Invalid UTF-8 bytes in a sidecar JSON file cause open() to raise UnicodeDecodeError, which is not caught by the (OSError, json.JSONDecodeError) handler, so the exception propagates instead of returning None."
+}

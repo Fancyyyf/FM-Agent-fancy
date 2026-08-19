@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_base_score",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_base_score.py",
+  "function_name": "_base_score",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_base_score.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_base_score.md",
+  "probe_stdout": "CONFIRMED — actual: 10.0 | expected: 0.0\n",
+  "trigger_summary": "Traceback function name matches a name part (but not the full name), incorrectly awarding W_TRACEBACK weight."
+}

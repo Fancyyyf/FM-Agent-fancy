@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/tmp/testproj', contains single file 'a.py' with content 'def foo(): pass'. Call _select_functions_by_source(proj_dir, entry_func='bar', end_funcs=[], extra_call_edges=None).",
+  "offending_statements": "Line 26: if not source_files:\n            raise ValueError(f\"no extractable source files found under {proj_dir!r}\")",
+  "reason": "Specification requires ValueError when entry_func is not found among extracted functions. Code only raises ValueError when no source files exist (Line 26) and does not validate entry_func presence; with the given input, source_files is non-empty, extraction succeeds, and the function returns normally with empty keep_by_source, violating the required exception."
+}

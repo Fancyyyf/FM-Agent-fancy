@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir is a git repository with at least one commit. Its working tree contains a top-level directory 'fm_agent' and also a subdirectory 'subdir/fm_agent/important.txt'. Invoke frozen_worktree(proj_dir) with default exclude=('fm_agent',). The snapshot worktree will contain 'subdir/fm_agent/important.txt', but the specification requires all entries matching names in exclude to be omitted from the snapshot.",
+  "offending_statements": "Line 47:             _git(\"rm\", \"-r\", \"--cached\", \"--quiet\", \"--ignore-unmatch\", \"--\",\nLine 48:                  *exclude, env=env)",
+  "reason": "The code uses 'git rm --cached' with only the top-level exclude names, so nested directories/files with the same name remain in the commit. The specification says 'entries matching names in exclude omitted', which requires omission of all such entries at any depth."
+}

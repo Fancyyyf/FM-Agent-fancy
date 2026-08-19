@@ -1,0 +1,5 @@
+{
+  "signature": "__call__(self) -> dict",
+  "pre_condition": "The instance is in a state where its configuration data has been fully resolved and populated",
+  "post_condition": "Returns a dict where each key is a valid field name of the settings class associated with this instance and each value is the configuration value for that field, with a type compatible with that field's Pydantic type annotation"
+}

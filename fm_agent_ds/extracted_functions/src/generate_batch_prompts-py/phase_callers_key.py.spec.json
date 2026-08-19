@@ -1,0 +1,5 @@
+{
+  "signature": "phase_callers_key(func, phase) -> str",
+  "pre_condition": "func is a dict mapping string keys to their values, representing function metadata that may contain keys for phase-specific caller lists. phase is a positive integer identifying the target phase.",
+  "post_condition": "Returns the string key in func that stores the list of caller FQN strings corresponding to the given phase number, when func contains a key matching the phase-caller naming convention for that phase. Returns the computed key for the given phase as a fallback when func contains no matching key. The returned value is always a non-empty string."
+}

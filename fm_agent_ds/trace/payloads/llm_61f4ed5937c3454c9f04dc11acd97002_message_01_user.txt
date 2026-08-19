@@ -1,0 +1,16 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a string referring to an existing directory. suffixes is a non-empty set of strings, each representing a file extension including the leading dot.
+
+Code block:
+```python
+Line 1: def _iter_project_files(proj_dir: str, suffixes: set[str]):
+Line 2:     for root, dirs, files in os.walk(proj_dir):
+Line 3:         dirs[:] = [directory for directory in dirs if directory.lower() not in _SKIP_DIRS]
+Line 4:         for filename in files:
+Line 5:             if Path(filename).suffix.lower() in suffixes:
+Line 6:                 yield os.path.abspath(os.path.join(root, filename))
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

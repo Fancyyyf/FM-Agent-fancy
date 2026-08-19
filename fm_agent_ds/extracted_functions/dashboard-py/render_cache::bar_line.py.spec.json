@@ -1,0 +1,5 @@
+{
+  "signature": "bar_line(label: str, rows: list[tuple[int, int]]) -> str",
+  "pre_condition": "label is a non-empty string. rows is a list of (cache_read_count, total_count) tuples where both elements are non-negative integers and cache_read_count ≤ total_count for each tuple.",
+  "post_condition": "When total_count summed across all tuples in rows equals zero, returns a dimmed Rich-markup string beginning with the right-aligned label (14 chars, left-padded with spaces) followed by the text '(no data)'. Otherwise, returns a Rich-markup string containing: (a) a left-aligned label (10 chars, right-padded with spaces); (b) the cache-hit rate expressed as a percentage with one decimal place, colored green when ≥ 80%, yellow when ≥ 50%, red when < 50%; (c) a 20-character bar composed of filled blocks ('█') followed by empty blocks ('░'), where the number of filled blocks equals floor(20 × rate) and rate is the sum of all cache_read_counts divided by the sum of all total_counts; and (d) a dimmed suffix showing the sum of all cache_read_counts and the sum of all total_counts, each formatted as a human-readable token count."
+}

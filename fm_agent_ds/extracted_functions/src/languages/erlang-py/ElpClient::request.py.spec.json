@@ -1,0 +1,5 @@
+{
+  "signature": "ElpClient.request(self, method: str, params: dict | list | None = None) -> Any",
+  "pre_condition": "self has an active connection to the ELP server. method is an LSP method name as a string. params is a dict or list of JSON-serializable parameters, or None.",
+  "post_condition": "Sends a JSON-RPC 2.0 request with the given method and params to the ELP server. When params is None, an empty dict is used in its place. Returns the 'result' field of the server's JSON-RPC response, parsed to the appropriate Python type. Transparently retries on transient server-side content-modification errors with exponential backoff bounded by the instance's configured message-processing timeout. Raises RuntimeError when all retries are exhausted on a content-modification error. Raises TimeoutError when the overall message-processing deadline expires before a response is received. Raises an exception when the server is unreachable, the server returns a non-retriable JSON-RPC error response, or the connection is lost."
+}

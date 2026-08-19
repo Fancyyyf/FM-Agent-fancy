@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_dedupe_edges",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_dedupe_edges.py",
+  "function_name": "_dedupe_edges",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_dedupe_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_dedupe_edges.md",
+  "probe_stdout": "CONFIRMED — actual (sorted by key): [('A::func', 'A::callee'), ('B::func', 'B::callee'), ('C::func', 'A::callee')] | expected (first-occurrence): [('B::func', 'B::callee'), ('A::func', 'A::callee'), ('C::func', 'A::callee')]\n",
+  "trigger_summary": "The sorted() call on line 23 reorders deduplicated edges lexicographically by (caller.fqn, callee.fqn) instead of preserving first-occurrence order as the specification requires."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "self.source = 'a😀c'; lsp_range = {'start': {'line': 0, 'character': 1}, 'end': {'line': 0, 'character': 3}}",
+  "offending_statements": "Line 4: return self.source[start:end]",
+  "reason": "The code slices the Python string using byte offsets as if they were code point indices. When the source contains characters that occupy more than one byte in the underlying encoding (e.g. '😀' U+1F600), position_to_offset returns byte offsets that do not align with string indices. In the counterexample, start=1 and end=5 (byte offsets for the emoji in UTF-8), but self.source[1:5] returns '😀c' instead of just '😀' as the specification requires."
+}

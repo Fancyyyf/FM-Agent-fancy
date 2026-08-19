@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "re.escape",
+      "signature": "re.escape(pattern: str) -> str",
+      "pre_condition": "pattern is a string.",
+      "post_condition": "Returns a string in which all non-alphanumeric characters of pattern are escaped with backslashes, such that the result can safely be used as a literal pattern in a regular expression."
+    },
+    {
+      "name": "re.search",
+      "signature": "re.search(pattern: str, string: str) -> Match | None",
+      "pre_condition": "pattern is a valid regular expression string. string is the text to search.",
+      "post_condition": "Returns a Match object when pattern matches a substring in string, or None when no match is found. A Match object is truthy and None is falsy in boolean context."
+    }
+  ]
+}

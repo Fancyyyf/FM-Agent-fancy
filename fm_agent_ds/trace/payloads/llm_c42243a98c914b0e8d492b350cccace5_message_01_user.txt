@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def build(cls, source: str) -> _SourceIndex:
+Line 2:         lines = source.splitlines(keepends=True)
+Line 3:         line_offsets = []
+Line 4:         offset = 0
+Line 5:         for line in lines:
+Line 6:             line_offsets.append(offset)
+Line 7:             offset += len(line)
+Line 8:         return cls(source=source, lines=lines, line_offsets=line_offsets)
+```
+
+Condition A (what the code actually does):
+Returns an instance r of _SourceIndex such that r.source == source, r.lines == source.splitlines(keepends=True), and for all i in 0..len(r.lines)-1: r.line_offsets[i] == sum(len(r.lines[j]) for j in range(i)).
+
+Condition B (what the specification requires):
+Returns a _SourceIndex instance that indexes source by line boundaries. The returned instance contains the full source text verbatim (with all line-ending characters preserved) and a list of zero-indexed byte offsets where each line begins within source. The first offset is always 0. Successive offsets increase monotonically — each offset equals the sum of byte lengths of all preceding lines (including their line-ending characters). The number of offsets equals the number of newline-delimited lines in source. The returned instance enables callers to map any valid line index and character position to the corresponding byte offset within source, and to extract contiguous substrings spanning an inclusive start byte offset to an exclusive end byte offset.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

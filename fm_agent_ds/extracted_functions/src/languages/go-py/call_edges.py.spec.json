@@ -1,0 +1,5 @@
+{
+  "signature": "call_edges(proj_dir: str) -> dict | None",
+  "pre_condition": "proj_dir is a string path to an existing project directory.",
+  "post_condition": "When the CodeGraph backend can index the project's Go code, returns a dict whose keys are canonicalized caller FQNs (using :: as the namespace separator) and whose values are sets of canonicalized callee FQNs, representing the call-graph edges for Go source files in the project. When the CodeGraph backend is unavailable, returns None."
+}

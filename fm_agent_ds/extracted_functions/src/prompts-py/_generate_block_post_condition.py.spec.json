@@ -1,0 +1,5 @@
+{
+  "signature": "_generate_block_post_condition(block, pre_condition, knowledge, language, trace_dir=None, trace_meta=None) -> dict",
+  "pre_condition": "block is a non-empty string containing source code. pre_condition is a string describing program state before block executes. language is a non-empty string identifying the programming language of block. knowledge is a string (may be empty).",
+  "post_condition": "Returns a dict with key 'post_condition' whose value is a non-empty string describing the program state after block finishes execution, covering all execution paths including early returns, exceptions, and normal flow-through, using semantics appropriate to language. Produces trace event records when trace_dir is truthy; produces no trace side effects when trace_dir is falsy."
+}

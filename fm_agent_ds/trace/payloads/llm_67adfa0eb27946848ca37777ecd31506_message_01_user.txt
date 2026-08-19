@@ -1,0 +1,12 @@
+Programming language: Python
+
+Pre-condition:
+items is a finite list. size is a positive integer.
+
+Code block:
+```python
+Line 1: def chunked(items: List[dict], size: int) -> List[List[dict]]:
+Line 2:     return [items[i : i + size] for i in range(0, len(items), size)]
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

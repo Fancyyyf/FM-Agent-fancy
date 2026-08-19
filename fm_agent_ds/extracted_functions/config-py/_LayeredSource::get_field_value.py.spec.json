@@ -1,0 +1,5 @@
+{
+  "signature": "get_field_value(self, field, field_name)",
+  "pre_condition": "Method exists for Pydantic settings-source protocol compliance; Pydantic resolves all settings values through this source's __call__ method that returns the full merged mapping, so get_field_value is never invoked during normal settings resolution.",
+  "post_condition": "Always raises NotImplementedError. Never returns a value."
+}

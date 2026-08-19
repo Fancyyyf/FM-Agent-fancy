@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _merge_descriptions(target_desc, source_desc):
+Line 2:     """Append a removed module's description to the owning module's description.
+Line 3:     Avoids re-merging the same content if it is already present.
+Line 4:     """
+Line 5:     source_desc = (source_desc or "").strip()
+Line 6:     if not source_desc:
+Line 7:         return target_desc
+Line 8:     if source_desc in target_desc:
+Line 9:         return target_desc
+Line 10:     if not target_desc:
+Line 11:         return source_desc
+Line 12:     return f"{target_desc}\n\n{source_desc}"
+```
+
+Condition A (what the code actually does):
+The function returns a string R that merges target_desc and source_desc according to the following rules, where S = source_desc.strip(): (i) if S is empty or S is a substring of target_desc, then R = target_desc; (ii) otherwise, if target_desc is empty, then R = S; (iii) otherwise, R = target_desc + '
+
+' + S. Formally: R = (if (S == '' or S in target_desc) then target_desc else (if target_desc == '' then S else target_desc + '
+
+' + S)).
+
+Condition B (what the specification requires):
+Returns a string formed by appending the stripped text of source_desc to target_desc. When the stripped text of source_desc is empty, returns target_desc unchanged. When target_desc already contains the full stripped text of source_desc, returns target_desc unchanged. When target_desc is empty and stripped source_desc is non-empty, returns stripped source_desc. Otherwise, returns the concatenation of target_desc and stripped source_desc with a separator between them.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

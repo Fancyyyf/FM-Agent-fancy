@@ -1,0 +1,28 @@
+{
+  "callees": [
+    {
+      "name": "_entry_func_source_rel",
+      "signature": "_entry_func_source_rel(entry_func: str) -> str",
+      "pre_condition": "entry_func is a non-empty FQN string",
+      "post_condition": "Returns the relative source file path within proj_dir that contains the function identified by entry_func"
+    },
+    {
+      "name": "add_test_file_exemption",
+      "signature": "add_test_file_exemption(rel_path: str) -> None",
+      "pre_condition": "rel_path is a relative file path string",
+      "post_condition": "The file at rel_path is exempted from test-file filtering for all subsequent extraction operations in the current process"
+    },
+    {
+      "name": "_run_entry_pipeline_inner",
+      "signature": "_run_entry_pipeline_inner(proj_dir, work_dir, entry_func, end_funcs, resume, domain_knowledge_files, one_phase, extra_call_edges_path, only_spec, bug_validator_path, plugin_config) -> None",
+      "pre_condition": "proj_dir is an existing directory. entry_func is a non-empty FQN string. work_dir is proj_dir/fm_agent/.",
+      "post_condition": "Extracts all functions from proj_dir, builds the call graph, identifies functions on paths from entry_func to end_funcs (or all reachable when end_funcs is None or empty), creates an isolated worktree copy at <proj_dir>.fm-entry-run containing only those functions' source files, runs the full reasoning pipeline on the trimmed copy, and copies the resulting fm_agent/ workspace into proj_dir before discarding the run directory"
+    },
+    {
+      "name": "clear_test_file_exemptions",
+      "signature": "clear_test_file_exemptions() -> None",
+      "pre_condition": "None",
+      "post_condition": "All test-file exemptions previously registered via add_test_file_exemption are removed"
+    }
+  ]
+}

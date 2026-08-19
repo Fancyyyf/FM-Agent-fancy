@@ -1,0 +1,1 @@
+{"signature": "_payload_dir(trace_dir) -> str", "pre_condition": "trace_dir is a valid filesystem directory path", "post_condition": "Returns a filesystem path string that names a subdirectory called 'payloads' located directly under trace_dir; the directory named by the returned path exists on the filesystem after the call returns"}

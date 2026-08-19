@@ -1,0 +1,17 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _prompt(prompt: str, default: str | None = None) -> str:
+Line 2:     suffix = f" [{default}]" if default is not None else ""
+Line 3:     raw = input(f"{prompt}{suffix}: ").strip()
+Line 4:     return raw or (default or "")
+```
+
+Condition A (what the code actually does):
+If no exception occurs, the function returns a string. Let suffix = " [" + default + "]" if default is not None, else suffix = "". Let raw = input(prompt + suffix + ": ").strip(). The return value is raw if raw is not the empty string; otherwise it is default if default is not None and default != ""; otherwise it is the empty string. If the call to input() raises an exception, that exception propagates.
+
+Condition B (what the specification requires):
+Displays prompt to stdout, followed by the default hint in brackets when default is not None, followed by ': '. Reads one line from stdin and strips surrounding whitespace from the received text. Returns the stripped input when it is a non-empty string. When the stripped input is empty and default is a non-empty string, returns default. When the stripped input is empty and default is None or empty, returns an empty string.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

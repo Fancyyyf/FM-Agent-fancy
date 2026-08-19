@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_update_specs_for_intent::_plan_spec_update",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent::_plan_spec_update.py",
+  "function_name": "_plan_spec_update",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_update_specs_for_intent::_plan_spec_update.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_update_specs_for_intent::_plan_spec_update.md",
+  "probe_stdout": "CONFIRMED — Both approaches reproduce the bug.\n  Approach 1 (real code): CONFIRMED — _update_specs_for_intent returned an empty list, meaning _plan_spec_update returned None and the function was silently skipped. When (a) fpath exists, (b) extension is valid ('py'->'python'), and (c) no prior spec exists (old_spec is None), the spec requires returning a plan dict, not None. The bug is at line 1843-1844: 'if not result or not result.get(\"spec_updated\"): return None' returns None even when _opencode_generate_spec returned None (falsy), violating the specification.\n  Approach 2 (mirrored logic): CONFIRMED — The mirrored logic at lines 1843-1844 returns None when _opencode_generate_spec returns a falsy value (None), but the specification requires returning a plan dict because conditions (a), (b), and (c) are all false. The silent None return causes the function to be skipped in the caller's filtering at line 1961: 'applied = [p for p in plans if p]'.",
+  "trigger_summary": "When _opencode_generate_spec returns a falsy value for a function with no prior spec, _plan_spec_update returns None instead of a plan dict, silently skipping the function."
+}

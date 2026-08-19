@@ -1,0 +1,5 @@
+{
+  "signature": "PluginStageConfig.validated() -> List[str]",
+  "pre_condition": "self is a PluginStageConfig instance with attributes type (str), replace_cmd (Optional[str]), input_md (Optional[str]), and output_process (Optional[str]).",
+  "post_condition": "Returns a list of zero or more validation error strings. The returned list is empty if and only if all of the following hold: (1) self.type is one of \"pass\", \"replace\", or \"modify\"; (2) if self.type is \"replace\", then self.replace_cmd is truthy; (3) if self.type is \"modify\", then at least one of self.input_md or self.output_process is truthy. When the list is non-empty, each entry is a string identifying which constraint was violated. The function does not modify self or any of its attributes."
+}

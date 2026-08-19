@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "[1]",
+  "offending_statements": "Line 6: elif value:\nLine 7:             paths.append(value)",
+  "reason": "The specification requires a flat list of string elements, but the code appends any truthy non-list/non-tuple value directly, including non-strings like integers. This violates the output type requirement."
+}

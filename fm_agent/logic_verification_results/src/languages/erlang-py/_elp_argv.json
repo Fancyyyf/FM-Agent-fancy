@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/_elp_argv.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "Returns a non-empty list of strings whose final element is \"server\", suitable for invoking ELP as a subprocess that reads JSON-RPC requests from standard input and writes JSON-RPC responses to standard output. The preceding elements form a platform-appropriate invocation of the configured ELP binary. The return value is stable: two calls return equal lists if the ELP backend configuration has not changed, and return unequal lists if the ELP backend has changed in a way that could produce different analysis output for the same input project.",
-    "actual_behavior": "The function returns a list of strings representing the argument vector to launch the ELP server. Let `cmd = settings.erlang.command.strip()` and `tokens = shlex.split(cmd, posix=(os.name != 'nt'))`. If `tokens` is empty, let `base = ['elp']`; otherwise `base = tokens`. The returned list is `base + ['server']`. Consequently, the result is never empty, always has `'server'` as its last element, and its first element is either the stripped nonempty content of `settings.erlang.command` split into tokens or `'elp'` if no valid command was configured.",
-    "code_evidence": "Line 6: return [*argv, \"server\"]",
-    "trigger_condition": "The returned list becomes ['elp', 'server', 'server'], which does not form a platform-appropriate invocation because the preceding elements now contain a duplicate 'server' that could confuse ELP. The specification requires that the arguments before the final 'server' constitute a correct invocation; the duplicate 'server' violates this requirement."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_l5vkw0lv/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_elp_argv.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

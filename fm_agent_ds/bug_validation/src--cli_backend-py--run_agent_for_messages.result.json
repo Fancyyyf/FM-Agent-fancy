@@ -1,0 +1,11 @@
+{
+  "id": "src--cli_backend-py--run_agent_for_messages",
+  "source_file": "src/cli_backend.py",
+  "function_name": "run_agent_for_messages",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--cli_backend-py--run_agent_for_messages.py",
+  "detail_file": "fm_agent/bug_validation/src--cli_backend-py--run_agent_for_messages.md",
+  "probe_stdout": "CONFIRMED — actual: (response='Hello, this is the agent response.', usage={}) | spec requires usage dict with token metadata, but code returns empty dict\\n",
+  "trigger_summary": "Calling run_agent_for_messages returns an empty dict {} as the usage metadata element instead of a dict containing token usage information from the LLM response."
+}

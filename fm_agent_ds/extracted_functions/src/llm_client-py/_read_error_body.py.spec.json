@@ -1,0 +1,5 @@
+{
+  "signature": "_read_error_body(exc, limit=800) -> str | None",
+  "pre_condition": "exc is an urllib.error.HTTPError instance whose response body may or may not be readable. limit is a positive integer.",
+  "post_condition": "When the response body is readable and contains non-empty content, returns the body decoded as UTF-8 text, truncated to limit characters with a trailing ellipsis (\"…\") appended when the decoded text length exceeds limit. When the body is empty, unreadable, or reading raises an exception, returns None."
+}

@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "validate_base_url",
+      "signature": "validate_base_url(url: str) -> None",
+      "pre_condition": "url is a non-empty, whitespace-stripped string.",
+      "post_condition": "Raises an exception when url is not a syntactically valid absolute URL whose scheme is http or https. Returns with no effect when url is a valid absolute URL with http or https scheme."
+    },
+    {
+      "name": "adapter_for_api_style",
+      "signature": "adapter_for_api_style(style: str) -> None",
+      "pre_condition": "style is a string.",
+      "post_condition": "Raises an exception when style is not a recognized API style identifier. Returns with no effect when style is a recognized API style identifier."
+    }
+  ]
+}

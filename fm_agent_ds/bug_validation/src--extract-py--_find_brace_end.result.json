@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--_find_brace_end",
+  "source_file": "src/extract-py/_find_brace_end.py",
+  "function_name": "_find_brace_end",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--_find_brace_end.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--_find_brace_end.md",
+  "probe_stdout": "CONFIRMED — extracted source truncated at comment brace. actual source: 'void test_func() {\\n    /*\\n     * multi-line block comment\\n     * containing } inside comment\\n'",
+  "trigger_summary": "A multi-line block comment (/* ... */ spanning lines) containing '}' causes _find_brace_end to return early — the block comment handler only searches for '*/' on the same line."
+}

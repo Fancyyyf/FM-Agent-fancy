@@ -1,0 +1,65 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _collapse_phases_to_one(work_dir):
+Line 2:     """Merge every planned module and its type context into phase 1."""
+Line 3:     phases_path = os.path.join(work_dir, "phases.json")
+Line 4:     with open(phases_path) as f:
+Line 5:         data = json.load(f)
+Line 6:     phases = sorted(data.get("phases", []), key=lambda phase: phase.get("phase", 0))
+Line 7:     if not phases:
+Line 8:         return
+Line 9:     merged_description = "\n\n".join(
+Line 10:         f"Phase {phase['phase']} ({phase['name']}): {phase_description}"
+Line 11:         for phase in phases
+Line 12:         if (phase_description := (phase.get("description") or "").strip())
+Line 13:     )
+Line 14:     first = phases[0]
+Line 15:     first["name"] = "Unified Analysis Phase"
+Line 16:     first["description"] = merged_description
+Line 17:     first["modules"] = [
+Line 18:         module
+Line 19:         for phase in phases
+Line 20:         for module in phase.get("modules", [])
+Line 21:     ]
+Line 22:     first["depends_on_phases"] = []
+Line 23:     data["phases"] = [first]
+Line 24:     with open(phases_path, "w") as f:
+Line 25:         json.dump(data, f, indent=2)
+Line 26:     domain_dir = os.path.join(work_dir, "spec_prompts", "domain_context")
+Line 27:     merged_types_path = os.path.join(domain_dir, "phase_01_types.txt")
+Line 28:     type_context = []
+Line 29:     for phase in phases:
+Line 30:         types_path = os.path.join(domain_dir, f"phase_{phase['phase']:02d}_types.txt")
+Line 31:         if os.path.isfile(types_path):
+Line 32:             with open(types_path) as f:
+Line 33:                 type_context.append(f.read().strip())
+Line 34:     if type_context:
+Line 35:         with open(merged_types_path, "w") as f:
+Line 36:             f.write("\n\n".join(type_context) + "\n")
+Line 37:         for types_path in glob.glob(os.path.join(domain_dir, "phase_*_types.txt")):
+Line 38:             if types_path != merged_types_path:
+Line 39:                 os.remove(types_path)
+```
+
+Condition A (what the code actually does):
+If the 'phases' list is empty, the file system remains unchanged and the function returns immediately. Otherwise, after normal execution (no exceptions):
+
+1. The file at phases_path (work_dir/phases.json) is overwritten with a JSON object whose 'phases' key holds a single-element list containing a merged phase object M. M has the same keys as the first phase in the original sorted list (including its original 'phase' number, which may not necessarily be 1), with the following modifications:
+   - 'name' is set to "Unified Analysis Phase".
+   - 'description' is the concatenation of all non‑empty, stripped 'description' strings from every original phase, in sorted order, separated by "\n\n". If none are non‑empty, this field is present but empty.
+   - 'modules' is a list containing every module dictionary from every original phase, preserving the order of phases and the order of modules within each phase.
+   - 'depends_on_phases' is set to an empty list [].
+
+2. In the directory work_dir/spec_prompts/domain_context:
+   a. Let T be the set of paths phase_{:02d}_types.txt for each original phase (using its 'phase' number, zero-padded to two digits).
+   b. If at least one such file existed, a single file phase_01_types.txt is created (or overwritten) containing the stripped contents of all existing files in T, concatenated in order with "\n\n" separators and a trailing newline. All other files matching the glob pattern "phase_*_types.txt" in that directory (including any that were not in T) are deleted, except the newly written phase_01_types.txt. After this step, the only file matching that pattern is phase_01_types.txt with the merged content.
+   c. If no file from T existed, no new file is created and no files are deleted; the directory remains as is.
+
+All operations assume existing files and directories required by the pre‑condition are readable/writable. If an I/O error occurs (e.g., inability to write phases.json or create the merged types file), the function raises an exception and the file system may be left in a partially modified state.
+
+Condition B (what the specification requires):
+If phases.json contained at least one phase, the file under work_dir is rewritten such that: (1) the 'phases' array contains exactly one phase element; (2) the single phase's 'modules' array is the concatenation, in ascending 'phase' order, of every 'modules' array from all original phases, with the relative ordering of modules within each original phase's 'modules' array preserved; (3) the single phase's 'description' is a string formed by joining the stripped, non-empty descriptions of all original phases in ascending 'phase' order with a blank-line separator; (4) the single phase's 'depends_on_phases' is an empty list. Additionally, if one or more 'phase_*_types.txt' files exist under '<work_dir>/spec_prompts/domain_context/', their stripped contents are concatenated in ascending phase order (separated by blank lines) and written to 'phase_01_types.txt' in the same directory, then all other 'phase_*_types.txt' files in that directory are deleted. If phases.json contained zero phases, no file modifications occur.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

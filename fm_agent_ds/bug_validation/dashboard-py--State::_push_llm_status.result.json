@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--State::_push_llm_status",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/dashboard.py",
+  "function_name": "_push_llm_status",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--State::_push_llm_status.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--State::_push_llm_status.md",
+  "probe_stdout": "CONFIRMED — actual: '' | spec-expected: ''\ncode uses 'if ts' (truthiness), but actual_behavior describes 'if ts is not None'",
+  "trigger_summary": "LLM's actual_behavior describes the code as using 'if ts is not None' but the actual code uses truthiness check 'if ts'; for ts='' (falsy but not None) the LLM description would crash while the code correctly returns ''"
+}

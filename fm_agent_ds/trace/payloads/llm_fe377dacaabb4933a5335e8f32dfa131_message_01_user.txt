@@ -1,0 +1,17 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _bare_function_name(identifier):
+Line 2:     """Return the unqualified tail, ignoring either extractor's dedup suffix."""
+Line 3:     bare = re.split(r"::|\.", identifier)[-1]
+Line 4:     return re.sub(r"_\d+$", "", bare)
+```
+
+Condition A (what the code actually does):
+The function returns a string formed by first splitting `identifier` with the regular expression `::|\.` and taking the last element, then removing any trailing substring that matches the pattern `_\d+$` (an underscore followed by one or more digits). Formally, if `parts = re.split(r'::|\.', identifier)`, then the returned value equals `re.sub(r'_\d+$', '', parts[-1])`.
+
+Condition B (what the specification requires):
+Returns the rightmost segment of identifier after splitting on any occurrence of '::' or '.', with any suffix matching the pattern _<digits> (underscore followed by one or more decimal digits at the end of that segment) removed. When identifier contains no '::' or '.' separators, the entire identifier is returned with any trailing _<digits> suffix stripped. The returned string is non-empty (empty-return is possible only when the input contains no characters beyond the stripped suffix).
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_is_valid_info_json",
+      "signature": "_is_valid_info_json(data: dict) -> bool",
+      "pre_condition": "data is a dict that may represent a candidate .info.json structure.",
+      "post_condition": "Returns True when data contains a 'callees' key whose value is a list of dicts, each containing the string keys 'name', 'signature', 'pre_condition', and 'post_condition'. Returns False when 'callees' is absent, is not a list, or any entry in it lacks a required key or has a non-string value for any required key."
+    },
+    {
+      "name": "_normalize_info_dict",
+      "signature": "_normalize_info_dict(info: dict) -> dict",
+      "pre_condition": "info is a dict optionally containing a 'callees' key whose value is a list of dicts with any subset of the fields 'name', 'signature', 'pre_condition', 'post_condition'.",
+      "post_condition": "Returns a dict with a single key 'callees' whose value is a list of dicts, each containing exactly the keys 'name', 'signature', 'pre_condition', 'post_condition' in that order. Missing fields in input callee entries are filled with empty strings. Extra keys in input callee entries are removed."
+    }
+  ]
+}

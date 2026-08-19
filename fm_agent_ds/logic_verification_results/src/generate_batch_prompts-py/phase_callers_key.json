@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_batch_prompts-py/phase_callers_key.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns the string key in func that stores the list of caller FQN strings corresponding to the given phase number, when func contains a key matching the phase-caller naming convention for that phase. Returns the computed key for the given phase as a fallback when func contains no matching key. The returned value is always a non-empty string.",
+    "actual_behavior": "The function returns a string. The input dictionary `func` and integer `phase` are unchanged. Let `target = 'phase' + str(phase) + '_callers'`. If `target` is a key in `func`, the return value equals `target`. Otherwise, if there exists any key `k` in `func` such that `k.startswith('phase')` and `k.endswith('_callers')`, then the return value is the first such key in the iteration order of `func.keys()`. If no such key exists, the return value equals `target`. Formally, for the returned string `r`:  \n(1) `target  func  r = target`.  \n(2) `target  func  k  keys(func) : k.startswith('phase')  k.endswith('_callers')  r = the minimal k in iteration order of func.keys() satisfying the condition`.  \n(3) `target  func  k  keys(func) : k.startswith('phase')  k.endswith('_callers')  r = target`.",
+    "code_evidence": "Line 5: for key in func.keys():\nLine 6:     if key.endswith(\"_callers\") and key.startswith(\"phase\"):\nLine 7:         return key",
+    "trigger_condition": "When the target key (e.g., 'phase1_callers') is missing, the specification says to return the computed key ('phase1_callers') as a fallback. Instead, the code iterates over all keys and returns any other key matching the pattern (e.g., 'phase2_callers'), which does not correspond to the given phase and violates the intended fallback behavior."
+  }
+}

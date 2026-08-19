@@ -1,0 +1,5 @@
+{
+  "signature": "resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir=None) -> list[str]",
+  "pre_condition": "paths is a non-empty iterable of string path entries whose elements may themselves be nested iterables of strings; base_dir is a string path to an existing directory; fallback_base_dir, if provided, is a string path to an existing directory",
+  "post_condition": "Returns a list of absolute file paths as strings, with each distinct real filesystem path (after symlink resolution) appearing at most once. For each string leaf obtained by recursively flattening paths: if the leaf is an absolute path it is used directly; otherwise it is first resolved against base_dir, and if that resolved path does not exist and fallback_base_dir is provided, resolved against fallback_base_dir. The resolved path must exist as a regular file whose extension (case-insensitive) belongs to the set of recognized markdown file extensions — if the resolved path does not exist, is not a regular file, or has an unrecognized extension, a ValueError is raised before any result is returned. The returned list preserves the order of first appearance after deduplication."
+}

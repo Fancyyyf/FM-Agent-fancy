@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Instance with timeout=0.001s, _MAX_CONTENT_MODIFIED_RETRIES=1. Call request('test', None). Server sends a ContentModifiedError response after the deadline (e.g., at 0.002s). _wait_for_response raises _ContentModifiedError despite the expired deadline. Code then raises RuntimeError instead of TimeoutError.",
+  "offending_statements": "Line 18:                 if attempt + 1 == _MAX_CONTENT_MODIFIED_RETRIES:\nLine 19:                     raise RuntimeError(\nLine 20:                         f\"ELP request {method} repeatedly failed: {exc.error}\"\nLine 21:                     ) from exc",
+  "reason": "When the last retry receives a ContentModifiedError after the overall deadline has expired, the code immediately raises RuntimeError without checking the remaining time. The specification requires TimeoutError when the deadline expires before a response is received, which should take precedence over RuntimeError."
+}

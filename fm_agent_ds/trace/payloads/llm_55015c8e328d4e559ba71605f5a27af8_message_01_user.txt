@@ -1,0 +1,12 @@
+Programming language: Python
+
+Pre-condition:
+The instance is in a state where its configuration data has been fully resolved and populated
+
+Code block:
+```python
+Line 1:     def __call__(self) -> dict:
+Line 2:         return self._data
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

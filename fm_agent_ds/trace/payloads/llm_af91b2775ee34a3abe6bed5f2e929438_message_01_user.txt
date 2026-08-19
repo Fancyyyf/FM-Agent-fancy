@@ -1,0 +1,70 @@
+Programming language: Python
+
+Pre-condition:
+result_json_rel is a non-empty string identifying a relative path from proj_dir to an existing JSON file containing a reasoning verdict with at minimum a 'verdict' field. proj_dir is an existing directory. If provided, bug_validator_path is an absolute or relative path to an existing file whose content specifies custom bug-validation instructions. If work_dir is None, it defaults to proj_dir.
+
+Code block:
+```python
+Line 1: def _validate_single_bug(
+Line 2:     result_json_rel,
+Line 3:     proj_dir,
+Line 4:     work_dir=None,
+Line 5:     resume=False,
+Line 6:     bug_validator_path=None,
+Line 7: ):
+Line 8:     """Validate a single MISMATCH result by running opencode with a per-file prompt."""
+Line 9:     if work_dir is None:
+Line 10:         work_dir = proj_dir
+Line 11:     script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+Line 12:     # Derive bug id from result path relative to results dir
+Line 13:     # e.g. "fm_agent/logic_verification_results/mod/func.json" -> "mod--func"
+Line 14:     parts = result_json_rel
+Line 15:     prefix = os.path.join("fm_agent", "logic_verification_results") + os.sep
+Line 16:     if parts.startswith(prefix):
+Line 17:         parts = parts[len(prefix):]
+Line 18:     elif parts.startswith("fm_agent/logic_verification_results/"):
+Line 19:         parts = parts[len("fm_agent/logic_verification_results/"):]
+Line 20:     bug_id = os.path.splitext(parts)[0].replace(os.sep, "--").replace("/", "--")
+Line 21:     function_id = function_id_from_result_path(result_json_rel)
+Line 22:     # Read either the user-selected validator or the built-in default.
+Line 23:     base_md_path = (
+Line 24:         bug_validator_path
+Line 25:         if bug_validator_path
+Line 26:         else os.path.join(script_dir, "md", "bug_validator.md")
+Line 27:     )
+Line 28:     with open(base_md_path, "r") as f:
+Line 29:         base_content = f.read()
+Line 30:     user_knowledge_paths = list_staged_domain_knowledge_relpaths(work_dir)
+Line 31:     if user_knowledge_paths:
+Line 32:         user_knowledge_section = (
+Line 33:             "## User-Provided Domain Knowledge\n\n"
+Line 34:             "Read these Markdown files as additional context for intended behavior, "
+Line 35:             "terminology, data encodings, and invariants before validating the "
+Line 36:             "candidate bug:\n\n"
+Line 37:             f"{format_domain_knowledge_bullets(user_knowledge_paths)}\n\n---\n\n"
+Line 38:         )
+Line 39:     else:
+Line 40:         user_knowledge_section = ""
+```
+
+Additional context:
+function_id_from_result_path(result_json_rel) -> str
+Pre-condition: result_json_rel is a non-empty string representing a path to a reasoning verdict JSON file.
+Post-condition: Returns a function identifier string derived from the result path, suitable for correlating verification results with their source function.
+
+list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+Pre-condition: work_dir is the FM-Agent work directory that may contain staged domain knowledge files.
+Post-condition: Returns a list of relative paths (from work_dir) to all user-provided domain knowledge markdown files currently staged in the work directory. Returns an empty list when no domain knowledge files are staged.
+
+format_domain_knowledge_bullets(paths) -> str
+Pre-condition: paths is a list of relative file path strings.
+Post-condition: Returns a markdown-formatted string containing a header section and a bullet list of the provided paths, suitable for embedding into a prompt as context references. When paths is empty, returns an empty string.
+
+build_llm_cli_command(model, prompt, cwd, files) -> list[str]
+Pre-condition: model is a non-empty string identifying the LLM model. prompt is a non-empty string. cwd is an existing directory. files is a list of file paths to attach.
+Post-condition: Returns a list of CLI argument strings that, when executed as a subprocess, invokes the configured LLM backend with the given model, prompt, working directory, and attached files.
+
+run_opencode_traced(proj_dir, work_dir, command, stage, function_ids, input_files, output_files, summary, metadata) -> None
+Pre-condition: proj_dir is an existing directory. command is a non-empty list of CLI argument strings. stage is a non-empty string identifying the pipeline stage. output_files is a non-empty list of relative paths (from proj_dir) that must exist after successful execution.
+Post-condition: Executes command as a subprocess with proj_dir as the working directory. Produces a structured trace event recording the execution metadata, timing, input/output file references, and exit code. Raises a CalledProcessError when the subprocess exits with a non-zero code. The output files listed in output_files must be produced on disk after a successful run.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

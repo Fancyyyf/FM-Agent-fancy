@@ -1,0 +1,78 @@
+Programming language: Python
+
+Pre-condition:
+After execution of the code block, the file workflow_spec_step4_batch.md has been copied into work_dir. The set all_processed is empty. The variables num_phases and project_name are set from phases_data as described. If phases_data["phases"] is empty, the for‑loop over phases completes without entering its body and execution continues at the statement following the loop (outside the block). Otherwise, phases are processed in ascending phase order. For each phase with an empty file list, the body is skipped with a log message. The first phase for which _get_phase_files returns a non‑empty list triggers the generation (if needed) and loading of the top‑down layers file, yielding total_layers. The inner loop over layers starts at layer 0; the required Stage 6/6 print has occurred, and the batch_cmd list has been built with arguments --phase <phase_num>, --layers 0, and if resume is True, --resume. No batch prompt generation or verification has been launched; all changes to the filesystem are limited to the file copy and any missing top‑down layers JSON file creation. Formally: (∃ f such that f = spec_prompts_dir / "phase_XX_topdown_layers.json" ∧ (file(f) pre‑existed ∨ post‑execution file(f) exists)) ∧ (∀ p ∈ phases_data["phases"] sorted by phase, either get_phase_files p = [] ∧ logging.info executed, or the state is such that the loop body has reached the construction of batch_cmd for layer 0 of the first such non‑empty phase). The execution point is either immediately after the for‑loop header (if no non‑empty phase exists) or at line 40 with batch_cmd defined.
+
+Code block:
+```python
+Line 41:             subprocess.run(batch_cmd, cwd=proj_dir, check=True)
+Line 42:             # Read manifest
+Line 43:             manifest_path = os.path.join(batch_dir, "manifest.json")
+Line 44:             with open(manifest_path, "r") as f:
+Line 45:                 manifest = json.load(f)
+Line 46:             all_batches = manifest.get("batches", [])
+Line 47:             if not all_batches:
+Line 48:                 logging.info(f"Phase {phase_num} Layer {layer_idx}: no batches, skipping.")
+Line 49:                 continue
+Line 50:             batch_rel_dir = os.path.relpath(batch_dir, proj_dir)
+Line 51:             # Build file list for this layer from the manifest
+Line 52:             layer_files = []
+Line 53:             for batch_info in all_batches:
+Line 54:                 for func_rel in batch_info.get("functions", []):
+Line 55:                     rel = os.path.relpath(os.path.join(proj_dir, func_rel), input_dir)
+Line 56:                     layer_files.append(rel)
+Line 57:             layer_processed = set()
+Line 58:             for attempt in range(1, OPENCODE_MAX_RETRIES + 1):
+Line 59:                 # Find batches with unspecced functions
+Line 60:                 pending_batches = _get_pending_batches(all_batches, proj_dir)
+Line 61:                 if not pending_batches:
+Line 62:                     # All functions in this layer are specced. In only-spec mode
+Line 63:                     # we stop here without running the reasoner/bug validation.
+Line 64:                     if not only_spec:
+Line 65:                         incomplete_verification = _get_incomplete_verification_files(
+Line 66:                             layer_files, input_dir, output_dir, work_dir
+Line 67:                         )
+Line 68:                         if incomplete_verification:
+Line 69:                             logging.info(
+Line 70:                                 f"Phase {phase_num} Layer {layer_idx}: "
+Line 71:                                 f"{len(incomplete_verification)} ready file(s) still need verification or validation"
+Line 72:                             )
+Line 73:                             newly_processed = streaming_reasoner(
+Line 74:                                 input_dir, output_dir, file_list=layer_files,
+Line 75:                                 proj_dir=proj_dir, work_dir=work_dir,
+Line 76:                                 spec_procs=None,
+Line 77:                                 already_processed=all_processed | layer_processed,
+Line 78:                                 resume=resume,
+Line 79:                                 bug_validator_path=bug_validator_path,
+Line 80:                             )
+```
+
+Additional context:
+_get_phase_files(phases_data: dict, phase_num: int, input_dir: str) -> list[str]
+Pre-condition: phases_data is a dict containing phase-to-file mappings. phase_num is a valid phase index. input_dir is the extracted_functions/ directory path.
+Post-condition: Returns a list of relative file paths for all extracted functions belonging to the given phase. Returns an empty list when the phase has no associated files.
+
+generate_topdown_layers(work_dir: str, phase_nums: list[int], extra_call_edges: str | None) -> None
+Pre-condition: work_dir is the fm_agent/ workspace directory containing the call graph data and extracted function files. phase_nums is a non-empty list of phase indices to process.
+Post-condition: Writes a phase_NN_topdown_layers.json file under the spec prompts directory for the given phases, describing dependency-ordered layers where each layer's functions only call into functions from strictly prior layers or external/leaf functions. The total_layers field records the number of layers produced.
+
+_get_pending_batches(all_batches: list[dict], proj_dir: str) -> list[dict]
+Pre-condition: all_batches is a list of batch-info dicts where each contains a 'functions' list of relative function paths and a 'file' string naming the batch prompt file. proj_dir is the project root directory.
+Post-condition: Returns the subset of all_batches whose 'functions' list contains at least one function for which a complete pair of .spec.json and .info.json sidecar files does not yet exist.
+
+_get_incomplete_verification_files(layer_files: list[str], input_dir: str, output_dir: str, work_dir: str) -> list[str]
+Pre-condition: layer_files is a list of relative paths to extracted function files. input_dir is the extracted_functions/ root. output_dir is the verification output directory. work_dir is the fm_agent/ workspace.
+Post-condition: Returns the subset of layer_files for which both .spec.json and .info.json sidecar files exist and are valid, but no verification verdict output has been written.
+
+streaming_reasoner(input_dir: str, output_dir: str, file_list: list[str], proj_dir: str, work_dir: str, spec_procs: list | None, already_processed: set[str], resume: bool, bug_validator_path: str | None) -> set[str]
+Pre-condition: input_dir is the extracted_functions/ directory containing function files with complete spec/info sidecars. output_dir is the destination directory for verification verdict JSON files. file_list identifies the functions in scope. proj_dir is the project root. spec_procs is a list of concurrent.futures.Future objects for ongoing spec-generation tasks, or None.
+Post-condition: For each function in scope whose spec/info sidecars are complete, has not yet been processed, and is not in already_processed, runs block-level Hoare-style reasoning to verify the function body against its specification. Produces a verdict JSON file under output_dir. For each MISMATCH verdict, dispatches a bug validation agent that builds and executes a probe script, producing a bug_validation/<bug_id>.md report. Returns the set of function file paths newly processed.
+
+_run_spec_generation_batch(proj_dir: str, work_dir: str, attempt: int, phase_num: int, layer_idx: int, batch_rel_dir: str, batch_info: dict) -> int
+Pre-condition: proj_dir is the project root directory. work_dir contains the workflow_spec_step4_batch.md instruction file. attempt is a positive integer tracking the current retry attempt. batch_info is a dict containing a 'file' key naming the batch prompt file, a 'functions' list of relative function paths, and a 'num_pending' count of unspecced functions.
+Post-condition: For each function listed in the batch, .spec.json and .info.json sidecar files are written next to the corresponding extracted source file according to the batch prompt instructions. Returns the subprocess exit code: 0 for success, non-zero for failure.
+
+is_file_ready(filepath: str) -> bool
+Pre-condition: filepath is an absolute path to an extracted function source file.
+Post-condition: Returns True when both a .spec.json and a .info.json sidecar file exist next to filepath and each contains valid JSON conforming to the metadata sidecar schema. Returns False otherwise.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,58 @@
+Programming language: Python
+
+Pre-condition:
+The function returns normally with value None. The input list `lines` is not modified. Internally, the loop has processed all lines, so `i == len(lines)` and `functions == []`. The state of `in_block_comment` depends on the content of the last lines but is unchanged externally. Formal: ensures result = None ∧ ∀j ∈ [0, len(lines)-1] . lines[j] = old(lines[j])
+
+Code block:
+```python
+Line 41:         # Handle named namespace — skip entire block
+Line 42:         if lang_key in ("cpp", "c") and re.match(r'^namespace\s+\w', stripped):
+Line 43:             # Find the opening brace and skip to the matching close
+Line 44:             # But we actually want to scan inside named namespaces too for
+Line 45:             # functions. Let's just skip the namespace line and descend.
+Line 46:             if '{' in stripped:
+Line 47:                 i += 1
+Line 48:                 continue
+Line 49:             else:
+Line 50:                 # Multi-line namespace declaration — skip until {
+Line 51:                 j = i + 1
+Line 52:                 while j < len(lines) and '{' not in lines[j]:
+Line 53:                     j += 1
+Line 54:                 i = j + 1
+Line 55:                 continue
+Line 56:         # Skip lines starting with class/struct/etc. keywords
+Line 57:         if any(stripped.startswith(kw) for kw in skip_kw_line):
+Line 58:             # But if it's a method definition (has '(' and '{'), still skip
+Line 59:             i += 1
+Line 60:             continue
+Line 61:         # Skip constexpr variable declarations (C++)
+Line 62:         if lang_key in ("cpp", "c") and stripped.startswith("constexpr") and stripped.endswith(";"):
+Line 63:             i += 1
+Line 64:             continue
+Line 65:         # Go: detect func keyword
+Line 66:         if lang_key == "go":
+Line 67:             if not stripped.startswith("func ") and not stripped.startswith("func("):
+Line 68:                 i += 1
+Line 69:                 continue
+Line 70:             # Extract name
+Line 71:             m = re.search(r'func\s+(?:\([^)]*\)\s*)?(\w+)', stripped)
+Line 72:             if not m:
+Line 73:                 i += 1
+Line 74:                 continue
+Line 75:             name = m.group(1)
+Line 76:             # Find opening brace
+Line 77:             sig_lines = [lines[i]]
+Line 78:             sig_end = i
+Line 79:             for look in range(i, min(i + 10, len(lines))):
+Line 80:                 if '{' in lines[look]:
+```
+
+Additional context:
+_find_brace_end(lines: list[str], open_brace_line: int) -> int
+Pre-condition: lines is a list of source code lines. open_brace_line is a valid 0-based index into lines where an opening brace '{' resides.
+Post-condition: Returns the 0-based index of the matching closing brace '}', accounting for nested brace pairs at any depth. The returned index is strictly greater than open_brace_line and strictly less than the length of lines.
+
+_extract_func_name_brace(sig_text: str, lang_cfg: dict) -> str | None
+Pre-condition: sig_text is a string containing a candidate function signature spanning one or more concatenated lines. lang_cfg is a dict with language-specific keyword and prefix configuration.
+Post-condition: Returns the bare function name extracted from sig_text, using language-specific keyword filtering from lang_cfg to separate the name from return types, parameter lists, and qualifiers. Returns None when sig_text does not contain a recognizable function declaration for the language.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--plugin-py--_validate_plugin_json_content",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/plugin-py/_validate_plugin_json_content.py",
+  "function_name": "_validate_plugin_json_content",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--plugin-py--_validate_plugin_json_content.py",
+  "detail_file": "fm_agent/bug_validation/src--plugin-py--_validate_plugin_json_content.md",
+  "probe_stdout": "CONFIRMED — actual: PluginConfig(name='probe_plugin_71kf98tp', version='1.0.0', root=PosixPath('/tmp/probe_plugin_71kf98tp'), stages={'mystage': PluginStageConfig(type='modify', replace_cmd=None, input_md='', output_process='echo hello')}) | expected: None\n  Bug: empty input_md resolved to /tmp/probe_plugin_71kf98tp (a directory), which is not a regular file, but the function returned a PluginConfig.",
+  "trigger_summary": "Empty input_md on a modify stage skips the file-existence guard (stage.input_md is falsy), but plugin_dir / '' is a directory, not a regular file, violating spec condition (6)."
+}

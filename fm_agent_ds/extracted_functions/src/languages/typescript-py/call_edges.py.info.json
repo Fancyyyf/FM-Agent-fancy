@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "CodeGraphExtractor.from_proj_dir",
+      "signature": "CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None",
+      "pre_condition": "proj_dir is a string representing the path to an existing project directory",
+      "post_condition": "Returns a CodeGraphExtractor instance initialized for the given project directory and ready to answer extraction queries, or None if the CodeGraph backend is unavailable or cannot be initialized for this project"
+    },
+    {
+      "name": "CodeGraphExtractor.get_call_edges",
+      "signature": "CodeGraphExtractor.get_call_edges(language: str) -> dict",
+      "pre_condition": "language is a string identifying a supported language (e.g., \"typescript\"); the CodeGraphExtractor instance has been successfully initialized for the project",
+      "post_condition": "Returns a dictionary mapping each caller identifier (a tuple of the form (caller_stem, caller_module) extracted from the project source) to a set of callee identifiers for the specified language. Each callee in a set is a function called by the corresponding caller."
+    }
+  ]
+}

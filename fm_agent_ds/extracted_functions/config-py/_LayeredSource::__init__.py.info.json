@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "tomllib.loads",
+      "signature": "tomllib.loads(text: str) -> dict[str, Any]",
+      "pre_condition": "text is a string containing valid TOML syntax",
+      "post_condition": "Returns a nested dict representation of the TOML document, preserving section hierarchy. Top-level keys are section names; each section value is a dict of key-value pairs. All TOML value types (strings, integers, floats, booleans, arrays, inline tables) are preserved with their Python equivalents. Raises TOMLDecodeError if text is not syntactically valid TOML."
+    },
+    {
+      "name": "os.environ.get",
+      "signature": "os.environ.get(key: str) -> str | None",
+      "pre_condition": "key is a non-empty string",
+      "post_condition": "Returns the string value of the environment variable named key if it is set in the process environment; returns None if no such variable is set."
+    }
+  ]
+}

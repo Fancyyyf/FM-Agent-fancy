@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "state.totals = {'input': 10}; state.opencode_token_totals = {}; state.cache_window = []; state.model_seen = ''; any state.cost_native, state.opencode_cost (e.g., 0).",
+  "offending_statements": "Line 4: if tot == 0: Line 5: return f\"[dim]{label:<14}(no data)[/]\" (with calls at Line 24-25 using rows[-10:] and rows[-100:])",
+  "reason": "Spec (a) requires each bar line to display a percentage value, colored bar, and token counts. When cache_window is empty but total tokens are non-zero, 'latest 10' and 'latest 100' lines show '(no data)' without these elements, violating the specification."
+}

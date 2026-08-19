@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_price_for.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a dict whose keys are pricing field names and values are non-negative float per-token costs in US dollars when model is a recognized model identifier. Returns None when model is None or unrecognized. A model identifier is recognized when either the complete identifier or the portion after a leading '<provider>/' segment maps to a known pricing entry.",
+    "actual_behavior": "The function returns a value v determined as follows: If model is falsy (None or an empty string), v = None. Otherwise, if model is a key present in the dictionary _MODEL_COST, v = _MODEL_COST[model]. Otherwise, if the character '/' is present in model, let bare = model.split('/', 1)[1]; if bare is a key in _MODEL_COST, v = _MODEL_COST[bare]; otherwise v = None. Otherwise (model is truthy, not in _MODEL_COST, and '/' absent), v = None. Formally: v = None if (not model)  ((model  _MODEL_COST)  (( '/'  model)  (bare  _MODEL_COST))); v = _MODEL_COST[model] if model  _MODEL_COST; v = _MODEL_COST[bare] if (model  _MODEL_COST)  ('/'  model)  (bare  _MODEL_COST). No side effects on global or local state occur.",
+    "code_evidence": "Line 8: if \"/\" in key:",
+    "trigger_condition": "The code strips everything after the first '/' and tries to match the remainder, even when the prefix before '/' is empty (e.g., '/model'). The specification requires a leading '<provider>/' segment with a non-empty provider. The input '/model' is not a recognized identifier because it lacks a provider, but the code incorrectly matches the bare 'model' and returns its pricing instead of None."
+  }
+}

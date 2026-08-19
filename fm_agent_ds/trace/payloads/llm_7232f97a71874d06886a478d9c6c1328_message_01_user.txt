@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def get_stage(self, stage_name: str) -> Optional[PluginStageConfig]:
+Line 2:         """Return the stage config for *stage_name*, or None if not configured."""
+Line 3:         return self.stages.get(stage_name)
+```
+
+Condition A (what the code actually does):
+After execution, the state of `self` is unchanged. The return value `result` satisfies: if `stage_name` is a key in the mapping `self.stages`, then `result` is the corresponding `PluginStageConfig` value; otherwise, `result` is `None`. Formally: `self = old(self) ∧ result = self.stages.get(stage_name)`.
+
+Condition B (what the specification requires):
+Returns the PluginStageConfig value stored in self.stages under the key stage_name if that key exists; returns None if stage_name is not present as a key in self.stages. The returned value is the same object reference stored in self.stages, not a copy
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

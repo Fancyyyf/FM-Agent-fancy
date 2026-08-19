@@ -1,0 +1,5 @@
+{
+  "signature": "_parse_iso(ts) -> datetime or None",
+  "pre_condition": "ts is a value extracted from a timestamp field in a parsed JSON event record. It is either a string, or None (or any falsy value) when the source field was absent or empty.",
+  "post_condition": "Returns None when ts is None or any falsy value. When ts is a string, interprets it as an ISO 8601 timestamp and returns a datetime object representing that moment if parsing succeeds. A trailing 'Z' suffix on the timestamp string denotes the UTC timezone offset. Returns None without raising an exception when ts is not a valid ISO 8601 timestamp string (including malformed strings, invalid date or time components, or otherwise unparseable input). The function never raises an exception to its caller."
+}

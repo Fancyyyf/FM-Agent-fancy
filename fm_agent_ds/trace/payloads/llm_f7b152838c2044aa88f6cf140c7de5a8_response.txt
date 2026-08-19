@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "value = {\"fqn\": 123}",
+  "offending_statements": "Line 4: fqn = _optional_string(value.get(\"fqn\", \"\"), \"caller.fqn\", source)",
+  "reason": "The code raises a ValueError whenever 'fqn' is present but has a non-string type (e.g., integer 123). The specification only permits ValueError when value is None, not a dict, or both 'fqn' (empty/absent) and 'callsite_names' (empty/absent). For the valid dict {\"fqn\": 123} the specification requires returning a CallerSelector, but the code raises a ValueError instead."
+}

@@ -1,6 +1,6 @@
 # Bug Report: batch_extract
 
-**Source file:** `src/languages/rust.py`
+**Source file:** `/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/languages/rust-py/batch_extract.py`
 **Verdict:** MISMATCH
 **Confirmation status:** confirmed
 
@@ -12,13 +12,25 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-If the CodeGraph backend initializes successfully, returns a dict mapping the absolute file path of every Rust source file under proj_dir to an ordered list of (function_name: str, function_body: str) tuples extracted from that file. Each function_name is canonicalized for FQN use. Each function_body is the raw source text of the function definition, including its signature and body. If the CodeGraph backend fails to initialize, returns an empty dict.
+When the semantic extraction backend (the codegraph index) is available for the project, returns a dict mapping the absolute path of each indexed Rust source file to the list of its extracted functions in file order; each entry is a (func_name, body) pair where func_name obeys the system-wide identity rules (canonicalized, with deterministic same-file dedup suffixes for repeated names) and body is the exact source text of that function; only Rust-language functions appear in the result. When the semantic backend is unavailable for the project, returns None (never an empty dict) so that callers record the language as having an unavailable backend and the regex fallback extraction applies to Rust files; a successfully returned empty dict instead means the backend handled the project and found no Rust functions. Per-file function lists may be empty; the dict value itself is None only in the backend-unavailable case.
 
 ---
 
 ### Actual Behavior
 
-The function batch_extract either returns normally with a dictionary or raises an exception. On normal return: let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is falsy, the return value is {}. If cg is truthy, the return value is cg.get_functions_by_file("rust", proj_dir), a dictionary mapping each absolute file path of a Rust source file located recursively under proj_dir to a list of (function_name, body) tuples extracted from that file. Under the given pre-condition (proj_dir is a valid directory containing Rust source files), the falsy branch is unreachable, so the result is the complete mapping of all Rust files to their extracted functions. Formal: (  cg := CodeGraphExtractor.from_proj_dir(proj_dir) . (cg = None  not cg)  return = {} )  ( cg  None  cg  return = cg.get_functions_by_file("rust", proj_dir)   f  RustFiles(proj_dir) : abs_path(f)  dom(return)  return[abs_path(f)] = extract_functions(f, "rust") ) . Any exception during from_proj_dir or get_functions_by_file propagates and no dictionary is returned.
+The function always returns a value of type dict and does not raise an exception due to a missing codegraph index. Two execution paths exist:
+
+1. (Index found) If a codegraph index exists at proj_dir or at its immediate parent directory, CodeGraphExtractor.from_proj_dir(proj_dir) returns a valid CodeGraphExtractor instance cg. The function then returns cg.get_functions_by_file("rust", proj_dir), which is a dict mapping the absolute file path (str) of each indexed Rust source file to a list of (deduped_ident: str, body_text: str) tuples in file order. Identities follow canonicalization and per-file dedup ordering (files ordered by path then start position; first occurrence keeps the plain name, later ones receive deterministic numeric suffixes). body_text is the exact source text of the function. The per-file list may be empty for indexed files containing no Rust functions. The returned dict is never None.
+
+2. (Index not found) If no codegraph index exists at proj_dir nor at its immediate parent directory, CodeGraphExtractor.from_proj_dir(proj_dir) returns None. The conditional expression evaluates to the else-branch and the function returns the empty dict {}.
+
+Formal logic:
+  LET idx_exists  ( index at proj_dir)  ( index at parent(proj_dir))
+  LET result = batch_extract(proj_dir)
+   idx_exists  result = get_functions_by_file(cg, "rust", proj_dir)  isinstance(result, dict)   k  result: isinstance(k, str)  isabs(k)  isinstance(result[k], list)   (name, body)  result[k]: isinstance(name, str)  isinstance(body, str)
+   idx_exists  result = {}  isinstance(result, dict)
+   In all cases: isinstance(result, dict)  result is not None
+   No exception is raised solely because the codegraph index is absent.
 
 ---
 
@@ -30,27 +42,27 @@ Line 4: return cg.get_functions_by_file("rust", proj_dir) if cg else {}
 
 ## Trigger Condition
 
-If get_functions_by_file raises an exception, the function propagates the exception instead of returning a dict. The specification states that the function returns a dict (empty on initialization failure, full mapping on success) and does not allow exceptions to propagate.
+When the codegraph index is absent (cg is None), the code returns an empty dict {} via the else-branch of the conditional expression. The specification explicitly requires returning None in the backend-unavailable case, stating 'returns None (never an empty dict) so that callers record the language as having an unavailable backend and the regex fallback extraction applies to Rust files; a successfully returned empty dict instead means the backend handled the project and found no Rust functions.' Returning {} conflates 'no index found' with 'index found but no Rust functions extracted', violating the specification's contract for caller-side fallback logic.
 
 ---
 
 ## How to trigger the bug
 
-The function only handles the case where the CodeGraph backend fails to initialize (`cg` is falsy → returns `{}`). When `cg` is truthy (the `.codegraph/codegraph.db` file exists on disk), `from_proj_dir` returns a `CodeGraphExtractor` instance, and `get_functions_by_file` is called. However, `from_proj_dir` only checks file existence via `os.path.exists()`, not file validity. If the DB file exists but is not a valid SQLite database (e.g. corrupted or replaced with a text file), `get_functions_by_file` raises a `sqlite3.DatabaseError`, which propagates uncaught through `batch_extract`. Per the spec, the function should return a dict — an empty dict is the natural fallback — but instead the exception leaks to the caller.
+The probe calls the Rust language handler's `batch_extract` through the public language-backend registry facade (`src.languages.registry.REGISTRY["rust"].batch_extract`), passing a fresh temporary project directory that contains no `.codegraph/codegraph.db` index (and whose immediate parent directory contains none either — the two locations checked by `CodeGraphExtractor.from_proj_dir`). Since `from_proj_dir` finds no index it returns `None`, the buggy else-branch evaluates, and the function returns the empty dict `{}`. The specification requires `None` in this backend-unavailable case so that callers (e.g. `registry.batch_extract_all`) classify the language as unavailable and apply the regex fallback.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| `proj_dir` | A temporary directory containing `.codegraph/codegraph.db` that exists but is not a valid SQLite database (e.g. contains the text `"this is not a valid sqlite database file"`) |
+| `proj_dir` | Freshly created empty temporary directory with no `.codegraph/codegraph.db` at that directory or its immediate parent (e.g. `/tmp/fm_probe_rust_py_XXXXXX`) |
 
 ### Expected (spec-correct) Output
 
-`{}` (empty dict)
+`None` (backend-unavailable sentinel; callers then record Rust as unavailable and fall back to regex extraction)
 
 ### Actual (buggy) Output
 
-`sqlite3.DatabaseError: file is not a database` (exception propagates)
+`{}` (empty dict — conflated with "backend handled the project but found no Rust functions")
 
 ### How to Reproduce
 
@@ -59,81 +71,87 @@ Step-by-step instructions to trigger the bug manually:
 1. Navigate to the repo root.
 2. Run the following snippet (uses the package entry point):
 
-```python
-import sys
-import os
+```py
 import tempfile
-sys.path.insert(0, os.getcwd())
-from src.languages.rust import batch_extract
+from src.languages.registry import REGISTRY
 
-with tempfile.TemporaryDirectory() as tmpdir:
-    os.makedirs(os.path.join(tmpdir, ".codegraph"))
-    with open(os.path.join(tmpdir, ".codegraph", "codegraph.db"), "w") as f:
-        f.write("not a database")
-    result = batch_extract(tmpdir)
-    print(result)
-# actual (buggy) output: sqlite3.DatabaseError: file is not a database
-# expected (correct) output: {}
+proj_dir = tempfile.mkdtemp(prefix="fm_probe_rust_py_")  # no .codegraph index
+result = REGISTRY["rust"].batch_extract(proj_dir)
+print(repr(result))
+# actual (buggy) output: {}
+# expected (correct) output: None
 ```
 
 ---
 
 ## Probe Script
 
-```python
-"""Probe script for bug: src--languages--rust-py--batch_extract
+```py
+"""Probe for bug src--languages--rust-py--batch_extract.
 
-The spec claims batch_extract returns a dict (empty on init failure, full mapping
-on success). The actual code propagates exceptions from get_functions_by_file
-instead of catching them and returning a dict.
+Spec claim: the Rust batch_extract backend must return None when the
+codegraph index is unavailable (never an empty dict), so callers can record
+the language as having an unavailable backend and apply the regex fallback.
 
-Strategy: create a mock codegraph DB that exists on disk but is invalid SQLite,
-causing get_functions_by_file to raise an exception.
+Trigger: call the rust language handler's batch_extract (exposed through the
+public registry facade src.languages.registry) on a project directory that
+has no .codegraph/codegraph.db index. Buggy code returns {} instead of None.
+
+FM-Agent self-validation guard: this probe only exercises the smallest unit
+(the registry's rust batch_extract handler) with a fresh temporary fixture
+directory; it does not start any FM-Agent workflow.
 """
-import sys
+
 import os
+import sys
 import tempfile
-import traceback
 
-# Probe is at <repo>/fm_agent/bug_validation/probe_*.py
-# Go up 3 levels to reach repo root
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _REPO_ROOT)
+# Ensure the repo root is importable regardless of the launch directory.
+_REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
+fixture = None
 try:
-    from src.languages.rust import batch_extract
+    from src.languages.registry import REGISTRY
 
-    # Create a temp directory with an invalid .codegraph/codegraph.db
-    with tempfile.TemporaryDirectory() as tmpdir:
-        codegraph_dir = os.path.join(tmpdir, ".codegraph")
-        os.makedirs(codegraph_dir)
-        db_path = os.path.join(codegraph_dir, "codegraph.db")
-        # Write something that is NOT a valid SQLite database
-        with open(db_path, "w") as f:
-            f.write("this is not a valid sqlite database file\n")
+    # Fresh temporary project directory owned by the probe; no files are
+    # written anywhere in the active repository.
+    fixture = tempfile.mkdtemp(prefix="fm_probe_rust_py_")
 
-        raised = False
-        try:
-            actual = batch_extract(tmpdir)
-        except Exception as e:
-            raised = True
-            print(f"CONFIRMED — batch_extract raised exception instead of returning a dict: {type(e).__name__}: {e}")
+    # Sanity-check the trigger precondition: no codegraph index at the
+    # fixture dir nor at its immediate parent (the two locations
+    # CodeGraphExtractor.from_proj_dir checks).
+    for candidate in (fixture, os.path.dirname(os.path.abspath(fixture))):
+        index = os.path.join(candidate, ".codegraph", "codegraph.db")
+        if os.path.exists(index):
+            print(f"ERROR: unexpected codegraph index at {index}")
+            sys.exit(1)
 
-        if not raised:
-            expected = {}
-            if actual == expected:
-                print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
-            else:
-                print(f"NOT CONFIRMED — actual: {actual!r} | expected: {expected!r} (different, but no exception)")
-
+    rust_handler = REGISTRY["rust"]
+    actual = rust_handler.batch_extract(fixture)
+    expected = None  # spec: backend unavailable -> None, never {}
+    passed = actual != expected  # True -> bug reproduced
 except Exception as e:
-    print(f"ERROR: {e}")
-    traceback.print_exc()
+    print(f"ERROR: {type(e).__name__}: {e}")
     sys.exit(1)
+finally:
+    if fixture and os.path.isdir(fixture):
+        try:
+            os.rmdir(fixture)  # fixture is an empty temp dir
+        except OSError:
+            pass
+
+if passed:
+    print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
+else:
+    print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
 ```
 
 ### Probe Output
 
 ```
-CONFIRMED — batch_extract raised exception instead of returning a dict: DatabaseError: file is not a database
+CONFIRMED — actual: {} | expected: None
 ```

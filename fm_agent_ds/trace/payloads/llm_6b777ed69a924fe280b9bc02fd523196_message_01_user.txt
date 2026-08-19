@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def warn_dotenv_overrides_for_updates(
+Line 2:     env_path: Path,
+Line 3:     updates: dict[str, str],
+Line 4: ) -> bool:
+Line 5:     """Warn when the focused TOML update remains shadowed by project dotenv."""
+Line 6:     _updated_env, legacy_overrides = remove_legacy_llm_env_overrides(
+Line 7:         _read_text_if_exists(env_path)
+Line 8:     )
+Line 9:     shadowing = tuple(
+Line 10:         name
+Line 11:         for name in legacy_overrides
+Line 12:         if _TOML_KEY_BY_ENV_KEY[name] in updates
+Line 13:     )
+Line 14:     if not shadowing:
+Line 15:         return False
+Line 16:     print("Warning: these project .env variables still override this TOML update:")
+Line 17:     print(f"  {', '.join(shadowing)}")
+Line 18:     print("The set command does not modify .env. Remove those lines, or run the")
+Line 19:     print("interactive wizard to migrate legacy LLM overrides.")
+Line 20:     return True
+```
+
+Condition A (what the code actually does):
+After normal execution (i.e., no exceptions), the function returns a boolean indicating whether any legacy environment variable overrides in the .env file shadow the supplied TOML updates. Let `content = _read_text_if_exists(env_path)` and `(_, overrides) = remove_legacy_llm_env_overrides(content)`. Define `shadowing = { name in overrides | _TOML_KEY_BY_ENV_KEY[name] in updates }`. If `shadowing` is empty, the function returns `False` and produces no output. Otherwise, it prints exactly the warning text: 'Warning: these project .env variables still override this TOML update:' followed by a line with the comma-separated list of `shadowing` names, then 'The set command does not modify .env. Remove those lines, or run the', 'interactive wizard to migrate legacy LLM overrides.', and returns `True`. The `env_path` file, the `updates` dictionary, and any global state are unchanged except for the standard output stream.
+
+Condition B (what the specification requires):
+Prints a warning to stdout when one or more keys in updates correspond to environment variables whose values are present in the .env file at env_path, indicating that those .env values would override the TOML updates. Returns True when at least one warning was printed; returns False when no overrides were found, or the .env file is absent or unreadable.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

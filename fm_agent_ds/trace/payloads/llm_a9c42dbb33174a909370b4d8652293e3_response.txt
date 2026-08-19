@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Set _llm_provider_client to a mock client whose chat.completions.create raises ValueError('invalid API key'). Call _llm_select_json(work_dir='/tmp', prompt_content='test', stage='test', validator=lambda x: (True,None), schema_description='desc'). The code executes _llm_json_call, which raises ValueError; it propagates out of _llm_select_json, causing an exception. The specification requires returning None and logging an error when the LLM produces no valid output (e.g., because of a client error).",
+  "offending_statements": "Line 11: result = _llm_json_call(\n        _llm_provider_client,\n        LLM_MODEL,\n        messages,\n        validator,\n        schema_description,\n        trace_dir=os.path.join(work_dir, \"trace\"),\n        trace_meta=meta,\n    )",
+  "reason": "The specification states that the function returns None whenever the LLM does not produce a valid, conforming JSON result; there is no provision for raising exceptions. The code propagates any exception raised by _llm_json_call (e.g., a network or client error) directly to the caller, violating the expected contract."
+}

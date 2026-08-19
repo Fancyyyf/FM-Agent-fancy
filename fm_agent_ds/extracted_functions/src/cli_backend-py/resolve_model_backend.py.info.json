@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_normalize_backend",
+      "signature": "_normalize_backend(backend: str) -> str",
+      "pre_condition": "backend is a string representing a configured backend name.",
+      "post_condition": "Returns the canonical backend name corresponding to the input string. Every recognized alias for a given backend resolves to the same canonical name. The returned string is always one of the canonical backend name strings. If the input is already a canonical name, it is returned unchanged. If the input matches no recognized alias, it is returned unchanged."
+    }
+  ]
+}

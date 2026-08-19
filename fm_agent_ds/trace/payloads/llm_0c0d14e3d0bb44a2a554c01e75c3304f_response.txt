@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "work_dir is a directory containing: (1) a valid phases.json at 'phases.json', (2) engine_overview.txt at 'engine_overview.txt', (3) phase_1_types.txt at 'phase_1_types.txt', with no spec_prompts directory. The phases.json defines just phase 1.",
+  "offending_statements": "Line 3: return _phase_plan_complete(work_dir) and _domain_context_complete(work_dir)",
+  "reason": "The specification requires engine_overview.txt and phase_P_types.txt to be placed under the spec_prompts/domain_context/ subdirectory. The actual code checks for these files directly under work_dir (as per Condition A). Thus, when the required files exist directly under work_dir but not in the subdirectory, the code returns True, violating the specification which expects False."
+}

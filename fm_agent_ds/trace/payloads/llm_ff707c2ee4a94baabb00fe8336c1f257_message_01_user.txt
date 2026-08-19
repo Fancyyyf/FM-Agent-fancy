@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+project_root is a Path identifying an existing directory.
+
+Code block:
+```python
+Line 1: def _fm_agent_config_path(project_root: Path) -> Path:
+Line 2:     """Match config.py's FM_AGENT_CONFIG path selection exactly."""
+Line 3:     explicit_config = os.environ.get("FM_AGENT_CONFIG")
+Line 4:     if explicit_config is None:
+Line 5:         # config.py loads the project .env without replacing a real process value.
+Line 6:         explicit_config = dotenv_values(project_root / ".env").get("FM_AGENT_CONFIG")
+Line 7:     return Path(explicit_config) if explicit_config else project_root / "fm-agent.toml"
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

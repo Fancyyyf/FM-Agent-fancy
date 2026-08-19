@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a string value. Let R be the result of attempting exc.read() (ignoring exceptions). If exc.read() raises an exception, the function returns the empty string. Otherwise, if the bytes read are empty (falsey), the function returns the empty string. Otherwise, let T be the string obtained by decoding the bytes as UTF-8 with error replacement and stripping leading/trailing whitespace. The function then returns T[:limit] if len(T) <= limit, else T[:limit] + '…'. The HTTPError object's response body is consumed after a successful read; subsequent reads will return empty or raise."
+}Note: I'll ensure it's valid JSON, double quotes. I'll make it a single string.

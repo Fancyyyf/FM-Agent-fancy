@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input: proj_dir='/tmp/proj', work_dir='/tmp/work' (empty, no domain knowledge), idx=0, fqn='func', lang_key='python', comment_prefix='#', developer_intent='no change', spec_block={'signature': 'f()', 'pre_condition': 'True', 'post_condition': 'True'}, info_block=None, callee_names=[], source='def f(): pass'. The LLM call _llm_select_json returns: {\"spec_updated\": true, \"new_spec\": {}, \"info_updated\": false, \"new_info\": {}, \"updated_callees\": []} because the validator only enforces key presence and types, not sub-schemas. Then the function returns that dict.",
+  "offending_statements": "Validator passed to _llm_select_json does not verify that when spec_updated is true, new_spec has the required keys 'signature', 'pre_condition', 'post_condition' and that new_info conforms to the .info.json schema. (The validator only checks top-level keys and types.)",
+  "reason": "Condition A only guarantees new_spec is a dict; condition B requires that when spec_updated is true, new_spec must have exactly the keys 'signature', 'pre_condition', 'post_condition'. The code can return a dict with spec_updated=true and new_spec={}, which violates B. The same applies to new_info not matching callee_names."
+}

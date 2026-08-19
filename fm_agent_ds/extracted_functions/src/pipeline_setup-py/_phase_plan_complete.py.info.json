@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_phase_plan_schema_errors",
+      "signature": "_phase_plan_schema_errors(phases_path)",
+      "pre_condition": "phases_path is a string path that may refer to any existing, missing, or unreadable file",
+      "post_condition": "Returns a value that is falsy when and only when the file at phases_path exists, is readable, contains syntactically valid JSON, and the content conforms to the required phases plan schema. Returns a truthy value otherwise, indicating the file is missing, unreadable, contains malformed JSON, or does not conform to the required schema structure."
+    }
+  ]
+}

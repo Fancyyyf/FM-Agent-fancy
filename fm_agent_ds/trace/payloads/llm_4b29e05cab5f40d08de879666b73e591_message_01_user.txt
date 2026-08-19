@@ -1,0 +1,55 @@
+Programming language: Python
+
+Pre-condition:
+config is an LLMConfigInput whose provider_id, provider_name, api_style, base_url, model_id, and api_key fields are all non-empty strings. merged_opencode is a dict representing a candidate OpenCode provider configuration. updated_toml is a string representing candidate TOML content. opencode_secret_path is a Path identifying the expected location of the provider secret key file.
+
+Code block:
+```python
+Line 1: def validate_generated_state(
+Line 2:     config: LLMConfigInput,
+Line 3:     merged_opencode: dict,
+Line 4:     updated_toml: str,
+Line 5:     *,
+Line 6:     opencode_secret_path: Path,
+Line 7: ) -> None:
+Line 8:     validate_input(config)
+Line 9:     json.dumps(merged_opencode)
+Line 10:     tomllib.loads(updated_toml)
+Line 11:     providers = merged_opencode.get("provider")
+Line 12:     if not isinstance(providers, dict) or config.provider_id not in providers:
+Line 13:         raise ConfigWizardError(
+Line 14:             f"Generated OpenCode config is missing provider '{config.provider_id}'."
+Line 15:         )
+Line 16:     entry = providers[config.provider_id]
+Line 17:     if not isinstance(entry, dict):
+Line 18:         raise ConfigWizardError(
+Line 19:             f"Generated OpenCode provider '{config.provider_id}' is not an object."
+Line 20:         )
+Line 21:     if entry.get("npm") != adapter_for_api_style(config.api_style):
+Line 22:         raise ConfigWizardError(
+Line 23:             "Generated OpenCode adapter does not match the selected API protocol."
+Line 24:         )
+Line 25:     options = entry.get("options")
+Line 26:     if (
+Line 27:         not isinstance(options, dict)
+Line 28:         or options.get("apiKey") != f"{{file:{opencode_secret_path}}}"
+Line 29:     ):
+Line 30:         raise ConfigWizardError(
+Line 31:             "Generated OpenCode config does not reference the saved key file."
+Line 32:         )
+Line 33:     models = entry.get("models")
+Line 34:     if not isinstance(models, dict) or config.model_id not in models:
+Line 35:         raise ConfigWizardError(
+Line 36:             f"Generated OpenCode config is missing model '{config.model_id}'."
+Line 37:         )
+```
+
+Additional context:
+validate_input(config: LLMConfigInput) -> None
+Pre-condition: config is an LLMConfigInput.
+Post-condition: Raises ConfigWizardError when any required field of config is empty, malformed, or fails its format constraint. Returns with no effect when config is valid.
+
+adapter_for_api_style(api_style: ApiStyle) -> str
+Pre-condition: api_style is a recognized API style value.
+Post-condition: Returns the npm package name string corresponding to the given API style. Raises when the API style is not recognized.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

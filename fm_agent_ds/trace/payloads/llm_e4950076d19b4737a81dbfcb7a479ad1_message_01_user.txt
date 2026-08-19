@@ -1,0 +1,30 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _normalize_info_dict(info):
+Line 2:     """Keep only fields supported by a .info.json sidecar."""
+Line 3:     callees = info.get("callees", [])
+Line 4:     if not isinstance(callees, list):
+Line 5:         raise ValueError("info JSON field callees must be an array")
+Line 6:     return {
+Line 7:         "callees": [
+Line 8:             {
+Line 9:                 "name": callee.get("name", ""),
+Line 10:                 "signature": callee.get("signature", ""),
+Line 11:                 "pre_condition": callee.get("pre_condition", ""),
+Line 12:                 "post_condition": callee.get("post_condition", ""),
+Line 13:             }
+Line 14:             for callee in callees
+Line 15:             if isinstance(callee, dict)
+Line 16:         ]
+Line 17:     }
+```
+
+Condition A (what the code actually does):
+If `isinstance(info.get('callees', []), list)` evaluates to False, a ValueError is raised and the program state is unchanged (`info` remains unmodified). Otherwise, the function returns a new dictionary `r` such that `r == {'callees': [{'name': c.get('name', ''), 'signature': c.get('signature', ''), 'pre_condition': c.get('pre_condition', ''), 'post_condition': c.get('post_condition', '')} for c in info['callees'] if isinstance(c, dict)]}`, and `info` is unmodified. Formally: (∀c ∈ info.get('callees', []): isinstance(c, dict) → c is transformed into the described dict; ∀c ∈ info.get('callees', []): ¬isinstance(c, dict) → c is omitted). The returned dict `r` has exactly one key `'callees'`; the original `info` dict is unchanged.
+
+Condition B (what the specification requires):
+Returns a dict with exactly one key 'callees' mapping to a list of dicts. Each output dict in that list contains exactly the four keys 'name', 'signature', 'pre_condition', 'post_condition'. For each dict entry in the input callees list, the corresponding output entry preserves any provided values for these four keys and substitutes an empty string for any key that is absent from the input callee dict. Non-dict entries in the input callees list are silently excluded from the output list. When the input dict has no 'callees' key, the output callees list is empty. Raises ValueError when the input callees value is present and is not a list. Extra keys present in the input info dict beyond 'callees' are absent from the returned dict.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -6,7 +6,7 @@
 # What each setting does, with defaults: see docs/configuration.md
 
 [llm]
-name      = "anthropic/claude-sonnet-4.6"    # LLM_MODEL
+name      = "qwen3.8-max"                    # LLM_MODEL
 provider  = "openrouter"                       # OPENCODE_MODEL_PROVIDER — the OpenCode provider id FM-Agent generates
 base_url  = "https://openrouter.ai/api/v1"     # LLM_API_BASE_URL
 backend   = "opencode"                         # FM_AGENT_MODEL_BACKEND — opencode | auto | codex-cli | claude-cli

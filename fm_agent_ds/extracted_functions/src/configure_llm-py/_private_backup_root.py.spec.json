@@ -1,0 +1,5 @@
+{
+  "signature": "_private_backup_root() -> Path",
+  "pre_condition": "The calling process has an OS-level user identity (numeric UID on POSIX platforms; the USERNAME or USER environment variable on other platforms).",
+  "post_condition": "Returns a Path within the platform's temporary-file directory whose final component encodes the calling process's user identity. The returned path is a directory location, not a file. The user-identity component contains only the characters A–Z, a–z, 0–9, '.', '_', and '-'. The same user identity always produces the same path; distinct user identities produce distinct paths."
+}

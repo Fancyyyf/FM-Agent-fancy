@@ -1,0 +1,514 @@
+{
+  "phase": 5,
+  "phase_name": "Specification & Verification Utilities",
+  "total_functions": 41,
+  "total_layers": 4,
+  "layers": [
+    {
+      "layer": 0,
+      "functions": [
+        {
+          "name": "src::file_utils-py::_get_all_phase_files",
+          "file": "extracted_functions/src/file_utils-py/_get_all_phase_files.py",
+          "unit": "file_utils",
+          "phase5_callers": [],
+          "phase5_callees": [
+            "src::file_utils-py::_get_phase_files"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_get_phase_files"
+          ]
+        },
+        {
+          "name": "src::file_utils-py::_get_incomplete_verification_files",
+          "file": "extracted_functions/src/file_utils-py/_get_incomplete_verification_files.py",
+          "unit": "file_utils",
+          "phase5_callers": [],
+          "phase5_callees": [
+            "src::file_utils-py::_json_file_is_valid"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_json_file_is_valid"
+          ]
+        },
+        {
+          "name": "src::file_utils-py::_has_source_code",
+          "file": "extracted_functions/src/file_utils-py/_has_source_code.py",
+          "unit": "file_utils",
+          "phase5_callers": [],
+          "phase5_callees": [
+            "src::file_utils-py::_iter_project_source_files"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_iter_project_source_files"
+          ]
+        },
+        {
+          "name": "src::file_utils-py::_is_test_file",
+          "file": "extracted_functions/src/file_utils-py/_is_test_file.py",
+          "unit": "file_utils",
+          "phase5_callers": [],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::file_utils-py::add_test_file_exemption",
+          "file": "extracted_functions/src/file_utils-py/add_test_file_exemption.py",
+          "unit": "file_utils",
+          "phase5_callers": [],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::file_utils-py::clear_test_file_exemptions",
+          "file": "extracted_functions/src/file_utils-py/clear_test_file_exemptions.py",
+          "unit": "file_utils",
+          "phase5_callers": [],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::file_utils-py::collect_file_names",
+          "file": "extracted_functions/src/file_utils-py/collect_file_names.py",
+          "unit": "file_utils",
+          "phase5_callers": [],
+          "phase5_callees": [
+            "src::file_utils-py::_is_metadata_sidecar",
+            "src::file_utils-py::_write_file_names"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_metadata_sidecar",
+            "src::file_utils-py::_write_file_names"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::main",
+          "file": "extracted_functions/src/generate_batch_prompts-py/main.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [],
+          "phase5_callees": [
+            "src::file_utils-py::is_file_ready",
+            "src::generate_batch_prompts-py::build_prompt",
+            "src::generate_batch_prompts-py::chunked",
+            "src::generate_batch_prompts-py::parse_args",
+            "src::generate_batch_prompts-py::parse_layers_spec",
+            "src::generate_batch_prompts-py::read_json"
+          ],
+          "all_callees": [
+            "src::file_utils-py::is_file_ready",
+            "src::generate_batch_prompts-py::build_prompt",
+            "src::generate_batch_prompts-py::chunked",
+            "src::generate_batch_prompts-py::parse_args",
+            "src::generate_batch_prompts-py::parse_layers_spec",
+            "src::generate_batch_prompts-py::read_json"
+          ]
+        },
+        {
+          "name": "src::parser-py::FunctionSpecMap::__str__",
+          "file": "extracted_functions/src/parser-py/FunctionSpecMap::__str__.py",
+          "unit": "parser",
+          "phase5_callers": [],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::parser-py::parse_input_function",
+          "file": "extracted_functions/src/parser-py/parse_input_function.py",
+          "unit": "parser",
+          "phase5_callers": [],
+          "phase5_callees": [
+            "src::parser-py::FunctionSpecMap::__init__",
+            "src::parser-py::_load_sidecar_json",
+            "src::parser-py::_remove_func_comments",
+            "src::parser-py::format_info_for_reasoner",
+            "src::parser-py::format_spec_for_reasoner"
+          ],
+          "all_callees": [
+            "src::parser-py::FunctionSpecMap::__init__",
+            "src::parser-py::_load_sidecar_json",
+            "src::parser-py::_remove_func_comments",
+            "src::parser-py::format_info_for_reasoner",
+            "src::parser-py::format_spec_for_reasoner"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "functions": [
+        {
+          "name": "src::file_utils-py::_get_phase_files",
+          "file": "extracted_functions/src/file_utils-py/_get_phase_files.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::file_utils-py::_get_all_phase_files"
+          ],
+          "phase5_callees": [
+            "src::file_utils-py::_is_metadata_sidecar"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_metadata_sidecar"
+          ]
+        },
+        {
+          "name": "src::file_utils-py::_iter_project_source_files",
+          "file": "extracted_functions/src/file_utils-py/_iter_project_source_files.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::file_utils-py::_has_source_code"
+          ],
+          "phase5_callees": [
+            "src::file_utils-py::_is_under_submodules"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_under_submodules"
+          ]
+        },
+        {
+          "name": "src::file_utils-py::_json_file_is_valid",
+          "file": "extracted_functions/src/file_utils-py/_json_file_is_valid.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::file_utils-py::_get_incomplete_verification_files"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::file_utils-py::_write_file_names",
+          "file": "extracted_functions/src/file_utils-py/_write_file_names.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::file_utils-py::collect_file_names"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::file_utils-py::is_file_ready",
+          "file": "extracted_functions/src/file_utils-py/is_file_ready.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase5_callees": [
+            "src::file_utils-py::_is_valid_info_json",
+            "src::file_utils-py::_is_valid_spec_json"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_valid_info_json",
+            "src::file_utils-py::_is_valid_spec_json"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::build_prompt",
+          "file": "extracted_functions/src/generate_batch_prompts-py/build_prompt.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase5_callees": [
+            "src::generate_batch_prompts-py::detect_lang_and_comment",
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info",
+            "src::generate_batch_prompts-py::extract_info_block",
+            "src::generate_batch_prompts-py::extract_spec_block",
+            "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
+            "src::generate_batch_prompts-py::phase_callee_info_names_key",
+            "src::generate_batch_prompts-py::phase_callers_key"
+          ],
+          "all_callees": [
+            "src::generate_batch_prompts-py::detect_lang_and_comment",
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info",
+            "src::generate_batch_prompts-py::extract_info_block",
+            "src::generate_batch_prompts-py::extract_spec_block",
+            "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
+            "src::generate_batch_prompts-py::phase_callee_info_names_key",
+            "src::generate_batch_prompts-py::phase_callers_key"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::chunked",
+          "file": "extracted_functions/src/generate_batch_prompts-py/chunked.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::parse_args",
+          "file": "extracted_functions/src/generate_batch_prompts-py/parse_args.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::parse_layers_spec",
+          "file": "extracted_functions/src/generate_batch_prompts-py/parse_layers_spec.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::read_json",
+          "file": "extracted_functions/src/generate_batch_prompts-py/read_json.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::main"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::parser-py::_load_sidecar_json",
+          "file": "extracted_functions/src/parser-py/_load_sidecar_json.py",
+          "unit": "parser",
+          "phase5_callers": [
+            "src::parser-py::parse_input_function"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::parser-py::_remove_func_comments",
+          "file": "extracted_functions/src/parser-py/_remove_func_comments.py",
+          "unit": "parser",
+          "phase5_callers": [
+            "src::parser-py::parse_input_function"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::parser-py::format_info_for_reasoner",
+          "file": "extracted_functions/src/parser-py/format_info_for_reasoner.py",
+          "unit": "parser",
+          "phase5_callers": [
+            "src::parser-py::parse_input_function"
+          ],
+          "phase5_callees": [
+            "src::parser-py::FunctionSpecMap::__init__",
+            "src::parser-py::FunctionSpecMap::add_entry"
+          ],
+          "all_callees": [
+            "src::parser-py::FunctionSpecMap::__init__",
+            "src::parser-py::FunctionSpecMap::add_entry"
+          ]
+        },
+        {
+          "name": "src::parser-py::format_spec_for_reasoner",
+          "file": "extracted_functions/src/parser-py/format_spec_for_reasoner.py",
+          "unit": "parser",
+          "phase5_callers": [
+            "src::parser-py::parse_input_function"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 2,
+      "functions": [
+        {
+          "name": "src::file_utils-py::_is_metadata_sidecar",
+          "file": "extracted_functions/src/file_utils-py/_is_metadata_sidecar.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::file_utils-py::_get_phase_files",
+            "src::file_utils-py::collect_file_names"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::file_utils-py::_is_under_submodules",
+          "file": "extracted_functions/src/file_utils-py/_is_under_submodules.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::file_utils-py::_iter_project_source_files"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::file_utils-py::_is_valid_info_json",
+          "file": "extracted_functions/src/file_utils-py/_is_valid_info_json.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::file_utils-py::is_file_ready"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::file_utils-py::_is_valid_spec_json",
+          "file": "extracted_functions/src/file_utils-py/_is_valid_spec_json.py",
+          "unit": "file_utils",
+          "phase5_callers": [
+            "src::file_utils-py::is_file_ready"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::detect_lang_and_comment",
+          "file": "extracted_functions/src/generate_batch_prompts-py/detect_lang_and_comment.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::extract_callee_spec_from_info",
+          "file": "extracted_functions/src/generate_batch_prompts-py/extract_callee_spec_from_info.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase5_callees": [
+            "src::generate_batch_prompts-py::_callee_match_names",
+            "src::generate_batch_prompts-py::_info_line_mentions_name"
+          ],
+          "all_callees": [
+            "src::generate_batch_prompts-py::_callee_match_names",
+            "src::generate_batch_prompts-py::_info_line_mentions_name"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::extract_info_block",
+          "file": "extracted_functions/src/generate_batch_prompts-py/extract_info_block.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase5_callees": [
+            "src::generate_batch_prompts-py::_info_json_path"
+          ],
+          "all_callees": [
+            "src::generate_batch_prompts-py::_info_json_path"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::extract_spec_block",
+          "file": "extracted_functions/src/generate_batch_prompts-py/extract_spec_block.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase5_callees": [
+            "src::generate_batch_prompts-py::_spec_json_path"
+          ],
+          "all_callees": [
+            "src::generate_batch_prompts-py::_spec_json_path"
+          ]
+        },
+        {
+          "name": "src::generate_batch_prompts-py::list_staged_domain_knowledge_relpaths",
+          "file": "extracted_functions/src/generate_batch_prompts-py/list_staged_domain_knowledge_relpaths.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::phase_callee_info_names_key",
+          "file": "extracted_functions/src/generate_batch_prompts-py/phase_callee_info_names_key.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::phase_callers_key",
+          "file": "extracted_functions/src/generate_batch_prompts-py/phase_callers_key.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::build_prompt"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::parser-py::FunctionSpecMap::__init__",
+          "file": "extracted_functions/src/parser-py/FunctionSpecMap::__init__.py",
+          "unit": "parser",
+          "phase5_callers": [
+            "src::parser-py::format_info_for_reasoner",
+            "src::parser-py::parse_input_function"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::parser-py::FunctionSpecMap::add_entry",
+          "file": "extracted_functions/src/parser-py/FunctionSpecMap::add_entry.py",
+          "unit": "parser",
+          "phase5_callers": [
+            "src::parser-py::format_info_for_reasoner"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "functions": [
+        {
+          "name": "src::generate_batch_prompts-py::_callee_match_names",
+          "file": "extracted_functions/src/generate_batch_prompts-py/_callee_match_names.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::_info_json_path",
+          "file": "extracted_functions/src/generate_batch_prompts-py/_info_json_path.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::extract_info_block"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::_info_line_mentions_name",
+          "file": "extracted_functions/src/generate_batch_prompts-py/_info_line_mentions_name.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_batch_prompts-py::_spec_json_path",
+          "file": "extracted_functions/src/generate_batch_prompts-py/_spec_json_path.py",
+          "unit": "batch_prompts",
+          "phase5_callers": [
+            "src::generate_batch_prompts-py::extract_spec_block"
+          ],
+          "phase5_callees": [],
+          "all_callees": []
+        }
+      ]
+    }
+  ]
+}

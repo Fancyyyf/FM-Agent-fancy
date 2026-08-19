@@ -1,0 +1,5 @@
+{
+  "signature": "function_spans(proj_dir: str, filepath: str) -> list | None",
+  "pre_condition": "proj_dir is a string representing the path to an existing project directory; filepath is a string representing the absolute path to a source file",
+  "post_condition": "If the CodeGraph backend is available for the project and can index the given file, returns a list of tuples where each tuple is (name: str, start_idx: int, end_idx: int). start_idx and end_idx are zero-based inclusive line numbers delimiting the span of the function named name within the file. The list is empty if the file contains no functions. If the CodeGraph backend is unavailable or cannot index the file, returns None."
+}

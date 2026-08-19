@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_price_for",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_price_for.py",
+  "function_name": "_price_for",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_price_for.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_price_for.md",
+  "probe_stdout": "CONFIRMED — actual: {'input_cost_per_token': 1.25e-05, 'litellm_provider': 'bedrock', 'max_input_tokens': 8191, 'max_output_tokens': 8191, 'max_tokens': 8191, 'mode': 'chat', 'output_cost_per_token': 1.25e-05} | expected: None\n",
+  "trigger_summary": "Input '/ai21.j2-mid-v1' (empty provider prefix) incorrectly matches bare 'ai21.j2-mid-v1' and returns pricing instead of None."
+}

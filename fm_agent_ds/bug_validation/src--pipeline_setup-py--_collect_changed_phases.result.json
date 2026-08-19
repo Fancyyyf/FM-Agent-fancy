@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_collect_changed_phases",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_collect_changed_phases",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_collect_changed_phases.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_collect_changed_phases.md",
+  "probe_stdout": "CONFIRMED — actual: [1, 'invalid'] | expected: [1]\n",
+  "trigger_summary": "Input ensure_changes={\"augmented\": {\"invalid\": \"value\", 1: \"valid\"}} causes the function to include the non-integer string key \"invalid\" in the result set, violating the spec that the set contains only integer phase numbers."
+}

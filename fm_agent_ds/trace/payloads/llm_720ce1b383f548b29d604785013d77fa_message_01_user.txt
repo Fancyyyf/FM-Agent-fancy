@@ -1,0 +1,85 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def collect_relevent_function_scope(proj_dir, developer_intent, changed_functions, range=None):
+Line 2:     """
+Line 3:     Select the functions relevant to developer_intent and return the most relevant ones.
+Line 4:     The module/phase plan in proj_dir/fm_agent/phases.json describes the project as a set
+Line 5:     of modules, each with a natural-language description and a list of source_files. This
+Line 6:     narrows the scope to the developer's intent in three passes:
+Line 7:       1. Module selection — a direct LLM call is given the module descriptions (already
+Line 8:          parsed from phases.json) and picks the modules relevant to the intent.
+Line 9:       2. File selection — for each relevant module, opencode reads that module's source
+Line 10:          files and picks the files relevant to the intent.
+Line 11:       3. Function selection — the function-localization algorithm from scope.py ranks the
+Line 12:          functions in each chosen file by relevance to the intent (heuristic signal scoring
+Line 13:          with call-graph and class-scope enrichments) and keeps the top-ranked functions
+Line 14:          per file.
+Line 15:     range, when given, caps the result to the first (most relevant) `range` functions; pass
+Line 16:     None to return all of them.
+Line 17:     Returns the selected extracted-function file paths (relative to the extracted_functions
+Line 18:     dir, matching the convention used elsewhere in this module), ordered by descending
+Line 19:     relevance score and truncated to the first `range` entries. Returns an empty list when
+Line 20:     phases.json has no modules or opencode selects none / fails to produce a result.
+Line 21:     """
+Line 22:     work_dir = os.path.join(proj_dir, "fm_agent")
+Line 23:     extracted_dir = os.path.join(work_dir, "extracted_functions")
+Line 24:     phases_data = _load_phases(work_dir)
+Line 25:     # Flatten every module across all phases so we can match opencode's selection back to
+Line 26:     # concrete modules (module names can repeat across phases, so keep the phase number too).
+Line 27:     modules = []  # list of (phase_num, module_dict)
+Line 28:     for phase_info in phases_data.get("phases", []):
+Line 29:         phase_num = phase_info.get("phase")
+Line 30:         for module in phase_info.get("modules", []):
+Line 31:             modules.append((phase_num, module))
+Line 32:     if not modules:
+Line 33:         logging.info("    [scope] no modules in phases.json; nothing to select.")
+Line 34:         return []
+Line 35:     changed_source_rels = {
+Line 36:         os.path.relpath(abs_src, proj_dir).replace(os.sep, "/")
+Line 37:         for abs_src in changed_functions
+Line 38:     }
+Line 39:     logging.info("    [scope] pass 1/3: selecting relevant modules from %d module(s)...", len(modules))
+Line 40:     # Pass 1: module selection. The module descriptions are already parsed from phases.json
+```
+
+Condition A (what the code actually does):
+The function returns a list of strings. If phases.json contains no modules or the module/file selection process fails to produce any result, the returned list is empty. Otherwise, the returned list consists of paths relative to the <proj_dir>/fm_agent/extracted_functions directory, each identifying a extracted-function file. The list is ordered by descending relevance score as computed by the function-localization ranking, and if the 'range' argument was provided (a positive integer), the list is truncated to at most 'range' entries. The selection process does not modify the input arguments or their referenced objects, but may create or overwrite temporary files inside <proj_dir>/fm_agent as a side effect of calling opencode and the LLM. The result accurately reflects the three-pass scope narrowing described in the docstring: first, an LLM selects relevant modules based on module descriptions; second, opencode selects relevant source files from those modules; third, the ranking algorithm picks the most relevant functions per file. Formally: Let L denote the returned list. Then (L = []) XOR (L is a list of strings S such that each S is a valid relative path from <proj_dir>/fm_agent/extracted_functions to an existing extracted function file, and S corresponds to a function name and source file pair that was chosen as relevant; the list is sorted in descending order by a relevance score, and if range is not None, |L| = min(range, number_of_selected_functions), else |L| = number_of_selected_functions). The function raises no exceptions under the given pre-conditions.
+
+Condition B (what the specification requires):
+Returns a list of relative paths (from proj_dir/fm_agent/extracted_functions/) to extracted function files, ordered by descending relevance score. Each path identifies a function judged relevant to developer_intent through three narrowing tiers: (1) modules in phases.json selected for relevance to developer_intent using the module descriptions, (2) source files within selected modules narrowed to those relevant to developer_intent, and (3) functions within selected files ranked by relevance using heuristic signal scoring with call-graph score propagation, retaining the top-ranked functions per file. Returns an empty list when phases.json contains no modules or when no modules are selected as relevant to developer_intent. When automated selection at any tier fails to produce results, the full scope at that tier is retained rather than dropped—no functions are silently excluded. Source files listed in changed_functions are always included in file-level scope for their respective modules regardless of automated file selection. When range is not None, the result is truncated to the first range entries; otherwise all selected functions are returned.
+
+Additional context:
+_load_phases(work_dir) -> dict
+Pre-condition: work_dir is an existing directory containing a valid phases.json file.
+Post-condition: Returns a dict parsed from phases.json containing at minimum a 'phases' key whose value is a list of phase objects, each with a 'modules' list. The returned structure preserves all keys and nested values from the file.
+
+_parse_issue_signals(developer_intent) -> dict
+Pre-condition: developer_intent is a non-empty string.
+Post-condition: Returns a dict containing signal dictionaries extracted from the intent text: traceback function references, backtick/code-block identifiers, dotted class-method references, plain CamelCase/snake_case names, exception type names, and body-word tokens. Each signal dictionary maps signal types to sets or lists of extracted tokens.
+
+_llm_select_json(work_dir, prompt, stage, validator, schema_description) -> list | None
+Pre-condition: prompt is a non-empty string containing the LLM selection instructions. validator is a callable that validates parsed output. schema_description specifies the expected JSON shape.
+Post-condition: Returns a list of parsed JSON objects matching the expected schema when the LLM produces valid output. Returns None when the LLM call fails, times out, or produces output that does not parse or validate against the expected schema.
+
+_opencode_select_json(proj_dir, work_dir, prompt_path, prompt, output_path, stage, input_files) -> list | None
+Pre-condition: prompt is a non-empty string. input_files is a list of file paths (relative to proj_dir or absolute) that opencode should read. output_path specifies where opencode should write its selection output.
+Post-condition: Returns a list of selected file paths parsed from the JSON output written to output_path by opencode. Returns None when opencode fails, exits non-zero, or the output file is missing, empty, or contains unparseable content.
+
+rank_functions_in_file(filepath, src_path, issue, signals, proj_dir) -> list[dict]
+Pre-condition: filepath is a source file path relative to proj_dir. src_path is the resolved absolute path to the source file. issue is a non-empty string describing the developer intent. signals is a dict of pre-parsed signal dictionaries from _parse_issue_signals.
+Post-condition: Returns a list of dicts, each with keys 'name' (function name string), 'score' (float relevance score), 'lineno' and 'end_lineno' (int line boundaries), sorted by descending score. Returns an empty list when the source file contains no localizable functions or when parsing fails. Ranking combines heuristic signal matching (traceback patterns, identifier references, exception-type presence) with call-graph score propagation where callees inherit a fraction of caller scores and vice versa.
+
+_extracted_func_dir(extracted_dir, src_rel) -> str
+Pre-condition: extracted_dir is the root directory of extracted functions. src_rel is a source file path relative to the project root.
+Post-condition: Returns the subdirectory path within extracted_dir that corresponds to src_rel—the directory where extracted function files for that source file reside.
+
+_extracted_files_by_method(func_dir) -> dict[str, list[str]]
+Pre-condition: func_dir is an existing directory containing extracted function files (one file per function or method).
+Post-condition: Returns a dict mapping each function or method name (as it appears in scope ranking results) to a list of extracted file paths within func_dir. A single name may map to multiple files when the same method name appears in multiple classes.
+
+_is_metadata_sidecar(fname) -> bool
+Pre-condition: fname is a non-empty filename string.
+Post-condition: Returns True when fname is a specification or callee-info metadata file (i.e., has a .spec.json or .info.json suffix). Returns False otherwise.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

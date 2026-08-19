@@ -1,0 +1,30 @@
+Programming language: Python
+
+Pre-condition:
+env_path is a Path identifying either a readable .env file or a path that does not identify an existing file. backend is a non-empty string that is not 'opencode' and that satisfies LLM setting validation for the key 'backend'.
+
+Code block:
+```python
+Line 1: def local_backend_toml_updates(env_path: Path, backend: str) -> dict[str, str]:
+Line 2:     """Keep local CLI model choices when migrating dotenv settings into TOML."""
+Line 3:     validate_llm_setting("backend", backend)
+Line 4:     dotenv_settings = dotenv_values(env_path)
+Line 5:     updates = {"backend": backend}
+Line 6:     for env_key, toml_key in (("LLM_MODEL", "name"), ("LLM_EFFORT", "effort")):
+Line 7:         value = dotenv_settings.get(env_key)
+Line 8:         if value is not None:
+Line 9:             updates[toml_key] = value
+Line 10:     for key, value in updates.items():
+Line 11:         validate_llm_setting(key, value)
+Line 12:     return updates
+```
+
+Additional context:
+validate_llm_setting(key: str, value: str) -> None
+Pre-condition: key is a non-empty string; value is a string.
+Post-condition: Returns normally when value is a valid setting for key. Raises an exception when key or value fails the LLM setting validation criteria.
+
+dotenv_values(env_path: Path) -> dict[str, str | None]
+Pre-condition: env_path is a Path.
+Post-condition: When env_path identifies an existing, readable .env file, returns a dict mapping each defined variable name to its string value. When env_path does not identify an existing file, returns an empty dict.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

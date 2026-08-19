@@ -1,0 +1,3 @@
+{
+  "post_condition": "On normal completion: The file at the path formed by os.path.join(payload_dir, f\"{event_id}_{name}\") exists and contains exactly the data from `content` (UTF-8 encoded if `binary` is False; raw bytes if `binary` is True). The temporary file at the path with \".tmp\" suffix no longer exists. The return value is the relative path from the parent directory of `trace_dir` to that file, computed by os.path.relpath. If any exception occurs before os.replace completes successfully, the function does not return normally: the target file (if it previously existed) remains unchanged, and the temporary file may exist with partial or full content, but no guarantee is made about its state."
+}

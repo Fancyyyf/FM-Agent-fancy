@@ -1,0 +1,11 @@
+{
+  "id": "src--git-py--_get_head_commit",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/git-py/_get_head_commit.py",
+  "function_name": "_get_head_commit",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--git-py--_get_head_commit.py",
+  "detail_file": "fm_agent/bug_validation/src--git-py--_get_head_commit.md",
+  "probe_stdout": "CONFIRMED — FileNotFoundError raised instead of returning None (spec: 'returns None' for any git command failure)\n",
+  "trigger_summary": "When git binary is not found on the system, subprocess.run raises FileNotFoundError (subclass of OSError) which is not caught by the except subprocess.CalledProcessError handler, causing the exception to propagate instead of returning None."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/project', filepath='/project/example.py' where example.py contains:\ndef outer():\n    def inner():\n        pass\n    return inner\nand a CodeGraph index exists that covers 'example.py' and get_function_spans returns both ('outer', 0, 3) and ('inner', 1, 2).",
+  "offending_statements": "Line 8: return cg.get_function_spans(\"python\", filepath) if cg else None",
+  "reason": "Specification requires only top-level functions, but the code returns whatever get_function_spans provides, which may include nested functions, violating the specification."
+}

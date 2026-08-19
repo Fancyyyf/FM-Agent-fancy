@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_llm_select_json",
+  "source_file": "src/incremental_reasoner-py/_llm_select_json.py",
+  "function_name": "_llm_select_json",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_llm_select_json.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_llm_select_json.md",
+  "probe_stdout": "CONFIRMED — exception propagated to caller (expected: None returned)",
+  "trigger_summary": "Exceptions from _llm_json_call (e.g., network or client errors) propagate to the caller instead of being caught and returning None as the specification requires."
+}

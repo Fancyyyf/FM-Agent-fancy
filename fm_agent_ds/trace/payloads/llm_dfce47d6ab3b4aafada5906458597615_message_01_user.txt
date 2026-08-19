@@ -1,0 +1,69 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def main():
+Line 2:     ap = argparse.ArgumentParser(description=__doc__)
+Line 3:     ap.add_argument("proj_dir",
+Line 4:                     help=("Either a target codebase (monitors <proj_dir>/fm_agent/) "
+Line 5:                           "or a workspace directly (any dir containing a trace/ subdir)"))
+Line 6:     ap.add_argument("--refresh", type=float, default=1.5, help="Refresh seconds (default 1.5)")
+Line 7:     args = ap.parse_args()
+Line 8:     state = State(args.proj_dir)
+Line 9:     if not state.trace_dir.exists():
+Line 10:         print(f"trace dir not found: {state.trace_dir}", file=sys.stderr)
+Line 11:         print("Has the pipeline started yet? (waiting…)", file=sys.stderr)
+Line 12:     console = Console()
+Line 13:     with Live(console=console, refresh_per_second=max(1.0, 1.0 / args.refresh),
+Line 14:               screen=True) as live:
+Line 15:         try:
+Line 16:             while True:
+Line 17:                 state.tail_events()
+Line 18:                 state.tail_opencode()
+Line 19:                 state.scan_bugs()
+Line 20:                 live.update(build_layout(state))
+Line 21:                 time.sleep(args.refresh)
+Line 22:         except KeyboardInterrupt:
+Line 23:             pass
+```
+
+Condition A (what the code actually does):
+Natural language: After calling main(), two execution paths are possible. If the project directory’s trace_dir subdirectory exists at the start, the function enters an infinite loop that continuously reads trace events, opencode data, and bug validation results, updating a live terminal dashboard. Upon a KeyboardInterrupt (SIGINT), the loop exits cleanly via the except clause, the Live context manager restores the terminal to its prior state, and main() returns None without raising any exception. If trace_dir does not exist at the start, the function prints two error messages to stderr: “trace dir not found: <path>” and “Has the pipeline started yet? (waiting…)”. It then proceeds into the Live context and attempts to call state.tail_events(). Because the directory is missing, this call raises a FileNotFoundError (or an equivalent OSError) which is not caught. The exception propagates out of the with Live block, causing the Live context manager to restore the terminal before the function terminates with that unhandled exception. In both cases, the terminal screen is properly restored.
+
+Formal logic: Let initial_trace_dir_exists be the truth value of state.trace_dir.exists() immediately after state creation. Let Pre be the given pre-condition. Then for the call main():
+
+(Pre ∧ initial_trace_dir_exists) ⇒
+  ( (function loops indefinitely until KeyboardInterrupt) ∧
+    (on KeyboardInterrupt: returns None ∧ no exception raised ∧ terminal restored) )
+
+(Pre ∧ ¬initial_trace_dir_exists) ⇒
+  ( stderr == stderr_pre + [“trace dir not found: ” + state.trace_dir, “Has the pipeline started yet? (waiting…)…”] ∧
+    eventually raises FileNotFoundError (or OSError) ∧
+    terminal restored before exception propagates )
+
+where stderr_pre denotes the stderr content before the call.
+
+Condition B (what the specification requires):
+Parses command-line arguments to obtain a project directory path and an optional refresh interval (floating-point seconds). If the trace directory under the project directory does not exist, prints a message to stderr and continues. Enters an infinite loop: on each iteration, reads newly arrived structured trace events, raw OpenCode LLM trace records, and bug validation reports from the trace directory, then re-renders the full dashboard terminal layout at a rate bounded by the configured refresh interval. Returns only upon KeyboardInterrupt.
+
+Additional context:
+State(proj_dir: str)
+Pre-condition: proj_dir is a non-empty string path to an existing directory.
+Post-condition: Returns a State instance whose trace_dir attribute resolves to the fm_agent/trace/ subdirectory under proj_dir. The instance holds empty in-memory collections for events, opencode trace data, and bug summaries, ready for subsequent tail_events, tail_opencode, and scan_bugs calls.
+
+tail_events(self)
+Pre-condition: self.trace_dir exists and contains a trace/events.jsonl file (possibly empty or absent after first tail).
+Post-condition: Appends all newly arrived structured trace event entries from events.jsonl (since the last tail_events call) into the in-memory event list. Event order is preserved as read from the file.
+
+tail_opencode(self)
+Pre-condition: self.trace_dir exists and may contain an opencode/ subdirectory with raw LLM request/response JSONL files.
+Post-condition: Reads any newly written raw OpenCode LLM trace records from the opencode/ subdirectory and updates internal counters — including the aggregate cache_window as a collection of (cached_tokens, total_input_tokens) pairs — to reflect the cumulative token usage across all OpenCode subprocess calls recorded so far.
+
+scan_bugs(self)
+Pre-condition: self.trace_dir exists and may contain a bug_validation/ subdirectory with per-bug Markdown reports and an optional summary.json.
+Post-condition: Reads all currently available bug validation reports and the aggregate summary from the bug_validation/ subdirectory. Updates in-memory bug verdict counts and status summaries to reflect the latest confirmed, unconfirmed, and total bug statistics.
+
+build_layout(state: State) -> RenderableType
+Pre-condition: state is a State instance whose in-memory collections (events, opencode trace counters, bug summaries) have been populated by prior tail_events, tail_opencode, and scan_bugs calls.
+Post-condition: Returns a Rich-layout-compatible renderable representing the complete dashboard terminal UI, displaying: per-stage pipeline progress, cumulative token usage and cost, prompt-cache hit rate (derived from state.cache_hit_rate), and current bug-validation verdict counts.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_build_domain_context_regen_prompt",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_build_domain_context_regen_prompt.py",
+  "function_name": "_build_domain_context_regen_prompt",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_build_domain_context_regen_prompt.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_build_domain_context_regen_prompt.md",
+  "probe_stdout": "CONFIRMED — actual output says 'does not need updating' (None-keyed entry {None: 2} was discarded by the code); expected output should include 'Review engine_overview.txt and update' (spec keeps None-keyed entry when value is not None)\n",
+  "trigger_summary": "When phase_cleanup['renumbered'] contains a key of None with a non-None value (e.g. {None: 2}), the code discards the entry due to the `old is not None` check at line 84, though the spec only requires filtering None-valued entries (where value is None)."
+}

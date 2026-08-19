@@ -1,0 +1,5 @@
+{
+  "signature": "_normalize_endpoint_label(label: str) -> str",
+  "pre_condition": "label is a non-empty string. If label represents a file-path-qualified function name, the path separators have been normalized to the FQN separator '::' (i.e., the label contains no '/' characters).",
+  "post_condition": "When label contains at least one '::' and the substring before the last '::' consists of POSIX-path-like components, returns a canonical FQN where: (1) any leading './' prefix in the path portion is removed; (2) the last '.' in the path's final filename component is replaced by '-'; (3) all parent-directory path components excluding '.' and the empty string are joined with '::' to form the FQN prefix; and (4) the function name is appended as the final '::'-separated segment. When label does not match this pattern, returns label unchanged after cleaning."
+}

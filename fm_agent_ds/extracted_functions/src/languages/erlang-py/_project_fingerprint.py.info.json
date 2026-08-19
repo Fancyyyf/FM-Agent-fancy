@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_iter_project_files",
+      "signature": "_iter_project_files(root: str, extensions: set[str]) -> Iterator[str]",
+      "pre_condition": "root is an absolute path to an existing directory; extensions is a non-empty set of file extension strings, each beginning with a period and containing only ASCII alphanumeric characters.",
+      "post_condition": "Returns an iterator that yields the absolute path of every regular file whose extension is in extensions and that is located under root or any of its subdirectories, traversed recursively. Each matching file is yielded exactly once. Directories, symbolic links, and files with extensions not in extensions are excluded from the yielded output."
+    },
+    {
+      "name": "_elp_argv",
+      "signature": "_elp_argv() -> tuple",
+      "pre_condition": "The ELP backend binary is installed and reachable via the configured command path.",
+      "post_condition": "Returns a value that identifies the current ELP backend version and configuration. The returned value remains equal across successive calls when the ELP backend has not changed, and differs when the ELP backend changes in a way that could produce different analysis output for the same input project."
+    }
+  ]
+}

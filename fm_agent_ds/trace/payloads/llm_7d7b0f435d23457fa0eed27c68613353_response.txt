@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/tmp', work_dir='/tmp/work', developer_intent='make it fast', changed_functions=[], relevant_rel_files=[], extra_call_edges=[]",
+  "offending_statements": "Line 41:         seed.add(_file_to_fqn(os.path.join(extracted_dir, rel), work_dir))",
+  "reason": "The code block consists of lines 41-80, which are all indented but are missing a preceding function definition or other block introduction. This causes a Python IndentationError at parse time. Thus, for any input (such as the trivial case where no functions are changed or relevant, which should return an empty list per specification), the code raises IndentationError instead of executing the intended logic, violating condition B for all inputs."
+}

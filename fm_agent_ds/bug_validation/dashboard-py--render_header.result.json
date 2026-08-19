@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--render_header",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/dashboard.py",
+  "function_name": "render_header",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--render_header.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--render_header.md",
+  "probe_stdout": "CONFIRMED\nactual markup:   '[bold cyan]FM-Agent Dashboard[/bold cyan]  •  [dim]workdir:[/dim] /test/workdir  •  [dim]model:[/dim] test-model  •  [dim]elapsed:[/dim] 42s'\nexpected markup: '[bold cyan]FM-Agent Dashboard[/] • [dim]workdir:[/] /test/workdir • [dim]model:[/] test-model • [dim]elapsed:[/] 42s'\n",
+  "trigger_summary": "The separator between header parts uses double spaces around the bullet ('  •  ') instead of single spaces (' • ') as required by the specification, causing the rendered markup to differ for any valid input."
+}

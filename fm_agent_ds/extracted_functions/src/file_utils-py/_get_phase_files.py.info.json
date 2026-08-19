@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_is_metadata_sidecar",
+      "signature": "_is_metadata_sidecar(fname) -> bool",
+      "pre_condition": "fname is a string representing a filename (the base name component of a file path).",
+      "post_condition": "Returns True when fname identifies a metadata sidecar file (a .spec.json or .info.json file accompanying an extracted function source file); returns False otherwise."
+    }
+  ]
+}

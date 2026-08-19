@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+spec is a dict.
+
+Code block:
+```python
+Line 1: def _normalize_spec_dict(spec):
+Line 2:     """Keep only fields supported by a .spec.json sidecar."""
+Line 3:     return {
+Line 4:         "signature": spec.get("signature", ""),
+Line 5:         "pre_condition": spec.get("pre_condition", ""),
+Line 6:         "post_condition": spec.get("post_condition", ""),
+Line 7:     }
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

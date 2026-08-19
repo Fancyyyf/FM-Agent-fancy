@@ -1,0 +1,5 @@
+{
+  "signature": "_source_for_range(source, lsp_range) -> str",
+  "pre_condition": "source is a non-empty string containing source code text. lsp_range is a dict with a 'start' entry and an 'end' entry, each being a dict with 'line' (non-negative integer) and 'character' (non-negative integer in UTF-16 code units) entries, where start does not follow end in the source.",
+  "post_condition": "Returns the substring of source spanning from the byte offset corresponding to lsp_range['start'] (inclusive) to the byte offset corresponding to lsp_range['end'] (exclusive). Position-to-offset mapping follows the same rules as _position_to_offset: lines are zero-indexed, characters are counted in UTF-16 code units, characters above U+FFFF consume 2 code units, and out-of-range positions are clamped to source boundaries. The returned string contains all bytes of source between the resolved start and end offsets."
+}

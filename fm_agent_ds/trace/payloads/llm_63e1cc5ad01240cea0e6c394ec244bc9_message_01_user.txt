@@ -1,0 +1,25 @@
+Programming language: Python
+
+Pre-condition:
+stream is a readable file-like object whose repeated read() calls return chunks until exhaustion; trace_log_path is either None or a filesystem path at which a file may be opened for writing in UTF-8 encoding
+
+Code block:
+```python
+Line 1: def _copy_opencode_output(stream, trace_log_path=None):
+Line 2:     trace_log = None
+Line 3:     try:
+Line 4:         if trace_log_path:
+Line 5:             trace_log = open(trace_log_path, "w", encoding="utf-8", errors="replace")
+Line 6:         for chunk in iter(lambda: stream.read(4096), ""):
+Line 7:             if not chunk:
+Line 8:                 break
+Line 9:             if trace_log:
+Line 10:                 trace_log.write(chunk)
+Line 11:                 trace_log.flush()
+Line 12:     finally:
+Line 13:         if trace_log:
+Line 14:             trace_log.close()
+Line 15:     stream.close()
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

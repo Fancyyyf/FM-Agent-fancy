@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/tmp/erl' with a single file 'src/mod.erl' containing 'a' (size=1). Let mtime_ns = 1000000000. After first call, modify file content to 'b' (size=1) and set mtime_ns to exactly 1000000000 (e.g., via os.utime). When _project_fingerprint is called again, it returns the same tuple because size and mtime_ns are identical, but a file content change occurred.",
+  "offending_statements": "Line 12",
+  "reason": "The fingerprint is built only from file size and modification timestamp, ignoring file content. Thus a content modification that preserves size and mtime_ns goes undetected, violating the requirement that the fingerprint must change whenever any file's content changes (a file change is defined as any modification to content, size, or mtime)."
+}

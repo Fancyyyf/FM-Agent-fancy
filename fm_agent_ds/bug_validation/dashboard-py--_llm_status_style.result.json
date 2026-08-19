@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_llm_status_style",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_llm_status_style.py",
+  "function_name": "_llm_status_style",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_llm_status_style.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_llm_status_style.md",
+  "probe_stdout": "CONFIRMED - actual: ('red', '?') | expected: ('red', '0')\n",
+  "trigger_summary": "code=0 (falsy non-None integer) with status=None makes 'or' fall through to '?' instead of using str(0)"
+}

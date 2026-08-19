@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "validate_base_url",
+      "signature": "validate_base_url(url: str) -> None",
+      "pre_condition": "url is a non-empty string with leading and trailing whitespace stripped.",
+      "post_condition": "Raises an exception when url is not a syntactically valid absolute URL whose scheme is http or https. Returns with no effect when url is valid."
+    },
+    {
+      "name": "adapter_for_api_style",
+      "signature": "adapter_for_api_style(style: ApiStyle) -> None",
+      "pre_condition": "style is an ApiStyle literal value.",
+      "post_condition": "Raises an exception when style does not match a member of the recognized API style set. Returns with no effect when style is a known API style."
+    },
+    {
+      "name": "validate_llm_setting",
+      "signature": "validate_llm_setting(name: str, value: str) -> None",
+      "pre_condition": "name identifies a configuration setting category, and value is the candidate string value for that setting.",
+      "post_condition": "Raises an exception when value is not a valid member of the constraint set for the setting identified by name. Returns with no effect when value is valid."
+    }
+  ]
+}

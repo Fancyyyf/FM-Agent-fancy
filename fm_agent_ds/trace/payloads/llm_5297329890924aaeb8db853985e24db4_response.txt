@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Let self._proc be a Popen object whose process has already terminated, but self._proc is not None and self._proc.stdin is not None (the pipe is still open). Call _send with any message dict, e.g., {\"method\": \"test\"}. The code will not raise RuntimeError, proceed to write, and raise BrokenPipeError, which is an OSError, not RuntimeError as required by the specification.",
+  "offending_statements": "Line 2:         if self._proc is None or self._proc.stdin is None:",
+  "reason": "The specification requires raising RuntimeError when the server process is not running or its stdin stream is not writable. The code only checks for None values, missing cases where the process has exited but the Popen object and stdin still exist. In such a case, the code raises an OSError instead of RuntimeError, violating the contract."
+}

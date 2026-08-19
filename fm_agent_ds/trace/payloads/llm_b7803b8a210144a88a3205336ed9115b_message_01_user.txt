@@ -1,0 +1,22 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a path to a valid project directory containing TypeScript source files.
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all TypeScript files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("typescript", proj_dir) if cg else {}
+```
+
+Additional context:
+from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a path to a valid project directory.
+Post-condition: Returns a CodeGraphExtractor instance initialized from the project directory, or None if initialization fails.
+
+get_functions_by_file(language: str, proj_dir: str) -> dict
+Pre-condition: The CodeGraphExtractor instance is initialized. language is a recognized language key. proj_dir is the project directory path.
+Post-condition: Returns a dictionary mapping each source file's absolute path (as a string) to a list of (function_name, function_body) tuples for all functions extracted from files in the given language under the project directory. Returns an empty dictionary if no functions are found.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_fqn_to_ident.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns the class-qualified identifier portion of fqn: the tail after the source-file component (the component whose rightmost hyphen-separated token is a known language file extension). If no source-file component is found, returns the last '::'-delimited component of fqn.",
+    "actual_behavior": "Let parts = fqn.split('::') and n = len(parts). The function returns a string result determined as follows: the code searches from i = n-1 down to 0 to find the first (i.e., rightmost) component where parts[i].rfind('-') returns a position h > 0 and the substring parts[i][h+1:] is a key in the global dictionary EXT_TO_LANG. If such an index i0 is found, the function immediately returns '::'.join(parts[i0+1:]). Otherwise (if no component satisfies the condition), it returns parts[-1] (the last component). If n = 1, the loop over indices is empty and result equals parts[0].",
+    "code_evidence": "Line 14: if hyphen > 0 and comp[hyphen + 1:] in EXT_TO_LANG:",
+    "trigger_condition": "The code's condition requires hyphen > 0, so it rejects components like '-cpp' that start with a hyphen even though the spec treats the rightmost hyphen-separated token 'cpp' as a valid extension. For input 'src::-cpp::foo::bar', the spec expects 'foo::bar' (tail after the source-file component '-cpp'), but the code returns 'bar' because it does not recognize '-cpp' as a source-file component."
+  }
+}

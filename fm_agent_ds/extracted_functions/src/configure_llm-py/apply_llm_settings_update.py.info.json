@@ -1,0 +1,28 @@
+{
+  "callees": [
+    {
+      "name": "_read_text_if_exists",
+      "signature": "_read_text_if_exists(path: Path) -> str",
+      "pre_condition": "path is a Path object identifying a filesystem location.",
+      "post_condition": "Returns the UTF-8 decoded text content of the file at path. Returns an empty string when no file exists at path."
+    },
+    {
+      "name": "update_llm_settings_toml_text",
+      "signature": "update_llm_settings_toml_text(toml_text: str, updates: dict[str, str]) -> str",
+      "pre_condition": "toml_text is a non-empty string containing valid TOML with a parseable [llm] section. updates is a non-empty dict whose keys are dot-separated field paths within the [llm] section and whose values are strings.",
+      "post_condition": "Returns TOML text where each field path key in updates has its value replaced with the corresponding update value in the [llm] section. All other sections, fields, and TOML structure outside the updated fields are preserved unchanged in the returned text."
+    },
+    {
+      "name": "backup_file",
+      "signature": "backup_file(path: Path) -> Path | None",
+      "pre_condition": "path identifies an existing, readable file.",
+      "post_condition": "Copies the file at path to a new file with a timestamp-suffixed name adjacent to path. Returns the Path of the new backup file when the copy succeeded, or None when a backup could not be created."
+    },
+    {
+      "name": "atomic_write",
+      "signature": "atomic_write(path: Path, content: str) -> None",
+      "pre_condition": "path is a writable filesystem location. content is a string.",
+      "post_condition": "The file at path is overwritten with content such that the file never exists in a partially written state. After the call, the file content at path equals content."
+    }
+  ]
+}

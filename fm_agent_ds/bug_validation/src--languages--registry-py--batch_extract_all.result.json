@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--registry-py--batch_extract_all",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/registry-py/batch_extract_all.py",
+  "function_name": "batch_extract_all",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--registry-py--batch_extract_all.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--registry-py--batch_extract_all.md",
+  "probe_stdout": "CONFIRMED — actual: ['func_b'] | expected: ['func_a', 'func_b'] (dict.update dropped functions from earlier language)\n",
+  "trigger_summary": "dict.update in batch_extract_all overwrites same-file-path entries from earlier languages, losing functions for files handled by multiple language handlers."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/project'; phase_files=[('/project/unreadable.py', 'mod.unreadable')]; fqn_map={'/project/unreadable.py': 'mod::unreadable'}; phase_fqns={'mod::unreadable','mod::other'}; known_fqns={'mod::unreadable','mod::other'}; extra_call_edges=None; 'unreadable.py' exists but lacks read permission; _detect_lang_from_ext('/project/unreadable.py') returns 'py'; registry_langs includes 'py'; registry_edges['mod::unreadable'] = {'mod::other'}.",
+  "offending_statements": "Line 59: if lang_key in registry_langs:\nLine 63: callee_fqns = {c for c in registry_edges.get(fqn, set())\nLine 64: if c != fqn and c in known_fqns}\nLine 68: with open(filepath, \"r\", errors=\"replace\") as f:\nLine 71: text = \"\"",
+  "reason": "The specification requires that function files unreadable due to I/O errors contribute no callee edges. In the registry branch, the code still adds callee edges from registry_edges even when the file cannot be read (OSError is caught but only affects extra edges text, not the registry edges themselves). This violates the specification."
+}

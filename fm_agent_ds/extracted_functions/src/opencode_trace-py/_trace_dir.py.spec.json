@@ -1,0 +1,5 @@
+{
+  "signature": "_trace_dir(work_dir) -> str",
+  "pre_condition": "work_dir is a non-empty string representing a filesystem directory path.",
+  "post_condition": "Returns a filesystem path string whose value names a subdirectory path under work_dir with the terminal component 'trace'. The result is deterministic — identical work_dir inputs produce identical outputs. The function is pure: it computes and returns a path without creating, checking, or modifying any filesystem entry."
+}

@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_name_parts",
+      "signature": "_name_parts(name) -> set[str]",
+      "pre_condition": "name is a non-empty string.",
+      "post_condition": "Returns a set of lowercase strings, each being a constituent part of the name obtained by splitting at word boundaries such as underscores and case transitions. The union of all parts reconstructs the original name in lowercase when rejoined with their original separators. Each part is a minimal word-like token with no internal delimiters."
+    },
+    {
+      "name": "_fuzzy_name_score",
+      "signature": "_fuzzy_name_score(parts, signals) -> float",
+      "pre_condition": "parts is a non-empty set of lowercase strings. signals is a dict containing identifier-like signal token sets (including 'plain_idents').",
+      "post_condition": "Returns a non-negative float representing the sum of typo-tolerant fuzzy match scores between members of parts and identifier-like signal tokens. A non-zero contribution requires: the part string length and the signal token length both meet a minimum character-length threshold, and their string similarity ratio exceeds a fixed threshold. The total contribution is bounded so that it never exceeds a small fraction of the maximum possible identifier-category score."
+    }
+  ]
+}

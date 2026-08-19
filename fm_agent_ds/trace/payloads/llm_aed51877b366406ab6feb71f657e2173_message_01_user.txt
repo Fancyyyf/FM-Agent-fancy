@@ -1,0 +1,50 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _opencode_provider_config():
+Line 2:     """Build an OpenCode ``provider`` block from FM-Agent's own LLM settings.
+Line 3:     ``fm-agent.toml`` is the single source of truth for provider / base URL /
+Line 4:     model: instead of the user hand-writing (and keeping in sync) a provider
+Line 5:     block in ``~/.config/opencode/opencode.json``, FM-Agent injects an equivalent
+Line 6:     block into the OpenCode subprocess via ``OPENCODE_CONFIG_CONTENT``. That is
+Line 7:     OpenCode's highest-precedence config source, so it wins over any same-named
+Line 8:     provider in the user's ``opencode.json``; OpenCode deep-merges per key, so
+Line 9:     other providers and the ``plugin`` array in that file are preserved.
+Line 10:     Returns ``None`` (injecting nothing) unless we have every field needed to
+Line 11:     build a working block — provider, base URL, model, and an API key. Without a
+Line 12:     key the injected ``{env:LLM_API_KEY}`` would be empty and would clobber a
+Line 13:     working config, so we stay out of the way and leave OpenCode's own config in
+Line 14:     effect.
+Line 15:     """
+Line 16:     llm = settings.llm
+Line 17:     if not (llm.api_key and llm.base_url and llm.name and llm.provider):
+Line 18:         return None
+Line 19:     adapter = (
+Line 20:         "@ai-sdk/anthropic"
+Line 21:         if llm.api_style == "anthropic"
+Line 22:         else "@ai-sdk/openai-compatible"
+Line 23:     )
+Line 24:     return {
+Line 25:         "provider": {
+Line 26:             llm.provider: {
+Line 27:                 "npm": adapter,
+Line 28:                 "options": {
+Line 29:                     "baseURL": llm.base_url,
+Line 30:                     # Resolved by OpenCode from the child env (set below), so the
+Line 31:                     # key is never written to a config file on disk.
+Line 32:                     "apiKey": "{env:LLM_API_KEY}",
+Line 33:                 },
+Line 34:                 "models": {llm.name: {}},
+Line 35:             }
+Line 36:         }
+Line 37:     }
+```
+
+Condition A (what the code actually does):
+The function modifies no global state except for its return value. Let llm be the value of settings.llm before the call. The possible outcomes are: 1. If not (llm.api_key and llm.base_url and llm.name and llm.provider), the function returns None. 2. Otherwise, the function returns a dictionary {'provider': {llm.provider: {'npm': adapter, 'options': {'baseURL': llm.base_url, 'apiKey': '{env:LLM_API_KEY}'}, 'models': {llm.name: {}}}}} where adapter = '@ai-sdk/anthropic' if llm.api_style == 'anthropic' else '@ai-sdk/openai-compatible'. Formally: (return = None) ↔ ¬(llm.api_key ∧ llm.base_url ∧ llm.name ∧ llm.provider) ∧ ( (llm.api_key ∧ llm.base_url ∧ llm.name ∧ llm.provider) ⇒ (∃ p, a, o, m: return = {'provider': {p: {'npm': a, 'options': o, 'models': m}}} ∧ p = llm.provider ∧ a = ('@ai-sdk/anthropic' if llm.api_style == 'anthropic' else '@ai-sdk/openai-compatible') ∧ o = {'baseURL': llm.base_url, 'apiKey': '{env:LLM_API_KEY}'} ∧ m = {llm.name: {}}) ).
+
+Condition B (what the specification requires):
+Returns None when any of the configured LLM API key, base URL, model name, or provider identifier is missing or falsy. Otherwise returns a dictionary representing a single-provider OpenCode configuration block: outermost key is "provider", its value is a dict keyed by the configured provider identifier containing an npm AI SDK adapter selected according to the configured API style (Anthropic SDK adapter when the API style is "anthropic", OpenAI-compatible adapter otherwise), a base URL set to the configured value, an API key expressed as an environment-variable reference, and the configured model name registered as an available model.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_payload_dir",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_payload_dir.py",
+  "function_name": "_payload_dir",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_payload_dir.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_payload_dir.md",
+  "probe_stdout": "CONFIRMED — actual: \"NotADirectoryError: [Errno 20] Not a directory: '/tmp/probe__payload_dir_qok5x53u/not_a_dir/payloads'\" | expected: 'a valid path (dir exists)'\n",
+  "trigger_summary": "When trace_dir is a file instead of a directory, os.makedirs raises NotADirectoryError which propagates unhandled, violating the spec guarantee that a directory exists after the call."
+}

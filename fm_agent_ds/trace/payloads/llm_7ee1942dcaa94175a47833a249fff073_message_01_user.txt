@@ -1,0 +1,63 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def run_llm_settings_update(
+Line 2:     project_root: Path,
+Line 3:     updates: dict[str, str],
+Line 4:     *,
+Line 5:     assume_yes: bool = False,
+Line 6: ) -> int:
+Line 7:     paths = default_paths(project_root)
+Line 8:     toml_path = paths.toml_path
+Line 9:     print(_preview_llm_settings_update(updates, toml_path))
+Line 10:     print()
+Line 11:     has_dotenv_override = warn_dotenv_overrides_for_updates(paths.env_path, updates)
+Line 12:     warn_live_llm_environment_overrides()
+Line 13:     if has_dotenv_override or live_llm_environment_overrides():
+Line 14:         print()
+Line 15:     if not assume_yes and not _prompt_yes_no("Continue?", default=True):
+Line 16:         print("Aborted.")
+Line 17:         return 1
+Line 18:     backup = apply_llm_settings_update(updates, toml_path)
+Line 19:     print(f"Updated {toml_path}")
+Line 20:     if backup is not None:
+Line 21:         print(f"Backed up {toml_path} -> {backup}")
+Line 22:     return 0
+```
+
+Condition A (what the code actually does):
+After execution of run_llm_settings_update, the program state satisfies one of the following exhaustive cases. (1) Early termination: assume_yes is False, the user responds negatively to the confirmation prompt; the function prints the preview string from _preview_llm_settings_update(updates, toml_path), any warnings from warn_dotenv_overrides_for_updates and warn_live_llm_environment_overrides, an extra blank line if either warning function flagged active overrides, then prints 'Aborted.' and returns 1. No changes are made to the TOML file. (2) Successful update: either assume_yes is True or the user responds affirmatively to the prompt; the same preview and warnings are printed, followed by 'Updated {toml_path}'. apply_llm_settings_update(updates, toml_path) is invoked, which writes the new LLM settings into the TOML file while preserving all other sections and fields, and may create a timestamped backup file adjacent to toml_path; if a backup was created, the line 'Backed up {toml_path} -> {backup_path}' is printed. The function returns 0. (3) Unhandled exception: if any step after printing the preview and warnings raises an exception (e.g., apply_llm_settings_update fails due to a non-writable file or TOML serialization error), the exception propagates without printing 'Updated ...' or 'Backed up ...'; the state of the TOML file may be unchanged or partially modified, and no return value is produced. Formally, given the pre-condition P, the post-condition is: (return = 1 ∧ ¬assume_yes ∧ ¬_prompt_yes_no_result ∧ stdout_includes(preview_output, warnings_output, "\n", "\n"[if any overrides exist], "Aborted.") ∧ toml_path.unchanged) ∨ (return = 0 ∧ (assume_yes ∨ _prompt_yes_no_result) ∧ stdout_includes(preview_output, warnings_output, "\n", "\n"[if any overrides exist], "Updated " + toml_path) ∧ (backup_created ⇒ stdout_includes("Backed up " + toml_path + " -> " + backup_path)) ∧ toml_path.llm_section = updates ∧ other_sections_preserved) ∨ (exception_raised ∧ stdout_includes(preview_output, warnings_output) ∧ (toml_path.unchanged ∨ inconsistent) ∧ "Updated " + toml_path ∉ stdout).
+
+Condition B (what the specification requires):
+Returns 0 when every key in updates has been written to the corresponding TOML field with the provided value and the pre-update TOML content has been backed up to a file adjacent to the original. Before the write, the planned field modifications are printed to stdout, and warnings are emitted for any .env entries or process environment variables whose precedence would override the TOML values being changed. When assume_yes is false and the user declines the confirmation prompt, no file modifications occur and the return value is non-zero. When the TOML file cannot be written or any key path in updates does not resolve to a writable field in the LLM section, the return value is non-zero and no partial updates are persisted.
+
+Additional context:
+default_paths(project_root: Path) -> WizardPaths
+Pre-condition: project_root is a Path identifying an existing directory.
+Post-condition: Returns a WizardPaths object whose toml_path, env_path, and opencode_config_path attributes refer to existing or creatable filesystem paths derived from project_root, following the platform conventions for fm-agent.toml, .env, and the OpenCode configuration file respectively. Each path is determined as: toml_path from the FM_AGENT_CONFIG environment variable when set, otherwise from <project_root>/fm-agent.toml; env_path as <project_root>/.env; opencode_config_path from OPENCODE_CONFIG when set, otherwise from the platform-specific OpenCode config directory.
+
+_preview_llm_settings_update(updates: dict[str, str], toml_path: Path) -> str
+Pre-condition: updates is a dict mapping TOML field paths to new values; toml_path is a Path identifying an existing TOML file.
+Post-condition: Returns a human-readable string describing each key in updates, the current value of that field in the TOML file, and the new value that will be written if applied.
+
+warn_dotenv_overrides_for_updates(env_path: Path, updates: dict[str, str]) -> bool
+Pre-condition: env_path is a Path to a .env file that may or may not exist; updates is a dict mapping LLM section field paths to new values.
+Post-condition: For each key in updates, prints a warning to stdout if the corresponding process environment variable name maps to the same TOML field and a value for that variable is present in the .env file at env_path. Returns True when at least one override warning was printed; returns False when no overrides were found or the .env file is absent or unreadable.
+
+warn_live_llm_environment_overrides() -> None
+Pre-condition: None required.
+Post-condition: Prints a warning to stdout when any LLM-related environment variable (from the set of variables listed in _ENV_MAP whose target section is 'llm') is currently set in the process environment, indicating that the live environment value will take precedence over any value written to fm-agent.toml. If no such variables are set, prints nothing.
+
+live_llm_environment_overrides() -> bool
+Pre-condition: None required.
+Post-condition: Returns True when at least one LLM-related environment variable (from the set of variables listed in _ENV_MAP whose target section is 'llm') is currently set in the process environment; returns False when no such variables are set. The result is determined solely by the current process environment; it does not examine any file.
+
+_prompt_yes_no(message: str, *, default: bool = True) -> bool
+Pre-condition: message is a non-empty string; default is True or False.
+Post-condition: Prints message to stdout followed by a [Y/n] or [y/N] prompt reflecting the default value. Reads one line from stdin. Returns True when the user's response matches a yes-affirming pattern (case-insensitive 'y' or 'yes') or when the user provides an empty response and default is True. Returns False when the user's response matches a no-affirming pattern (case-insensitive 'n' or 'no') or when the user provides an empty response and default is False.
+
+apply_llm_settings_update(updates: dict[str, str], toml_path: Path) -> Path | None
+Pre-condition: updates is a dict mapping valid LLM-section TOML field paths to new string or boolean values; toml_path identifies an existing, readable, and writable TOML file.
+Post-condition: Writes the provided values to the corresponding fields in the TOML file at toml_path, preserving all other sections and fields unchanged. Before writing, copies the original file content to a backup file named with a timestamp suffix adjacent to toml_path. Returns the backup file path if the backup was successfully created; returns None when the file was updated without creating a backup. The file's TOML structure and formatting outside the modified fields are preserved to the extent the underlying serializer permits.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

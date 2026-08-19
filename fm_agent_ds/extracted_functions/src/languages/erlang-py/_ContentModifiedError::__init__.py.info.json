@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "Exception.__init__",
+      "signature": "Exception.__init__(self, message: str)",
+      "pre_condition": "message is a non-empty string containing the human-readable description of the JSON-RPC error, produced by converting the error dict to its string representation via str(error).",
+      "post_condition": "The base Exception class records message as the exception's description. When the exception instance is converted to a string (via str() or repr()), this message is returned. No exception is raised by the base initializer itself."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/home/user/project', output_dir='/tmp/output', phase_num=1, phase_fqns={'my::func'}, layers=[{'layer':0,'functions':['my::func'],'cycle_resolution':False}], file_map={'my::func':'/home/user/project/extracted_functions/my_func.py'}, module_map={'my::func':''}, callers_map={}, callees_map={}, all_callees_map={}, edge_aliases_map={}",
+  "offending_statements": "Line 93: out_path = os.path.join(output_dir, f\"phase_{phase_num:02d}_topdown_layers.json\")",
+  "reason": "The specification requires output files to be written under proj_dir/spec_prompts/, but the code writes to output_dir, which is not constrained to that location. For the given valid input, the code creates /tmp/output/phase_01_topdown_layers.json instead of /home/user/project/spec_prompts/phase_01_topdown_layers.json."
+}

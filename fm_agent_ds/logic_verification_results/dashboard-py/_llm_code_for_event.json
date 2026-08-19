@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_llm_code_for_event.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a short display code string. Status values indicating successful matching or operation completion yield the code '200'. Status values indicating a malformed or unparseable result yield the code 'FMT'. Status values indicating a general error yield the code 'ERR'. For any other truthy status value, returns the status value unchanged. When status is falsy, returns '?'.",
+    "actual_behavior": "Natural language: The function returns a string code based on the input status. If status is 'success' or 'mismatch', the return value is '200'. If status is 'format_error', the return value is 'FMT'. If status is 'error', the return value is 'ERR'. Otherwise, if status is truthy (non-empty string), the return value is status itself; if status is falsy (e.g., None or empty string), the return value is '?'. Formal logic: result = (if status in {'success', 'mismatch'} then '200' else if status == 'format_error' then 'FMT' else if status == 'error' then 'ERR' else (status or '?')).",
+    "code_evidence": "Line 6: if status == \"error\":",
+    "trigger_condition": "The specification requires that any status value indicating a general error return 'ERR'. The input 'ERROR' clearly indicates a general error, but the code only checks for the exact lowercase string 'error', so it falls through and returns 'ERROR' unchanged, violating the specification."
+  }
+}

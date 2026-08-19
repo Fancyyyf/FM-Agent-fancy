@@ -1,0 +1,43 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def close(self):
+Line 2:         proc = self._proc
+Line 3:         if proc is None:
+Line 4:             return
+Line 5:         try:
+Line 6:             if proc.poll() is None:
+Line 7:                 try:
+Line 8:                     self.request("shutdown")
+Line 9:                 except Exception:
+Line 10:                     pass
+Line 11:                 try:
+Line 12:                     self.notify("exit")
+Line 13:                 except Exception:
+Line 14:                     pass
+Line 15:                 try:
+Line 16:                     proc.wait(timeout=5)
+Line 17:                 except subprocess.TimeoutExpired:
+Line 18:                     proc.terminate()
+Line 19:                     try:
+Line 20:                         proc.wait(timeout=5)
+Line 21:                     except subprocess.TimeoutExpired:
+Line 22:                         proc.kill()
+Line 23:         finally:
+Line 24:             for stream in (proc.stdin, proc.stdout):
+Line 25:                 if stream:
+Line 26:                     try:
+Line 27:                         stream.close()
+Line 28:                     except OSError:
+Line 29:                         pass
+Line 30:             self._proc = None
+```
+
+Condition A (what the code actually does):
+After execution, self._proc is None. The original subprocess object (if it existed) has been properly handled: if it was still running, an attempt was made to gracefully shut it down (via request('shutdown'), notify('exit'), and wait with timeout), and if necessary it was terminated or killed; ultimately the process is no longer running and its standard input and output streams have been closed (any OSError during close is caught). The self._reader attribute remains unchanged, still referencing an active background reader thread. No unhandled exceptions propagate from this method. Formally: (self._proc = None) ∧ (∀ s ∈ { proc.stdin, proc.stdout } : s is closed) ∧ (self._reader is an active thread) ∧ (the subprocess originally referenced is not running and its termination has been properly waited).
+
+Condition B (what the specification requires):
+The ELP subprocess referenced by self._proc is terminated and its stdin and stdout pipes are closed. self._proc is set to None. The background reader thread self._reader is stopped and no longer consuming from the subprocess stdout. All OS-level resources (pipes, process handle) associated with the subprocess are released.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

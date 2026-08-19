@@ -1,0 +1,266 @@
+# Phase 04 — LLM Communication & Tracing
+
+## Core Types
+
+### LLM Client (`llm_client.py`)
+
+**LLM Call Pattern:**
+- Primary path: OpenAI-compatible API via `openai` SDK client
+- Anthropic-native path: detected via model name prefix (`claude`/`anthropic/`), routed to `/v1/messages`
+- JSON response parsing: `_parse_json_response()` handles direct JSON, fenced blocks, and prose-wrapped structured responses
+- Retry: exponential backoff with jitter for rate limits (up to 20 retries), general errors (up to 5 retries)
+
+**Key Functions:**
+```python
+def build_llm_cli_command(model, prompt, cwd, files=None) → list[str]:
+    """Build CLI command for file-oriented LLM task.
+    CLI backends: codex exec / claude command
+    Default: opencode run --model <provider>/<model> --file ... -- <prompt>
+    """
+
+def _llm_json_call(messages, model=None) → dict:
+    """Send messages via OpenAI API, parse response as JSON. Returns dict on success."""
+
+def _parse_json_response(response) → dict | list:
+    """Parse structured JSON from LLM response text.
+    Handles: bare JSON, ```json fences, prose-wrapped JSON objects.
+    Raises ValueError on failure."""
+
+def _retry_create(client_callable, *args, **kwargs) → tuple:
+    """Call with exponential backoff retry. Returns (text_response, usage_dict)."""
+```
+
+**Request Injection:**
+```python
+def _should_inject_user_id(base_url) → bool:
+    """Whether to inject user_id metadata header for prompt-cache affinity."""
+```
+Uses `settings.inject.id` (or built-in fallback) and `settings.inject.hosts` (comma-separated).
+
+**Anthropic Native Adapter:**
+```python
+def _messages_to_anthropic(messages) → tuple:
+    """Split OpenAI messages → (system_text, anthropic_messages).
+    Returns (system_text_str, [{"role": ..., "content": ...}])"""
+
+def _anthropic_create(model, messages) → tuple:
+    """Send via Anthropic-native /v1/messages with prompt caching.
+    Returns (text_str, usage_dict).
+    Sets max_tokens=8192 (Anthropic-required field).
+    cache_control: {"type": "ephemeral"} on system prompt (5-min TTL)."""
+```
+
+### CLI Backend (`cli_backend.py`)
+
+**`AgentCommand` (frozen dataclass):**
+```python
+@dataclass(frozen=True)
+class AgentCommand:
+    argv: list[str]              # full command-line argument list
+    stdin: Optional[str] = None  # prompt text fed to subprocess stdin
+    backend: str = "opencode"
+```
+
+**Backend Resolution:**
+```python
+def resolve_model_backend() → str:
+    """Returns "codex-cli" | "claude-cli" | "opencode".
+    "auto": probes env markers (FM_AGENT_HOST, CODEX_HOME, CLAUDE_PLUGIN_ROOT, etc.)
+    Falls back to "codex-cli"."""
+
+def is_cli_backend_enabled() → bool:
+    """True when backend is codex-cli or claude-cli."""
+
+def build_agent_command(model, prompt, cwd, files=None, backend=None, effort=None) → AgentCommand:
+    """Build full CLI command for codex-cli or claude-cli backends.
+    codex-cli: codex exec --sandbox danger-full-access --dangerously-bypass-approvals-and-sandbox
+               --skip-git-repo-check -C <cwd> [--model <model>] [--effort <effort>] <stdin>
+    claude-cli: claude [--model <model>] [--effort <effort>] --dangerously-skip-permissions
+                -c <cwd> <stdin>
+    """
+```
+
+**Backend Aliases:**
+```python
+_BACKEND_ALIASES = {
+    "codex": "codex-cli", "codex-cli": "codex-cli",
+    "claude": "claude-cli", "claude-cli": "claude-cli",
+    "opencode": "opencode", "open-code": "opencode",
+}
+```
+
+### OpenCode Trace (`opencode_trace.py`)
+
+**`TracedOpenCodeProcess` (dataclass):**
+```python
+@dataclass
+class TracedOpenCodeProcess:
+    proc: subprocess.Popen
+    work_dir: str
+    event_id: str                    # unique event identifier
+    stage: str                       # pipeline stage label
+    started: str                     # ISO 8601 UTC timestamp
+    command: list                    # full argv
+    function_ids: list | None        # FQN identifiers for functions involved
+    input_files: list | None         # relative paths to input files
+    output_files: list | None        # relative paths to expected output files
+    summary: str | None              # human-readable summary
+    metadata: dict | None            # arbitrary metadata
+    opencode_log_path: str | None
+    opencode_trace_path: str | None
+    log_thread: threading.Thread | None
+    stdin_thread: threading.Thread | None
+    error: str | None                # error message if process failed
+```
+
+**FQN Extraction from Paths:**
+```python
+def function_id_from_extracted_path(path) → str:
+    """extracted_functions/src/core/util-cpp/doThing.cpp → src::core::util-cpp::doThing"""
+
+def function_id_from_result_path(path) → str:
+    """fm_agent/logic_verification_results/src/core/util-cpp/doThing.cpp → src::core::util-cpp::doThing"""
+```
+
+**Provider Config Injection:**
+```python
+def _opencode_provider_config() → dict | None:
+    """Build OpenCode provider block from FM-Agent LLM settings.
+    Uses OPENCODE_CONFIG_CONTENT (highest-precedence config source).
+    Returns None when key fields (api_key, base_url, name, provider) are missing."""
+```
+
+**Core Function:**
+```python
+def run_opencode_traced(*, proj_dir, work_dir, command, stage, **kwargs) → TracedOpenCodeProcess:
+    """Execute an LLM subprocess with full tracing.
+    - Injects OPENCODE_CONFIG_CONTENT, TRACE_DIR, LLM_API_KEY into subprocess env
+    - Streams stdout to opencode log file
+    - Captures process exit code and timing
+    - Writes traced event to events.jsonl
+    Returns the TracedOpenCodeProcess with exit code in proc.returncode."""
+```
+
+### Trace Writer (`trace_writer.py`)
+
+**File Layout:**
+```
+fm_agent/trace/
+├── events.jsonl       # structured event records (newline-delimited JSON)
+├── payloads/          # event payloads (stdout, LLM messages, responses)
+│   ├── <event_id>_opencode.log
+│   ├── <event_id>_message_00_system.txt
+│   ├── <event_id>_message_01_user.txt
+│   └── <event_id>_response.txt
+└── opencode/          # raw LLM request/response pairs (plugin-generated)
+    └── <event_id>.jsonl
+```
+
+**Event ID format:** `evt_<uuid4_hex>`
+
+**Event Record Shape:**
+```python
+{
+    "event_id": str,         # e.g. "evt_a1b2c3..."
+    "timestamp": str,        # ISO 8601 UTC
+    "stage": str,            # pipeline stage
+    "command": [str],        # full argv
+    "exit_code": int,
+    "duration_s": float,
+    "function_ids": [str] | None,
+    "input_files": [str] | None,
+    "output_files": [str] | None,
+    "metadata": {...},
+    "children": [
+        {
+            "type": "system_prompt" | "user_prompt" | "assistant_output",
+            "role": str,
+            "content_ref": str,  # relative path to payload file
+        }
+    ]
+}
+```
+
+**Key Functions:**
+```python
+def new_event_id(prefix="evt") → str:
+    """Generate unique event identifier."""
+
+def utc_now_iso() → str:
+    """Return current UTC time as ISO 8601 string."""
+
+def append_event(trace_dir, event) → None:
+    """Thread-safe append to events.jsonl."""
+
+def write_payload(trace_dir, event_id, name, content, binary=False) → str:
+    """Write payload content atomically (via tmp+rename). Returns relative path."""
+
+def record_llm_exchange(trace_dir, event_id, event, messages, response=None) → None:
+    """Record full LLM request/response with per-message payloads."""
+
+def record_trace_event(trace_dir, event) → None:
+    """Thread-safe event recording (no-op when trace_dir is falsy)."""
+```
+
+### Prompts (`prompts.py`)
+
+**Spec-Check JSON Parsing:**
+```python
+def _parse_spec_check_json(response) → tuple:
+    """Parse and validate spec-check LLM response.
+    Returns (has_mismatch: bool, offending_statements: str, reason: str, data: dict).
+    
+    Required JSON fields: {verdict, counterexample, offending_statements, reason}
+    - verdict: "MATCH" | "MISMATCH" (case-insensitive, normalized to uppercase)
+    - MATCH: counterexample and offending_statements must be null/empty
+    - MISMATCH: all three fields required (non-empty strings)
+    Raises ValueError on schema violations."""
+
+def _generate_block_post_condition(messages, model=None) → str:
+    """Generate Hoare-style post-condition for one code block via LLM."""
+
+def _check_post_implies_spec(messages, model=None) → tuple:
+    """Check whether block post-conditions jointly imply the function spec.
+    Returns (has_mismatch, offending_statements, reason, data)."""
+```
+
+**JSON Parse Utility:**
+`_parse_json_response(response)` is the shared parser used across the codebase.
+It extracts JSON from LLM output handling: bare JSON objects/arrays, markdown-fenced
+code blocks (` ```json `), and prose-wrapped structured text.
+
+## Invariants
+
+1. All LLM calls through `llm_client.py` MUST use retry logic — no bare API calls.
+2. `_llm_json_call` and `_parse_spec_check_json` MUST handle malformed JSON gracefully
+   (ValueError, not crashing the pipeline).
+3. Trace events are NO-OP when `trace_dir` is falsy — tracing is always-on but safe to disable.
+4. Thread-safe event writing uses `threading.Lock` on the events.jsonl append path.
+5. CLI backend resolution through `resolve_model_backend()` is the single source of truth
+   for all callers — no ad-hoc backend checks elsewhere.
+6. `OPENCODE_CONFIG_CONTENT` is OpenCode's highest-precedence config — injected
+   provider blocks override same-named providers in the user's opencode.json.
+7. `_parse_json_response` is the single shared JSON extraction function — all spec-check,
+   post-condition, and validation callers use it.
+
+## Entry Point Function Signatures
+
+```python
+def build_llm_cli_command(model, prompt, cwd, files=None) → list[str]:
+
+def _llm_json_call(messages, model=None) → dict:
+
+def is_cli_backend_enabled() → bool:
+
+def build_agent_command(model, prompt, cwd, files=None, backend=None, effort=None) → AgentCommand:
+
+def run_opencode_traced(*, proj_dir, work_dir, command, stage,
+                        function_ids=None, input_files=None, output_files=None,
+                        summary=None, metadata=None) → TracedOpenCodeProcess:
+
+def _generate_block_post_condition(messages, model=None) → str:
+
+def _check_post_implies_spec(messages, model=None) → tuple:
+
+def _parse_spec_check_json(response) → tuple:
+```

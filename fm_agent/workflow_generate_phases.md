@@ -71,7 +71,7 @@ Quickly scan the codebase structure and **immediately** write `fm_agent/phases.j
 - `phases[*].modules[*].description` — one short paragraph explaining what this module does
 - `phases[*].description` — one sentence explaining what this phase does in the data pipeline
 - `phases[*].modules[*].name` — matches the subdirectory name of the module
-- `phases[*].modules[*].source_files` — relative paths from the project root `/home/fancy/Projects_Vault/FM-Agent` of all source files that belong to this module. For example, a file at `/home/fancy/Projects_Vault/FM-Agent/path/to/file.ext` must be recorded as `path/to/file.ext`, NOT as `FM-Agent/path/to/file.ext`. **Exclude all test files** (e.g., files in `test/`, `tests/`, `__tests__/` directories, or files named `*_test.*`, `test_*.*`, `*_spec.*`)
+- `phases[*].modules[*].source_files` — relative paths from the project root `/home/fancy/Projects_Vault/FM-Agent_qwen_7d490` of all source files that belong to this module. For example, a file at `/home/fancy/Projects_Vault/FM-Agent_qwen_7d490/path/to/file.ext` must be recorded as `path/to/file.ext`, NOT as `FM-Agent_qwen_7d490/path/to/file.ext`. **Exclude all test files** (e.g., files in `test/`, `tests/`, `__tests__/` directories, or files named `*_test.*`, `test_*.*`, `*_spec.*`)
 - `phases[*].depends_on_phases` — list of phase numbers whose outputs this phase consumes (empty list for phases with no dependencies)
 
 Each phase must be **self-contained**. Each phase should be splitted into multiple small modules. All source files for a module in that phase must be listed explicitly.

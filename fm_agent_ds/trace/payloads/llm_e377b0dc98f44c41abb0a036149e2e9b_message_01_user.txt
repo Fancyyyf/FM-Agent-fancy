@@ -1,0 +1,15 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def utc_now_iso():
+Line 2:     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+```
+
+Condition A (what the code actually does):
+The function returns a string that represents the current UTC date and time in ISO 8601 format with the UTC offset '+00:00' replaced by 'Z'. The returned string matches the regular expression ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$ and satisfies: parsing the string with 'Z' replaced by '+00:00' using datetime.fromisoformat yields a datetime object that equals the result of datetime.now(timezone.utc) at the moment datetime.now() was called (ignoring negligible execution time).
+
+Condition B (what the specification requires):
+Returns the current wall-clock time in UTC as an ISO 8601 formatted string ending in 'Z', with at least second precision.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

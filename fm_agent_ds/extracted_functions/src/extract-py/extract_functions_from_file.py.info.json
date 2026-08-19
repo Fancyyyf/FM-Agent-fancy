@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_extract_functions_brace",
+      "signature": "_extract_functions_brace(lines: list[str], lang_key: str, lang_cfg: dict) -> list[tuple[str, int, int]]",
+      "pre_condition": "lines is a non-empty list of strings with normalized line endings. lang_key is a recognized language key. lang_cfg is the LANG_CONFIG entry for that language with body type 'brace'.",
+      "post_condition": "Returns a list of (func_name, start_index, end_index) tuples identifying each top-level function in the file by brace matching, using language-specific keyword and prefix filtering from lang_cfg. Indices are 0-based and inclusive."
+    },
+    {
+      "name": "_extract_functions_indent",
+      "signature": "_extract_functions_indent(lines: list[str], lang_cfg: dict) -> list[tuple[str, int, int]]",
+      "pre_condition": "lines is a non-empty list of strings with normalized line endings. lang_cfg is the LANG_CONFIG entry for a language with body type 'indent'.",
+      "post_condition": "Returns a list of (func_name, start_index, end_index) tuples identifying each top-level function in the file by indentation boundaries, using language-specific keyword and prefix filtering from lang_cfg. Indices are 0-based and inclusive."
+    },
+    {
+      "name": "canonicalize",
+      "signature": "canonicalize(func_name: str) -> str",
+      "pre_condition": "func_name is a raw function name string that may contain characters unsafe for filesystem paths or FQN separators.",
+      "post_condition": "Returns a filesystem-safe, FQN-compatible string with '/' characters translated to '_'. The result is suitable for use in file paths and FQN components."
+    }
+  ]
+}

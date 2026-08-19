@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "open_document('/nonexistent.erl')",
+  "offending_statements": "Line 4: source = document.read_text(encoding=\"utf-8\", errors=\"replace\")",
+  "reason": "The code raises a FileNotFoundError (a file-read exception) when the file does not exist, but the specification only allows exceptions when the server is unreachable, the server rejects the notification, or the connection is lost."
+}

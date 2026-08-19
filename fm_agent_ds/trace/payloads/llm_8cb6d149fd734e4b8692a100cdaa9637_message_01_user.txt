@@ -1,0 +1,25 @@
+Programming language: Python
+
+Pre-condition:
+config is a fully-populated LLMConfigInput with non-empty fields: provider_id, provider_name, api_style, base_url (absolute http(s) URL), model_id, api_key, and backend. opencode_secret_path is an absolute Path pointing to a file containing the API key.
+
+Code block:
+```python
+Line 1: def build_provider_entry(config: LLMConfigInput, opencode_secret_path: Path) -> dict:
+Line 2:     return {
+Line 3:         "npm": adapter_for_api_style(config.api_style),
+Line 4:         "options": {
+Line 5:             "baseURL": config.base_url,
+Line 6:             "apiKey": f"{{file:{opencode_secret_path}}}",
+Line 7:         },
+Line 8:         "models": {
+Line 9:             config.model_id: {},
+Line 10:         },
+Line 11:     }
+```
+
+Additional context:
+adapter_for_api_style(api_style: ApiStyle) -> str
+Pre-condition: api_style is an ApiStyle enum value — one of the two valid styles supported by the OpenCode provider adapter.
+Post-condition: Returns a non-empty string that names the OpenCode npm provider-adapter package corresponding to the given API style. Each distinct valid api_style value maps to a distinct, non-empty package name.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

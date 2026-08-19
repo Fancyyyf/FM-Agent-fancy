@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "resolve_domain_knowledge_paths",
+      "signature": "resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir)",
+      "pre_condition": "paths is a non-empty sequence of file path strings. base_dir is an absolute path to an existing directory. fallback_base_dir is an absolute path to an existing directory.",
+      "post_condition": "Returns a list of absolute, validated paths to existing markdown files. Every returned path is a valid markdown file accessible on the filesystem."
+    },
+    {
+      "name": "_safe_staged_name",
+      "signature": "_safe_staged_name(source_path, used_names) -> str",
+      "pre_condition": "source_path is an absolute path to an existing file. used_names is a set of strings representing already-reserved staged filenames.",
+      "post_condition": "Returns a filename string that is derived from the source file's basename with all special characters replaced by underscores. The returned name is guaranteed distinct from every name in used_names. When the derived name is not in used_names, it is returned as-is; when it collides with a name in used_names, a numeric suffix is appended to produce a unique name."
+    },
+    {
+      "name": "list_staged_domain_knowledge_relpaths",
+      "signature": "list_staged_domain_knowledge_relpaths(work_dir) -> list[str]",
+      "pre_condition": "work_dir is an absolute path to an existing, FM-Agent-managed workspace directory. The directory spec_prompts/domain_context/user_knowledge/ exists under work_dir.",
+      "post_condition": "Returns a sorted list of relative path strings (using `/` separator, prefixed with `fm_agent/`) to every markdown file present in the user knowledge directory under work_dir. The list is in lexicographic ascending order."
+    }
+  ]
+}

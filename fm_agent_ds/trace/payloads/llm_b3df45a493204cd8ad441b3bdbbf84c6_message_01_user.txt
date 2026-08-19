@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+rel_path is a string path relative to the repository root, known to exist at the old_commit_id revision bound in the enclosing scope. old_commit_id is a valid, reachable commit identifier in the repository. lang_key is a string recognized by extract_functions_from_file as a language key. ext is a non-empty string.
+
+Code block:
+```python
+Line 1:     def _funcs_from_commit(rel_path, lang_key, ext):
+Line 2:         """Extract {name: source} for the old_commit_id version of rel_path via a temp file."""
+Line 3:         text = _git("show", f"{old_commit_id}:{rel_path}")
+Line 4:         with tempfile.NamedTemporaryFile("w", suffix=f".{ext}", delete=False) as tmp:
+Line 5:             tmp.write(text)
+Line 6:             tmp_path = tmp.name
+Line 7:         try:
+Line 8:             return dict(extract_functions_from_file(tmp_path, lang_key))
+Line 9:         finally:
+Line 10:             os.unlink(tmp_path)
+```
+
+Additional context:
+_git(command, arg_string) -> str
+Pre-condition: command is a string naming a valid git subcommand. arg_string is a non-empty string of arguments for that subcommand. The current working directory is within a git repository.
+Post-condition: Executes git command arg_string and returns the captured stdout as a string. Raises subprocess.CalledProcessError when the git command exits with a non-zero status.
+
+extract_functions_from_file(file_path, lang_key) -> Iterable[tuple[str, str]]
+Pre-condition: file_path is the absolute path to a source file that exists and is readable. lang_key is a string key recognized by the extraction backend for the language.
+Post-condition: Returns an iterable of (function_name, source_text) pairs extracted from the file at file_path. Each function_name is a non-empty string identifying a function defined in the file; each source_text is a non-empty string containing the function's source code.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

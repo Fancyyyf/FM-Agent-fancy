@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Call reasoner(func=\"def f(): pass\", spec=42, info=\"\", language=\"python\")",
+  "offending_statements": "Line 5: pre_condition, spec_post_condition = _parse_spec_conditions(spec)",
+  "reason": "When spec is not a dictionary (e.g., the integer 42), the specification requires the function to return a string starting with 'Failed to ' because the specification cannot be parsed. However, the code unconditionally calls _parse_spec_conditions(spec) on line 5, which expects a dict and may raise an exception (e.g., TypeError) when pre-conditions are violated, thereby failing to return the required string and breaking Condition B."
+}

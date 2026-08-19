@@ -1,0 +1,11 @@
+{
+  "id": "src--parser-py--format_info_for_reasoner",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/parser-py/format_info_for_reasoner.py",
+  "function_name": "format_info_for_reasoner",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--parser-py--format_info_for_reasoner.py",
+  "detail_file": "fm_agent/bug_validation/src--parser-py--format_info_for_reasoner.md",
+  "probe_stdout": "CONFIRMED — actual entries: 1 (only last callee survives) | expected entries: 2 (one per callee)\n  retained spec is from callee #2: 'Pre-condition: x is not empty\\nPost-condition: returns x.upper()'",
+  "trigger_summary": "Two callees with the same name 'foo' cause the dict-based FunctionSpecMap to overwrite the first callee's entry, returning 1 entry instead of 2 as required by the spec."
+}

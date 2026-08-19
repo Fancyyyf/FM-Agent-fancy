@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_topdown_layers-py/_detect_lang_from_ext.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns the language key string from the fixed extension-to-language registry whose registered extension matches the suffix of filepath's terminal name component following (and excluding) the last '.' character. Returns None when the terminal name component of filepath contains no '.' character. Returns None when the extracted suffix does not match any registered extension in the registry. The directory portion of filepath preceding the terminal name component does not affect the result.",
+    "actual_behavior": "After the function returns, no global state has been modified. The return value is the language key string corresponding to the file extension extracted from the input filepath, or None if the extension is not present in the EXT_TO_LANG dictionary. The extension is the substring after the last dot in the basename of filepath, or an empty string if there is no dot. Formally: let b = os.path.basename(filepath); let ext = b.rsplit('.', 1)[-1] if '.' in b else ''; the result = EXT_TO_LANG.get(ext).",
+    "code_evidence": "Line 4: ext = base.rsplit('.', 1)[-1] if '.' in base else ''; Line 5: return EXT_TO_LANG.get(ext)",
+    "trigger_condition": "The specification mandates None for any filename whose terminal name component lacks a dot, regardless of the registry contents. The code delegates the decision to EXT_TO_LANG.get(''), so if the registry has an empty-string key, it returns a language instead of None, violating the specification."
+  }
+}

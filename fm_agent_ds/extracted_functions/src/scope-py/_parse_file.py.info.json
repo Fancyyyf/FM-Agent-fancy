@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_parse_python_file",
+      "signature": "_parse_python_file(src_path: Path) -> tuple[list[dict] | None, list[str] | None, list[dict] | None]",
+      "pre_condition": "src_path is an absolute path to an existing Python source file with a .py extension.",
+      "post_condition": "Returns a tuple (funcs, source_lines, classes). funcs is a list of function-metadata dicts each containing keys for name (string), start line (int), and end line (int), or None when no top-level functions are found. source_lines is the file content as a list of strings, or None when the file cannot be read. classes is a list of class-metadata dicts each containing at least a 'name' key (string), or None when no classes are found. Returns (None, None, None) when AST parsing fails."
+    },
+    {
+      "name": "_parse_generic_file",
+      "signature": "_parse_generic_file(src_path: Path, lang_key: str, proj_dir: str | None = None) -> tuple[list[dict], list[str], list[dict]] | tuple[None, None, None]",
+      "pre_condition": "src_path is an absolute path to an existing source file. lang_key is a non-empty string identifying a language registered in EXT_TO_LANG. proj_dir, when not None, is the project root directory path.",
+      "post_condition": "Returns a tuple (funcs, source_lines, classes) with the same shape as _parse_file. Uses CodeGraph-backed extraction for function boundaries when proj_dir is provided and the source file is indexed; falls back to regex-based extraction otherwise. Returns (None, None, None) when the file cannot be read or parsed."
+    }
+  ]
+}

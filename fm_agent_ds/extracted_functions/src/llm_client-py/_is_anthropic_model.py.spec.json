@@ -1,0 +1,1 @@
+{"signature": "_is_anthropic_model(model) -> bool", "pre_condition": "model is a string (a falsy value is treated as the empty string).", "post_condition": "Returns True when the lowercased model string begins with the prefix 'claude' or 'anthropic/'; returns False for all other inputs, including falsy values, empty strings, and model names with other prefixes."}

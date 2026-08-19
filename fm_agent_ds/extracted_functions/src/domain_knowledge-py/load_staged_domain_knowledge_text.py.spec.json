@@ -1,0 +1,5 @@
+{
+  "signature": "load_staged_domain_knowledge_text(work_dir)",
+  "pre_condition": "work_dir is a string path to an existing work directory",
+  "post_condition": "Returns a string containing the concatenated full text of all staged domain knowledge files, formatted for injection into an LLM prompt. If no staged domain knowledge files are found, returns an empty string. When files are present, the returned string starts with a header indicating user-provided domain knowledge context, followed by one markdown section per file. Each section consists of a markdown heading formed by prepending '### ' to the file's relative path, followed by the file's complete text content. Files that cannot be read due to I/O errors and files with empty content are skipped without affecting other files. The returned string has no leading or trailing whitespace beyond the content of the included files."
+}

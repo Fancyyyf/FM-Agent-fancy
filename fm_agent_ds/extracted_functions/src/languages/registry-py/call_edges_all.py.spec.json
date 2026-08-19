@@ -1,0 +1,5 @@
+{
+  "signature": "call_edges_all(proj_dir: str, lang_keys) -> tuple",
+  "pre_condition": "proj_dir is a directory path; lang_keys is an iterable of language key strings",
+  "post_condition": "Returns a tuple (edges, langs). edges is a dict mapping each canonicalized caller FQN string to a set of canonicalized callee FQN strings, formed by merging the call-edge results of every language key in lang_keys that is present in REGISTRY and whose call_edges handler returns a dict. langs is a set of language key strings for which the handler returned a dict (including empty dicts), indicating those languages were handled by the CodeGraph backend. Language keys absent from REGISTRY or whose handler returns None are excluded from langs and contribute no edges—they were not handled by CodeGraph and the caller should use regex-based extraction for those languages"
+}

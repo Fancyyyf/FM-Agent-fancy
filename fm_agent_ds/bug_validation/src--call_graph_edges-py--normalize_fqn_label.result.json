@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--normalize_fqn_label",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/normalize_fqn_label.py",
+  "function_name": "normalize_fqn_label",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--normalize_fqn_label.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--normalize_fqn_label.md",
+  "probe_stdout": "NOT CONFIRMED — actual matches specification: 'path::to::file-c::func'\n",
+  "trigger_summary": "Input 'path/to/file.c::func' where :: already present causes the LLM to assume naive .:: replacement fails, but actual code parses via PurePosixPath and correctly returns 'path::to::file-c::func'."
+}

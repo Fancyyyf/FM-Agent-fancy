@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "ElpClient.notify",
+      "signature": "ElpClient.notify(self, method: str, params: dict) -> None",
+      "pre_condition": "self has an active connection to the ELP server. method is an LSP notification method name. params is a dict of JSON-serializable parameters.",
+      "post_condition": "The ELP server has received the notification with the given method and parameters. Raises an exception when the server is unreachable, the server rejects the notification, or the connection is lost."
+    }
+  ]
+}

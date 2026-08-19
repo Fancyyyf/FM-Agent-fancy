@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/_fm_agent_config_path.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a Path whose string representation equals the value obtained by resolving the FM_AGENT_CONFIG configuration key through the following precedence: (1) the process environment variable FM_AGENT_CONFIG, if set; (2) the value of the FM_AGENT_CONFIG key in the dotenv environment file at project_root/.env, if the file exists and contains the key; (3) the literal filename \"fm-agent.toml\", resolved relative to project_root.",
+    "actual_behavior": "The function returns a Path object. If the environment variable 'FM_AGENT_CONFIG' is set and its value is a non-empty string, the returned path is Path(os.environ['FM_AGENT_CONFIG']). Otherwise, if the environment variable is completely absent (None) and the .env file at project_root / '.env' contains a non-empty value for 'FM_AGENT_CONFIG', the returned path is Path(dotenv_values(project_root / '.env').get('FM_AGENT_CONFIG')). In all remaining cases (environment variable present but empty, or absent and .env entry missing or empty), the returned path is project_root / 'fm-agent.toml'. Formally: let env = os.environ.get('FM_AGENT_CONFIG'). If env is not None and env != '': result = Path(env). Else if env is None: let dotenv = dotenv_values(project_root / '.env').get('FM_AGENT_CONFIG'); if dotenv is not None and dotenv != '': result = Path(dotenv); else: result = project_root / 'fm-agent.toml'. Else (env == ''): result = project_root / 'fm-agent.toml'.",
+    "code_evidence": "Line 7: return Path(explicit_config) if explicit_config else project_root / \"fm-agent.toml\"",
+    "trigger_condition": "The specification states that if the environment variable FM_AGENT_CONFIG is set (i.e., present in os.environ), its value is used as the path, regardless of whether it is empty. The code incorrectly falls back to the default 'fm-agent.toml' when the variable is set but empty, because the ternary treats an empty string as falsy."
+  }
+}

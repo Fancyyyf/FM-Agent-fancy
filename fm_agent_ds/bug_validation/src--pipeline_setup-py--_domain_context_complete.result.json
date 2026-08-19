@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_domain_context_complete",
+  "source_file": "src/pipeline_setup-py/_domain_context_complete.py",
+  "function_name": "_domain_context_complete",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_domain_context_complete.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_domain_context_complete.md",
+  "probe_stdout": "CONFIRMED — actual: AttributeError raised | expected: return False",
+  "trigger_summary": "When phases.json contains a top-level JSON array, _json_file_is_valid returns True but phases_data.get() fails with AttributeError, propagating an exception instead of returning False."
+}

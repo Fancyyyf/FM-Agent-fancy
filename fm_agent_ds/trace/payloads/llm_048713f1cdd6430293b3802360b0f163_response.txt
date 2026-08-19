@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "src::-cpp::foo::bar",
+  "offending_statements": "Line 14: if hyphen > 0 and comp[hyphen + 1:] in EXT_TO_LANG:",
+  "reason": "The code's condition requires hyphen > 0, so it rejects components like '-cpp' that start with a hyphen even though the spec treats the rightmost hyphen-separated token 'cpp' as a valid extension. For input 'src::-cpp::foo::bar', the spec expects 'foo::bar' (tail after the source-file component '-cpp'), but the code returns 'bar' because it does not recognize '-cpp' as a source-file component."
+}

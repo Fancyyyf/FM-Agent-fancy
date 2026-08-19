@@ -1,1 +1,11 @@
-{"id": "src--pipeline_setup-py--_phases_cover_current_sources", "source_file": "src/pipeline_setup.py", "function_name": "_phases_cover_current_sources", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_phases_cover_current_sources.py", "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_phases_cover_current_sources.md", "probe_stdout": "CONFIRMED — actual: True | expected: False\n", "trigger_summary": "An empty-string source_file entry in phases.json bypasses path normalization because replace('\\\\', '/') leaves it unchanged and os.path.join(proj_dir, '') resolves to proj_dir, which always exists."}
+{
+  "id": "src--pipeline_setup-py--_phases_cover_current_sources",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_jx75d3w8/snapshot/fm_agent/extracted_functions/src/pipeline_setup-py/_phases_cover_current_sources.py",
+  "function_name": "_phases_cover_current_sources",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_phases_cover_current_sources.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_phases_cover_current_sources.md",
+  "probe_stdout": "CONFIRMED — raised AttributeError instead of returning False (no exception + return False). actual=<raised AttributeError: 'NoneType' object has no attribute 'get'> | expected=False",
+  "trigger_summary": "Feeding _phases_cover_current_sources a phases_json containing valid but non-dict JSON (the four bytes 'null') lets json.load succeed, after which data.get('phases', []) raises AttributeError that is not covered by except (OSError, ValueError), so the exception propagates instead of the function returning False as the specification requires."
+}

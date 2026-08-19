@@ -1,0 +1,15 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _nonempty_string(value):
+Line 2:         return isinstance(value, str) and bool(value.strip())
+```
+
+Condition A (what the code actually does):
+The function returns True if and only if `value` is a string and the string obtained by stripping leading and trailing whitespace from `value` is non-empty; otherwise it returns False. Formally: _nonempty_string(value) ⇔ (isinstance(value, str) ∧ len(value.strip()) > 0).
+
+Condition B (what the specification requires):
+Returns True when value is of type str and contains at least one character that is not a whitespace character (according to Python's str.strip whitespace definition: spaces, tabs, newlines, carriage returns, vertical tabs, and form feeds). Returns False when value is not of type str, or when value is a str consisting entirely of zero or more whitespace characters with no non-whitespace content.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_callgraph_project_root(proj_dir: str) -> str",
+  "pre_condition": "proj_dir is a string referring to a filesystem path. The path may be either the original Erlang source project root or a pipeline workspace directory derived from it.",
+  "post_condition": "Returns an absolute path string that identifies the original Erlang source project root. When proj_dir does not contain an 'extracted_functions' subdirectory, the absolute path of proj_dir is returned unchanged. When proj_dir contains an 'extracted_functions' subdirectory and its parent directory contains at least one file with the .erl extension, the absolute path of the parent directory is returned. Otherwise, the absolute path of proj_dir is returned."
+}

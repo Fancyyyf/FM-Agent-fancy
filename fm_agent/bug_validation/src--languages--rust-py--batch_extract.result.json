@@ -1,11 +1,11 @@
 {
   "id": "src--languages--rust-py--batch_extract",
-  "source_file": "src/languages/rust.py",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/languages/rust-py/batch_extract.py",
   "function_name": "batch_extract",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--rust-py--batch_extract.py",
   "detail_file": "fm_agent/bug_validation/src--languages--rust-py--batch_extract.md",
-  "probe_stdout": "CONFIRMED — batch_extract raised exception instead of returning a dict: DatabaseError: file is not a database\n",
-  "trigger_summary": "batch_extract propagates sqlite3.DatabaseError when .codegraph/codegraph.db exists but is not a valid SQLite database, instead of returning an empty dict as the spec requires."
+  "probe_stdout": "CONFIRMED — actual: {} | expected: None",
+  "trigger_summary": "Calling the Rust batch_extract handler on a project directory without a .codegraph/codegraph.db index (backend unavailable) returns {} via the conditional else-branch instead of the spec-required None."
 }

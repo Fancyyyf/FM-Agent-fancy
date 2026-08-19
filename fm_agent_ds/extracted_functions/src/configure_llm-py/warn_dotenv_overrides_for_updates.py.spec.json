@@ -1,0 +1,5 @@
+{
+  "signature": "warn_dotenv_overrides_for_updates(env_path: Path, updates: dict[str, str]) -> bool",
+  "pre_condition": "env_path is a Path to a .env file that may or may not exist; updates is a dict mapping LLM section field paths to new values.",
+  "post_condition": "Prints a warning to stdout when one or more keys in updates correspond to environment variables whose values are present in the .env file at env_path, indicating that those .env values would override the TOML updates. Returns True when at least one warning was printed; returns False when no overrides were found, or the .env file is absent or unreadable."
+}

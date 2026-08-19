@@ -1,0 +1,46 @@
+{
+  "callees": [
+    {
+      "name": "is_cli_backend_enabled",
+      "signature": "is_cli_backend_enabled() -> bool",
+      "pre_condition": "None.",
+      "post_condition": "Returns True when the configured LLM backend is a CLI-based backend (codex-cli or claude-cli); returns False otherwise."
+    },
+    {
+      "name": "run_agent_for_messages",
+      "signature": "run_agent_for_messages(model, messages) -> tuple",
+      "pre_condition": "model is a non-empty string naming the LLM model. messages is a non-empty list of message dicts with 'role' and 'content' keys.",
+      "post_condition": "Returns a 2-tuple (text_response, usage_dict) where text_response is the string LLM output and usage_dict is a dict with token usage information. Raises an exception on persistent failure."
+    },
+    {
+      "name": "_is_anthropic_model",
+      "signature": "_is_anthropic_model(model) -> bool",
+      "pre_condition": "model is a non-empty string.",
+      "post_condition": "Returns True when model identifies an Anthropic-family model (by name prefix); returns False otherwise."
+    },
+    {
+      "name": "_should_inject_user_id",
+      "signature": "_should_inject_user_id(base_url) -> bool",
+      "pre_condition": "base_url is a string (may be empty) representing the LLM API base URL.",
+      "post_condition": "Returns True when the base_url matches a configured host pattern that supports user-ID-based prompt-cache routing affinity; returns False otherwise."
+    },
+    {
+      "name": "_metadata_body",
+      "signature": "_metadata_body() -> dict",
+      "pre_condition": "None.",
+      "post_condition": "Returns a dict containing metadata fields (including user_id) suitable for injection into the API request body."
+    },
+    {
+      "name": "_anthropic_create",
+      "signature": "_anthropic_create(model, messages) -> tuple",
+      "pre_condition": "model is a non-empty string identifying the Anthropic model. messages is a non-empty list of message dicts with 'role' and 'content' keys.",
+      "post_condition": "Returns a 2-tuple (text, usage) where text is the string LLM response content and usage is a dict with token usage metadata. Raises an exception on API communication failure."
+    },
+    {
+      "name": "_read_error_body",
+      "signature": "_read_error_body(exc) -> str | None",
+      "pre_condition": "exc is an urllib.error.HTTPError instance.",
+      "post_condition": "Returns the raw response body string from the HTTP error when readable; returns None when the body cannot be read."
+    }
+  ]
+}

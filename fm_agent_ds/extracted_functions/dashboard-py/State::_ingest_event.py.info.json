@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "_parse_iso",
+      "signature": "_parse_iso(ts)",
+      "pre_condition": "ts is a string value extracted from the ev dict's 'start_time' or 'end_time' field, or None if the field was absent or falsy.",
+      "post_condition": "Returns a parsed datetime value if ts is a valid ISO 8601 timestamp string. Returns None if ts is None or cannot be parsed as a valid timestamp."
+    },
+    {
+      "name": "_cost_from_usage",
+      "signature": "_cost_from_usage(model, usage)",
+      "pre_condition": "model is a string model identifier or None. usage is a dict containing token-count fields reflecting a single LLM request's consumption.",
+      "post_condition": "Returns the monetary cost in dollars for the given model and token counts. Returns 0.0 if model is None or unrecognized."
+    },
+    {
+      "name": "_push_recent",
+      "signature": "_push_recent(self, ts, stage, status, summary)",
+      "pre_condition": "ts is a datetime or None. stage, status, and summary are strings describing the event.",
+      "post_condition": "A new entry is appended to self's in-memory recent-event timeline, recording the timestamp, stage, status, and summary. Entries are appended in call order."
+    },
+    {
+      "name": "_push_llm_status",
+      "signature": "_push_llm_status(self, ts, source, label, status, model, code, detail)",
+      "pre_condition": "ts is a datetime or None. source is a string identifying the origin (e.g., 'direct' or 'opencode'). label, status, model, code, and detail are strings describing the LLM call outcome.",
+      "post_condition": "A new entry is appended to self's in-memory LLM-status timeline, recording the timestamp, source, label, status, model, status code, and detail. Entries are appended in call order."
+    },
+    {
+      "name": "_llm_code_for_event",
+      "signature": "_llm_code_for_event(status)",
+      "pre_condition": "status is a string representing an event status value.",
+      "post_condition": "Returns a short display code string corresponding to the status value. Returns a default code for status values that have no specific mapping."
+    }
+  ]
+}

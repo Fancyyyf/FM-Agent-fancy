@@ -1,0 +1,5 @@
+{
+  "signature": "_validate_module_selection(data) -> list[dict]",
+  "pre_condition": "data is the raw structured response from an LLM prompted to select a set of relevant project modules; each selected module is expected to carry an integer phase identifier and a non-empty module name string.",
+  "post_condition": "Returns a list of dicts, each containing exactly the keys 'phase' (int) and 'name' (str), preserving the order and count of valid entries in data. Every returned 'name' has no leading or trailing whitespace. Raises ValueError with a message identifying the failing index if data is not a list, if any item is not a dict, if any item's 'phase' field is missing, not an integer, or is a bool, or if any item's 'name' field is missing, not a string, or empty after stripping whitespace. Only the 'phase' and 'name' keys survive into the output; any other keys present in input items are discarded."
+}

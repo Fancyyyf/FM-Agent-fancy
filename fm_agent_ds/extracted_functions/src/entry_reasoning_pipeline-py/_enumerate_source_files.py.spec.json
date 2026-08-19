@@ -1,0 +1,5 @@
+{
+  "signature": "_enumerate_source_files(proj_dir) -> list[str]",
+  "pre_condition": "proj_dir is an existing filesystem directory path.",
+  "post_condition": "Returns a sorted list of all files under proj_dir whose file extension maps to a known programming language and that are not classified as test files. The returned paths are relative to proj_dir and use '/' as the path separator. The directories named 'fm_agent' and '.git' and all their descendants are excluded from traversal. The list is sorted lexicographically. proj_dir is never modified."
+}

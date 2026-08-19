@@ -1,0 +1,31 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _count_mismatches(results_dir):
+Line 2:     """Count MISMATCH verdicts in a logic_verification_results/ tree.
+Line 3:     Each function's verdict is a JSON file nested under per-module directories;
+Line 4:     a ``"verdict"`` of ``"MISMATCH"`` marks a spec violation (a candidate bug).
+Line 5:     Unreadable or malformed files are skipped.
+Line 6:     """
+Line 7:     count = 0
+Line 8:     for root, _dirs, files in os.walk(results_dir):
+Line 9:         for fname in files:
+Line 10:             if not fname.endswith(".json"):
+Line 11:                 continue
+Line 12:             try:
+Line 13:                 with open(os.path.join(root, fname), "r") as f:
+Line 14:                     if json.load(f).get("verdict") == "MISMATCH":
+Line 15:                         count += 1
+Line 16:             except (OSError, ValueError):
+Line 17:                 continue
+Line 18:     return count
+```
+
+Condition A (what the code actually does):
+If the function terminates normally (returns), the return value is an integer `count` such that `count = |{ f ∈ F | f.name.endswith('.json') ∧ readable_json_object(f) ∧ decoded(f).get('verdict') == 'MISMATCH' }|`, where `F` is the set of all regular files discovered by `os.walk(results_dir)`, `readable_json_object(f)` holds iff opening and reading `f` succeeds and its content is valid JSON representing a mapping object. Files that cause `OSError` or `ValueError` during opening, reading, or JSON decoding are excluded from the count. If the function terminates with an uncaught exception, that exception is an `OSError` (or subclass) raised by `os.walk(results_dir)` (e.g., because `results_dir` does not exist, is not a directory, or cannot be accessed); in this case no value is returned.
+
+Condition B (what the specification requires):
+Returns a non-negative integer equal to the count of JSON files reachable by recursively walking the directory tree rooted at results_dir whose deserialized 'verdict' field equals the literal string 'MISMATCH'. A JSON file that cannot be opened for reading or whose content is not valid JSON does not contribute to the count. When results_dir does not exist as a directory, returns 0.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

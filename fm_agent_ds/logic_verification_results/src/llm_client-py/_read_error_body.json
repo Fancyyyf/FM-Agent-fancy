@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_read_error_body.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "When the response body is readable and contains non-empty content, returns the body decoded as UTF-8 text, truncated to limit characters with a trailing ellipsis (\"\") appended when the decoded text length exceeds limit. When the body is empty, unreadable, or reading raises an exception, returns None.",
+    "actual_behavior": "The function returns a string value. Let R be the result of attempting exc.read() (ignoring exceptions). If exc.read() raises an exception, the function returns the empty string. Otherwise, if the bytes read are empty (falsey), the function returns the empty string. Otherwise, let T be the string obtained by decoding the bytes as UTF-8 with error replacement and stripping leading/trailing whitespace. The function then returns T[:limit] if len(T) <= limit, else T[:limit] + ''. The HTTPError object's response body is consumed after a successful read; subsequent reads will return empty or raise.",
+    "code_evidence": "Line 8: return \"\"\nLine 10: return \"\"",
+    "trigger_condition": "Condition A returns an empty string when reading raises an exception or the body is empty/falsey, but the specification requires returning None in all such cases (unreadable, empty, or exception)."
+  }
+}

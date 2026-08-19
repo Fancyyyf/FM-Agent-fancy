@@ -1,11 +1,11 @@
 {
   "id": "src--reasoner-py--_split_into_blocks_braced",
-  "source_file": "src/reasoner.py",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_jx75d3w8/snapshot/fm_agent/extracted_functions/src/reasoner-py/_split_into_blocks_braced.py",
   "function_name": "_split_into_blocks_braced",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_split_into_blocks_braced.py",
   "detail_file": "fm_agent/bug_validation/src--reasoner-py--_split_into_blocks_braced.md",
-  "probe_stdout": "Concatenation check: PASS\nBlock 0 has unbalanced braces (net depth=1):\n  line 0: '{'\n  line 1: '    int x = 1;'\n  line 2: '    int y = 2;'\nBlock 1: balanced, 3 lines\nBlock 2 has unbalanced braces (net depth=-1):\n  line 0: '    return x + y;'\n  line 1: '}'\nCONFIRMED — blocks contain unclosed brace groupings",
-  "trigger_summary": "With GRANULARITY=2 and a C function body that opens with '{' on line 0, the first block (lines 0-2) contains the opening brace without its matching closing brace — entry_depth is set from depths[0] but the block's starting depth is not verified against it."
+  "probe_stdout": "CONFIRMED — actual first-block lines: 42 | expected: 40 | block sizes: [42, 43] | partition_ok: True",
+  "trigger_summary": "For braced-language input longer than 2*GRANULARITY lines whose brace depth returns to the entry depth exactly at the GRANULARITY-th line of a block, the split-point search starts at i + GRANULARITY instead of i + GRANULARITY - 1, skipping the earliest spec-valid boundary and making the first non-final block GRANULARITY+2 lines instead of GRANULARITY."
 }

@@ -1,0 +1,5 @@
+{
+  "signature": "remove_legacy_llm_env_overrides(text: str) -> tuple[str, tuple[str, ...]]",
+  "pre_condition": "text is a string whose content follows .env file convention: each line is either empty, a comment (first non-whitespace character is '#'), or a variable assignment optionally prefixed with 'export' followed by KEY=VALUE where KEY consists of uppercase letters, digits, and underscores.",
+  "post_condition": "Returns (cleaned_text, removed_names). cleaned_text is text with every line removed whose variable name (after stripping an optional 'export' prefix) belongs to a known set of legacy LLM override variable names — environment variables that previously held LLM configuration fields now stored in fm-agent.toml rather than .env. Every line in text whose variable name does not belong to the legacy set appears in cleaned_text unchanged, preserving original content, whitespace, and relative line order. removed_names is a tuple of the distinct legacy LLM override variable names found and removed from text, in the order of their first occurrence. When no legacy LLM override variable appears in text, removed_names is an empty tuple."
+}

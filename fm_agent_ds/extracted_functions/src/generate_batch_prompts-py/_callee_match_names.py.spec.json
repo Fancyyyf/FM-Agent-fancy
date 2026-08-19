@@ -1,0 +1,5 @@
+{
+  "signature": "_callee_match_names(callee_fqn: str, aliases: Sequence[str]) -> List[str]",
+  "pre_condition": "callee_fqn is a string. aliases is a sequence of strings (may be empty, may contain empty strings).",
+  "post_condition": "Returns a deduplicated list of candidate name strings in insertion order. The first element is always callee_fqn verbatim. The second element is the last '::'-delimited segment of callee_fqn (equal to callee_fqn when callee_fqn contains no '::'). For each non-empty string a in aliases in order: a is appended, and if a contains literal '::', the last '::'-delimited segment of a is also appended. Empty strings in aliases are excluded from the result. No element in the returned list appears more than once."
+}

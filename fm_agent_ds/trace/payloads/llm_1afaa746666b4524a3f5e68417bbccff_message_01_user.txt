@@ -1,0 +1,21 @@
+Programming language: Python
+
+Pre-condition:
+base_url is a string (possibly None or empty) representing an LLM API base URL.
+
+Code block:
+```python
+Line 1: def _should_inject_user_id(base_url):
+Line 2:     url = (base_url or "").rstrip("/")
+Line 3:     return any(_matches_inject_target(url, target) for target in _inject_targets())
+```
+
+Additional context:
+_matches_inject_target(url, target) -> bool
+Pre-condition: url is a normalized URL string (trailing slashes stripped, falsy values converted to empty string). target is a string representing an inject-target host pattern.
+Post-condition: Returns True when url matches the target pattern according to the configured host-matching rule; returns False otherwise.
+
+_inject_targets() -> list
+Pre-condition: None.
+Post-condition: Returns a list of strings, each representing a configured host pattern for which user-identity injection is enabled.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

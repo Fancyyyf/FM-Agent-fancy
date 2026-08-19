@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--State::_ingest_event",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/dashboard.py",
+  "function_name": "State::_ingest_event",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--State::_ingest_event.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--State::_ingest_event.md",
+  "probe_stdout": "CONFIRMED — verification_mismatch: 0 -> 1 (incorrectly incremented for non-verification event) | verification_error: 0 -> 1 (incorrectly incremented for non-verification event)",
+  "trigger_summary": "Non-verification llm_call event with status 'mismatch' or 'error' incorrectly increments verification counters because the mismatch and error branches lack a purpose check (only the success branch checks purpose == 'check_post_implies_spec')."
+}

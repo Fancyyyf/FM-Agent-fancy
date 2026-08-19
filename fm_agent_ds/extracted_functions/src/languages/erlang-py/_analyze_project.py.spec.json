@@ -1,0 +1,5 @@
+{
+  "signature": "_analyze_project(proj_dir: str) -> ErlangAnalysis",
+  "pre_condition": "proj_dir is a non-empty string whose absolute path refers to an existing directory containing a valid Erlang project structure.",
+  "post_condition": "Returns an ErlangAnalysis object whose .functions, .edges, and .spans attributes are dicts populated with ELP analysis data for the Erlang source files under proj_dir. When the project content at proj_dir has not changed since the most recent prior call to this function for the same proj_dir, returns the identical cached ErlangAnalysis object rather than performing a fresh analysis. Raises an exception when the ELP backend is unavailable, proj_dir is not analyzable by ELP, or the analysis process encounters an unrecoverable error."
+}

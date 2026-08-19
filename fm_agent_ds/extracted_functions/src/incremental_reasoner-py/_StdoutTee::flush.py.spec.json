@@ -1,0 +1,5 @@
+{
+  "signature": "_StdoutTee.flush(self)",
+  "pre_condition": "self._console and self._log_stream are file-like objects with a flush() method.",
+  "post_condition": "All buffered data written to the console stream is flushed to the underlying device. All buffered data written to the log stream is flushed to the underlying file, unless the log stream is closed, in which case no flush is attempted and no exception is raised. Returns None."
+}

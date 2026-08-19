@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_collect_changed_functions::_git.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Executes the command git -C proj_dir <args> in a subprocess and returns the captured standard output as a string. Raises subprocess.CalledProcessError when the git command exits with a non-zero status code; the captured standard error is available in the exception's stderr attribute.",
+    "actual_behavior": "If the function returns normally, it returns the captured stdout (as a string) of the command `git -C proj_dir *args`. If the git subprocess terminates with a non-zero exit code, a `subprocess.CalledProcessError` is raised. If the `git` executable cannot be found, a `FileNotFoundError` (a subclass of `OSError`) is raised. No other side effects on the Python process state occur, although the git command may modify the repository and file system.\n\nFormally: post  { normal_return   res  subprocess.CompletedProcess . res = subprocess.run(['git', '-C', proj_dir, *args], check=True, capture_output=True, text=True)  res.returncode = 0  return = res.stdout }  { exceptional  (exception  {subprocess.CalledProcessError, FileNotFoundError}) }",
+    "code_evidence": "Line 5: text=True",
+    "trigger_condition": "The specification requires that when the git command exits with code 0, the function returns the captured standard output as a string. Using text=True without error handling can raise UnicodeDecodeError for binary stdout, violating the return-type guarantee."
+  }
+}

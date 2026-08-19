@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/plugin-py/load_plugins.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a dictionary mapping plugin names (str) to PluginConfig objects for all valid, non-hidden, non-__pycache__ subdirectories of plugins_dir, ordered by ascending subdirectory name. A valid plugin subdirectory is one whose contents pass PluginConfig validation (its plugin.json parses to a PluginConfig whose fields satisfy all configured validation rules). Each subdirectory that fails validation is skipped after printing its error reason; it is absent from the returned dictionary. If plugins_dir does not exist or is not a directory, returns an empty dictionary.",
+    "actual_behavior": "If the function terminates normally (no unhandled exception), then the return value is a dictionary mapping strings to PluginConfig objects. For every key-value pair (k, v) in the dictionary, k == v.name and v is a nonNone result of validate_plugin(d) for some subdirectory d of plugins_dir such that d is an existing directory (as determined by d.is_dir()), d.name does not start with '.' and d.name != '__pycache__'. For every such subdirectory d of plugins_dir, if validate_plugin(d) did not return None, there exists exactly one entry with key equal to the name attribute of the returned PluginConfig. All keys are nonempty and distinct. If plugins_dir.is_dir() is false (plugins_dir does not exist, is not a directory, or is not accessible), the function returns an empty dictionary without raising an exception. If plugins_dir.is_dir() is true but iterating its contents via plugins_dir.iterdir() raises an exception (e.g. PermissionError), that exception propagates and the function does not return normally.",
+    "code_evidence": "Line 13: config = validate_plugin(entry)\nLine 14: if config is not None:\nLine 15:     plugins[config.name] = config",
+    "trigger_condition": "The specification states: \"Each subdirectory that fails validation is skipped after printing its error reason.\" The code never prints the error reason when validate_plugin returns None."
+  }
+}

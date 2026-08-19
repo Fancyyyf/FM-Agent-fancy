@@ -1,0 +1,5 @@
+{
+  "signature": "batch_extract(proj_dir: str) -> dict",
+  "pre_condition": "proj_dir is a string referring to a filesystem directory that may contain Erlang source files",
+  "post_condition": "Returns a dictionary whose keys are absolute file paths (strings) of Erlang source files and whose values are lists of (function_id: str, body: str) pairs. Each function_id is a canonicalized, module-qualified name usable as an FQN. Each body is the verbatim source text of that function as extracted from the source file. Returns an empty dict when the Erlang Language Platform backend is unavailable or when proj_dir contains no extractable Erlang functions."
+}

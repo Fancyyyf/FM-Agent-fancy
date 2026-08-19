@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_trace_dir",
+      "signature": "_trace_dir(work_dir) -> str",
+      "pre_condition": "work_dir is a valid directory path",
+      "post_condition": "returns the trace subdirectory path within work_dir"
+    },
+    {
+      "name": "_payload_dir",
+      "signature": "_payload_dir(trace_dir) -> str",
+      "pre_condition": "trace_dir is a valid directory path",
+      "post_condition": "returns the payload subdirectory path within trace_dir"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "batch_extract_all(proj_dir: str) -> tuple[dict, set[str]]",
+  "pre_condition": "proj_dir is a path to an existing directory.",
+  "post_condition": "Returns (funcs, langs). funcs is a dict mapping each absolute file path to a non-empty list of (func_name, body_text) tuples for all functions extractable from that file across all supported languages. langs is a set of language key strings, containing exactly those language keys for which at least one function was extracted. When no function is extractable from any file in proj_dir, returns ({}, set())."
+}

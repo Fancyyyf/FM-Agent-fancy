@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "REGISTRY[lang].call_edges",
+      "signature": "call_edges(proj_dir: str)",
+      "pre_condition": "lang is a language key present in REGISTRY; proj_dir is a directory path",
+      "post_condition": "Returns a dict mapping caller FQN strings to iterables of callee FQN strings if the CodeGraph backend is available for the language, where the FQNs use the canonicalized format; returns None if the backend is unavailable, indicating the caller must use regex-based extraction for this language"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+response is a string containing LLM-generated text that may include a JSON object, represented as bare JSON, within markdown-fenced code blocks, or interleaved with prose.
+
+Code block:
+```python
+Line 1: def _load_spec_check_json(response):
+Line 2:     """Load a single JSON object from a specification-check response.
+Line 3:     The shared parser handles direct, fenced, and prose-wrapped structured
+Line 4:     responses.  This adapter retains the spec-checker's object-only contract
+Line 5:     and its ``JSONDecodeError`` failure type.
+Line 6:     """
+Line 7:     text = response.strip() if isinstance(response, str) else ""
+Line 8:     try:
+Line 9:         data = _parse_json_response(response)
+Line 10:     except ValueError as exc:
+Line 11:         raise json.JSONDecodeError(str(exc), text, 0) from exc
+Line 12:     if not isinstance(data, dict):
+Line 13:         raise json.JSONDecodeError("spec-check response must contain a JSON object", text, 0)
+Line 14:     return data
+```
+
+Additional context:
+_parse_json_response(response) -> dict | list
+Pre-condition: response is a string that may contain a JSON object or array, encoded as bare JSON, within ```json fenced code blocks, or embedded in prose text.
+Post-condition: Returns a dict or list containing the parsed JSON value extracted from the response text. Raises ValueError when no valid JSON object or array can be extracted and parsed from the response.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

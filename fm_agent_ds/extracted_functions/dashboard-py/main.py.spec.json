@@ -1,0 +1,5 @@
+{
+  "signature": "main()",
+  "pre_condition": "The modules argparse, sys, time and the components Console, Live, State, and build_layout are importable and accessible in the current namespace.",
+  "post_condition": "Parses command-line arguments to obtain a project directory path and an optional refresh interval (floating-point seconds). If the trace directory under the project directory does not exist, prints a message to stderr and continues. Enters an infinite loop: on each iteration, reads newly arrived structured trace events, raw OpenCode LLM trace records, and bug validation reports from the trace directory, then re-renders the full dashboard terminal layout at a rate bounded by the configured refresh interval. Returns only upon KeyboardInterrupt."
+}

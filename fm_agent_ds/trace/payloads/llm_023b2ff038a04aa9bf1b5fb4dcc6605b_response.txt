@@ -1,0 +1,1 @@
+{"post_condition": "Returns an instance r of _SourceIndex such that r.source == source, r.lines == source.splitlines(keepends=True), and for all i in 0..len(r.lines)-1: r.line_offsets[i] == sum(len(r.lines[j]) for j in range(i))." }

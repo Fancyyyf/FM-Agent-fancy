@@ -1,0 +1,176 @@
+# Phase 01 — Initialization & Configuration
+
+## Core Types
+
+### `Settings` (Pydantic BaseSettings)
+Central validated configuration object. Imported as `settings` module global.
+```python
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(extra="forbid")
+    llm: LLMCfg
+    runtime: RuntimeCfg
+    scope: ScopeCfg
+    erlang: ErlangCfg
+    inject: InjectCfg
+    codegraph: CodegraphCfg
+```
+- Precedence: init_settings > (process env > .env > fm-agent.toml > built-in defaults)
+- All sections use `extra="forbid"` — typo'd TOML keys or env vars fail fast at startup
+- `_LayeredSource`: custom Pydantic source merging TOML + mapped env variables
+
+### `LLMCfg` (Pydantic BaseModel)
+```python
+class LLMCfg(_Section):
+    api_key: str = ""           # secret — from .env/env only, never committed
+    base_url: str = "https://openrouter.ai/api/v1"
+    backend: str = "opencode"   # "opencode" | "auto" | "codex-cli" | "claude-cli"
+    name: str = "anthropic/claude-sonnet-4.6"
+    effort: str = ""            # "" | "low" | "medium" | "high"
+    provider: str = "openrouter"
+    api_style: Literal["openai", "anthropic"] = "openai"
+```
+
+### `RuntimeCfg` (Pydantic BaseModel)
+```python
+class RuntimeCfg(_Section):
+    max_spec_iter: int = 5         # gt=0
+    granularity: int = 40          # gt=0 — lines per reasoning block
+    max_workers: int = 10          # gt=0
+    opencode_max_retries: int = 5  # gt=0
+    bug_validation_max_retries: int = 1  # ge=0
+    opencode_timeout_s: int = 1800 # gt=0 — hard cap on subprocess
+    domain_knowledge_paths: str = ""  # os.pathsep-separated markdown paths
+```
+
+### `ScopeCfg` (Pydantic BaseModel)
+```python
+class ScopeCfg(_Section):
+    top_k: int = 5                       # gt=0 — max functions per scoped file
+    llm_trigger_funcs: int = 5           # gt=0 — file has ≥ this many funcs → LLM re-rank
+    llm_top_k: int = 5                   # gt=0 — candidate functions requested from LLM
+    llm_confidence_threshold: float = 8.0 # ge=0 — heuristic score below → LLM re-rank
+```
+
+### `ErlangCfg` (Pydantic BaseModel)
+```python
+class ErlangCfg(_Section):
+    command: str = "elp"
+    timeout_s: int = 180  # gt=0
+```
+
+### `InjectCfg` (Pydantic BaseModel)
+```python
+class InjectCfg(_Section):
+    id: str = ""     # request metadata for prompt-cache affinity
+    hosts: str = ""  # comma-separated hostnames to inject user_id
+```
+
+### `CodegraphCfg` (Pydantic BaseModel)
+```python
+class CodegraphCfg(_Section):
+    repo: str = "fmagent-project/codegraph"
+    version: str = "v1.5.0-fmagent.1"
+    bin_dir: str = "~/.local/bin"
+```
+
+### Module-Level Legacy Constants (backward-compat)
+Provided for `from config import *` callers. Every constant is derived from the
+validated `settings` object:
+```python
+LLM_API_KEY, LLM_API_BASE_URL, FM_AGENT_MODEL_BACKEND, LLM_MODEL, LLM_EFFORT,
+OPENCODE_MODEL_PROVIDER, OPENCODE_SETUP_MODEL, OPENCODE_SPEC_MODEL,
+OPENCODE_BUG_VALIDATION_MODEL, REASONER_POST_CONDITION_MODEL,
+REASONER_SPEC_CHECK_MODEL, MAX_SPC_ITER, GRANULARITY, MAX_WORKERS,
+OPENCODE_MAX_RETRIES, BUG_VALIDATION_MAX_RETRIES, OPENCODE_TIMEOUT_SECONDS,
+SCOPE_TOP_K, SCOPE_LLM_TRIGGER_FUNCS, SCOPE_LLM_TOP_K, SCOPE_LLM_CONFIDENCE_THRESHOLD
+```
+
+## LLM Configuration Wizard Types
+
+### `LLMConfigInput` (frozen dataclass)
+```python
+@dataclass(frozen=True)
+class LLMConfigInput:
+    provider_id: str       # OpenCode provider key, non-empty
+    provider_name: str     # display name, non-empty
+    api_style: ApiStyle    # "openai" | "anthropic"
+    base_url: str          # absolute http(s) URL, validated via urlparse
+    model_id: str          # LLM model string, non-empty
+    api_key: str           # secret, non-empty
+    backend: str = "opencode"
+```
+
+### `WizardPaths` (frozen dataclass)
+```python
+@dataclass(frozen=True)
+class WizardPaths:
+    project_root: Path
+    env_path: Path          # project .env
+    toml_path: Path         # fm-agent.toml (respects FM_AGENT_CONFIG)
+    opencode_config_path: Path  # ~/.config/opencode/opencode.json[c]
+```
+
+### Environment Variable Mapping
+`_ENV_MAP`: dict mapping process env names to (toml_section, toml_field):
+```
+LLM_API_KEY          → ("llm", "api_key")
+LLM_API_BASE_URL     → ("llm", "base_url")
+FM_AGENT_MODEL_BACKEND → ("llm", "backend")
+LLM_MODEL            → ("llm", "name")
+LLM_EFFORT           → ("llm", "effort")
+OPENCODE_MODEL_PROVIDER → ("llm", "provider")
+LLM_API_STYLE        → ("llm", "api_style")
+MAX_SPC_ITER         → ("runtime", "max_spec_iter")
+GRANULARITY          → ("runtime", "granularity")
+MAX_WORKERS          → ("runtime", "max_workers")
+OPENCODE_MAX_RETRIES → ("runtime", "opencode_max_retries")
+BUG_VALIDATION_MAX_RETRIES → ("runtime", "bug_validation_max_retries")
+OPENCODE_TIMEOUT_SECONDS → ("runtime", "opencode_timeout_s")
+FM_AGENT_DOMAIN_KNOWLEDGE → ("runtime", "domain_knowledge_paths")
+SCOPE_TOP_K          → ("scope", "top_k")
+SCOPE_LLM_TRIGGER_FUNCS → ("scope", "llm_trigger_funcs")
+SCOPE_LLM_TOP_K      → ("scope", "llm_top_k")
+SCOPE_LLM_CONFIDENCE_THRESHOLD → ("scope", "llm_confidence_threshold")
+ELP_COMMAND          → ("erlang", "command")
+ELP_TIMEOUT_SECONDS  → ("erlang", "timeout_s")
+INJECT_ID            → ("inject", "id")
+INJECT_HOST          → ("inject", "hosts")
+CODEGRAPH_REPO       → ("codegraph", "repo")
+CODEGRAPH_VERSION    → ("codegraph", "version")
+CODEGRAPH_BIN_DIR    → ("codegraph", "bin_dir")
+```
+
+## Environment Check Types
+
+### `env_check.run(proj_dir, config) → bool`
+Runs pre-flight checks. Returns True to proceed, False to abort.
+Checks performed (when not using CLI backend):
+- LLM API key configured (not empty/placeholder)
+- oh-my-openagent installed via bunx
+- comment-checker hook disabled in oh-my-openagent config
+- codegraph pinned build matches version in fm-agent.toml
+
+Ignored checks are persisted to `fm_agent/.env_check_memory` (one check-id per line).
+
+## Git Utility Types
+
+### `_is_git_repo(proj_dir) → bool`
+Returns whether proj_dir is a git repo with at least one commit.
+
+### `_get_head_commit(proj_dir) → str | None`
+Returns HEAD commit SHA, or None if not a git repo.
+
+### `_record_version(commit_id, work_dir) → None`
+Appends commit_id to `fm_agent/version.log` for incremental run tracking.
+
+### `frozen_worktree(proj_dir, exclude=("fm_agent",), copy_excluded=True) → context manager`
+Yields an isolated git worktree snapshot. The snapshot includes committed state
+PLUS uncommitted edits. `exclude` dirs are kept out of the git commit but
+optionally copied in afterward. Falls back to plain directory copy for non-git repos.
+
+## Entry Point Function Signatures
+
+```python
+def run(proj_dir, config) -> bool:
+    """Run all env checks. Returns True to proceed, False to abort."""
+```

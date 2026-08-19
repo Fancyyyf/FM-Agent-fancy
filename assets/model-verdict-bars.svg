@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">DeepSeek 与 Qwen 自验证结果对比</title>
+  <desc id="desc">分组柱状图。DeepSeek 有 145 个 MATCH 和 312 个 MISMATCH；Qwen 有 330 个 MATCH 和 127 个 MISMATCH。</desc>
+  <style>
+    text { font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; fill: #222; }
+    .title { font-size: 23px; font-weight: 600; }
+    .sub { font-size: 14px; fill: #666; }
+    .axis { font-size: 13px; fill: #555; }
+    .group { font-size: 16px; font-weight: 600; }
+    .value { font-size: 14px; font-weight: 600; }
+    .grid { stroke: #dedede; stroke-width: 1; }
+    .base { stroke: #555; stroke-width: 1.2; }
+  </style>
+
+  <rect width="900" height="520" fill="#fff"/>
+  <text class="title" x="450" y="36" text-anchor="middle">DeepSeek 与 Qwen 自验证结果对比</text>
+  <text class="sub" x="450" y="62" text-anchor="middle">同一基线，共 457 个函数</text>
+
+  <line class="grid" x1="95" y1="383.75" x2="830" y2="383.75"/>
+  <line class="grid" x1="95" y1="297.5" x2="830" y2="297.5"/>
+  <line class="grid" x1="95" y1="211.25" x2="830" y2="211.25"/>
+  <line class="grid" x1="95" y1="125" x2="830" y2="125"/>
+  <line class="base" x1="95" y1="470" x2="830" y2="470"/>
+  <line class="base" x1="95" y1="125" x2="95" y2="470"/>
+
+  <text class="axis" x="82" y="474" text-anchor="end">0</text>
+  <text class="axis" x="82" y="388" text-anchor="end">100</text>
+  <text class="axis" x="82" y="302" text-anchor="end">200</text>
+  <text class="axis" x="82" y="216" text-anchor="end">300</text>
+  <text class="axis" x="82" y="130" text-anchor="end">400</text>
+  <text class="axis" x="35" y="300" text-anchor="middle" transform="rotate(-90 35 300)">函数数</text>
+
+  <rect x="205" y="344.94" width="92" height="125.06" fill="#4c78a8"/>
+  <rect x="313" y="200.9" width="92" height="269.1" fill="#e76f51"/>
+  <rect x="520" y="185.38" width="92" height="284.62" fill="#4c78a8"/>
+  <rect x="628" y="360.46" width="92" height="109.54" fill="#e76f51"/>
+
+  <text class="value" x="251" y="335" text-anchor="middle">145</text>
+  <text class="value" x="359" y="191" text-anchor="middle">312</text>
+  <text class="value" x="566" y="175" text-anchor="middle">330</text>
+  <text class="value" x="674" y="351" text-anchor="middle">127</text>
+
+  <text class="group" x="305" y="500" text-anchor="middle">DeepSeek</text>
+  <text class="group" x="620" y="500" text-anchor="middle">Qwen</text>
+
+  <rect x="323" y="82" width="14" height="14" fill="#4c78a8"/>
+  <text class="axis" x="345" y="94">MATCH</text>
+  <rect x="455" y="82" width="14" height="14" fill="#e76f51"/>
+  <text class="axis" x="477" y="94">MISMATCH</text>
+</svg>

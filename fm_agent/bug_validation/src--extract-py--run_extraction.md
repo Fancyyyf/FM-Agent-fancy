@@ -1,6 +1,6 @@
 # Bug Report: run_extraction
 
-**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/extract-py/run_extraction.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent_qwen_7d490/fm_agent/extracted_functions/src/extract-py/run_extraction.py`
 **Verdict:** MISMATCH
 **Confirmation status:** not_confirmed
 
@@ -12,190 +12,199 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-Returns a tuple (written, skipped) where both are non-negative integers. written is the number of function extraction files newly created; skipped is the number of function files that already existed with valid .spec.json and .info.json sidecars and were left unchanged.
-
-Every written file resides under work_dir/extracted_functions/ (falling back to proj_dir/extracted_functions/) and follows the path convention <source_rel_dir>/<basename-ext>/<func_name>.<ext>, where <basename-ext> replaces the last dot in the source filename with a hyphen.
-
-Each written file contains the extracted source code of exactly one function. A file matching an existing, fully-specced function (both .spec.json and .info.json sidecars present and valid) is NOT written unless force is True.
-
-Source files whose relative path matches test-file patterns, or whose extension maps to no known language handler, are excluded from extraction.
-
-When both written and skipped are zero (no source files produced any extractable function), an error-level log message is emitted.
-
-If phases.json is absent from the expected location, FileNotFoundError is raised.
+After return, for every source file listed in phases.json that (a) is not a test file, (b) exists under proj_dir, and (c) has a file extension mapped to a supported language, every function extracted from that file exists as a separate file at work_dir/extracted_functions/<relative-source-directory>/<source-basename-with-last-dot-replaced-by-hyphen>/<canonicalized-function-name>.<original-extension>, with class-qualified names preserved in the flat filename. The returned first value equals the number of function files written during this call; the returned second value equals the number of extracted functions skipped because their output file already existed together with valid .spec.json and .info.json sidecars (skipping is disabled when force=True, in which case existing outputs are overwritten). Files whose output already satisfies the readiness condition are never rewritten unless force=True. Test files, missing files, and files with unmapped extensions contribute neither to the written nor the skipped count. If no function is written and none is skipped, the function still returns (0, 0) without raising. FileNotFoundError is raised if and only if the phases.json file does not exist at the resolved location. The function never modifies any source file under proj_dir. After writing, the extraction output directory is checked for conformance to the one-function-per-file invariant, and any violations are reported as warnings without aborting the call or changing the returned counts. The returned counts satisfy written >= 0 and skipped >= 0.
 
 ---
 
 ### Actual Behavior
 
-The function returns a tuple (written_count, skipped_count). After normal execution, for every relative path `sf` that appears in `phases.json` under any phase's modules' `source_files`, if `sf` is not a test file (according to `_is_test_file`) and the absolute path `os.path.join(proj_dir, sf)` exists, then all functions extracted from that file (using the pre-built `registry_funcs` mapping normalized absolute paths to function lists, or via `extract_functions_from_file` if languagespecific reextraction is needed) are processed. For each function, a safe filename is generated and the output file `<work_dir>/extracted_functions/<safe_filename>` is created or overwritten. If `force` is `False` and the output file already exists and is valid (both `.spec.json` and `.info.json` sidecars present, i.e., `is_file_ready` returns `True`), the function is skipped and counted in `skipped_count`; otherwise the function body is written, sidecars are produced, and it is counted in `written_count`. After all source files are processed, the output directory is validated via `_validate_extraction`; any extracted file containing a number of functions different from one is reported (e.g., logged), but does not affect the returned counts. If `verbose` is `True`, informational messages are printed. If the precondition that `phases.json` exists and is valid JSON is violated, `FileNotFoundError` or `json.JSONDecodeError` is raised before any side effects. Missing source files trigger a warning and are skipped without contributing to any count. No files outside `work_dir/extracted_functions/` are modified.
+The function terminates in one of the following ways:
+
+**Exception paths:**
+1. If the file at os.path.join(work_dir or proj_dir, 'phases.json') does not exist, a FileNotFoundError is raised with a message containing 'phases.json not found at'. No files are written and no extraction occurs.
+2. If json.load raises (e.g., malformed JSON despite the pre-condition), the corresponding exception propagates. No extraction output is produced.
+3. Any I/O or OS-level exception during batch_extract_all, file reading, or file writing propagates to the caller.
+
+**Normal termination:**
+Let effective_work_dir = work_dir if work_dir is not None, else proj_dir.
+
+1. The function returns a tuple (written_count, skipped_count) of non-negative integers.
+2. written_count equals the number of individual function files successfully written under os.path.join(effective_work_dir, 'extracted_functions').
+3. skipped_count equals the number of source-file entries from phases.json that were not processed into output, encompassing: (a) entries for which _is_test_file returned True, (b) entries whose resolved path os.path.join(proj_dir, src_rel) does not exist on disk, and (c) any other entries skipped by logic beyond line 40 (e.g., unsupported language, empty extraction result, or pre-existing output when force is False).
+4. The directory os.path.join(effective_work_dir, 'extracted_functions') exists after return.
+5. For every source file that was processed (not skipped), each extracted function is written as a separate file whose name is produced by _safe_filename(func_name, ext), preserving '::' separators for class-qualified names. Adjacent sidecar files '<name>.spec.json' and '<name>.info.json' are created for each written function file.
+6. The registry returned by batch_extract_all is consumed with keys normalized via os.path.normcase(os.path.normpath(...)); this normalization does not alter the filesystem.
+7. _validate_extraction(output_base) is invoked on the extracted_functions directory. Its return value (a list of (path, count) pairs for files not containing exactly one function) is used for validation reporting but does not alter the written files.
+8. No source files under proj_dir are modified or deleted.
+9. The phases.json file is opened read-only and is not modified.
+10. For every source_files entry sf in phases.json: exactly one of the following holds  sf was skipped (counted in skipped_count), sf was processed and contributed zero or more entries to written_count, or an exception was raised before completion.
+11. written_count + skipped_count  total number of source_files entries across all phases and modules in phases.json.
+12. If verbose is True, informational messages about skipped test files are printed to stdout; if verbose is False, no such messages are printed. Warnings for missing source files are always emitted via logging.warning regardless of verbose.
+
+Formally:
+ sf  source_files_list(phases_data):
+  (_is_test_file(sf)  exists(proj_dir/sf)  other_skip_condition(sf))  sf contributes to skipped_count
+  (_is_test_file(sf)  exists(proj_dir/sf)  other_skip_condition(sf))  sf contributes k  0 entries to written_count
+ return_value = (written_count, skipped_count)
+ written_count  0  skipped_count  0
+ os.path.isdir(effective_work_dir / 'extracted_functions')
 
 ---
 
 ## Code Evidence
 
-The code block does not include the lines that construct the output file path, but the overall behavior (condition A) writes `<work_dir>/extracted_functions/<safe_filename>` without subdirectories, violating the required path convention.
+Line 32: if _is_test_file(src_rel):
+Line 33:     if verbose:
+Line 34:         print(f"  SKIP (test): {src_rel}")
+Line 35:     continue
 
 ---
 
 ## Trigger Condition
 
-Every written file must follow the path convention <source_rel_dir>/<basename-ext>/<func_name>.<ext>, but the code generates only a safe filename placed directly under the output base, resulting in a flat structure.
+Condition A states that skipped_count encompasses '(a) entries for which _is_test_file returned True' and '(b) entries whose resolved path does not exist on disk', meaning test files and missing files are counted in skipped_count. However, Condition B explicitly requires: 'Test files, missing files, and files with unmapped extensions contribute neither to the written nor the skipped count.' Additionally, Condition B defines skipped_count as 'the number of extracted functions skipped because their output file already existed together with valid .spec.json and .info.json sidecars', which is a per-function count of pre-existing outputs, not a per-source-file count of unprocessed entries. In the counterexample, a single test file in phases.json causes Condition A to produce (0,1) while Condition B requires (0,0).
 
 ---
 
 ## How to trigger the bug
 
-The probe created a minimal test project with a source file `mypkg/utils.py` containing two functions (`add` and `sub`). After running `run_extraction`, the output files were inspected.
+The reported mismatch claims that `run_extraction` counts unprocessed source-file entries (test files, missing files, unmapped extensions) into `skipped_count`, so a `phases.json` listing a single test file would return `(0, 1)` while the specification requires `(0, 0)`.
 
-The actual source code at `src/extract.py` lines 724-731 clearly constructs the output directory path using `src_dir` (the relative directory of the source file) and `dir_name` (basename with last dot replaced by hyphen), then line 755 joins the safe function filename under that directory. This yields paths following the `<source_rel_dir>/<basename-ext>/<func_name>.<ext>` convention exactly.
+Three probe attempts exercised `src.extract.run_extraction` — the smallest unit on the extraction path, invoked directly because the FM-Agent self-validation guard forbids starting an FM-Agent workflow (`run_pipeline`, `main.py`, CLI) from the probe — against throwaway fixture projects in fresh temporary directories:
+
+1. **Attempt 1:** `phases.json` lists exactly one test file (`tests/test_foo.py`, present on disk, containing one extractable function). Claimed buggy output `(0, 1)`. Observed: `(0, 0)`.
+2. **Attempt 2:** `phases.json` lists exactly one missing file (`src/missing.py`, absent on disk). Claimed buggy output `(0, 1)`. Observed: `(0, 0)`.
+3. **Attempt 3 (final):** `phases.json` lists one entry of each uncountable category (test file + missing file + unmapped `.xyz` extension). Claimed buggy output `(0, 3)`. Observed: `(0, 0)`.
+
+Reading the implementation confirms the observation: in `run_extraction`, the `continue` branches for test files, missing files, and unmapped extensions do **not** touch `skipped`; the single `skipped += 1` statement (line 762) is a per-function increment executed only when an output file already exists together with valid `.spec.json`/`.info.json` sidecars and `force` is False. That is exactly the semantics the specification ("Condition B") requires. The `actual_behavior` description recorded in the verification result ("Condition A", a per-source-file count of unprocessed entries) does not match the code under test, so the claimed miscount could not be reproduced within the 3-attempt budget.
 
 ### Inputs
 
 | Parameter | Value |
 |-----------|-------|
-| proj_dir | `<tempdir>` |
-| work_dir | `<tempdir>` |
-| force | True |
-| phases.json | `{"phases": [{"modules": [{"source_files": ["mypkg/utils.py"]}]}]}` |
-| Source file | `mypkg/utils.py` with functions `add` and `sub` |
+| `proj_dir` | fresh `tempfile.mkdtemp()` fixture directory (probe-owned) |
+| `phases.json` | `{"phases": [{"modules": [{"source_files": ["tests/test_foo.py", "src/missing.py", "data/notes.xyz"]}]}]}` |
+| `tests/test_foo.py` | exists, contains `def helper(): return 1` |
+| `src/missing.py` | listed but not created on disk |
+| `data/notes.xyz` | exists, extension maps to no supported language |
+| `work_dir` | `None` (defaults to `proj_dir`) |
+| `force` | `False` |
+| `verbose` | `False` |
 
 ### Expected (spec-correct) Output
 
-Files at:
-- `mypkg/utils-py/add.py`
-- `mypkg/utils-py/sub.py`
+`(0, 0)`
 
 ### Actual (buggy) Output
 
-Files at:
-- `mypkg/utils-py/add.py`
-- `mypkg/utils-py/sub.py`
-
-The actual output matches the spec-correct output. The code DOES follow the path convention.
+`(0, 0)` — the code returned exactly the spec-correct value; the claimed buggy outputs (`(0, 1)` / `(0, 3)`) never occurred, so no divergent buggy output exists to report.
 
 ### How to Reproduce
 
-Step-by-step instructions to trigger the bug manually:
+Step-by-step instructions (run from the repo root; uses the repo's pinned interpreter `.venv/bin/python` so FM-Agent's dependencies resolve):
 
 1. Navigate to the repo root.
-2. Run the following snippet (uses the package entry point):
+2. Run the following snippet (exercises the smallest public unit of the extraction stage; starting the FM-Agent pipeline itself is forbidden by the self-validation guard):
 
-```python
-import os, json, tempfile
-tmpdir = tempfile.mkdtemp()
-os.makedirs(os.path.join(tmpdir, "mypkg"), exist_ok=True)
-with open(os.path.join(tmpdir, "mypkg", "utils.py"), "w") as f:
-    f.write("def add(x, y):\n    return x + y\n\ndef sub(x, y):\n    return x - y\n")
-with open(os.path.join(tmpdir, "phases.json"), "w") as f:
-    json.dump({"phases": [{"modules": [{"source_files": ["mypkg/utils.py"]}]}]}, f)
-
+```py
+import json, os, sys, tempfile
+sys.path.insert(0, os.getcwd())  # repo root
 from src.extract import run_extraction
-written, skipped = run_extraction(tmpdir, tmpdir, force=True, verbose=False)
-# Output files: tmpdir/extracted_functions/mypkg/utils-py/{add,sub}.py
-# These follow the <source_rel_dir>/<basename-ext>/<func_name>.<ext> convention
+
+proj_dir = tempfile.mkdtemp(prefix="fm_probe_run_extraction_")
+os.makedirs(os.path.join(proj_dir, "tests"))
+with open(os.path.join(proj_dir, "tests", "test_foo.py"), "w") as f:
+    f.write("def helper():\n    return 1\n")
+with open(os.path.join(proj_dir, "phases.json"), "w") as f:
+    json.dump({"phases": [{"modules": [{"source_files": ["tests/test_foo.py"]}]}]}, f)
+
+print(run_extraction(proj_dir))
+# actual output: (0, 0)
+# expected (correct) output: (0, 0)
+# claimed buggy output from the verification result: (0, 1) — NOT observed
 ```
 
 ---
 
 ## Probe Script
 
-```python
-import sys
-import os
+```py
+"""Probe for bug src--extract-py--run_extraction (attempt 3).
+
+Maximal counterexample: phases.json now lists one entry of each category the
+specification declares uncountable —
+  1. "tests/test_foo.py"  (exists on disk, detected as a test file)
+  2. "src/missing.py"     (listed but absent on disk)
+  3. "data/notes.xyz"     (exists on disk, extension maps to no language)
+
+The verification result's actual_behavior claim counts every unprocessed
+source-file entry into skipped_count, i.e. expected buggy output (0, 3). The
+specification requires that test files, missing files, and files with unmapped
+extensions contribute neither to the written nor the skipped count, i.e.
+spec-correct output (0, 0).
+
+FM-Agent self-validation guard: no FM-Agent workflow is started; the probe
+exercises the smallest relevant unit, src.extract.run_extraction, against a
+throwaway fixture project in a fresh temporary directory.
+"""
+
 import json
+import os
+import sys
 import tempfile
-import shutil
 
-# All test fixtures, outputs, and intermediate files live under a temp dir.
-# We import from the repo's source tree but never use the repo workspace for I/O.
-tmpdir = tempfile.mkdtemp(prefix="probe_run_extraction_")
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
-# -------------------------------------------------------------------
-# 1. Create a minimal test project inside the temp directory
-# -------------------------------------------------------------------
-# Source file: mypkg/utils.py with two functions
-test_src_dir = os.path.join(tmpdir, "mypkg")
-os.makedirs(test_src_dir, exist_ok=True)
-test_src_file = os.path.join(test_src_dir, "utils.py")
-with open(test_src_file, "w") as f:
-    f.write("def add(x, y):\n    return x + y\n\ndef sub(x, y):\n    return x - y\n")
 
-# phases.json referencing that source file
-phases = {"phases": [{"modules": [{"source_files": ["mypkg/utils.py"]}]}]}
-phases_path = os.path.join(tmpdir, "phases.json")
-with open(phases_path, "w") as f:
-    json.dump(phases, f)
-
-# -------------------------------------------------------------------
-# 2. Call run_extraction via the public entry point
-# -------------------------------------------------------------------
-# The repo root must be on sys.path so 'from src.extract import run_extraction'
-# resolves. We add it at the front so intra-package 'from src.xxx' imports work.
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, repo_root)
-
-try:
+def main():
     from src.extract import run_extraction
 
-    written, skipped = run_extraction(
-        proj_dir=tmpdir,
-        work_dir=tmpdir,
-        force=True,
-        verbose=False,
-    )
-except Exception as e:
-    # Catch import errors, codegraph failures, etc.
-    print(f"ERROR: {e}", file=sys.stderr)
-    # Still write the verdict marker
-    print("NOT CONFIRMED")
-    sys.exit(0)
+    proj_dir = tempfile.mkdtemp(prefix="fm_probe_run_extraction_")
 
-# -------------------------------------------------------------------
-# 3. Inspect the output paths
-# -------------------------------------------------------------------
-output_base = os.path.join(tmpdir, "extracted_functions")
+    os.makedirs(os.path.join(proj_dir, "tests"))
+    os.makedirs(os.path.join(proj_dir, "data"))
+    with open(os.path.join(proj_dir, "tests", "test_foo.py"), "w", encoding="utf-8") as f:
+        f.write("def helper():\n    return 1\n")
+    with open(os.path.join(proj_dir, "data", "notes.xyz"), "w", encoding="utf-8") as f:
+        f.write("no language maps to .xyz\n")
+    # src/missing.py deliberately not created.
 
-convention_paths = []  # paths following <source_rel_dir>/<basename-ext>/<func_name>.<ext>
-flat_paths = []        # paths directly under extracted_functions/ with no subdirs
-other_paths = []       # anything else
+    phases = {"phases": [{"modules": [{"source_files": [
+        "tests/test_foo.py",
+        "src/missing.py",
+        "data/notes.xyz",
+    ]}]}]}
+    with open(os.path.join(proj_dir, "phases.json"), "w", encoding="utf-8") as f:
+        json.dump(phases, f)
 
-for root, _dirs, files in os.walk(output_base):
-    for fname in files:
-        full = os.path.join(root, fname)
-        rel = os.path.relpath(full, output_base)
-        parts = rel.split(os.sep)
-        if len(parts) == 3:
-            convention_paths.append(rel)
-        elif len(parts) == 1:
-            flat_paths.append(rel)
-        else:
-            other_paths.append(rel)
+    actual = run_extraction(proj_dir)
 
-# The bug claim: files are written flat (no subdirectories).
-# If we find convention paths, the bug is NOT CONFIRMED.
-# If files are flat, the bug IS CONFIRMED.
-bug_confirmed = len(convention_paths) == 0 and len(flat_paths) > 0
+    # Spec-correct: none of the three categories counts -> (0, 0).
+    # Claimed buggy behavior: each unprocessed entry counted -> (0, 3).
+    expected = (0, 0)
+    passed = actual != expected  # True -> bug reproduced
 
-if bug_confirmed:
-    print(f"CONFIRMED - flat files detected (no subdirectory structure)")
-    print(f"Flat paths: {flat_paths}")
-else:
-    print(f"NOT CONFIRMED - output files follow path convention")
-    print(f"Convention paths found: {convention_paths}")
-    if flat_paths:
-        print(f"Flat paths also present: {flat_paths}")
-    if other_paths:
-        print(f"Other paths: {other_paths}")
+    if passed:
+        print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
+    else:
+        print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
 
-# Cleanup temp dir
-shutil.rmtree(tmpdir, ignore_errors=True)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"ERROR: {type(e).__name__}: {e}")
+        sys.exit(1)
 ```
 
 ### Probe Output
 
 ```
-Extraction complete: 2 written, 0 skipped.
-NOT CONFIRMED - output files follow path convention
-Convention paths found: ['mypkg/utils-py/add.py', 'mypkg/utils-py/sub.py']
+Extraction complete: 0 written, 0 skipped.
+NOT CONFIRMED — actual matched expected: (0, 0)
 ```
+
+(Exit code 0. On stderr, the run additionally emitted `WARNING:root:Source file not found: <tmp>/src/missing.py`, `WARNING:root:Unsupported file extension '.xyz' for data/notes.xyz, skipping.`, and `ERROR:root:Nothing was extracted — check phases.json source_files paths.` — diagnostic logging that does not affect the returned counts.)

@@ -1,0 +1,5 @@
+{
+  "signature": "function_spans(proj_dir: str, filepath: str) -> list | None",
+  "pre_condition": "proj_dir is the project root directory on disk. filepath is a source-file path string within the project.",
+  "post_condition": "Resolves filepath to an absolute path. Returns a list of (func_name, start_idx, end_idx) tuples for that file, where start_idx and end_idx are 0-based inclusive source-line indices derived from the ELP analysis of proj_dir. Returns None when the resolved path has no matching data in the ELP analysis."
+}

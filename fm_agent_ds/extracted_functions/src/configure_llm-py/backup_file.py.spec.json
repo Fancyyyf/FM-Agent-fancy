@@ -1,0 +1,5 @@
+{
+  "signature": "backup_file(path: Path, now: datetime | None = None, *, private: bool = False) -> Path | None",
+  "pre_condition": "path is a Path to a filesystem entry that may or may not exist as a readable regular file.",
+  "post_condition": "When path does not exist, returns None without modifying the filesystem. When path exists and is readable, returns a Path identifying a newly created regular file whose content is byte-for-byte identical to the content of the file at path at the time of the call. The backup file is created in the same directory as path when private is false, and in a private backup directory with owner-restricted permissions when private is true. When path.name is '.env', the backup file permissions restrict read and write access to the owner regardless of the private flag. When private is true, the backup file permissions likewise restrict read and write access to the owner. Every call produces a distinct backup destination — no existing backup file is overwritten. When a filesystem operation after destination reservation fails, the reserved empty destination file is removed before the exception propagates to the caller."
+}

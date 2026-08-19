@@ -1,0 +1,42 @@
+Programming language: Python
+
+Pre-condition:
+record is a TracedOpenCodeProcess struct whose proc subprocess has completed execution (proc.returncode is an integer). All record metadata fields — event_id, stage, started, command, work_dir, function_ids, input_files, output_files, summary, metadata, error, opencode_log_path, opencode_trace_path — hold values of their declared types or None.
+
+Code block:
+```python
+Line 1: def finish_opencode_trace(record):
+Line 2:     if record.stdin_thread:
+Line 3:         record.stdin_thread.join()
+Line 4:     if record.log_thread:
+Line 5:         record.log_thread.join()
+Line 6:     status = "error" if record.error or record.proc.returncode != 0 else "success"
+Line 7:     record_opencode_call(
+Line 8:         work_dir=record.work_dir,
+Line 9:         event_id=record.event_id,
+Line 10:         stage=record.stage,
+Line 11:         status=status,
+Line 12:         started=record.started,
+Line 13:         ended=utc_now_iso(),
+Line 14:         command=record.command,
+Line 15:         function_ids=record.function_ids,
+Line 16:         input_files=record.input_files,
+Line 17:         output_files=record.output_files,
+Line 18:         exit_code=record.proc.returncode,
+Line 19:         summary=record.summary,
+Line 20:         error=record.error,
+Line 21:         metadata=record.metadata,
+Line 22:         opencode_log_path=record.opencode_log_path,
+Line 23:         opencode_trace_path=record.opencode_trace_path,
+Line 24:     )
+```
+
+Additional context:
+record_opencode_call(work_dir, event_id, stage, status, started, ended, command, function_ids, input_files, output_files, exit_code, summary, error, metadata, opencode_log_path, opencode_trace_path)
+Pre-condition: work_dir is an existing directory containing a trace/ subdirectory. event_id, stage, status, started, ended, and command are non-empty strings. exit_code is an integer. All remaining parameters hold their declared types or None.
+Post-condition: A structured event record containing all provided fields is atomically appended to the events.jsonl file under <work_dir>/trace/. The written record is self-contained and includes event_id, timestamp, stage, command, exit_code, status, and all optional metadata fields.
+
+utc_now_iso()
+Pre-condition: None.
+Post-condition: Returns the current wall-clock time as an ISO 8601 formatted UTC string.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a new dictionary with exactly the keys 'signature', 'pre_condition', and 'post_condition'. For each of these keys, if spec contains that key, the value is the corresponding value from spec; otherwise, the value is the empty string. The input spec is not modified. Formally: result = {'signature': spec.get('signature', ''), 'pre_condition': spec.get('pre_condition', ''), 'post_condition': spec.get('post_condition', '')}."
+}

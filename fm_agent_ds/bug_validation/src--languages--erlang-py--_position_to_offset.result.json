@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_position_to_offset",
+  "source_file": "src/languages/erlang-py/_position_to_offset.py",
+  "function_name": "_position_to_offset",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_position_to_offset.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_position_to_offset.md",
+  "probe_stdout": "CONFIRMED — source='a', char=1 beyond single-char line | actual: 1 | expected: 0\nCONFIRMED — source='a\\nb', line=0 char=2 beyond line | actual: 2 | expected: 1\nCONFIRMED — source='x\\ny\\nz', line=1 char=2 beyond 'y\\n' | actual: 4 | expected: 3",
+  "trigger_summary": "When character is at or beyond the line's UTF-16 length, _SourceIndex.position_to_offset returns base+len(line) (offset right after the line) instead of the byte offset of the last byte of that line."
+}

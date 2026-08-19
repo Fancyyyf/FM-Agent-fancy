@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Create a project directory 'proj' containing 'proj/fm_agent/phases.json' (regular file) and 'proj/fm_agent/extracted_functions/other.py' (non-sidecar file) with valid 'other.py.spec.json' and 'other.py.info.json'. No files under a 'some_submodule' subdirectory exist. Call check_last_run_existence(proj_dir='proj', submodules=['some_submodule']). The code returns False because no function file falls under 'some_submodule/', but the specification returns True: condition (b) is satisfied by the existence of 'other.py', and condition (c) is vacuously true as no file matches the submodule restriction.",
+  "offending_statements": "Line 31: if submodules and not _is_under_submodules(rel, submodules):",
+  "reason": "The specification (Condition B) separates condition (b) (unrestricted existence of at least one non-sidecar function file) from the submodule-based restriction in condition (c). The code, through Lines 31-35, requires at least one ready function file within the selected submodules, which is stricter. When submodules are provided but no file matches them while a ready file exists elsewhere, the code returns False while the specification expects True."
+}

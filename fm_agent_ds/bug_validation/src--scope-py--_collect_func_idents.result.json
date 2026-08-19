@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_collect_func_idents",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_collect_func_idents.py",
+  "function_name": "_collect_func_idents",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_collect_func_idents.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_collect_func_idents.md",
+  "probe_stdout": "CONFIRMED — exc_types missing: ['ioerror', 'oserror', 'typeerror', 'valueerror'] | actual exc_types: ['runtimeerror']\n",
+  "trigger_summary": "ast.Tuple nodes in except clauses (e.g., except (ValueError, TypeError):) are not traversed to extract individual exception type names, so all tuple-caught exceptions are silently dropped from exc_types."
+}

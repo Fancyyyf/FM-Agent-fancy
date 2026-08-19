@@ -1,0 +1,21 @@
+Programming language: Python
+
+Pre-condition:
+source is a non-empty string containing source code text. lsp_range is a dict with a 'start' entry and an 'end' entry, each being a dict with 'line' (non-negative integer) and 'character' (non-negative integer in UTF-16 code units) entries, where start does not follow end in the source.
+
+Code block:
+```python
+Line 1: def _source_for_range(source: str, lsp_range: dict) -> str:
+Line 2:     """Compatibility wrapper for callers that do not reuse a source index."""
+Line 3:     return _SourceIndex.build(source).source_for_range(lsp_range)
+```
+
+Additional context:
+build(cls, source: str) -> _SourceIndex
+Pre-condition: source is a non-empty string containing source code text.
+Post-condition: Returns a _SourceIndex instance that indexes the source text by line boundaries, enabling position-to-offset and range-to-source queries for the given source.
+
+source_for_range(self, lsp_range: dict) -> str
+Pre-condition: self is a _SourceIndex instance built from the same source string handed to _source_for_range. lsp_range is a dict with 'start' and 'end' entries, each being a dict with 'line' and 'character' entries, where start does not follow end in the indexed source.
+Post-condition: Returns the substring of the indexed source from the byte offset of lsp_range['start'] (inclusive) to the byte offset of lsp_range['end'] (exclusive).
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

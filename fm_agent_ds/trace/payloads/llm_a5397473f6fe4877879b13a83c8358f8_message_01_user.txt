@@ -1,0 +1,20 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _load_sidecar_json(file_path, suffix):
+Line 2:     """Read one JSON sidecar next to file_path, or return None when unavailable."""
+Line 3:     try:
+Line 4:         with open(f"{file_path}{suffix}", "r", encoding="utf-8") as file:
+Line 5:             return json.load(file)
+Line 6:     except (OSError, json.JSONDecodeError):
+Line 7:         return None
+```
+
+Condition A (what the code actually does):
+The function either returns the Python object resulting from `json.load` on the file at `file_path + suffix` (opened in 'r' mode with utf-8 encoding) if the file is successfully opened and the content is valid JSON, or returns `None` if an `OSError` or `json.JSONDecodeError` interrupts the operation, or propagates any other exception that occurs. Formally, let `p = file_path + suffix`. After execution, one of the following holds: (1) the function terminates normally with return value `v`, where `v = json.load(open(p, 'r', encoding='utf-8'))` and no `OSError` or `json.JSONDecodeError` was raised during that call; (2) the function terminates normally with return value `None` because an `OSError` was raised by `open` (e.g., file not found, permission error) or a `json.JSONDecodeError` was raised by `json.load`; (3) the function terminates abnormally with an exception `e`, where `e` is not an instance of `OSError` or `json.JSONDecodeError` and was raised during the attempt to open or parse the file.
+
+Condition B (what the specification requires):
+Returns the dict parsed from the JSON contents of the file whose path is the concatenation of file_path and suffix. Returns None if the concatenated path does not name a readable file or if its contents are not valid JSON.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,69 @@
+Programming language: Python
+
+Pre-condition:
+existing is a dict representing the current OpenCode configuration. config is an LLMConfigInput with non-empty provider_id and api_style fields. opencode_secret_path is a Path to the provider secret key file.
+
+Code block:
+```python
+Line 1: def merge_opencode_config(
+Line 2:     existing: dict,
+Line 3:     config: LLMConfigInput,
+Line 4:     *,
+Line 5:     opencode_secret_path: Path,
+Line 6: ) -> dict:
+Line 7:     merged = deepcopy(existing)
+Line 8:     if "$schema" not in merged:
+Line 9:         merged["$schema"] = SCHEMA_URL
+Line 10:     providers = merged.get("provider")
+Line 11:     if providers is None:
+Line 12:         providers = {}
+Line 13:     if not isinstance(providers, dict):
+Line 14:         raise ConfigWizardError("OpenCode config field 'provider' must be an object.")
+Line 15:     entry = providers.get(config.provider_id)
+Line 16:     if entry is None:
+Line 17:         entry = {}
+Line 18:     if not isinstance(entry, dict):
+Line 19:         raise ConfigWizardError(
+Line 20:             f"OpenCode provider '{config.provider_id}' must be a JSON object."
+Line 21:         )
+Line 22:     merged_entry = deepcopy(entry)
+Line 23:     merged_entry["npm"] = adapter_for_api_style(config.api_style)
+Line 24:     options = merged_entry.get("options")
+Line 25:     if options is None:
+Line 26:         options = {}
+Line 27:     if not isinstance(options, dict):
+Line 28:         raise ConfigWizardError(
+Line 29:             f"OpenCode provider '{config.provider_id}.options' must be an object."
+Line 30:         )
+Line 31:     options = dict(options)
+Line 32:     options["baseURL"] = config.base_url
+Line 33:     options["apiKey"] = f"{{file:{opencode_secret_path}}}"
+Line 34:     merged_entry["options"] = options
+Line 35:     models = merged_entry.get("models")
+Line 36:     if models is None:
+Line 37:         models = {}
+Line 38:     if not isinstance(models, dict):
+Line 39:         raise ConfigWizardError(
+Line 40:             f"OpenCode provider '{config.provider_id}.models' must be an object."
+Line 41:         )
+Line 42:     models = dict(models)
+Line 43:     existing_model = models.get(config.model_id)
+Line 44:     if existing_model is None:
+Line 45:         existing_model = {}
+Line 46:     if not isinstance(existing_model, dict):
+Line 47:         raise ConfigWizardError(
+Line 48:             f"OpenCode model entry '{config.provider_id}/{config.model_id}' must be an object."
+Line 49:         )
+Line 50:     models[config.model_id] = existing_model
+Line 51:     merged_entry["models"] = models
+Line 52:     providers = dict(providers)
+Line 53:     providers[config.provider_id] = merged_entry
+Line 54:     merged["provider"] = providers
+Line 55:     return merged
+```
+
+Additional context:
+adapter_for_api_style(api_style: str) -> str
+Pre-condition: api_style is a non-empty string identifying a supported API style.
+Post-condition: Returns the npm package name string of the OpenCode adapter corresponding to the given API style.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

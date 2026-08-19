@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _split_into_blocks(func):
+Line 2:     lines = func.strip().split('\n')
+Line 3:     total = len(lines)
+Line 4:     if total <= GRANULARITY:
+Line 5:         return [func.strip()]
+Line 6:     blocks = []
+Line 7:     i = 0
+Line 8:     while i < total:
+Line 9:         remaining = total - i
+Line 10:         if remaining <= GRANULARITY * 2:
+Line 11:             blocks.append('\n'.join(lines[i:]))
+Line 12:             break
+Line 13:         end = i + GRANULARITY
+Line 14:         blocks.append('\n'.join(lines[i:end]))
+Line 15:         i = end
+Line 16:     return blocks
+```
+
+Condition A (what the code actually does):
+Let s = func.strip(), lines = s.split('\n'), total = len(lines). The function returns a list of strings blocks such that: (1) ''.join(blocks) == s; (2) if total <= GRANULARITY then blocks = [s]; (3) otherwise, len(blocks) >= 2, for j = 0 to len(blocks)-2, block j is '\n'.join(lines[j*GRANULARITY : (j+1)*GRANULARITY]), the last block is '\n'.join(lines[(len(blocks)-1)*GRANULARITY : total]), and the number of lines in the last block r = total - (len(blocks)-1)*GRANULARITY satisfies 1 <= r <= 2*GRANULARITY. All lines are taken sequentially without gaps or overlaps.
+
+Condition B (what the specification requires):
+Returns an ordered list of block strings, each a contiguous segment of func, such that the concatenation of all blocks in returned order reconstructs func. When the total line count of func does not exceed GRANULARITY, the result is a single-element list containing func. Otherwise, every block except possibly the last contains exactly GRANULARITY lines. When fewer than 2*GRANULARITY lines remain at the end, those remaining lines form the final block regardless of whether its line count reaches GRANULARITY. Each original line of func appears exactly once and in its original order across the returned list.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

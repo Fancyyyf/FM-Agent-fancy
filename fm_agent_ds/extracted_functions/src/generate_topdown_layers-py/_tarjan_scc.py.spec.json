@@ -1,0 +1,5 @@
+{
+  "signature": "_tarjan_scc(nodes, edges) -> list",
+  "pre_condition": "nodes is a non-empty set of FQN strings. edges is a dict mapping each FQN in nodes to a collection of FQN strings representing its in-neighbors, where every target FQN in the mapped collections is a member of nodes. Every FQN uses the canonical `::` separator.",
+  "post_condition": "Returns a list of lists, where each inner list is a strongly connected component containing one or more FQN strings drawn from nodes. Every FQN in nodes appears in exactly one inner list across the entire returned outer list. For every edge u → v in edges, the inner list containing u does not appear after the inner list containing v in the returned outer list."
+}

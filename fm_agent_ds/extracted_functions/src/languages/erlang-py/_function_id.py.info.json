@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_module_from_uri",
+      "signature": "_module_from_uri(uri: str) -> str",
+      "pre_condition": "uri is a non-empty string representing an absolute file path for an Erlang source file.",
+      "post_condition": "Returns a deterministic string identifier for the module containing the source file at uri. The same uri always produces the same module identifier."
+    },
+    {
+      "name": "_escape_component",
+      "signature": "_escape_component(component: str) -> str",
+      "pre_condition": "component is a non-empty string (a module identifier or a function name).",
+      "post_condition": "Returns a transformed version of component where any characters that would clash with the double-underscore separator in the function identifier format are deterministically replaced. Identical component values always produce identical results."
+    }
+  ]
+}

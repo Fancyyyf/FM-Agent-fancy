@@ -1,0 +1,11 @@
+{
+  "id": "src--entry_reasoning_pipeline-py--_make_run_copy",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_make_run_copy.py",
+  "function_name": "_make_run_copy",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--entry_reasoning_pipeline-py--_make_run_copy.py",
+  "detail_file": "fm_agent/bug_validation/src--entry_reasoning_pipeline-py--_make_run_copy.md",
+  "probe_stdout": "CONFIRMED — .svn was copied (present in run_dir) but specification requires excluding all version-control metadata directories. git_exists=False svn_exists=True src_exists=True readme_exists=True\n",
+  "trigger_summary": "A project directory containing .svn metadata has it copied into run_dir, violating the specification's requirement to exclude all version-control metadata directories."
+}

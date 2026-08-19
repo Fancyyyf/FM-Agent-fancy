@@ -1,0 +1,5 @@
+{
+  "signature": "_find_brace_end(lines: list[str], start_idx: int) -> int",
+  "pre_condition": "lines is a list of strings representing source code lines. start_idx is a valid 0-based index into lines. At least one source-code-significant '{' appears at or after start_idx and a matching '}' exists later in lines.",
+  "post_condition": "Returns the 0-based line index of the closing brace '}' that matches the first source-code-significant '{' found at or after start_idx. A brace is source-code-significant when it is not inside a double-quoted string literal, a single-quoted string literal, a character literal, a line comment (delimited by '//' to end-of-line), or a block comment (delimited by '/*' and '*/'). Braces belonging to a brace pair whose opening '{' is immediately preceded (after optional whitespace) by the standalone keyword 'interface' or 'struct' are excluded from the primary closing-brace match and counted independently. Matching uses outermost-pair depth balancing starting from the first significant '{'. When no matching '}' is found, returns len(lines) - 1."
+}

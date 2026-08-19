@@ -1,0 +1,29 @@
+Programming language: Python
+
+Pre-condition:
+A JSON-RPC request with the given request_id has been sent to the ELP server. deadline is a monotonic timestamp by which a response must be received.
+
+Code block:
+```python
+Line 1:     def _wait_for_response(self, request_id: int, deadline: float):
+Line 2:         while True:
+Line 3:             message = self._next_message(deadline)
+Line 4:             if message.get("id") == request_id and "method" not in message:
+Line 5:                 error = message.get("error")
+Line 6:                 if error:
+Line 7:                     if isinstance(error, dict) and error.get("code") == _CONTENT_MODIFIED_ERROR:
+Line 8:                         raise _ContentModifiedError(error)
+Line 9:                     raise RuntimeError(f"ELP request failed: {error}")
+Line 10:                 return message.get("result")
+Line 11:             self._handle_server_message(message)
+```
+
+Additional context:
+ElpClient._next_message(self, deadline: float) -> dict
+Pre-condition: deadline is a monotonic timestamp in the future. self has an active connection to the ELP server.
+Post-condition: Returns the next complete JSON-RPC message from the server as a dict. Blocks until a message arrives or the deadline is reached. Raises an exception when the deadline expires before a message is received or when the connection to the server is lost.
+
+ElpClient._handle_server_message(self, message: dict)
+Pre-condition: message is a dict representing a JSON-RPC message from the server that is not the response to the current request (either a server notification or a response for a different request_id).
+Post-condition: Processes the server message according to its type and content. Does not return a value relevant to the caller.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

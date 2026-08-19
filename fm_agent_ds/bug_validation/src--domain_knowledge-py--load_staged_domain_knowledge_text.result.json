@@ -1,0 +1,11 @@
+{
+  "id": "src--domain_knowledge-py--load_staged_domain_knowledge_text",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/domain_knowledge-py/load_staged_domain_knowledge_text.py",
+  "function_name": "load_staged_domain_knowledge_text",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--load_staged_domain_knowledge_text.py",
+  "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--load_staged_domain_knowledge_text.md",
+  "probe_stdout": "NOT CONFIRMED — list_staged_domain_knowledge_relpaths accepts single arg (prefix defaults to 'fm_agent'), no TypeError raised\n",
+  "trigger_summary": "list_staged_domain_knowledge_relpaths is called with one argument but prefix has a default value 'fm_agent', so no TypeError occurs."
+}

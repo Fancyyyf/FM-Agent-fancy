@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--render_llm_status",
+  "source_file": "dashboard-py/render_llm_status.py",
+  "function_name": "render_llm_status",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--render_llm_status.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--render_llm_status.md",
+  "probe_stdout": "CONFIRMED — detail table shows 5 rows, spec requires up to 6 rows from the full list (20 items). Window (LLM_STATUS_WINDOW=5) limited to 5 items, detail table draws from windowed tail 5 rows, full list tail would provide 6 rows.\n",
+  "trigger_summary": "Detail table slice ([-6:]) is applied to the already-windowed list ([-LLM_STATUS_WINDOW:]) instead of the full list, so when LLM_STATUS_WINDOW < 6 and the full list has >=6 items, the table shows fewer than 6 rows."
+}

@@ -1,0 +1,15 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def cli_effort():
+Line 2:     return settings.llm.effort.strip()
+```
+
+Condition A (what the code actually does):
+The function returns a string that is the result of stripping leading and trailing whitespace from `settings.llm.effort`. The value of `settings.llm.effort` is unchanged and remains a non-empty string. The function raises no exceptions. Formally: `result = settings.llm.effort.strip() ∧ settings.llm.effort = old(settings.llm.effort) ∧ settings.llm.effort ≠ ""`.
+
+Condition B (what the specification requires):
+Returns a string equal to the value of settings.llm.effort with leading and trailing whitespace removed. The returned string is non-empty.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

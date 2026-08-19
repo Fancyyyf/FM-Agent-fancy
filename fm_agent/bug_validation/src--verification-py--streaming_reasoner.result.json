@@ -1,11 +1,11 @@
 {
   "id": "src--verification-py--streaming_reasoner",
-  "source_file": "src/verification.py",
+  "source_file": "src/verification-py/streaming_reasoner.py",
   "function_name": "streaming_reasoner",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--verification-py--streaming_reasoner.py",
   "detail_file": "fm_agent/bug_validation/src--verification-py--streaming_reasoner.md",
-  "probe_stdout": "Functions pending verification: 1\nWARNING:root:Spec generation process(es) exited (codes [1]) but no .spec.json/.info.json sidecar pairs were created.\nCONFIRMED -- file with ready sidecars was NOT in processed set: False | expected: True\n",
-  "trigger_summary": "The unready computation at line 224 uses expected_files minus processed without checking is_file_ready(), causing files with ready sidecars to be incorrectly marked as pending when spec_procs finish before the scanning loop picks them up."
+  "probe_stdout": "Functions pending verification: 1\\nCONFIRMED - MISMATCH resolved during interrupt handling was never submitted to bug validation (verdict='MISMATCH' | verify_calls=1 | bug_validation_submissions=0 | proj_dir=provided | expected_submissions>=1); spec requires every MISMATCH to be submitted to bug validation before return when proj_dir is provided",
+  "trigger_summary": "A user interruption (KeyboardInterrupt) arriving while a reasoning future is in flight causes the interrupt handler to discard the future's MISMATCH verdict without submitting it to bug validation, even though proj_dir is provided."
 }

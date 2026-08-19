@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_wait_opencode_process",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/src/opencode_trace.py",
+  "function_name": "_wait_opencode_process",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_wait_opencode_process.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_wait_opencode_process.md",
+  "probe_stdout": "WARNING:root:opencode test timed out after 1s, killing: echo hello\nCONFIRMED — actual: -15 | expected: 0\n",
+  "trigger_summary": "A subprocess that times out and exits cleanly via SIGTERM (exit code 0) within the 10s grace period has its exit code incorrectly remapped to -15; the -15 mapping should only apply after SIGKILL."
+}

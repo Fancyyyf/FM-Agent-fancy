@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_is_under_submodules",
+      "signature": "_is_under_submodules(sf, submodules) -> bool",
+      "pre_condition": "sf is a normalized forward-slash file path string relative to proj_dir; submodules is a non-empty sequence of subdirectory paths",
+      "post_condition": "Returns True if and only if the path sf starts with a prefix equal to one of the submodule directory paths, where matching respects directory boundaries (concatenating the submodule path with a path separator before comparison)"
+    },
+    {
+      "name": "_collect_project_source_files",
+      "signature": "_collect_project_source_files(proj_dir, submodules) -> set",
+      "pre_condition": "proj_dir is an existing directory path; submodules, if not None, is a non-empty sequence of subdirectory paths relative to proj_dir",
+      "post_condition": "Returns a set of normalized forward-slash relative file paths for all project source files discovered under proj_dir. When submodules is not None, the returned set is restricted to files whose paths fall under at least one of the specified submodule directories."
+    }
+  ]
+}

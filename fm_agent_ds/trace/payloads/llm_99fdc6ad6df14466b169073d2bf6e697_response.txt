@@ -1,0 +1,1 @@
+{"post_condition": "The function returns an integer r = max(1, t) where t = settings.erlang.timeout_s, t ∈ ℤ. Thus r ≥ 1 and r is an integer. Formally: (t < 1 → r = 1) ∧ (t ≥ 1 → r = t). The state of settings.erlang.timeout_s is unchanged."}

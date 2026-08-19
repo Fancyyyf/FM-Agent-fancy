@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "_SKIP_DIRS = ['.git']; proj_dir contains a directory '.svn' with files. The function copies '.svn' into run_dir, violating the requirement to exclude version-control metadata directories.",
+  "offending_statements": "Line 12: shutil.copytree(\nLine 13:     proj_dir, tmp_dir,\nLine 14:     ignore=shutil.ignore_patterns(*_SKIP_DIRS),\nLine 15:     symlinks=True,\nLine 16: )",
+  "reason": "The specification requires exclusion of version-control metadata directories (e.g., .svn, .hg). The code uses a global _SKIP_DIRS that, per the docstring, only excludes '.git'. Consequently, a project containing a .svn directory would have it copied, violating the specification."
+}

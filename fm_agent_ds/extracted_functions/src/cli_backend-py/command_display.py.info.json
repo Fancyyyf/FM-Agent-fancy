@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "command_argv",
+      "signature": "command_argv(command) -> list[str]",
+      "pre_condition": "command is a non-None value whose argv attribute is a list of strings.",
+      "post_condition": "Returns the argv attribute of command as a list of strings."
+    },
+    {
+      "name": "command_stdin",
+      "signature": "command_stdin(command) -> str | None",
+      "pre_condition": "command is a non-None value whose stdin attribute is either a string or None.",
+      "post_condition": "Returns the stdin attribute of command — a string when stdin was supplied, or None when no stdin was provided."
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "default_paths(project_root: Path) -> WizardPaths",
+  "pre_condition": "project_root is a Path identifying an existing directory.",
+  "post_condition": "Returns a WizardPaths object whose toml_path, env_path, and opencode_config_path attributes each refer to an existing or creatable filesystem path. toml_path is the value of the FM_AGENT_CONFIG environment variable when set, otherwise <project_root>/fm-agent.toml. env_path is <project_root>/.env. opencode_config_path is the value of the OPENCODE_CONFIG environment variable when set, otherwise the path to the OpenCode configuration file (opencode.jsonc when present, otherwise opencode.json) in the platform-specific OpenCode configuration directory."
+}

@@ -1,0 +1,1 @@
+{"post_condition": "The method returns the dictionary `self._data`, which holds the fully resolved and populated configuration data. The instance state is not modified; the return value is exactly the reference to `self._data`. Formally: `result = self._data` ∧ `isinstance(result, dict)` ∧ `∀f ∈ fields(self) : final(f) = initial(f)`."}

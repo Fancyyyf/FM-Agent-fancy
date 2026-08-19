@@ -1,0 +1,5 @@
+{
+  "signature": "_iter_project_files(proj_dir: str, suffixes: set[str]) -> Iterator[str]",
+  "pre_condition": "proj_dir is a string referring to an existing directory. suffixes is a non-empty set of strings, each representing a file extension including the leading dot.",
+  "post_condition": "Returns a lazy iterator that yields absolute-path strings, one at a time. Each yielded string is the absolute path of a regular file whose file extension, compared case-insensitively, is a member of suffixes, found under the directory tree rooted at proj_dir. Subdirectories whose name, compared case-insensitively, matches any name in a predetermined set of pipeline workspace artifact directory names are pruned from the traversal — no files from within those subdirectories are yielded. Each matching file is yielded exactly once. Directories, symbolic links, and files whose extension is not in suffixes are not yielded. The iteration order depends on the order in which the filesystem enumeration encounters files. When no matching files exist under proj_dir, the iterator is exhausted on the first call to next()."
+}

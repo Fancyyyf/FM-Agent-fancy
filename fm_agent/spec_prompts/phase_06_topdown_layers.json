@@ -2,7 +2,7 @@
   "phase": 6,
   "phase_name": "Reasoning & Verification Engine",
   "total_functions": 146,
-  "total_layers": 8,
+  "total_layers": 7,
   "layers": [
     {
       "layer": 0,
@@ -41,9 +41,7 @@
           "unit": "orchestration",
           "phase6_callers": [],
           "phase6_callees": [],
-          "all_callees": [
-            "src::file_utils-py::_is_under_submodules"
-          ]
+          "all_callees": []
         },
         {
           "name": "main-py::_resolve_bug_validator_path",
@@ -52,6 +50,21 @@
           "phase6_callers": [],
           "phase6_callees": [],
           "all_callees": []
+        },
+        {
+          "name": "main-py::run_pipeline",
+          "file": "extracted_functions/main-py/run_pipeline.py",
+          "unit": "orchestration",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "main-py::_clean_previous_run",
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ],
+          "all_callees": [
+            "main-py::_clean_previous_run",
+            "src::plugin-py::PluginConfig::get_stage",
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ]
         },
         {
           "name": "src::entry_reasoning_pipeline-py::run_entry_pipeline",
@@ -186,7 +199,6 @@
           "unit": "incremental_pipeline",
           "phase6_callers": [],
           "phase6_callees": [
-            "main-py::run_pipeline",
             "src::generate_topdown_layers-py::generate_topdown_layers",
             "src::incremental_reasoner-py::_collect_changed_functions",
             "src::incremental_reasoner-py::_remove_stale_extracted",
@@ -197,7 +209,6 @@
             "src::incremental_reasoner-py::collect_relevent_function_scope"
           ],
           "all_callees": [
-            "main-py::run_pipeline",
             "src::call_graph_edges-py::load_call_edges",
             "src::domain_knowledge-py::stage_domain_knowledge_files",
             "src::extract-py::run_extraction",
@@ -313,6 +324,16 @@
           ]
         },
         {
+          "name": "main-py::_clean_previous_run",
+          "file": "extracted_functions/main-py/_clean_previous_run.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "main-py::run_pipeline"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
           "name": "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner",
           "file": "extracted_functions/src/entry_reasoning_pipeline-py/_run_entry_pipeline_inner.py",
           "unit": "entry_pipeline",
@@ -320,7 +341,6 @@
             "src::entry_reasoning_pipeline-py::run_entry_pipeline"
           ],
           "phase6_callees": [
-            "main-py::run_pipeline",
             "src::entry_reasoning_pipeline-py::_count_mismatches",
             "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
             "src::entry_reasoning_pipeline-py::_make_run_copy",
@@ -328,7 +348,6 @@
             "src::entry_reasoning_pipeline-py::_trim_project_in_place"
           ],
           "all_callees": [
-            "main-py::run_pipeline",
             "src::call_graph_edges-py::load_call_edges",
             "src::entry_reasoning_pipeline-py::_count_mismatches",
             "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
@@ -547,6 +566,28 @@
           ]
         },
         {
+          "name": "src::spec_generation_and_verification-py::run_spec_generation_and_verification",
+          "file": "extracted_functions/src/spec_generation_and_verification-py/run_spec_generation_and_verification.py",
+          "unit": "spec_orchestrator",
+          "phase6_callers": [
+            "main-py::run_pipeline"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::spec_generation_and_verification-py::_get_pending_batches",
+            "src::verification-py::streaming_reasoner"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_get_incomplete_verification_files",
+            "src::file_utils-py::_get_phase_files",
+            "src::file_utils-py::is_file_ready",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::languages::erlang-py::_JsonRpcReader::run",
+            "src::spec_generation_and_verification-py::_get_pending_batches",
+            "src::verification-py::streaming_reasoner"
+          ]
+        },
+        {
           "name": "src::verification-py::_validate_single_bug",
           "file": "extracted_functions/src/verification-py/_validate_single_bug.py",
           "unit": "verification",
@@ -737,37 +778,6 @@
             "dashboard-py::_fmt_tokens",
             "dashboard-py::_price_for",
             "dashboard-py::render_tokens::row"
-          ]
-        },
-        {
-          "name": "main-py::run_pipeline",
-          "file": "extracted_functions/main-py/run_pipeline.py",
-          "unit": "orchestration",
-          "phase6_callers": [
-            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner",
-            "src::incremental_reasoner-py::run_incremental_pipeline"
-          ],
-          "phase6_callees": [
-            "main-py::_clean_previous_run",
-            "src::generate_topdown_layers-py::generate_topdown_layers",
-            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
-          ],
-          "all_callees": [
-            "main-py::_clean_previous_run",
-            "src::call_graph_edges-py::load_call_edges",
-            "src::domain_knowledge-py::stage_domain_knowledge_files",
-            "src::extract-py::run_extraction",
-            "src::file_utils-py::_get_all_phase_files",
-            "src::file_utils-py::_has_source_code",
-            "src::file_utils-py::_write_file_names",
-            "src::file_utils-py::collect_file_names",
-            "src::generate_topdown_layers-py::generate_topdown_layers",
-            "src::languages::codegraph-py::try_codegraph_init",
-            "src::pipeline_setup-py::_post_process_phases",
-            "src::pipeline_setup-py::_run_generate_domain_context",
-            "src::pipeline_setup-py::_run_generate_phases",
-            "src::plugin-py::PluginConfig::get_stage",
-            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
           ]
         },
         {
@@ -1107,6 +1117,37 @@
             "src::scope-py::_parse_file",
             "src::scope-py::_rank_functions"
           ]
+        },
+        {
+          "name": "src::spec_generation_and_verification-py::_get_pending_batches",
+          "file": "extracted_functions/src/spec_generation_and_verification-py/_get_pending_batches.py",
+          "unit": "spec_orchestrator",
+          "phase6_callers": [
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::file_utils-py::is_file_ready"
+          ]
+        },
+        {
+          "name": "src::verification-py::streaming_reasoner",
+          "file": "extracted_functions/src/verification-py/streaming_reasoner.py",
+          "unit": "verification",
+          "phase6_callers": [
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ],
+          "phase6_callees": [
+            "src::verification-py::_generate_validation_summary",
+            "src::verification-py::_spec_task_done",
+            "src::verification-py::_spec_task_exit_code"
+          ],
+          "all_callees": [
+            "src::file_utils-py::is_file_ready",
+            "src::verification-py::_generate_validation_summary",
+            "src::verification-py::_spec_task_done",
+            "src::verification-py::_spec_task_exit_code"
+          ]
         }
       ]
     },
@@ -1271,16 +1312,6 @@
           ]
         },
         {
-          "name": "main-py::_clean_previous_run",
-          "file": "extracted_functions/main-py/_clean_previous_run.py",
-          "unit": "orchestration",
-          "phase6_callers": [
-            "main-py::run_pipeline"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
           "name": "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
           "file": "extracted_functions/src/entry_reasoning_pipeline-py/_entry_func_source_rel.py",
           "unit": "entry_pipeline",
@@ -1349,6 +1380,30 @@
           "phase6_callees": [],
           "all_callees": [
             "src::extract-py::_function_spans"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::generate_topdown_layers",
+          "file": "extracted_functions/src/generate_topdown_layers-py/generate_topdown_layers.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_topdown_ordered_fqns",
+            "src::incremental_reasoner-py::run_incremental_pipeline",
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_compute_layers",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_load_phases"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_compute_layers",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_load_phases"
           ]
         },
         {
@@ -1548,26 +1603,35 @@
           ]
         },
         {
-          "name": "src::spec_generation_and_verification-py::run_spec_generation_and_verification",
-          "file": "extracted_functions/src/spec_generation_and_verification-py/run_spec_generation_and_verification.py",
-          "unit": "spec_orchestrator",
+          "name": "src::verification-py::_generate_validation_summary",
+          "file": "extracted_functions/src/verification-py/_generate_validation_summary.py",
+          "unit": "verification",
           "phase6_callers": [
-            "main-py::run_pipeline"
-          ],
-          "phase6_callees": [
-            "src::generate_topdown_layers-py::generate_topdown_layers",
-            "src::spec_generation_and_verification-py::_get_pending_batches",
+            "src::incremental_reasoner-py::_verify_incremental_functions",
             "src::verification-py::streaming_reasoner"
           ],
-          "all_callees": [
-            "src::file_utils-py::_get_incomplete_verification_files",
-            "src::file_utils-py::_get_phase_files",
-            "src::file_utils-py::is_file_ready",
-            "src::generate_topdown_layers-py::generate_topdown_layers",
-            "src::languages::erlang-py::_JsonRpcReader::run",
-            "src::spec_generation_and_verification-py::_get_pending_batches",
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::verification-py::_spec_task_done",
+          "file": "extracted_functions/src/verification-py/_spec_task_done.py",
+          "unit": "verification",
+          "phase6_callers": [
             "src::verification-py::streaming_reasoner"
-          ]
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::verification-py::_spec_task_exit_code",
+          "file": "extracted_functions/src/verification-py/_spec_task_exit_code.py",
+          "unit": "verification",
+          "phase6_callers": [
+            "src::verification-py::streaming_reasoner"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
         }
       ]
     },
@@ -1619,29 +1683,73 @@
           "all_callees": []
         },
         {
-          "name": "src::generate_topdown_layers-py::generate_topdown_layers",
-          "file": "extracted_functions/src/generate_topdown_layers-py/generate_topdown_layers.py",
+          "name": "src::generate_topdown_layers-py::_build_call_graph",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_build_call_graph.py",
           "unit": "topdown_layers",
           "phase6_callers": [
-            "main-py::run_pipeline",
-            "src::incremental_reasoner-py::_topdown_ordered_fqns",
-            "src::incremental_reasoner-py::run_incremental_pipeline",
-            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_project_call_graph"
           ],
           "phase6_callees": [
-            "src::generate_topdown_layers-py::_build_call_graph",
-            "src::generate_topdown_layers-py::_collect_phase_files",
-            "src::generate_topdown_layers-py::_compute_layers",
+            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
+            "src::generate_topdown_layers-py::_detect_lang_from_ext",
             "src::generate_topdown_layers-py::_file_to_fqn",
-            "src::generate_topdown_layers-py::_load_phases"
+            "src::generate_topdown_layers-py::_find_call_sites",
+            "src::generate_topdown_layers-py::_get_keywords_for_lang",
+            "src::generate_topdown_layers-py::_resolve_extra_call_edges"
           ],
           "all_callees": [
-            "src::generate_topdown_layers-py::_build_call_graph",
-            "src::generate_topdown_layers-py::_collect_phase_files",
-            "src::generate_topdown_layers-py::_compute_layers",
+            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
+            "src::generate_topdown_layers-py::_detect_lang_from_ext",
             "src::generate_topdown_layers-py::_file_to_fqn",
-            "src::generate_topdown_layers-py::_load_phases"
+            "src::generate_topdown_layers-py::_find_call_sites",
+            "src::generate_topdown_layers-py::_get_keywords_for_lang",
+            "src::generate_topdown_layers-py::_resolve_extra_call_edges",
+            "src::languages::registry-py::call_edges_all"
           ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_collect_phase_files",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_project_call_graph"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_metadata_sidecar"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_compute_layers",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_compute_layers.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_tarjan_scc"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_tarjan_scc"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_load_phases",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_load_phases.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_project_call_graph",
+            "src::incremental_reasoner-py::_remove_stale_extracted",
+            "src::incremental_reasoner-py::_topdown_ordered_fqns",
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
         },
         {
           "name": "src::incremental_reasoner-py::_bare_function_name",
@@ -1777,208 +1885,11 @@
           "all_callees": [
             "src::scope-py::_name_parts"
           ]
-        },
-        {
-          "name": "src::spec_generation_and_verification-py::_get_pending_batches",
-          "file": "extracted_functions/src/spec_generation_and_verification-py/_get_pending_batches.py",
-          "unit": "spec_orchestrator",
-          "phase6_callers": [
-            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
-          ],
-          "phase6_callees": [],
-          "all_callees": [
-            "src::file_utils-py::is_file_ready"
-          ]
-        },
-        {
-          "name": "src::verification-py::streaming_reasoner",
-          "file": "extracted_functions/src/verification-py/streaming_reasoner.py",
-          "unit": "verification",
-          "phase6_callers": [
-            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
-          ],
-          "phase6_callees": [
-            "src::verification-py::_generate_validation_summary",
-            "src::verification-py::_spec_task_done",
-            "src::verification-py::_spec_task_exit_code"
-          ],
-          "all_callees": [
-            "src::file_utils-py::is_file_ready",
-            "src::verification-py::_generate_validation_summary",
-            "src::verification-py::_spec_task_done",
-            "src::verification-py::_spec_task_exit_code"
-          ]
         }
       ]
     },
     {
       "layer": 5,
-      "functions": [
-        {
-          "name": "src::generate_topdown_layers-py::_build_call_graph",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_build_call_graph.py",
-          "unit": "topdown_layers",
-          "phase6_callers": [
-            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
-            "src::generate_topdown_layers-py::generate_topdown_layers",
-            "src::incremental_reasoner-py::_project_call_graph"
-          ],
-          "phase6_callees": [
-            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
-            "src::generate_topdown_layers-py::_detect_lang_from_ext",
-            "src::generate_topdown_layers-py::_file_to_fqn",
-            "src::generate_topdown_layers-py::_find_call_sites",
-            "src::generate_topdown_layers-py::_get_keywords_for_lang",
-            "src::generate_topdown_layers-py::_resolve_extra_call_edges"
-          ],
-          "all_callees": [
-            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
-            "src::generate_topdown_layers-py::_detect_lang_from_ext",
-            "src::generate_topdown_layers-py::_file_to_fqn",
-            "src::generate_topdown_layers-py::_find_call_sites",
-            "src::generate_topdown_layers-py::_get_keywords_for_lang",
-            "src::generate_topdown_layers-py::_resolve_extra_call_edges",
-            "src::languages::registry-py::call_edges_all"
-          ]
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_collect_phase_files",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py",
-          "unit": "topdown_layers",
-          "phase6_callers": [
-            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
-            "src::generate_topdown_layers-py::generate_topdown_layers",
-            "src::incremental_reasoner-py::_project_call_graph"
-          ],
-          "phase6_callees": [],
-          "all_callees": [
-            "src::file_utils-py::_is_metadata_sidecar"
-          ]
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_compute_layers",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_compute_layers.py",
-          "unit": "topdown_layers",
-          "phase6_callers": [
-            "src::generate_topdown_layers-py::generate_topdown_layers"
-          ],
-          "phase6_callees": [
-            "src::generate_topdown_layers-py::_tarjan_scc"
-          ],
-          "all_callees": [
-            "src::generate_topdown_layers-py::_tarjan_scc"
-          ]
-        },
-        {
-          "name": "src::generate_topdown_layers-py::_load_phases",
-          "file": "extracted_functions/src/generate_topdown_layers-py/_load_phases.py",
-          "unit": "topdown_layers",
-          "phase6_callers": [
-            "src::generate_topdown_layers-py::generate_topdown_layers",
-            "src::incremental_reasoner-py::_project_call_graph",
-            "src::incremental_reasoner-py::_remove_stale_extracted",
-            "src::incremental_reasoner-py::_topdown_ordered_fqns",
-            "src::incremental_reasoner-py::collect_relevent_function_scope"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_collect_calls",
-          "file": "extracted_functions/src/scope-py/_collect_calls.py",
-          "unit": "scope_analysis",
-          "phase6_callers": [
-            "src::scope-py::_parse_python_file"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_collect_func_idents",
-          "file": "extracted_functions/src/scope-py/_collect_func_idents.py",
-          "unit": "scope_analysis",
-          "phase6_callers": [
-            "src::scope-py::_parse_python_file"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_extract_classes",
-          "file": "extracted_functions/src/scope-py/_extract_classes.py",
-          "unit": "scope_analysis",
-          "phase6_callers": [
-            "src::scope-py::_parse_python_file"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_fuzzy_name_score",
-          "file": "extracted_functions/src/scope-py/_fuzzy_name_score.py",
-          "unit": "scope_analysis",
-          "phase6_callers": [
-            "src::scope-py::_base_score"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_generic_func_info",
-          "file": "extracted_functions/src/scope-py/_generic_func_info.py",
-          "unit": "scope_analysis",
-          "phase6_callers": [
-            "src::scope-py::_parse_generic_file"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::scope-py::_name_parts",
-          "file": "extracted_functions/src/scope-py/_name_parts.py",
-          "unit": "scope_analysis",
-          "phase6_callers": [
-            "src::scope-py::_base_score",
-            "src::scope-py::_score_class"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::verification-py::_generate_validation_summary",
-          "file": "extracted_functions/src/verification-py/_generate_validation_summary.py",
-          "unit": "verification",
-          "phase6_callers": [
-            "src::incremental_reasoner-py::_verify_incremental_functions",
-            "src::verification-py::streaming_reasoner"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::verification-py::_spec_task_done",
-          "file": "extracted_functions/src/verification-py/_spec_task_done.py",
-          "unit": "verification",
-          "phase6_callers": [
-            "src::verification-py::streaming_reasoner"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        },
-        {
-          "name": "src::verification-py::_spec_task_exit_code",
-          "file": "extracted_functions/src/verification-py/_spec_task_exit_code.py",
-          "unit": "verification",
-          "phase6_callers": [
-            "src::verification-py::streaming_reasoner"
-          ],
-          "phase6_callees": [],
-          "all_callees": []
-        }
-      ]
-    },
-    {
-      "layer": 6,
       "functions": [
         {
           "name": "src::generate_topdown_layers-py::_add_resolved_extra_edge",
@@ -2059,11 +1970,72 @@
           ],
           "phase6_callees": [],
           "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_collect_calls",
+          "file": "extracted_functions/src/scope-py/_collect_calls.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_collect_func_idents",
+          "file": "extracted_functions/src/scope-py/_collect_func_idents.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_extract_classes",
+          "file": "extracted_functions/src/scope-py/_extract_classes.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_fuzzy_name_score",
+          "file": "extracted_functions/src/scope-py/_fuzzy_name_score.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_base_score"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_generic_func_info",
+          "file": "extracted_functions/src/scope-py/_generic_func_info.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_generic_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_name_parts",
+          "file": "extracted_functions/src/scope-py/_name_parts.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_base_score",
+            "src::scope-py::_score_class"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
         }
       ]
     },
     {
-      "layer": 7,
+      "layer": 6,
       "functions": [
         {
           "name": "src::generate_topdown_layers-py::_get_call_regex",

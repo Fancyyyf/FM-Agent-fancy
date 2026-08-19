@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/project', work_dir='/tmp/work', modified_modules=['module_A']. Ensure /tmp/work/phases.json exists and module_A owns source files, and the LLM agent call succeeds.",
+  "offending_statements": "Line 41: output_files=[\"fm_agent/phases.json\"]",
+  "reason": "The specification requires that the updated module descriptions be written to the phases.json file at the expected path under work_dir (the same file checked for existence on line 15-16). However, the code configures the agent to write its output to a different file, work_dir/fm_agent/phases.json, and never modifies the original work_dir/phases.json. As a result, after the function returns, the original phases.json remains unchanged, violating the requirement."
+}

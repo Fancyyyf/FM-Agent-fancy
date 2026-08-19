@@ -1,0 +1,5 @@
+{
+  "signature": "validate_input(config: LLMConfigInput) -> None",
+  "pre_condition": "config is an immutable LLMConfigInput whose fields — provider_id (str), provider_name (str), api_style (ApiStyle literal), base_url (str), model_id (str), api_key (str), and backend (str) — are all present.",
+  "post_condition": "Raises ConfigWizardError when, after stripping leading and trailing whitespace, config.provider_id, config.provider_name, config.model_id, or config.api_key is empty. Raises an exception when the stripped config.base_url is not a syntactically valid absolute URL whose scheme is http or https. Raises an exception when config.api_style is not a member of the known set of valid API styles. Raises an exception when config.backend is not a member of the known set of valid backend identifiers. Returns with no effect when every field satisfies its respective validation rule."
+}

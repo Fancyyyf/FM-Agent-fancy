@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/_warn_on_codegraph_version_mismatch.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "If the configured codegraph.version (after stripping whitespace and removing any leading 'v') is empty, returns immediately with no side effects. If the executable at cmd cannot be reached or fails to report its version, returns silently with no side effects. If the version reported by the executable differs from the configured version, a warning is logged containing both version strings. The function never raises an exception and never blocks or terminates the calling process.",
-    "actual_behavior": "The function returns None. No exception is propagated. The global state (including `settings.codegraph.version`) is unchanged. If `want` (computed as `settings.codegraph.version.strip().removeprefix('v')`) is empty, the function returns immediately with no side effects. If `want` is nonempty, the subprocess `cmd --version` is run with `capture_output=True`, `text=True`, `timeout=10`. If an `OSError` or `subprocess.SubprocessError` is raised, it is caught and the function returns without logging. If the subprocess completes successfully, its stdout is stripped into `got`. If `got` is nonempty and `got != want`, then `logging.warning` is called with the specific message containing `got` and `want`; otherwise, no warning is logged. No other output or state change occurs.\n\nFormally:\nLet `want = settings.codegraph.version.strip().removeprefix('v')`.\nPost-condition:\n  return = None\n   (want = ''    no warning logged  subprocess not executed)\n   (want  ''  \n      ( (subprocess.run raises OSError  subprocess.SubprocessError)\n           no warning logged )\n       ( no such exception occurs \n            let `got = subprocess_result.stdout.strip()` in\n            ( (got  ''  got  want)    warning_logged_with(got, want) )\n        )\n    )",
-    "code_evidence": "Line 15: if got and got != want:",
-    "trigger_condition": "The code's condition requires `got` to be truthy before checking inequality, so it skips the warning when the executable reports an empty version string. The specification demands a warning whenever the reported version differs, even if it is empty."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/languages/codegraph-py/_warn_on_codegraph_version_mismatch.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

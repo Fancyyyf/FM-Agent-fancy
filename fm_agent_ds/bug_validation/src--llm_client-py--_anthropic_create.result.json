@@ -1,0 +1,11 @@
+{
+  "id": "src--llm_client-py--_anthropic_create",
+  "source_file": "src/llm_client.py",
+  "function_name": "_anthropic_create",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_anthropic_create.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--_anthropic_create.md",
+  "probe_stdout": "CONFIRMED — actual: '' (empty string) | expected per spec: non-empty string\n",
+  "trigger_summary": "_anthropic_create returns an empty string when the API response content array contains no blocks of type 'text' (e.g., tool_use-only responses), violating the specification's requirement that text is a non-empty string."
+}

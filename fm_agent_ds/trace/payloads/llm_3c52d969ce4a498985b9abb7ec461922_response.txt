@@ -1,0 +1,1 @@
+{"verdict": "MISMATCH", "counterexample": "{\"location\": \"not a dict\"}", "offending_statements": "Line 4: return (symbol.get(\"location\") or {}).get(\"range\")", "reason": "Code raises AttributeError when symbol['location'] is a truthy non-dict (e.g., a string), but the specification requires returning None because location does not map to a truthy dict containing 'range'."}

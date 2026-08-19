@@ -1,0 +1,41 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _string_list(value, key: str, source: str) -> tuple[str, ...]:
+Line 2:     if not isinstance(value, list):
+Line 3:         raise ValueError(f"{source}: '{key}' must be a string array")
+Line 4:     out = []
+Line 5:     for idx, item in enumerate(value, start=1):
+Line 6:         if not isinstance(item, str):
+Line 7:             raise ValueError(f"{source}: {key}[{idx}] must be a string")
+Line 8:         label = _clean_label(item)
+Line 9:         if label:
+Line 10:             out.append(label)
+Line 11:     return tuple(out)
+```
+
+Condition A (what the code actually does):
+The function _string_list validates that `value` is a list of strings, with error reporting using `key` and `source`, and returns a tuple of non‑empty cleaned strings obtained by applying `_clean_label` to each element in order, skipping those that become empty. If `value` is not a list, a ValueError is raised with the message f"{source}: '{key}' must be a string array". If any element of `value` is not a string, a ValueError is raised with the message f"{source}: {key}[{idx}] must be a string" where idx is the 1‑based index of the offending element. Otherwise (i.e., `value` is a list and every element is a string) the function returns tuple(out) where out = [l for x in value if (l := _clean_label(x)) != '']. Formally:
+
+Let S = {source}, K = {key}.
+Precondition: True (value arbitrary, key non‑empty, source arbitrary).
+Postcondition:
+  (not isinstance(value, list)) ⇒
+    (∃ ValueError raised with message = f"{S}: '{K}' must be a string array")
+  ∧
+  (isinstance(value, list) ∧ ∃ i ∈ [0, len(value)-1] such that not isinstance(value[i], str)) ⇒
+    (∃ ValueError raised with message = f"{S}: {K}[{i+1}] must be a string")
+  ∧
+  (isinstance(value, list) ∧ ∀ i ∈ [0, len(value)-1]: isinstance(value[i], str)) ⇒
+    (function returns tuple T where T = tuple(l for x in value if (l := _clean_label(x)) != ''))
+    ∧ no exception raised.
+
+Condition B (what the specification requires):
+Raises ValueError whose message text contains source and key when value is not of list type. Raises ValueError whose message text contains source, key, and a 1-based index when any element of value is not of string type. Otherwise returns a tuple of the non-empty strings derived from the elements of value, preserving element order; elements that yield an empty string after label validation are excluded from the result.
+
+Additional context:
+_clean_label(item: str) -> str
+Pre-condition: item is a string element from the list being validated.
+Post-condition: Returns a cleaned string. When the returned string is empty, the element is excluded from the output tuple.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

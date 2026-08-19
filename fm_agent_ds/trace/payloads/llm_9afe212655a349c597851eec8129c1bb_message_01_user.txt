@@ -1,0 +1,17 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for Rust."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("rust") if cg else None
+```
+
+Condition A (what the code actually does):
+After the function finishes execution normally, the return value R is determined as follows: if the call CodeGraphExtractor.from_proj_dir(proj_dir) returns an object O that is truthy, then R = O.get_call_edges("rust") and R is a dictionary mapping tuples of the form (caller_stem, caller_module) to sets of callee_stems. If O is falsy, R = None. The function does not modify proj_dir or any global state. If an exception is raised during the execution of CodeGraphExtractor.from_proj_dir(proj_dir), the exception propagates, and no normal return occurs. Formally: let cg = CodeGraphExtractor.from_proj_dir(proj_dir); then (normal_return ⇒ ((cg ≠ None ∧ cg ≠ False ∧ ...) ⇒ result = cg.get_call_edges("rust") ∧ result is dict with said structure) ∧ (¬cg ⇒ result = None)) ∧ (exception ⇒ no return).
+
+Condition B (what the specification requires):
+If the CodeGraph backend initializes successfully, returns a dict mapping each Rust caller identifier to a set of callee identifiers for all Rust source files under proj_dir. Both caller and callee identifiers use the canonicalized FQN format. If the CodeGraph backend fails to initialize, returns None.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

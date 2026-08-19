@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _flatten_paths(values):
+Line 2:     paths = []
+Line 3:     for value in values or []:
+Line 4:         if isinstance(value, (list, tuple)):
+Line 5:             paths.extend(_flatten_paths(value))
+Line 6:         elif value:
+Line 7:             paths.append(value)
+Line 8:     return paths
+```
+
+Condition A (what the code actually does):
+The function returns a flat list containing all non‑empty strings from the input `values` (or an empty list if `values` is `None`). Recursively, for any nested list or tuple, all its elements are flattened in depth‑first order, preserving the original sequence. Falsy strings (e.g., empty strings) are omitted. Formally, define function flatten(x) as: if x is None or x is empty iterable: []; else if x is a string: [x] if x != '' else []; else if x is a list or tuple: concatenation over e in x of flatten(e). Then the return value R satisfies R = flatten(values).
+
+Condition B (what the specification requires):
+Returns a flat list of string elements obtained by recursively flattening all nested iterables in values into a single list, preserving the relative order of elements from the original structure. Elements that are empty strings or otherwise falsy are excluded from the result.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

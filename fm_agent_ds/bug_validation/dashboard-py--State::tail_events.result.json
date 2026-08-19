@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--State::tail_events",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/State::tail_events.py",
+  "function_name": "State::tail_events",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--State::tail_events.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--State::tail_events.md",
+  "probe_stdout": "CONFIRMED — tail_events() raised IsADirectoryError when events_path is a directory; spec requires normal return with no side effects\n",
+  "trigger_summary": "When events_path is a directory, Path.exists() returns True (spec requires 'exists as a file' check), skipping the early return and causing IsADirectoryError on open() instead of a normal return with no side effects."
+}

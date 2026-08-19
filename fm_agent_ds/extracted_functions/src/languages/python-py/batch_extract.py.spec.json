@@ -1,0 +1,5 @@
+{
+  "signature": "batch_extract(proj_dir: str) -> dict",
+  "pre_condition": "proj_dir is a path to an existing directory",
+  "post_condition": "Returns a dictionary whose keys are absolute file paths (str) for every Python source file discovered in proj_dir. The value for each key is a list of (func_name: str, func_body: str) 2-tuples, one tuple per function defined in that file. A file containing no function definitions yields an empty list. When the static-analysis backend cannot initialize, returns an empty dictionary."
+}

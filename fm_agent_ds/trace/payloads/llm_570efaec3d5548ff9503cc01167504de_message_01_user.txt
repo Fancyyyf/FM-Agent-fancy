@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+uri is a non-empty string representing an absolute file path for an Erlang source file. label is a non-empty string from an ELP symbol that encodes a function name and an arity, where the arity follows the final forward slash and is parseable as a non-negative integer.
+
+Code block:
+```python
+Line 1: def _function_id(uri: str, label: str) -> str:
+Line 2:     try:
+Line 3:         name, arity = label.rsplit("/", 1)
+Line 4:         int(arity)
+Line 5:     except (ValueError, TypeError) as exc:
+Line 6:         raise ValueError(f"ELP function label has no valid arity: {label!r}") from exc
+Line 7:     if ":" in name and not name.startswith("'"):
+Line 8:         name = name.rsplit(":", 1)[1]
+Line 9:     module = _module_from_uri(uri)
+Line 10:     return f"{_escape_component(module)}__{_escape_component(name)}__{arity}"
+```
+
+Additional context:
+_module_from_uri(uri: str) -> str
+Pre-condition: uri is a non-empty string representing an absolute file path for an Erlang source file.
+Post-condition: Returns a deterministic string identifier for the module containing the source file at uri. The same uri always produces the same module identifier.
+
+_escape_component(component: str) -> str
+Pre-condition: component is a non-empty string (a module identifier or a function name).
+Post-condition: Returns a transformed version of component where any characters that would clash with the double-underscore separator in the function identifier format are deterministically replaced. Identical component values always produce identical results.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a string referring to a filesystem directory that may contain Erlang source files
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return ``{abs_filepath: [(function_id, body)]}`` for Erlang files."""
+Line 3:     return _analysis_or_empty(proj_dir).functions
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

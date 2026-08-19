@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "lang_key = \"python\" when LANG_CONFIG = {} and _COMMON_EXTRA_KEYWORDS = ()",
+  "offending_statements": "Line 4: kw = set(lang_cfg.get(\"keywords\", set()))\nLine 5: kw.update(_COMMON_EXTRA_KEYWORDS)",
+  "reason": "If _COMMON_EXTRA_KEYWORDS is empty and lang_key has no entry or no configured keywords, the returned set is empty, violating the specification's requirement that the returned set is non-empty."
+}

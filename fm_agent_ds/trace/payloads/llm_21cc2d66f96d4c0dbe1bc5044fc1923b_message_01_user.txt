@@ -1,0 +1,49 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def scan_bugs(self):
+Line 2:         self.bugs_confirmed = 0
+Line 3:         self.bugs_not_confirmed = 0
+Line 4:         if not self.bug_dir.exists():
+Line 5:             return
+Line 6:         for path in self.bug_dir.glob("*.result.json"):
+Line 7:             try:
+Line 8:                 with open(path, "r", encoding="utf-8") as f:
+Line 9:                     d = json.load(f)
+Line 10:             except Exception:
+Line 11:                 continue
+Line 12:             status = (d.get("confirmation_status") or "").lower()
+Line 13:             if "not" in status:
+Line 14:                 self.bugs_not_confirmed += 1
+Line 15:             elif "confirm" in status:
+Line 16:                 self.bugs_confirmed += 1
+Line 17:             else:
+Line 18:                 self.bugs_not_confirmed += 1  
+Line 19:         # pending = bug_validation opencode_calls with success status, minus results files
+Line 20:         bv = self.stage_counts.get("bug_validation", {})
+Line 21:         bv_done = sum(bv.values())
+Line 22:         self.bugs_pending = max(0, bv_done - (self.bugs_confirmed + self.bugs_not_confirmed))
+```
+
+Condition A (what the code actually does):
+After execution, the attributes `self.bugs_confirmed`, `self.bugs_not_confirmed`, and `self.bugs_pending` are updated according to the following rules, and no other attributes are modified. Let `E` be `self.bug_dir.exists()` before the method. If `¬E`, then `self.bugs_confirmed = 0`, `self.bugs_not_confirmed = 0`, and `self.bugs_pending = max(0, bv_done)` where `bv_done = sum(self.stage_counts.get('bug_validation', {}).values())` (with original value). If `E`, define:
+
+- `F` = { p : p ∈ self.bug_dir.glob('*.result.json') } (the set of file paths matching the pattern)
+- `S` = { p ∈ F : opening and parsing `p` as JSON succeeds without raising any exception }
+- For each `p ∈ S`, let `status(p)` = `(d.get('confirmation_status') or '').lower()` where `d` is the parsed JSON object
+- `C` = { p ∈ S : 'confirm' ∈ status(p) ∧ 'not' ∉ status(p) }
+- `N` = `S \ C`
+
+Then:
+`self.bugs_confirmed = |C|`
+`self.bugs_not_confirmed = |N|`
+`bv_done` = sum of values in `self.stage_counts.get('bug_validation', {})` (as it was at method entry)
+`self.bugs_pending = max(0, bv_done - |S|)`.
+
+That is, `bugs_confirmed` counts parsed files whose lowercased confirmation status contains "confirm" but not "not"; `bugs_not_confirmed` counts the remaining parsed files (those containing "not" or neither string); `bugs_pending` is the maximum of zero and the difference between the sum of count values for the 'bug_validation' stage (or 0 if absent) and the total number of successfully parsed result files.
+
+Condition B (what the specification requires):
+self.bugs_confirmed, self.bugs_not_confirmed, and self.bugs_pending are updated to reflect the current state of self.bug_dir. When the directory exists, every .result.json file is classified: a file whose confirmation_status (case-insensitive) contains the substring 'confirm' without containing 'not' increments bugs_confirmed; any other file increments bugs_not_confirmed. self.bugs_pending is max(0, completed_bug_validation_stages − (bugs_confirmed + bugs_not_confirmed)). When self.bug_dir does not exist, all three counters are zero.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

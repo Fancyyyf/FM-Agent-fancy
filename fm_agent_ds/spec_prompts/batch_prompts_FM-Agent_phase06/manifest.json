@@ -1,0 +1,20 @@
+{
+  "phase": 6,
+  "layers": "7",
+  "total_functions": 2,
+  "total_batches": 1,
+  "batches": [
+    {
+      "index": 0,
+      "file": "batch_000_layer7_extracted_b0.txt",
+      "layer": 7,
+      "is_cycle": false,
+      "num_functions": 2,
+      "num_pending": 0,
+      "functions": [
+        "fm_agent/extracted_functions/src/generate_topdown_layers-py/_get_call_regex.py",
+        "fm_agent/extracted_functions/src/generate_topdown_layers-py/_strip_comments_from_source.py"
+      ]
+    }
+  ]
+}

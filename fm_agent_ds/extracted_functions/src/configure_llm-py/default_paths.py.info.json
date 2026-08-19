@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_fm_agent_config_path",
+      "signature": "_fm_agent_config_path(project_root: Path) -> Path",
+      "pre_condition": "project_root is a Path identifying an existing directory.",
+      "post_condition": "Returns a Path: the value of the FM_AGENT_CONFIG environment variable when set, otherwise <project_root>/fm-agent.toml."
+    },
+    {
+      "name": "detect_opencode_config_path",
+      "signature": "detect_opencode_config_path() -> Path",
+      "pre_condition": "No caller guarantees required.",
+      "post_condition": "Returns a Path to the OpenCode configuration file: the value of the OPENCODE_CONFIG environment variable when set; otherwise, opencode.jsonc when it exists in the platform-specific OpenCode configuration directory, or opencode.json otherwise."
+    }
+  ]
+}

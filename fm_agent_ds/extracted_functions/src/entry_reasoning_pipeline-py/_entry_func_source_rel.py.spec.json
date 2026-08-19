@@ -1,0 +1,5 @@
+{
+  "signature": "_entry_func_source_rel(entry_func: str) -> str",
+  "pre_condition": "entry_func is a non-empty string whose components are delimited by '::', representing a fully-qualified function name. The FQN corresponds to a function whose source file was extracted into extracted_functions/ and whose extracted-file path (formed by replacing every '::' with the platform path separator) can be resolved by _extracted_file_to_source_rel.",
+  "post_condition": "Returns a string containing the project-relative path (using forward slashes as separators) of the source file that contains the function identified by entry_func. The returned path encodes the source module and file from which the function was extracted, with no leading or trailing whitespace."
+}

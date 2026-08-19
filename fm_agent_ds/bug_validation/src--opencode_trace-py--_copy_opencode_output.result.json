@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_copy_opencode_output",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_copy_opencode_output.py",
+  "function_name": "_copy_opencode_output",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_copy_opencode_output.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_copy_opencode_output.md",
+  "probe_stdout": "CONFIRMED — TypeError raised when writing bytes to text-mode trace log: write() argument must be str, not bytes",
+  "trigger_summary": "Passing a binary stream (BytesIO) to _copy_opencode_output causes trace_log.write() to raise TypeError because the text-mode file expects str but receives bytes."
+}

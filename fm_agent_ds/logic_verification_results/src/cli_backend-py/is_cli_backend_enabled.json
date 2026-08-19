@@ -1,0 +1,5 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/cli_backend-py/is_cli_backend_enabled.py",
+  "verdict": "MATCH",
+  "gaps": null
+}

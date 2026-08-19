@@ -1,0 +1,39 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def validated(self) -> List[str]:
+Line 2:         """Return a list of validation error strings (empty = valid)."""
+Line 3:         errors = []
+Line 4:         if self.type not in ("pass", "replace", "modify"):
+Line 5:             errors.append(
+Line 6:                 "stage type must be 'pass', 'replace', or 'modify', "
+Line 7:                 f"got '{self.type}'"
+Line 8:             )
+Line 9:         if self.type == "replace" and not self.replace_cmd:
+Line 10:             errors.append("type=replace requires 'replace_cmd'")
+Line 11:         if (
+Line 12:             self.type == "modify"
+Line 13:             and not self.input_md
+Line 14:             and not self.output_process
+Line 15:         ):
+Line 16:             errors.append(
+Line 17:                 "type=modify requires at least one of 'input_md' or 'output_process'"
+Line 18:             )
+Line 19:         return errors
+```
+
+Condition A (what the code actually does):
+The method returns a list `errors` containing zero or more validation error strings depending on the attributes of `self`. The list is built by concatenating up to three error messages in the order they are checked:
+1. If `self.type` is not one of `"pass"`, `"replace"`, or `"modify"`, then the first element is the string: `"stage type must be 'pass', 'replace', or 'modify', got '<value>'` with `<value>` replaced by the actual `self.type`.
+2. If `self.type == "replace"` and `self.replace_cmd` is falsy (i.e., `None` or an empty string), then an element `"type=replace requires 'replace_cmd'"` is appended.
+3. If `self.type == "modify"` and both `self.input_md` and `self.output_process` are falsy, then an element `"type=modify requires at least one of 'input_md' or 'output_process'"` is appended.
+No other elements appear; if none of the conditions hold, the returned list is empty. Formally, the returned list `R` satisfies:
+R = (['stage type must be \'pass\', \'replace\', or \'modify\', got \'' + self.type + '\''] if self.type not in {'pass','replace','modify'} else []) +
+    (['type=replace requires \'replace_cmd\''] if self.type == 'replace' and not self.replace_cmd else []) +
+    (['type=modify requires at least one of \'input_md\' or \'output_process\''] if self.type == 'modify' and not self.input_md and not self.output_process else [])
+
+Condition B (what the specification requires):
+Returns a list of zero or more validation error strings. The returned list is empty if and only if all of the following hold: (1) self.type is one of "pass", "replace", or "modify"; (2) if self.type is "replace", then self.replace_cmd is truthy; (3) if self.type is "modify", then at least one of self.input_md or self.output_process is truthy. When the list is non-empty, each entry is a string identifying which constraint was violated. The function does not modify self or any of its attributes.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

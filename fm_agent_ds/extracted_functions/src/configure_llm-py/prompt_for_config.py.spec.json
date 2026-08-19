@@ -1,0 +1,5 @@
+{
+  "signature": "prompt_for_config() -> tuple[LLMConfigInput, bool]",
+  "pre_condition": "None required.",
+  "post_condition": "Returns a tuple of (config, validate_flag) where config is an LLMConfigInput instance with all fields populated from user terminal input: provider_id, provider_name, base_url, model_id, and api_key are non-empty strings; api_style is a member of the ApiStyle enumeration; and backend is 'opencode'. validate_flag is True when the user elected to validate the generated configuration, False otherwise. Configuration fields are collected interactively via stdout and stdin, with each field offering a default value that is accepted when the user provides empty input. Raises ConfigWizardError when the user's API style selection does not correspond to any recognized valid option. Re-prompts the user for any field whose input fails that field's validation rules, continuing until valid input is provided."
+}

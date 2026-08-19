@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "lines = ['{', '/* {', '}', '*/', '}']",
+  "offending_statements": "Line 40:             if ch == '/' and i + 1 < len(line) and line[i + 1] == '*':\nLine 41:                 i += 2\nLine 42:                 while i < len(line):\nLine 43:                     if line[i] == '*' and i + 1 < len(line) and line[i + 1] == '/':\nLine 44:                         i += 2\nLine 45:                         break\nLine 46:                     i += 1\nLine 47:                 # If block comment spans lines, we ignore braces inside it (simplified)\nLine 48:                 continue",
+  "reason": "The code processes each line independently without carrying over the block comment state, so braces inside a multi-line block comment are not ignored, violating the specification that requires all braces inside block comments to be excluded regardless of spanning multiple lines."
+}

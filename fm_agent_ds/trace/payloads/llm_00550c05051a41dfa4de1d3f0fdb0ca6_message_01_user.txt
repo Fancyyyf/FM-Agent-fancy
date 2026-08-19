@@ -1,0 +1,36 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def validate_llm_setting(key: str, value: str) -> None:
+Line 2:     """Validate one non-secret [llm] setting accepted by the lightweight CLI."""
+Line 3:     if key not in _LLM_TOML_KEYS:
+Line 4:         raise ConfigWizardError(f"Unsupported LLM setting: {key}")
+Line 5:     if key == "provider" and not value.strip():
+Line 6:         raise ConfigWizardError("Provider ID must not be empty.")
+Line 7:     if key == "base_url":
+Line 8:         validate_base_url(value.strip())
+Line 9:     elif key == "backend" and value not in _BACKENDS:
+Line 10:         supported = ", ".join(_BACKENDS)
+Line 11:         raise ConfigWizardError(
+Line 12:             f"Backend must be one of: {supported}; got: {value!r}"
+Line 13:         )
+Line 14:     elif key == "api_style":
+Line 15:         adapter_for_api_style(value)
+```
+
+Condition A (what the code actually does):
+The function validate_llm_setting(key, value) either returns None or raises an exception. If key is not in _LLM_TOML_KEYS, it raises ConfigWizardError("Unsupported LLM setting: {key}"). If key == 'provider' and value.strip() is empty, it raises ConfigWizardError("Provider ID must not be empty."). If key == 'base_url', it calls validate_base_url(value.strip()) which may raise an exception if value.strip() is not a syntactically valid absolute URL with http or https scheme; otherwise it does not raise. If key == 'backend' and value not in _BACKENDS, it raises ConfigWizardError with message listing supported backends. If key == 'api_style', it calls adapter_for_api_style(value) which may raise an exception if value is not a recognized API style; otherwise it does not raise. Otherwise, if none of the above conditions cause an exception, the function returns None without side effects.
+
+Condition B (what the specification requires):
+Raises ConfigWizardError when key is not a recognized LLM configuration setting key. When key is recognized, raises ConfigWizardError when value fails the validation constraint associated with that key: a constraint requiring a non-empty trimmed string (value is empty or consists only of whitespace after stripping); a constraint requiring a syntactically valid absolute URL with http or https scheme (value does not satisfy it); a constraint requiring membership in a fixed set of recognized identifiers (value is absent from that set); or a constraint delegating to an API style adapter (the adapter rejects value). Returns with no effect when key is recognized and value satisfies all constraints associated with that key.
+
+Additional context:
+validate_base_url(url: str) -> None
+Pre-condition: url is a non-empty, whitespace-stripped string.
+Post-condition: Raises an exception when url is not a syntactically valid absolute URL whose scheme is http or https. Returns with no effect when url is a valid absolute URL with http or https scheme.
+
+adapter_for_api_style(style: str) -> None
+Pre-condition: style is a string.
+Post-condition: Raises an exception when style is not a recognized API style identifier. Returns with no effect when style is a recognized API style identifier.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,22 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _verify(rel):
+Line 2:         fpath = os.path.join(extracted_dir, rel)
+Line 3:         language = _VERIFY_EXT_TO_LANG.get(os.path.splitext(fpath)[1], "C")
+Line 4:         _, verdict = _verify_single_file(fpath, extracted_dir, output_dir, language, work_dir=work_dir)
+Line 5:         return rel, verdict
+```
+
+Condition A (what the code actually does):
+The function _verify either completes normally, returning a 2-tuple (rel, verdict), or propagates any exception raised by _verify_single_file. If _verify_single_file does not raise an exception, the tuple's first element is the input relative path rel (unchanged), and the second element, verdict, is the second component of the tuple returned by _verify_single_file (as specified in its own post-condition: None or a dict containing at least the key 'verdict' with value 'MATCH' or 'MISMATCH'; when 'MISMATCH' the dict also contains non-empty strings under 'counterexample' and 'offending_statements'). The call to _verify_single_file may create verification artefacts inside output_dir, but leaves the original extracted function file (fpath) and its associated .spec.json and .info.json sidecars unchanged. If _verify_single_file raises an exception (e.g., due to missing or malformed sidecars), the exception propagates unmodified and no return occurs. Formally, let E be the exception type and R be the return value: ( ( _verify_single_file(fpath, extracted_dir, output_dir, language, work_dir) ⇓ (_, v)  ∧  R = (rel, v)  ∧  output_dir ⊆ output_dir' ∧ files unmodified )  ∨  ( _verify_single_file raises E  ∧  _verify raises E ) ).
+
+Condition B (what the specification requires):
+Returns a pair (rel, verdict) where the first element equals the input argument unchanged, and verdict is the verification outcome for the function at extracted_dir/rel. When the function's .spec.json and .info.json sidecars both exist and are well-formed, verdict is a dict whose 'verdict' key is either 'MATCH' (the implementation satisfies the spec) or 'MISMATCH' (the implementation violates the spec); a MISMATCH verdict additionally contains non-empty 'counterexample' and 'offending_statements' strings. When required sidecar files are absent or malformed, verdict is None.
+
+Additional context:
+_verify_single_file(file_path: str, extracted_dir: str, output_dir: str, language: str, work_dir: str) -> tuple
+Pre-condition: file_path is the absolute path to an extracted function file whose adjacent .spec.json and .info.json sidecars exist and conform to the metadata schema. extracted_dir is the root directory of the extracted_functions tree. output_dir is a writable directory for storing verification results. language is a non-empty string identifying the programming language of the function. work_dir is the FM-Agent workspace directory containing trace and configuration data.
+Post-condition: Returns a tuple. The second element is either a dict containing a 'verdict' key with value 'MATCH' or 'MISMATCH', or None. When the verdict is 'MISMATCH', the dict contains non-empty 'counterexample' and 'offending_statements' strings describing the spec violation. The function file and its sidecars are not modified.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

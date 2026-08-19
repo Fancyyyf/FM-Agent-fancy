@@ -1,0 +1,5 @@
+{
+  "signature": "_fqn_to_ident(fqn) -> str",
+  "pre_condition": "fqn is a non-empty string representing a fully-qualified function name whose components are separated by '::'.",
+  "post_condition": "Returns the class-qualified identifier portion of fqn: the tail after the source-file component (the component whose rightmost hyphen-separated token is a known language file extension). If no source-file component is found, returns the last '::'-delimited component of fqn."
+}

@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "local_backend_toml_updates",
+      "signature": "local_backend_toml_updates(env_path: Path, backend: str) -> dict[str, Any]",
+      "pre_condition": "env_path is a Path that identifies a readable .env file or does not identify an existing file. backend is a non-empty string that is not 'opencode'.",
+      "post_condition": "Returns a non-empty dict mapping dot-separated TOML field paths within the LLM section to new values along a key path that sets the LLM backend to backend. When model or effort values exist in the project .env or fm-agent.toml configuration, their current values are preserved in the returned dict."
+    },
+    {
+      "name": "update_llm_settings_toml_text",
+      "signature": "update_llm_settings_toml_text(toml_text: str, updates: dict[str, Any]) -> str",
+      "pre_condition": "toml_text is valid TOML text. updates is a non-empty dict whose keys are dot-separated field paths that each resolve to a writable leaf location in the LLM section of toml_text.",
+      "post_condition": "Returns valid TOML text in which every field path present in updates has been set to its corresponding value and all other content of toml_text is unchanged."
+    },
+    {
+      "name": "remove_legacy_llm_env_overrides",
+      "signature": "remove_legacy_llm_env_overrides(env_text: str | None) -> tuple[str | None, tuple[str, ...]]",
+      "pre_condition": "env_text is the text content of a .env file or None.",
+      "post_condition": "Returns (updated_env, removed_overrides). removed_overrides is a tuple of environment variable names whose legacy LLM override entries were present in env_text before the call and are absent from updated_env; every other entry from the original env_text is preserved unchanged in updated_env. When env_text is None or empty, returns (env_text, ())."
+    },
+    {
+      "name": "backup_file",
+      "signature": "backup_file(path: Path) -> Path",
+      "pre_condition": "path identifies an existing readable file.",
+      "post_condition": "Returns a Path to a copy of the file at path whose content is byte-for-byte identical to the content path held at the time of the call."
+    },
+    {
+      "name": "atomic_write",
+      "signature": "atomic_write(path: Path, content: str) -> None",
+      "pre_condition": "path is a writable filesystem path.",
+      "post_condition": "Upon return, path contains exactly content. The write is atomic: any concurrent reader of path observes either the complete prior content or the complete new content."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Initial `lines` = []; `block` = \"any block content\"; `caller_expectations` = None; `functions` = [{\"name\":\"foo\",\"file\":\"foo.py\",\"<phase_callers_key>\":[]}]; `is_cycle` = False; `phase` = 1; `layer_idx` = 0; `func_to_layer` = {}; `fm_agent_prefix` = \"\"; any valid `fn` metadata that does not add earlier‑layer callers.",
+  "offending_statements": "Line 81-153: The code block does not append the required header identifying phase number and layer index, the detected programming language, the domain‑context file reading instructions, the behavioral spec writing rules, or the formatted spec blocks from earlier‑layer callers. The resulting string lacks these mandatory elements, violating specification (B).",
+  "reason": "The specification requires a complete prompt containing a header (phase, layer, language), domain‑context file instructions, behavioral spec rules, and formatted earlier‑layer caller spec blocks. The code block (lines 81‑153) adds only a subset of those elements. With an empty initial `lines`, the returned string misses the required header, language detection, file‑reading instructions, spec rules, and caller spec blocks, producing a concrete output that does not satisfy (B)."
+}

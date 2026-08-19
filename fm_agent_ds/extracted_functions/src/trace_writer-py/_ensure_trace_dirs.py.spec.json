@@ -1,0 +1,5 @@
+{
+  "signature": "_ensure_trace_dirs(trace_dir) -> None",
+  "pre_condition": "trace_dir is a string representing a filesystem path whose parent directory exists or can be created.",
+  "post_condition": "The subdirectory named 'payloads' within trace_dir exists as a writable directory. If trace_dir or any of its ancestor directories did not previously exist, they have been created. If all directories along the full path already existed, no filesystem modifications occur. On failure to create any missing directory (e.g., permission denied, read-only filesystem, a path component exists as a non-directory file), an OSError propagates to the caller; in this case the filesystem state of directories created during the partially-successful operation is undefined."
+}

@@ -1,0 +1,1 @@
+{"signature": "_write_command_stdin(stream, text)", "pre_condition": "stream is a writable file-like object; text is a string", "post_condition": "all characters of text are written to stream and the write is flushed before stream is closed; stream is closed under all execution paths, including when an exception is raised during writing or flushing"}

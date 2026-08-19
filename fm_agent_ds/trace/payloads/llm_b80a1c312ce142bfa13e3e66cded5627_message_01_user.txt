@@ -1,0 +1,72 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _codegraph_legacy_coverage(proj_dir, codegraph_functions, file_languages):
+Line 2:     """Check that CodeGraph covers every function the legacy extractor sees.
+Line 3:     CodeGraph can legitimately contain *additional* functions, such as an inline
+Line 4:     C++ member that the legacy extractor skips. It is only safe to bypass the
+Line 5:     legacy path when every legacy-visible function has an ordered CodeGraph match
+Line 6:     with the same bare name and source. A missing match means CodeGraph is
+Line 7:     incomplete for this file, so callers must use the legacy fallback instead.
+Line 8:     """
+Line 9:     coverage = {}
+Line 10:     for rel_path, lang_key in file_languages.items():
+Line 11:         rel_key = _normalized_relative_path(proj_dir, rel_path)
+Line 12:         abs_path = os.path.join(proj_dir, rel_path)
+Line 13:         if not os.path.exists(abs_path):
+Line 14:             # Added or removed files only have functions on one side of the
+Line 15:             # comparison; an absent file is therefore an expected empty map.
+Line 16:             coverage[rel_key] = True
+Line 17:             continue
+Line 18:         legacy_functions = extract_functions_from_file(abs_path, lang_key)
+Line 19:         codegraph_items = list(codegraph_functions.get(rel_key, {}).items())
+Line 20:         codegraph_index = 0
+Line 21:         for legacy_name, legacy_source in legacy_functions:
+Line 22:             legacy_body = _normalized_function_source(legacy_source)
+Line 23:             legacy_bare_name = _bare_function_name(legacy_name)
+Line 24:             while codegraph_index < len(codegraph_items):
+Line 25:                 identifier, codegraph_source = codegraph_items[codegraph_index]
+Line 26:                 codegraph_index += 1
+Line 27:                 if (
+Line 28:                     _bare_function_name(identifier) == legacy_bare_name
+Line 29:                     and _normalized_function_source(codegraph_source) == legacy_body
+Line 30:                 ):
+Line 31:                     break
+Line 32:             else:
+Line 33:                 logging.warning(
+Line 34:                     "CodeGraph does not cover legacy-extracted function %s in %s; "
+Line 35:                     "using legacy comparison for this file.",
+Line 36:                     legacy_name,
+Line 37:                     rel_path,
+Line 38:                 )
+Line 39:                 coverage[rel_key] = False
+Line 40:                 break
+Line 41:         else:
+Line 42:             coverage[rel_key] = True
+Line 43:     return coverage
+```
+
+Condition A (what the code actually does):
+The function returns a dictionary `coverage` with one key-value pair for each `rel_path` in the input `file_languages`. For a given `rel_path` with associated language key `lang_key`, let `rel_key = _normalized_relative_path(proj_dir, rel_path)` and `abs_path = os.path.join(proj_dir, rel_path)`. If `os.path.exists(abs_path)` is False, then `coverage[rel_key]` is `True`. Otherwise, let `legacy_funcs` be the list of `(name, source)` tuples returned by `extract_functions_from_file(abs_path, lang_key)`, and let `codegraph_items` be the list of `(identifier, source)` pairs from `codegraph_functions.get(rel_key, {})` in dictionary item order. The value `coverage[rel_key]` is `True` if and only if there exists a strictly increasing integer sequence `j_0 < j_1 < ... < j_{L-1}` (where `L = len(legacy_funcs)`) with each `j_i` a valid index into `codegraph_items` such that for every `i`: `_bare_function_name(codegraph_items[j_i][0]) == _bare_function_name(legacy_funcs[i][0])` and `_normalized_function_source(codegraph_items[j_i][1]) == _normalized_function_source(legacy_funcs[i][1])`. If no such sequence exists, `coverage[rel_key]` is `False`. The iteration order over `file_languages` determines the order of insertion into `coverage`, but no further ordering of the returned dictionary is guaranteed beyond the natural Python dict insertion order (Python 3.7+).
+
+Condition B (what the specification requires):
+Returns a dict whose keys are the normalized relative paths of the files listed in file_languages (paths relativized against proj_dir and case-normalized) and whose values are booleans. For a file whose corresponding disk path under proj_dir does not exist, the value is True. For an existing file, the value is True if and only if the ordered sequence of (func_name, source) tuples produced by the legacy extractor under the file's language key is an ordered subsequence of the CodeGraph entries for that file — where a pair of entries match when they have the same unqualified function name and their source texts are identical after line-ending normalization — and each matched CodeGraph entry appears at a strictly later index than the preceding match. When the ordered-subsequence condition fails — meaning at least one legacy-discovered function lacks a matching CodeGraph entry in the required order — the value is False and a warning identifying the unmatched function name and its file path is emitted via the logging system. The function makes no modifications to the filesystem.
+
+Additional context:
+_normalized_relative_path(proj_dir, path) -> str
+Pre-condition: proj_dir is a directory path. path is an absolute path or a path relative to proj_dir.
+Post-condition: Returns the path normalized relative to proj_dir: collapses . and .. segments, normalizes path separators, and applies case normalization for case-insensitive filesystems. The result is a string with no leading directory separator.
+
+extract_functions_from_file(filepath, lang_key) -> list[tuple[str, str]]
+Pre-condition: filepath refers to an existing, readable file. lang_key is a language key present in the extraction configuration.
+Post-condition: Returns a list of (func_name, source_text) tuples, one per function found in the file via language-specific extraction rules, appearing in source-code order. Each func_name is canonicalized: unsafe characters are translated and duplicates are deduplicated by a numeric suffix in order of first occurrence. Each source_text includes the full function body from start to end inclusive, with line endings normalized to '\n' and a trailing newline.
+
+_bare_function_name(identifier) -> str
+Pre-condition: identifier is a string that may contain :: or . qualifier separators and a trailing _<digits> deduplication suffix.
+Post-condition: Returns the rightmost segment of identifier after the last :: or . separator, with any trailing underscore followed by digits removed. When the identifier contains no qualifier separators, the identifier itself is returned with any trailing dedup suffix stripped.
+
+_normalized_function_source(source) -> str
+Pre-condition: source is a string containing function source text.
+Post-condition: Returns the source text with all line endings normalized to a single \n character. Carriage-return–line-feed pairs (\r\n) and standalone carriage returns (\r) are each replaced with \n.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

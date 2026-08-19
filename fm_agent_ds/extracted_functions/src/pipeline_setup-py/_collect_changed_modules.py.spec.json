@@ -1,0 +1,5 @@
+{
+  "signature": "_collect_changed_modules(ensure_changes, *change_sets)",
+  "pre_condition": "ensure_changes is a dict that may contain an 'augmented_modules' key whose value is a list of dicts, each having at minimum 'phase' (int, 1-indexed) and 'module' (str) keys. Each positional argument in change_sets is a dict that may contain a 'modified_modules' key whose value is a list of dicts, each having at minimum 'phase' (int, 1-indexed) and 'module' (str) keys.",
+  "post_condition": "Returns a list of dicts, each containing 'phase' and 'module' keys. The returned list contains exactly one entry for each distinct (phase, module) pair that appears in any 'modified_modules' list across all change_sets arguments or in the 'augmented_modules' list of ensure_changes. If a given (phase, module) pair appears in multiple input sources, it appears exactly once in the returned list. Entries from change_sets are encountered before those from ensure_changes; within each source the relative encounter order is preserved."
+}

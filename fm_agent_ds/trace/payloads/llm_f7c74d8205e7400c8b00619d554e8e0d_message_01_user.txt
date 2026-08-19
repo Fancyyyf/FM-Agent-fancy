@@ -1,0 +1,20 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _fm_agent_config_path(project_root: Path) -> Path:
+Line 2:     """Match config.py's FM_AGENT_CONFIG path selection exactly."""
+Line 3:     explicit_config = os.environ.get("FM_AGENT_CONFIG")
+Line 4:     if explicit_config is None:
+Line 5:         # config.py loads the project .env without replacing a real process value.
+Line 6:         explicit_config = dotenv_values(project_root / ".env").get("FM_AGENT_CONFIG")
+Line 7:     return Path(explicit_config) if explicit_config else project_root / "fm-agent.toml"
+```
+
+Condition A (what the code actually does):
+The function returns a Path object. If the environment variable 'FM_AGENT_CONFIG' is set and its value is a non-empty string, the returned path is Path(os.environ['FM_AGENT_CONFIG']). Otherwise, if the environment variable is completely absent (None) and the .env file at project_root / '.env' contains a non-empty value for 'FM_AGENT_CONFIG', the returned path is Path(dotenv_values(project_root / '.env').get('FM_AGENT_CONFIG')). In all remaining cases (environment variable present but empty, or absent and .env entry missing or empty), the returned path is project_root / 'fm-agent.toml'. Formally: let env = os.environ.get('FM_AGENT_CONFIG'). If env is not None and env != '': result = Path(env). Else if env is None: let dotenv = dotenv_values(project_root / '.env').get('FM_AGENT_CONFIG'); if dotenv is not None and dotenv != '': result = Path(dotenv); else: result = project_root / 'fm-agent.toml'. Else (env == ''): result = project_root / 'fm-agent.toml'.
+
+Condition B (what the specification requires):
+Returns a Path whose string representation equals the value obtained by resolving the FM_AGENT_CONFIG configuration key through the following precedence: (1) the process environment variable FM_AGENT_CONFIG, if set; (2) the value of the FM_AGENT_CONFIG key in the dotenv environment file at project_root/.env, if the file exists and contains the key; (3) the literal filename "fm-agent.toml", resolved relative to project_root.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

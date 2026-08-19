@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "CodeGraphExtractor.from_proj_dir",
+      "signature": "CodeGraphExtractor.from_proj_dir(proj_dir) -> CodeGraphExtractor | None",
+      "pre_condition": "proj_dir is a string path to an existing project directory.",
+      "post_condition": "Returns a CodeGraphExtractor instance initialised against the project directory if the CodeGraph index can be created; returns None otherwise."
+    },
+    {
+      "name": "get_function_spans",
+      "signature": "get_function_spans(language: str, filepath: str) -> list | None",
+      "pre_condition": "Called on a valid CodeGraphExtractor instance. language is a string identifying the target programming language and filepath is a string path to a source file.",
+      "post_condition": "Returns a list of (name, start_idx, end_idx) tuples for each function in the specified file where indices are 0-indexed and inclusive, or None if the file is not indexed by the backend."
+    }
+  ]
+}

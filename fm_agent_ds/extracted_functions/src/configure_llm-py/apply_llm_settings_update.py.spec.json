@@ -1,0 +1,5 @@
+{
+  "signature": "apply_llm_settings_update(updates: dict[str, str], toml_path: Path) -> Path | None",
+  "pre_condition": "updates is a non-empty dict whose keys are dot-separated field paths within the [llm] section of the TOML document and whose values are non-empty strings or booleans representing new configuration values. toml_path identifies an existing, readable, and writable file whose content is valid TOML parseable by the standard library TOML parser.",
+  "post_condition": "The file at toml_path is overwritten such that every key in updates has its value written to the corresponding field path in the [llm] section, while all other sections, fields, and the overall TOML structure outside the updated fields are preserved unchanged. Before the write, the original file content is copied to a timestamp-suffixed backup file adjacent to toml_path. Returns the backup file Path when a backup was created; returns None when no backup was created. Raises ConfigWizardError when toml_path does not refer to an existing file or when the updated TOML content is not parseable as valid TOML by the standard library parser."
+}

@@ -1,0 +1,1 @@
+{"verdict": "MATCH", "counterexample": null, "offending_statements": null, "reason": "The code's behavior precisely matches the specification: the returned list is empty if and only if self.type is valid and any additional type-specific constraints are satisfied; error messages are correctly reported when a constraint is violated."}

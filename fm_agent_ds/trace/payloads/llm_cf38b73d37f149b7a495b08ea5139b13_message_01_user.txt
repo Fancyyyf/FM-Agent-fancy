@@ -1,0 +1,15 @@
+Programming language: Python
+
+Pre-condition:
+self is an initialized State instance.
+
+Code block:
+```python
+Line 1:     def elapsed(self):
+Line 2:         if self.first_event_time is None:
+Line 3:             return None
+Line 4:         end = self.last_event_time or datetime.now(timezone.utc)
+Line 5:         return (end - self.first_event_time).total_seconds()
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/path/to/pure/python/project' where the project has no C++ files, so from_proj_dir returns a valid CodeGraphExtractor, but get_call_edges('cpp') returns None.",
+  "offending_statements": "Line 4: return cg.get_call_edges(\"cpp\") if cg else None",
+  "reason": "The specification requires a dict when CodeGraph initialization is successful. The code returns None if get_call_edges('cpp') returns None (e.g., C++ not indexed), violating the spec's guarantee of a dict in that case."
+}

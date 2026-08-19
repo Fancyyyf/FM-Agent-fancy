@@ -1,102 +1,114 @@
-"""Probe script for bug: src--git-py--frozen_worktree
+#!/usr/bin/env python3
+"""Probe for bug src--git-py--frozen_worktree.
 
-The bug claim: frozen_worktree() uses `git rm --cached` with only top-level
-exclude names (e.g. "fm_agent"), so nested directories/files with the same
-name are NOT removed from the commit and leak into the snapshot.
+Bug claim: in frozen_worktree()'s non-git fallback path, the call
+    shutil.copytree(proj_dir, wt, ignore=shutil.ignore_patterns(*exclude), ...)
+matches the basename of every exclude entry at ALL levels of the tree, so a
+nested directory such as proj_dir/src/fm_agent/ is omitted from the snapshot.
+The spec requires only the specific top-level directory named in `exclude`
+(proj_dir/fm_agent) to be absent; the rest of the tree must be a faithful copy.
 
-This script creates a temporary git repo with:
-  - A top-level fm_agent/ dir (should be excluded)
-  - A nested testdata/fm_agent/ dir (should ALSO be excluded per spec)
-then calls frozen_worktree() and checks whether the nested fm_agent/ leaks.
+Probe: builds a fresh, NON-git fixture project inside a probe-owned temp dir:
+    fixture_proj/
+      README.txt                     (faithful-copy sanity check)
+      fm_agent/phases.json           (real top-level workspace dir; must be excluded)
+      src/fm_agent/old_results.json  (nested dir with the same basename; MUST be present)
+
+Then calls frozen_worktree(proj_dir, exclude=('fm_agent',), copy_excluded=False)
+through the same public import main.py uses, and inspects the snapshot.
+
+  Buggy outcome  : snapshot lacks src/fm_agent/old_results.json -> CONFIRMED
+  Spec outcome   : snapshot contains src/fm_agent/old_results.json -> NOT CONFIRMED
+
+Self-contained: no network, no test framework, all fixtures/outputs live in
+fresh temporary directories, which are removed at the end.
 """
 
+import contextlib
+import io
 import os
-import sys
 import shutil
+import sys
 import tempfile
-import subprocess
 
-# ---------------------------------------------------------------------------
-# Must import from the public entry point
-# ---------------------------------------------------------------------------
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-from src.git import frozen_worktree
+# Repo root = two levels above fm_agent/bug_validation/. Put it on sys.path so
+# the package entry-point import used by main.py ("from src.git import ...")
+# resolves when this probe is run from the repo root.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
-# ---------------------------------------------------------------------------
-# Build a fresh temporary git repo with the trigger structure
-# ---------------------------------------------------------------------------
-tmpdir = tempfile.mkdtemp(prefix="probe_fwt_")
-repo_path = os.path.join(tmpdir, "repo")
-os.makedirs(repo_path)
+NESTED_CONTENT = '{"prior": "run"}'
 
-def git(*args):
-    subprocess.run(["git", "-C", repo_path, *args], check=True,
-                   capture_output=True, text=True)
 
-git("init")
-git("config", "user.name", "test")
-git("config", "user.email", "test@example.com")
+def main():
+    from src.git import frozen_worktree  # public import, as used by main.py
 
-# Create the top-level excluded directory (fm_agent/)
-os.makedirs(os.path.join(repo_path, "fm_agent"))
-with open(os.path.join(repo_path, "fm_agent", "top_level.txt"), "w") as f:
-    f.write("should be excluded")
+    work = tempfile.mkdtemp(prefix="probe_fwt_fixture_")
+    snap_base = None
+    try:
+        proj_dir = os.path.join(work, "fixture_proj")
+        nested_dir = os.path.join(proj_dir, "src", "fm_agent")
+        top_ws_dir = os.path.join(proj_dir, "fm_agent")
+        os.makedirs(nested_dir)
+        os.makedirs(top_ws_dir)
+        with open(os.path.join(nested_dir, "old_results.json"), "w") as f:
+            f.write(NESTED_CONTENT)
+        with open(os.path.join(top_ws_dir, "phases.json"), "w") as f:
+            f.write("{}")
+        with open(os.path.join(proj_dir, "README.txt"), "w") as f:
+            f.write("fixture project")
 
-# Create a NESTED directory with the same name (testdata/fm_agent/)
-os.makedirs(os.path.join(repo_path, "testdata", "fm_agent"))
-with open(os.path.join(repo_path, "testdata", "fm_agent", "nested.txt"), "w") as f:
-    f.write("should ALSO be excluded but may leak")
+        announcements = io.StringIO()
+        with contextlib.redirect_stdout(announcements):
+            # proj_dir has no .git anywhere up its tree -> non-git fallback path.
+            with frozen_worktree(proj_dir, exclude=("fm_agent",), copy_excluded=False) as wt:
+                snap_base = os.path.dirname(wt)
+                nested_path = os.path.join(wt, "src", "fm_agent", "old_results.json")
+                nested_present = os.path.isfile(nested_path)
+                nested_content_ok = False
+                if nested_present:
+                    with open(nested_path) as f:
+                        nested_content_ok = f.read() == NESTED_CONTENT
+                toplevel_present = os.path.exists(os.path.join(wt, "fm_agent"))
+                readme_present = os.path.isfile(os.path.join(wt, "README.txt"))
 
-# Create a regular file that should be present regardless
-with open(os.path.join(repo_path, "regular.txt"), "w") as f:
-    f.write("should be in snapshot")
+        # Spec oracle: only the top-level fm_agent directory is "the excluded
+        # directory"; everything else (incl. src/fm_agent/) must be copied.
+        spec_satisfied = (
+            nested_present and nested_content_ok and readme_present and not toplevel_present
+        )
+        bug_reproduced = (not nested_present) and (not toplevel_present) and readme_present
 
-# Initial commit so we have a HEAD
-git("add", "testdata/")
-git("add", "regular.txt")
-git("add", "fm_agent/")
-git("commit", "-m", "initial")
-
-# ---------------------------------------------------------------------------
-# Call frozen_worktree (set copy_excluded=False so excluded dirs are NOT
-# copied back — we only care about what the git worktree commit contains)
-# ---------------------------------------------------------------------------
-result = "ERROR"
-actual_detail = ""
-
-try:
-    with frozen_worktree(repo_path, exclude=("fm_agent",), copy_excluded=False) as wt:
-        # Check: is the nested fm_agent/ present in the snapshot?
-        nested_path = os.path.join(wt, "testdata", "fm_agent")
-        top_level_path = os.path.join(wt, "fm_agent")
-        regular_path = os.path.join(wt, "regular.txt")
-
-        nested_exists = os.path.isdir(nested_path)
-
-        if nested_exists:
-            # BUG CONFIRMED: nested fm_agent/ leaked into snapshot
-            result = "CONFIRMED"
-            nested_files = os.listdir(nested_path)
-            actual_detail = (
-                f"nested fm_agent/ present in snapshot at {nested_path} "
-                f"(contains: {nested_files}) — spec requires exclusion at all depths"
+        if bug_reproduced:
+            print(
+                "CONFIRMED - snapshot is missing nested src/fm_agent/old_results.json, "
+                "which the spec requires to be present (only the top-level fm_agent "
+                f"directory may be excluded). nested_present={nested_present}, "
+                f"toplevel_fm_agent_present={toplevel_present}, readme_present={readme_present}"
+            )
+        elif spec_satisfied:
+            print(
+                "NOT CONFIRMED - snapshot contains the nested src/fm_agent/ directory "
+                "exactly as the spec requires; only the top-level fm_agent was excluded."
             )
         else:
-            result = "NOT CONFIRMED"
-            actual_detail = (
-                "nested fm_agent/ was correctly excluded from snapshot"
+            print(
+                f"NOT CONFIRMED - inconclusive snapshot state: nested_present={nested_present}, "
+                f"nested_content_ok={nested_content_ok}, "
+                f"toplevel_fm_agent_present={toplevel_present}, readme_present={readme_present}"
             )
+    finally:
+        # Remove everything the probe created, including the snapshot dir that
+        # frozen_worktree deliberately retains on disk.
+        if snap_base is not None and os.path.isdir(snap_base):
+            shutil.rmtree(snap_base, ignore_errors=True)
+        shutil.rmtree(work, ignore_errors=True)
 
-except Exception as e:
-    result = "ERROR"
-    actual_detail = str(e)
 
-# ---------------------------------------------------------------------------
-# Cleanup
-# ---------------------------------------------------------------------------
-shutil.rmtree(tmpdir, ignore_errors=True)
-
-# ---------------------------------------------------------------------------
-# Output
-# ---------------------------------------------------------------------------
-print(f"{result} — {actual_detail}")
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        print(f"ERROR: {type(exc).__name__}: {exc}")
+        sys.exit(1)

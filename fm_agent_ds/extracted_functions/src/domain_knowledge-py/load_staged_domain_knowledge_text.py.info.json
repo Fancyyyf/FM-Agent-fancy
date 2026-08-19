@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "list_staged_domain_knowledge_relpaths",
+      "signature": "list_staged_domain_knowledge_relpaths(work_dir, prefix)",
+      "pre_condition": "work_dir is a string path to an existing work directory",
+      "post_condition": "Returns a sorted list of relative path strings, each pointing to a staged domain knowledge file under the work directory's domain_context/user_knowledge/ subdirectory, prefixed with the given prefix and work_dir. Returns an empty list if no staged files exist."
+    }
+  ]
+}

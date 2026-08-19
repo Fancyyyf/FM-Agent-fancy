@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "new_event_id",
+      "signature": "new_event_id(prefix) -> str",
+      "pre_condition": "prefix is a non-empty string",
+      "post_condition": "returns a unique string identifier beginning with the given prefix"
+    },
+    {
+      "name": "utc_now_iso",
+      "signature": "utc_now_iso() -> str",
+      "pre_condition": "none",
+      "post_condition": "returns the current UTC time as an ISO 8601 formatted string"
+    },
+    {
+      "name": "_retry_create",
+      "signature": "_retry_create(client, model, messages) -> tuple",
+      "pre_condition": "client is a callable LLM API client; model is a non-empty string; messages is a list of message dicts with 'role' and 'content' keys",
+      "post_condition": "returns (response_text: str, usage_dict: dict) representing the LLM response text and token usage; raises an exception on persistent API communication failure after exhausting retries"
+    },
+    {
+      "name": "_parse_json_response",
+      "signature": "_parse_json_response(response) -> dict | list",
+      "pre_condition": "response is a string that may contain bare JSON, markdown-fenced code blocks, or prose-wrapped JSON",
+      "post_condition": "returns the first valid JSON object or array extracted from the response; raises ValueError if no valid JSON can be extracted"
+    },
+    {
+      "name": "record_llm_exchange",
+      "signature": "record_llm_exchange(trace_dir, event_id, event, messages, response) -> None",
+      "pre_condition": "event_id is a non-empty string; event is a dict with required trace fields; messages is a list of message dicts",
+      "post_condition": "when trace_dir is truthy, atomically writes the full LLM message exchange and response to trace payload files keyed by event_id; when trace_dir is falsy, is a no-op"
+    }
+  ]
+}

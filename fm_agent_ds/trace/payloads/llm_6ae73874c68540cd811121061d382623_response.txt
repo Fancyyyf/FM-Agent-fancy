@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "data = 'hello', self._console = open('readonly.txt', 'r'), self._log_stream = open('log.txt', 'w')",
+  "offending_statements": "Line 2: self._console.write(data)",
+  "reason": "The specification requires that data is written to the console stream. The pre‑condition states only that the console stream is open, not that it is open for writing. A valid input can provide an open console stream in read mode, causing self._console.write(data) to raise an exception. The code then does not write data to the console and does not return len(data), violating the specification."
+}

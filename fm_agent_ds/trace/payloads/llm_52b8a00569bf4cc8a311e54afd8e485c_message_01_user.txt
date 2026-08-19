@@ -1,0 +1,90 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def update_llm_settings_toml_text(text: str, updates: dict[str, str]) -> str:
+Line 2:     if not updates:
+Line 3:         raise ConfigWizardError("Provide at least one LLM setting to update.")
+Line 4:     for key, value in updates.items():
+Line 5:         validate_llm_setting(key, value)
+Line 6:     try:
+Line 7:         loaded = tomllib.loads(text)
+Line 8:     except tomllib.TOMLDecodeError as exc:
+Line 9:         raise ConfigWizardError(
+Line 10:             "Existing fm-agent.toml is invalid TOML; refusing to overwrite it."
+Line 11:         ) from exc
+Line 12:     if loaded and not isinstance(loaded, dict):
+Line 13:         raise ConfigWizardError("Existing fm-agent.toml must decode to a table/object.")
+Line 14:     target = {key: _quote_toml_string(value) for key, value in updates.items()}
+Line 15:     lines = text.splitlines(keepends=True)
+Line 16:     if not lines:
+Line 17:         lines = ["[llm]\n"]
+Line 18:     new_lines: list[str] = []
+Line 19:     current_section: str | None = None
+Line 20:     in_llm = False
+Line 21:     llm_found = False
+Line 22:     seen_keys: set[str] = set()
+Line 23:     for line in lines:
+Line 24:         section_match = _SECTION_RE.match(line)
+Line 25:         if section_match:
+Line 26:             if in_llm:
+Line 27:                 for key, value in target.items():
+Line 28:                     if key not in seen_keys:
+Line 29:                         new_lines.append(f"{key:<9} = {value}\n")
+Line 30:                 seen_keys.clear()
+Line 31:             current_section = section_match.group(1)
+Line 32:             in_llm = current_section == "llm"
+Line 33:             llm_found = llm_found or in_llm
+Line 34:             new_lines.append(line)
+Line 35:             continue
+Line 36:         if in_llm:
+Line 37:             kv_match = _KV_RE.match(line)
+Line 38:             if kv_match and kv_match.group(2) in target:
+Line 39:                 indent, key, sep, _old_value, trailer, _comment = kv_match.groups()
+Line 40:                 new_lines.append(f"{indent}{key}{sep}{target[key]}{trailer}\n")
+Line 41:                 seen_keys.add(key)
+Line 42:                 continue
+Line 43:         new_lines.append(line)
+Line 44:     if in_llm:
+Line 45:         for key, value in target.items():
+Line 46:             if key not in seen_keys:
+Line 47:                 new_lines.append(f"{key:<9} = {value}\n")
+Line 48:     elif not llm_found:
+Line 49:         if new_lines and not new_lines[-1].endswith("\n"):
+Line 50:             new_lines[-1] += "\n"
+Line 51:         if new_lines and new_lines[-1].strip():
+Line 52:             new_lines.append("\n")
+Line 53:         new_lines.append("[llm]\n")
+Line 54:         for key, value in target.items():
+Line 55:             new_lines.append(f"{key:<9} = {value}\n")
+Line 56:     return "".join(new_lines)
+```
+
+Condition A (what the code actually does):
+The function update_llm_settings_toml_text either returns a modified TOML string that integrates all desired LLM settings from `updates` into the `[llm]` section of the input `text`, or raises an error if preconditions are violated. More precisely:
+
+- If `updates` is falsy (e.g., empty dict), it raises ConfigWizardError('Provide at least one LLM setting to update.').
+- If any (key, value) pair in `updates` fails `validate_llm_setting(key, value)`, the error raised by that function propagates (this error indicates that `key` is unrecognized or `value` does not meet the field's type/format constraints).
+- If `text` cannot be parsed as TOML for any reason (i.e., `tomllib.loads(text)` raises a `tomllib.TOMLDecodeError`), it raises ConfigWizardError('Existing fm-agent.toml is invalid TOML; refusing to overwrite it.').
+- If `text` decodes successfully but the result is a truthy value that is not a dict (e.g., a string, integer, array), it raises ConfigWizardError('Existing fm-agent.toml must decode to a table/object.').
+
+Otherwise (all checks pass), the function returns a new string `r` that is a valid TOML document, satisfying:
+1. `r` contains a `[llm]` section (top-level table).
+2. In that `[llm]` section, for every key `k` in `updates`, there is exactly one key‑value line of the form `{k:<9} = {_quote_toml_string(updates[k])}` (where `_quote_toml_string` produces a TOML-valid quoted string). Any pre‑existing value for such a key in the original `[llm]` section is replaced; if a key was absent, it is added at the end of the section.
+3. All other content of `text` (other sections, comments, formatting, blank lines outside `[llm]`) is preserved in `r`, except that if the original `text` was empty, `r` consists solely of `[llm]\n` followed by the required key‑value lines (each terminated by a newline).
+4. When the original `text` contained an `[llm]` section, any existing LLM keys not mentioned in `updates` remain unchanged in `r`.
+
+Symbolically, given pre‑condition P(text, updates):
+  (updates is empty)  ⇒  function raises ConfigWizardError  ∧  return value undefined
+  (∃ k,v ∈ updates such that validate_llm_setting(k,v) fails)  ⇒  function raises an error  ∧  return undefined
+  (tomllib.loads(text) fails OR returns a truthy non‑dict)  ⇒  function raises ConfigWizardError  ∧  return undefined
+  otherwise  ⇒  function returns r, where r is a string meeting properties 1‑4 above.
+
+Condition B (what the specification requires):
+Raises ConfigWizardError when updates is empty. Raises ConfigWizardError when any key-value pair in updates fails validation (the key is not a recognized LLM configuration field name, or the value does not conform to the expected format for that field). Raises ConfigWizardError when text is not parseable as valid TOML by the standard library parser, or when text decodes to a non-table TOML value. Otherwise returns a string containing valid TOML in which: for every key in updates, the corresponding field under the [llm] section is set to updates[key]; every other TOML section, every field outside the updated keys, every comment, and all whitespace outside the updated field values is preserved unchanged from text. When text does not contain an [llm] section, a new [llm] section is appended containing all fields from updates.
+
+Additional context:
+validate_llm_setting(key: str, value: str) -> None
+Pre-condition: key is a string identifying an LLM configuration field name; value is a string representing the desired new value for that field.
+Post-condition: Completes without error when key is a recognized LLM configuration field name and value conforms to the expected type and format for that field. Raises an error when key is not a recognized field name or value does not satisfy the field's type and format constraints.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

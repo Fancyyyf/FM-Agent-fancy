@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/_SourceIndex::source_for_range.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns the substring of self.source spanning from the byte offset corresponding to lsp_range['start'] (inclusive) to the byte offset corresponding to lsp_range['end'] (exclusive). Byte-offset resolution follows the same rules as position_to_offset: positions exceeding source boundaries are clamped to the nearest valid offset; characters above U+FFFF consume two UTF-16 code units in position mapping.",
+    "actual_behavior": "The method returns a string result such that result == self.source[start:end], where start = self.position_to_offset(lsp_range['start']) and end = self.position_to_offset(lsp_range['end']). Because the pre-condition guarantees that lsp_range['start'] does not lexicographically follow lsp_range['end'] relative to the source contents, we have start <= end. The slicing operation self.source[start:end] yields the substring from offset start (inclusive) to end (exclusive); if start equals end, the empty string is returned. No exceptions are raised.",
+    "code_evidence": "Line 4: return self.source[start:end]",
+    "trigger_condition": "The code slices the Python string using byte offsets as if they were code point indices. When the source contains characters that occupy more than one byte in the underlying encoding (e.g. '' U+1F600), position_to_offset returns byte offsets that do not align with string indices. In the counterexample, start=1 and end=5 (byte offsets for the emoji in UTF-8), but self.source[1:5] returns 'c' instead of just '' as the specification requires."
+  }
+}

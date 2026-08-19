@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "issue_text = 'in MyFunc\\n'",
+  "offending_statements": "Line 13: signals['traceback_funcs'] = set(re.findall(r'\\bin (\\w+)\\s*\\n', issue_text))",
+  "reason": "The traceback_funcs set is not lowercased, but the specification requires all extracted tokens to be lowercased. For input 'in MyFunc\\n', the code returns {'MyFunc'} while the specification requires {'myfunc'}."
+}

@@ -1,0 +1,21 @@
+Programming language: Python
+
+Pre-condition:
+seconds is None or a numeric value representing a duration in seconds.
+
+Code block:
+```python
+Line 1: def _fmt_duration(seconds):
+Line 2:     if seconds is None:
+Line 3:         return "—"
+Line 4:     s = int(seconds)
+Line 5:     h, rem = divmod(s, 3600)
+Line 6:     m, s = divmod(rem, 60)
+Line 7:     if h:
+Line 8:         return f"{h}h {m:02d}m {s:02d}s"
+Line 9:     if m:
+Line 10:         return f"{m}m {s:02d}s"
+Line 11:     return f"{s}s"
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

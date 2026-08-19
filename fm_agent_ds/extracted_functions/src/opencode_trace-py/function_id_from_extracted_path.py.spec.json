@@ -1,0 +1,5 @@
+{
+  "signature": "function_id_from_extracted_path(path)",
+  "pre_condition": "path is a non-empty string representing a file path that may contain backslash or forward-slash separators.",
+  "post_condition": "Returns a string that is the canonical fully-qualified function name (FQN) for the function whose extracted body resides at the given path. The FQN is derived by: removing any leading extracted-functions directory prefix (the longest matching prefix among 'fm_agent/extracted_functions/' and 'extracted_functions/') from a normalized form of the path; stripping the file extension; and replacing all remaining path-component separators with '::' (double colon). The returned string contains no file extension and uniquely identifies a function within the project's FQN namespace."
+}

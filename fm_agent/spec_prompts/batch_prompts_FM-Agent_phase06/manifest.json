@@ -1,13 +1,13 @@
 {
   "phase": 6,
-  "layers": "7",
+  "layers": "6",
   "total_functions": 2,
   "total_batches": 1,
   "batches": [
     {
       "index": 0,
-      "file": "batch_000_layer7_extracted_b0.txt",
-      "layer": 7,
+      "file": "batch_000_layer6_extracted_b0.txt",
+      "layer": 6,
       "is_cycle": false,
       "num_functions": 2,
       "num_pending": 0,

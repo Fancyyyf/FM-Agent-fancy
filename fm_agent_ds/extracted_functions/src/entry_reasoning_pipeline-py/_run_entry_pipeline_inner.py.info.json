@@ -1,0 +1,52 @@
+{
+  "callees": [
+    {
+      "name": "load_call_edges",
+      "signature": "load_call_edges(extra_call_edges_path)",
+      "pre_condition": "extra_call_edges_path is either None or a filesystem path to a JSON file",
+      "post_condition": "Returns a list of CallEdge records parsed from the file at extra_call_edges_path. Returns an empty list when extra_call_edges_path is None."
+    },
+    {
+      "name": "_select_functions_by_source",
+      "signature": "_select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edges)",
+      "pre_condition": "proj_dir is an existing directory. entry_func is a non-empty FQN string. extra_call_edges is a list of CallEdge records, possibly empty.",
+      "post_condition": "Returns a pair (all_by_source, keep_by_source) where all_by_source maps each source file path to all function names extracted from that file, and keep_by_source maps each source file path to the subset of those function names that lie on directed call-graph paths from entry_func to some FQN in end_funcs. When end_funcs is None or empty, keep_by_source contains all functions reachable from entry_func."
+    },
+    {
+      "name": "_make_run_copy",
+      "signature": "_make_run_copy(proj_dir, run_dir)",
+      "pre_condition": "proj_dir is an existing directory. run_dir is a filesystem path that does not exist or is the path to a prior resumed run.",
+      "post_condition": "run_dir exists and contains a copy of proj_dir's source tree and any pre-existing fm_agent/ workspace found in proj_dir."
+    },
+    {
+      "name": "try_codegraph_init",
+      "signature": "try_codegraph_init(run_dir)",
+      "pre_condition": "run_dir is an existing directory",
+      "post_condition": "If the codegraph indexing tool is installed in the environment, a codegraph index covering source files under run_dir has been built. If the tool is not installed, no action has been taken and no error has been raised."
+    },
+    {
+      "name": "_trim_project_in_place",
+      "signature": "_trim_project_in_place(run_dir, all_by_source, keep_by_source)",
+      "pre_condition": "run_dir contains a full project copy. all_by_source and keep_by_source are the dicts returned by _select_functions_by_source.",
+      "post_condition": "For every source file listed in all_by_source, the file under run_dir has been modified so that only the functions named in keep_by_source for that file remain present. Functions present in all_by_source but absent from keep_by_source for a given file have been removed from that file. Files not appearing in all_by_source are left unchanged."
+    },
+    {
+      "name": "run_pipeline",
+      "signature": "run_pipeline(run_dir, resume, required_source_files, domain_knowledge_files, one_phase, extra_call_edges_path, only_spec, bug_validator_path, plugin_config)",
+      "pre_condition": "run_dir is an existing directory containing a trimmed project. resume is a boolean. required_source_files is a list of source file paths relative to run_dir.",
+      "post_condition": "The full 6-stage FM-Agent pipeline has been executed on the project at run_dir, producing behavioral specifications, reasoning verdicts, and bug-validation reports under run_dir/fm_agent/. The source files listed in required_source_files are included in the generated phases plan regardless of whether the setup agent would otherwise include or omit them."
+    },
+    {
+      "name": "_entry_func_source_rel",
+      "signature": "_entry_func_source_rel(entry_func)",
+      "pre_condition": "entry_func is a non-empty FQN string",
+      "post_condition": "Returns the source file path relative to the project root that contains the function identified by entry_func"
+    },
+    {
+      "name": "_count_mismatches",
+      "signature": "_count_mismatches(results_dir)",
+      "pre_condition": "results_dir is a filesystem path",
+      "post_condition": "Returns an integer count of reasoning-verdict files under results_dir whose verdict field equals the literal string 'MISMATCH'. Returns 0 when results_dir does not exist."
+    }
+  ]
+}

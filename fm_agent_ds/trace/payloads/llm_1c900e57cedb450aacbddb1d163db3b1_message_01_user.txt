@@ -1,0 +1,80 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _codegraph_functions_at_revision(proj_dir, revision, file_languages):
+Line 2:     """Index ``revision`` in a temporary worktree and return its functions.
+Line 3:     CodeGraph indexes real files rather than ``git show`` output. A linked
+Line 4:     worktree gives it an exact historical source tree without disturbing the
+Line 5:     caller's current checkout or its ``fm_agent`` artifacts.
+Line 6:     """
+Line 7:     parent_dir = tempfile.mkdtemp(prefix="fm_agent_incremental_base_")
+Line 8:     worktree_dir = os.path.join(parent_dir, "source")
+Line 9:     created = False
+Line 10:     try:
+Line 11:         try:
+Line 12:             subprocess.run(
+Line 13:                 [
+Line 14:                     "git", "-C", proj_dir, "worktree", "add", "--detach",
+Line 15:                     "--quiet", worktree_dir, revision,
+Line 16:                 ],
+Line 17:                 check=True,
+Line 18:                 capture_output=True,
+Line 19:                 text=True,
+Line 20:             )
+Line 21:             created = True
+Line 22:         except (OSError, subprocess.CalledProcessError) as exc:
+Line 23:             detail = getattr(exc, "stderr", "") or str(exc)
+Line 24:             logging.warning(
+Line 25:                 "Could not create temporary worktree for CodeGraph baseline %s; "
+Line 26:                 "falling back to legacy extraction: %s",
+Line 27:                 revision, detail[:300],
+Line 28:             )
+Line 29:             return None
+Line 30:         try_codegraph_init(worktree_dir)
+Line 31:         lang_keys = set(file_languages.values())
+Line 32:         functions = _codegraph_functions_by_file(worktree_dir, lang_keys)
+Line 33:         if functions is None:
+Line 34:             logging.warning(
+Line 35:                 "Could not build a CodeGraph index for baseline %s; falling back "
+Line 36:                 "to legacy extraction.",
+Line 37:                 revision,
+Line 38:             )
+Line 39:             return None
+Line 40:         coverage = _codegraph_legacy_coverage(
+Line 41:             worktree_dir, functions, file_languages
+Line 42:         )
+Line 43:         return functions, coverage
+Line 44:     finally:
+Line 45:         if created:
+Line 46:             subprocess.run(
+Line 47:                 [
+Line 48:                     "git", "-C", proj_dir, "worktree", "remove", "--force",
+Line 49:                     worktree_dir,
+Line 50:                 ],
+Line 51:                 check=False,
+Line 52:                 capture_output=True,
+Line 53:                 text=True,
+Line 54:             )
+Line 55:         shutil.rmtree(parent_dir, ignore_errors=True)
+```
+
+Condition A (what the code actually does):
+Post-condition: After the call, regardless of whether the function returns or raises an exception, the temporary directory created by tempfile.mkdtemp (parent_dir) no longer exists, and if the variable 'created' was set to True (meaning a git worktree was added), the worktree has been removed via 'git worktree remove --force'. The git repository at proj_dir remains unchanged. If the function returns normally: (1) if subprocess.run for 'git worktree add' raises OSError or CalledProcessError, the function logs a warning and returns None. (2) if _codegraph_functions_by_file returns None, the function logs a warning and returns None. (3) otherwise, it returns a tuple (functions, coverage) where functions = _codegraph_functions_by_file(worktree_dir, set(file_languages.values())) and coverage = _codegraph_legacy_coverage(worktree_dir, functions, file_languages). Formal: Forall execution paths, after termination: (not os.path.exists(parent_dir)) AND (created IMPLIES worktree_dir not present) AND (proj_dir state invariant). If normal return with value R, then (R = None) OR (exists F, C: R = (F, C) AND F = codegraph_funcs(worktree_dir, lang_keys) AND C = legacy_cov(worktree_dir, F, file_languages)).
+
+Condition B (what the specification requires):
+If a git worktree at the given revision can be created and CodeGraph can successfully index the resulting source tree, returns a tuple (functions, coverage) where functions maps each source file path to a dict of function data keyed by function name, and coverage indicates for each file in file_languages which functions were and were not observed by CodeGraph. If worktree creation fails or CodeGraph indexing fails at any point, returns None after logging a warning. In all cases — success, failure, or any exception in between — any temporary worktree and its parent directory created during the call are removed before the function returns, leaving no side effects on the filesystem.
+
+Additional context:
+try_codegraph_init(worktree_dir)
+Pre-condition: worktree_dir is a path to a directory containing source files to be indexed by CodeGraph.
+Post-condition: Initializes a CodeGraph index for the source tree at worktree_dir. Returns nothing on success; on failure, subsequent CodeGraph queries return None.
+
+_codegraph_functions_by_file(worktree_dir, lang_keys) -> dict | None
+Pre-condition: worktree_dir is a directory path whose source tree has been successfully indexed by CodeGraph. lang_keys is a collection of language key strings drawn from the values of file_languages.
+Post-condition: Returns a dict mapping each source file path to a dict of function data keyed by function name. Returns None when the CodeGraph index is unavailable or cannot be queried.
+
+_codegraph_legacy_coverage(worktree_dir, functions, file_languages) -> dict
+Pre-condition: worktree_dir is a directory path. functions is the dict returned by _codegraph_functions_by_file. file_languages is a dict mapping relative file paths to language keys.
+Post-condition: Returns a coverage dict indicating, for each file in file_languages, which function names are present in the CodeGraph functions dict and which are absent, allowing the caller to identify functions that require legacy (non-CodeGraph) extraction.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

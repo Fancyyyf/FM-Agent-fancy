@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_is_under_submodules",
+      "signature": "_is_under_submodules(source_file, submodules) -> bool",
+      "pre_condition": "source_file is a string representing a file path; submodules is a non-empty sequence of subdirectory path strings",
+      "post_condition": "Returns True if and only if the source_file path, after normalizing directory separators, begins with the path prefix of at least one entry in submodules (after the same normalization). Returns False when source_file does not reside within any of the specified submodule directories."
+    }
+  ]
+}

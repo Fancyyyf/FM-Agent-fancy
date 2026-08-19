@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "'\"hello \\\\\\n# world\"'",
+  "offending_statements": "Line 23: if char == '\\\\' and index + 1 < len(code):\nLine 24: result.append(code[index + 1])\nLine 25: index += 2\nLine 26: continue\nLine 29: line_start = char == '\\n'",
+  "reason": "When a backslash escapes a newline inside a string literal, the escaped newline is consumed without updating line_start. Consequently, a '#' character appearing on the next physical line is incorrectly treated as a comment (because line_start is still false), even though it should be preserved as part of the string literal. This violates the specification requirement that all content within string delimiters, including backslash-escaped characters and any otherwise comment-like sequences, be kept literally."
+}

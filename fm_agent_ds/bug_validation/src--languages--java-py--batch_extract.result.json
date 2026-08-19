@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--java-py--batch_extract",
+  "source_file": "src/languages/java.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--java-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--java-py--batch_extract.md",
+  "probe_stdout": "CONFIRMED: batch_extract(None) raised TypeError: expected str, bytes or os.PathLike object, not NoneType\nSpec requires returning {}; got exception instead\nPASS: batch_extract('/tmp/\\x00test') returned {} as spec requires\nCONFIRMED — batch_extract propagates exception(s) instead of returning {}",
+  "trigger_summary": "Calling batch_extract(None) causes os.path.abspath to raise TypeError, which propagates uncaught instead of returning {} as the spec requires."
+}

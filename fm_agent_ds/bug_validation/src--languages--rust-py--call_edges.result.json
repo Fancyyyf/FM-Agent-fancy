@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--rust-py--call_edges",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/rust-py/call_edges.py",
+  "function_name": "call_edges",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--rust-py--call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--rust-py--call_edges.md",
+  "probe_stdout": "Result keys: ['src::main-rs::main']\n  caller='src::main-rs::main' (type=str) -> callees={'src::utils-rs::helper'}\n\nCaller keys are strings (FQN):    True\nCaller keys are tuples (claimed): False\nCallees are strings (FQN):        True\nCallees contain '::' (FQN):       True\n\nNOT CONFIRMED — caller identifiers are FQN strings (not tuples), callee identifiers are FQN strings (not bare stems). Actual behaviour matches the specification.",
+  "trigger_summary": "False positive: get_call_edges returns FQN strings matching the spec; the logic verification compared the spec against the extracted docstring tuple/stem claim rather than actual runtime behavior."
+}

@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _spec_json_path(filepath: Path) -> Path:
+Line 2:     """Return the spec sidecar next to one extracted function file."""
+Line 3:     return Path(str(filepath) + ".spec.json")
+```
+
+Condition A (what the code actually does):
+The function returns a `pathlib.Path` object derived from the input `filepath`. Let `result` be the returned value. Then `result` satisfies: `isinstance(result, Path) and str(result) == str(filepath) + '.spec.json'`. No external state is modified, and no exceptions are raised under normal conditions.
+
+Condition B (what the specification requires):
+Returns a Path whose string representation equals the string representation of filepath with the literal suffix '.spec.json' appended.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

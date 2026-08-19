@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_ingest_opencode",
+      "signature": "_ingest_opencode(self, rec, name)",
+      "pre_condition": "rec is a dict parsed from a valid JSON object line in a raw OpenCode trace file identified by name (a string filename).",
+      "post_condition": "The raw trace record rec is incorporated into the State's in-memory OpenCode trace collection. The aggregate cache_window collection — pairs of (cached_tokens, total_input_tokens) — is updated to reflect cumulative token usage across all records ingested so far."
+    }
+  ]
+}

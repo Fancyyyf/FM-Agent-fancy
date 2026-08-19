@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_project_fingerprint",
+      "signature": "_project_fingerprint(root: str) -> object",
+      "pre_condition": "root is an absolute path to an existing directory containing an Erlang project.",
+      "post_condition": "Returns a value that uniquely identifies the current state of the Erlang project at root. The returned value changes if and only if at least one source file under root has changed since the previous call."
+    },
+    {
+      "name": "_analyze_project_uncached",
+      "signature": "_analyze_project_uncached(root: str) -> ErlangAnalysis",
+      "pre_condition": "root is an absolute path to an existing directory containing a valid Erlang project structure.",
+      "post_condition": "Returns an ErlangAnalysis object whose .functions, .edges, and .spans attributes are dicts populated with ELP analysis data for the Erlang source files under root. Raises an exception when the ELP backend is unavailable, root is not analyzable by ELP, or analysis encounters an unrecoverable error."
+    },
+    {
+      "name": "_persist_analysis",
+      "signature": "_persist_analysis(root: str, fingerprint: object, analysis: ErlangAnalysis)",
+      "pre_condition": "root is an absolute path to an existing directory. fingerprint is the project fingerprint for root. analysis is an ErlangAnalysis object with populated .functions, .edges, and .spans attributes.",
+      "post_condition": "Persists the analysis data and fingerprint for root to durable storage. Raises OSError when persistence fails; the caller treats OSError as a non-fatal condition."
+    }
+  ]
+}

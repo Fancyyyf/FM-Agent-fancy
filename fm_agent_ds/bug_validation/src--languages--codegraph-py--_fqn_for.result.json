@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--codegraph-py--_fqn_for",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/_fqn_for.py",
+  "function_name": "_fqn_for",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_fqn_for.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_fqn_for.md",
+  "probe_stdout": "CONFIRMED — actual: 'dir::.hidden::func' | expected: 'dir::-hidden::func'",
+  "trigger_summary": "When basename starts with '.' (e.g. '.hidden'), last_dot=0 fails the > 0 guard, so the dot is not replaced with '-' as the spec requires."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_load_call_edge_file(edge_path: Path) -> list[CallEdge]",
+  "pre_condition": "edge_path refers to an existing, readable file whose content is either empty/whitespace-only or valid JSON containing an 'edges' array of edge objects.",
+  "post_condition": "When the file content is empty or consists solely of Unicode whitespace characters, returns an empty list. When the file content is non-empty valid JSON, returns a list containing one CallEdge object for each element in the 'edges' array, in the same order the elements appear in the array. If the 'edges' array is present but contains zero elements, returns an empty list. Raises FileNotFoundError if edge_path does not refer to an existing file. Raises JSONDecodeError (or a subclass thereof) if the file content is non-empty but is not valid JSON conforming to the expected schema."
+}

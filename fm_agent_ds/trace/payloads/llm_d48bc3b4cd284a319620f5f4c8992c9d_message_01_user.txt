@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _symbol_line_span(symbol_range: dict) -> tuple[int, int]:
+Line 2:     """Convert an LSP half-open range to a 0-based inclusive line span."""
+Line 3:     start = max(0, int(symbol_range["start"].get("line", 0)))
+Line 4:     end_position = symbol_range["end"]
+Line 5:     end = max(start, int(end_position.get("line", start)))
+Line 6:     if end > start and int(end_position.get("character", 0)) == 0:
+Line 7:         end -= 1
+Line 8:     return start, end
+```
+
+Condition A (what the code actually does):
+The function returns a tuple (start, end) where start = max(0, int(symbol_range['start']['line'])). Let raw_end = max(start, int(symbol_range['end']['line'])) if 'line' is in symbol_range['end'], else raw_end = start. Let end_char = int(symbol_range['end'].get('character', 0)). Then end = raw_end - 1 if raw_end > start and end_char == 0, else end = raw_end. The result is (start, end).
+
+Condition B (what the specification requires):
+Returns (start, end) where both are non-negative integers and start <= end. start is the value of symbol_range['start']['line'] clamped to minimum 0. end is the value of symbol_range['end']['line'] clamped to minimum of start. When end > start and symbol_range['end']['character'] equals 0, end is reduced by 1, because an LSP half-open range ending at column 0 of line N contains no content on line N. The returned span is 0-indexed and inclusive.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

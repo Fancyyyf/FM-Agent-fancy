@@ -1,0 +1,52 @@
+Programming language: Python
+
+Pre-condition:
+state is a State instance whose llm_statuses attribute is an iterable collection of dictionaries, each containing at minimum 'code' and 'status' keys. LLM_STATUS_WINDOW is a positive integer constant defined in the enclosing scope.
+
+Code block:
+```python
+Line 1: def render_llm_status(state):
+Line 2:     statuses = list(state.llm_statuses)[-LLM_STATUS_WINDOW:]
+Line 3:     if not statuses:
+Line 4:         return Panel(
+Line 5:             Align.center(Text.from_markup("[dim](no LLM calls yet)[/]"), vertical="middle"),
+Line 6:             title="LLM Calls",
+Line 7:             border_style="cyan",
+Line 8:         )
+Line 9:     strip = Text()
+Line 10:     for item in statuses[-50:]:
+Line 11:         color, label = _llm_status_style(item.get("code"), item.get("status"))
+Line 12:         symbol = "■" if label == "200" else "▲" if color == "yellow" else "■"
+Line 13:         strip.append(symbol, style=color)
+Line 14:     table = Table(show_header=True, header_style="bold", expand=True, pad_edge=False)
+Line 15:     table.add_column("time", style="dim", no_wrap=True)
+Line 16:     table.add_column("src", style="cyan", no_wrap=True)
+Line 17:     table.add_column("code", no_wrap=True)
+Line 18:     table.add_column("call", overflow="ellipsis", no_wrap=True)
+Line 19:     for item in list(reversed(statuses[-6:])):
+Line 20:         color, label = _llm_status_style(item.get("code"), item.get("status"))
+Line 21:         table.add_row(
+Line 22:             item.get("time") or "",
+Line 23:             item.get("source") or "?",
+Line 24:             f"[{color}]{label}[/]",
+Line 25:             item.get("label") or "",
+Line 26:         )
+Line 27:     total = len(statuses)
+Line 28:     ok = sum(1 for item in statuses if _llm_status_style(item.get("code"), item.get("status"))[1] == "200")
+Line 29:     rate = ok / total * 100 if total else 0
+Line 30:     text = Text.from_markup(
+Line 31:         f"[dim]recent {total}/{LLM_STATUS_WINDOW} calls[/]  "
+Line 32:         f"[bold {'green' if rate >= 95 else 'yellow' if rate >= 80 else 'red'}]{rate:.1f}% 200[/]\n"
+Line 33:     )
+Line 34:     text.append(strip)
+Line 35:     group = Table.grid(expand=True)
+Line 36:     group.add_row(text)
+Line 37:     group.add_row(table)
+Line 38:     return Panel(group, title="LLM Calls", border_style="cyan")
+```
+
+Additional context:
+_llm_status_style(code, status) -> (color, label)
+Pre-condition: code and status are values obtained from an item in state.llm_statuses. Either or both may be None if the corresponding keys are absent from the item dictionary.
+Post-condition: Returns a tuple (color, label) where color is a Rich-compatible style name and label is a string. The mapping from (code, status) input pairs to (color, label) output pairs is deterministic: identical inputs always produce identical outputs.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

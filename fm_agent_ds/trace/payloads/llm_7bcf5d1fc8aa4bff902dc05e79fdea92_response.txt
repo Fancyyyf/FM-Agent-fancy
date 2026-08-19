@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/tmp/test' where '/tmp/test/bug_validation' exists and contains a valid 'example.result.json' file, but the process lacks write permission on the 'bug_validation' directory (or the disk is full).",
+  "offending_statements": "Line 33: with open(tmp_path, \"w\") as f:\nLine 34:         json.dump(summary, f, indent=2, ensure_ascii=False)\nLine 35:     os.replace(tmp_path, summary_path)",
+  "reason": "The specification requires that the function writes bug_validation/summary.json atomically when the subdirectory exists, with no provision for I/O errors. The code does not handle OSError during writing (open of temporary file or os.replace), so an unhandled exception can propagate, leaving summary.json unwritten and violating the mandatory write guarantee."
+}

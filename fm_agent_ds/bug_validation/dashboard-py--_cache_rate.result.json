@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_cache_rate",
+  "source_file": "fm_agent/extracted_functions/dashboard-py/_cache_rate.py",
+  "function_name": "_cache_rate",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_cache_rate.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_cache_rate.md",
+  "probe_stdout": "CONFIRMED — _cache_rate returned rate=None instead of expected rate=0.0 when in_total=0. Full return: actual=(None, 0, 0) | expected=(0.0, 0, 0)\n",
+  "trigger_summary": "Pass an empty list (or any input where total_count sums to 0) to _cache_rate; the code returns None for rate but the spec requires 0.0."
+}

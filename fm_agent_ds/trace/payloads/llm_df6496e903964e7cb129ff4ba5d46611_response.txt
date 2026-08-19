@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "No concrete input can be provided where the code produces an output that violates the specification, as all requirements are satisfied for any valid input (deterministic, pure, 64-char lowercase hex digest; no demonstrable collision can be generated for SHA-256)."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_extract_classes(tree: ast.Module, source_lines: list[str]) -> list[dict]",
+  "pre_condition": "tree is a valid ast.Module node produced by ast.parse representing a syntactically valid Python source file. source_lines is a list of strings where index i contains line i+1 of the original source file content.",
+  "post_condition": "Returns a list of dicts, one per class definition that appears as a direct child of the module body (not nested inside another class definition). Each dict contains at minimum: 'name' (non-empty string, the class identifier as written in source), 'docstring' (string, the class-level docstring extracted from the first expression statement in the class body, or the empty string when no docstring is present), and 'method_linenos' (list of positive ints, each a 1-indexed line number where a FunctionDef or AsyncFunctionDef node starts within the class body). The list is empty when the module contains no top-level class definitions. The function does not modify tree or source_lines."
+}

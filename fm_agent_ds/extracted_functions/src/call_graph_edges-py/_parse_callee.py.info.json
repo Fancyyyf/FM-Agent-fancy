@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_required_string",
+      "signature": "_required_string(raw_value, field_name: str, source: str) -> str",
+      "pre_condition": "raw_value is the value to validate. field_name identifies the field for error messages. source is a provenance string.",
+      "post_condition": "Returns raw_value as a string when raw_value is a non-empty string. Raises an error with a message that includes field_name and source when raw_value is None, empty, or not a string."
+    },
+    {
+      "name": "_string_list",
+      "signature": "_string_list(raw_value, field_name: str, source: str) -> tuple[str, ...]",
+      "pre_condition": "raw_value is expected to be an iterable of strings. field_name identifies the field for error messages. source is a provenance string.",
+      "post_condition": "Returns a tuple of strings derived from raw_value. When raw_value is an empty or non-list value, returns an empty tuple. When raw_value is a non-empty list of strings, returns those strings as a tuple. Raises an error with a message that includes field_name and source when any element of raw_value is not a string."
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _collect_phase_files(proj_dir, phase_data):
+Line 2:     """For a phase, collect all extracted function file paths.
+Line 3:     Returns list of (file_path, module_name) tuples.
+Line 4:     """
+Line 5:     extracted_base = os.path.join(proj_dir, "extracted_functions")
+Line 6:     results = []
+Line 7:     for module in phase_data.get("modules", []):
+Line 8:         module_name = module["name"]
+Line 9:         for src_file in module.get("source_files", []):
+Line 10:             # Derive extracted directory: xxx/yyy/zzz.ext -> xxx/yyy/zzz-ext
+Line 11:             src_dir = os.path.dirname(src_file)
+Line 12:             src_base = os.path.basename(src_file)
+Line 13:             last_dot = src_base.rfind(".")
+Line 14:             if last_dot > 0:
+Line 15:                 dir_name = src_base[:last_dot] + "-" + src_base[last_dot + 1:]
+Line 16:             else:
+Line 17:                 dir_name = src_base
+Line 18:             func_dir = os.path.join(extracted_base, src_dir, dir_name) if src_dir else os.path.join(extracted_base, dir_name)
+Line 19:             if not os.path.isdir(func_dir):
+Line 20:                 continue
+Line 21:             # Every extracted function is a flat file directly in func_dir, member
+Line 22:             # functions keeping the class qualifier in the name
+Line 23:             # ("<file>-cpp/LocalStorage::Flush.cpp"). os.walk stays robust to any
+Line 24:             # legacy nested file.
+Line 25:             for root, _dirs, fnames in os.walk(func_dir):
+Line 26:                 for fname in fnames:
+Line 27:                     fpath = os.path.join(root, fname)
+Line 28:                     if os.path.isfile(fpath) and not _is_metadata_sidecar(fname):
+Line 29:                         results.append((fpath, module_name))
+Line 30:     return results
+```
+
+Condition A (what the code actually does):
+Returns a list results = [(fpath, module_name), ...] that contains exactly one tuple for each regular file found by os.walk inside the directories derived from phase_data's modules' source files, excluding metadata sidecar files. Formally: Let R be the returned list. R is empty at first. For each module m in phase_data.get('modules', []) in the given list order, let m_name = m['name']. For each source file s in m.get('source_files', []) in its list order: let B = os.path.basename(s), D = os.path.dirname(s), dot = B.rfind('.'). Set dir_name = (B[:dot] + '-' + B[dot+1:] if dot > 0 else B). Set func_dir = os.path.join(proj_dir, 'extracted_functions', D, dir_name) if D else os.path.join(proj_dir, 'extracted_functions', dir_name). If os.path.isdir(func_dir), then for each (root, _dirs, fnames) in the order yielded by os.walk(func_dir) and for each fname in fnames in the order yielded: let fpath = os.path.join(root, fname). If os.path.isfile(fpath) and not _is_metadata_sidecar(fname) evaluates to True, then (fpath, m_name) is appended to R. No other elements are appended. The final value of R is the return value.
+
+Condition B (what the specification requires):
+Returns a list of (fpath, module_name) tuples. For each source_file path listed in each module of phase_data, the source file extension separator '.' is replaced by '-' to derive the extracted-function directory name, and that directory is searched under proj_dir/extracted_functions/. Every regular file found in that directory whose filename does not match the metadata sidecar naming pattern is included as one tuple where fpath is the absolute path to the file and module_name is the 'name' from the enclosing module object. Source files whose corresponding extracted-function directory does not exist under proj_dir/extracted_functions/ contribute no tuples. Each fpath is unique within the returned list. Results are ordered by module order in phase_data, then by source_file order, then by filesystem traversal order within each directory. The returned list may be empty if no extracted-function directories exist for any source file in the phase.
+
+Additional context:
+_is_metadata_sidecar(fname) -> bool
+Pre-condition: fname is a filename string (basename only, not a full path) from a filesystem directory listing.
+Post-condition: Returns True when fname matches the naming pattern of a metadata sidecar that accompanies an extracted function file (e.g., a .spec.json or .info.json suffix); returns False otherwise. The determination is based solely on the filename string and does not inspect file contents or filesystem metadata.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

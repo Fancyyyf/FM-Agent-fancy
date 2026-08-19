@@ -1,0 +1,5 @@
+{
+  "signature": "_strip_angle_brackets(text) -> str",
+  "pre_condition": "text is a string that may contain angle-bracket-delimited regions such as template or generic parameter lists.",
+  "post_condition": "Returns a string formed from text by removing every outermost balanced '<...>' region: both the delimiting '<' and '>' characters and all content between them are stripped. Nesting is resolved — a '<' encountered inside an active '<...>' region belongs to the inner region and does not terminate the outer. Characters that are not part of any balanced '<...>' region are preserved in their original relative order. A '>' character that does not close any active '<...>' region is omitted from the result."
+}

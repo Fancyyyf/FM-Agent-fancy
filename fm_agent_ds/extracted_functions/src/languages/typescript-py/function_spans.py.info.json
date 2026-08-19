@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "CodeGraphExtractor.from_proj_dir",
+      "signature": "CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None",
+      "pre_condition": "proj_dir is a string representing the path to an existing project directory",
+      "post_condition": "Returns a CodeGraphExtractor instance initialized for the given project directory and ready to answer extraction queries, or None if the CodeGraph backend is unavailable or cannot be initialized for this project"
+    },
+    {
+      "name": "CodeGraphExtractor.get_function_spans",
+      "signature": "CodeGraphExtractor.get_function_spans(language: str, filepath: str) -> list | None",
+      "pre_condition": "language is a string identifying a supported language (e.g., \"typescript\"); filepath is the absolute path to a source file; the CodeGraphExtractor instance has been successfully initialized for the project",
+      "post_condition": "Returns a list of tuples (name: str, start_idx: int, end_idx: int) describing the zero-based inclusive line spans of functions in the given file, or None if the file is not indexed by CodeGraph"
+    }
+  ]
+}

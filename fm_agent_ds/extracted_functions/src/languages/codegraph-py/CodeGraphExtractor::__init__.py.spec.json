@@ -1,0 +1,5 @@
+{
+  "signature": "__init__(self, db_path: str)",
+  "pre_condition": "db_path is a string",
+  "post_condition": "self._db is set to db_path; the CodeGraphExtractor instance is initialized with the given database path and is ready for subsequent method calls"
+}

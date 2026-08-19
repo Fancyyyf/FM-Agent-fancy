@@ -1,0 +1,21 @@
+Programming language: Python
+
+Pre-condition:
+work_dir is a directory containing pipeline output files from the preceding stages of the pipeline
+
+Code block:
+```python
+Line 1: def _setup_outputs_complete(work_dir):
+Line 2:     """Return True when both phase plan and domain context are complete."""
+Line 3:     return _phase_plan_complete(work_dir) and _domain_context_complete(work_dir)
+```
+
+Additional context:
+_phase_plan_complete(work_dir) -> bool
+Pre-condition: work_dir is a directory path
+Post-condition: Returns True if and only if phases.json exists at its expected path under work_dir and contains a valid phases plan
+
+_domain_context_complete(work_dir) -> bool
+Pre-condition: work_dir is a directory path
+Post-condition: Returns True if and only if engine_overview.txt exists at its expected path under work_dir and, for every phase number P defined in the current phases.json, a corresponding phase_P_types.txt exists at its expected path under work_dir
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

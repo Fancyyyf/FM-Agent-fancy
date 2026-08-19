@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "update_llm_settings_toml_text",
+      "signature": "update_llm_settings_toml_text(text: str, settings: dict[str, str]) -> str",
+      "pre_condition": "text is a string containing valid TOML content with an [llm] section; settings maps field names under [llm] to their desired string values.",
+      "post_condition": "Returns TOML content where each field under [llm] named in settings is updated to its corresponding value. All other TOML sections, fields, and comments are preserved unchanged."
+    }
+  ]
+}

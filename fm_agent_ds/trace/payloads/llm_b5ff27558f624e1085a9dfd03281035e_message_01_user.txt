@@ -1,0 +1,60 @@
+Programming language: Python
+
+Pre-condition:
+work_dir is an absolute path to an existing, writable directory managed by FM-Agent. markdown_paths is either None, an empty sequence, or a non-empty sequence of file path strings.
+
+Code block:
+```python
+Line 1: def stage_domain_knowledge_files(proj_dir, work_dir, markdown_paths=None):
+Line 2:     """Copy user markdown files into fm_agent/spec_prompts/domain_context/.
+Line 3:     When markdown_paths is provided, the staged directory is replaced with exactly
+Line 4:     those files. When omitted or empty, existing staged files are preserved and
+Line 5:     listed; this supports resume runs.
+Line 6:     """
+Line 7:     if not markdown_paths:
+Line 8:         return list_staged_domain_knowledge_relpaths(work_dir)
+Line 9:     resolved = resolve_domain_knowledge_paths(
+Line 10:         markdown_paths,
+Line 11:         base_dir=proj_dir,
+Line 12:         fallback_base_dir=os.getcwd(),
+Line 13:     )
+Line 14:     target_dir = os.path.join(work_dir, USER_KNOWLEDGE_REL_DIR)
+Line 15:     parent_dir = os.path.dirname(target_dir)
+Line 16:     tmp_dir = target_dir + ".tmp"
+Line 17:     shutil.rmtree(tmp_dir, ignore_errors=True)
+Line 18:     os.makedirs(tmp_dir, exist_ok=True)
+Line 19:     used_names = set()
+Line 20:     entries = []
+Line 21:     for source_path in resolved:
+Line 22:         target_name = _safe_staged_name(source_path, used_names)
+Line 23:         target_path = os.path.join(tmp_dir, target_name)
+Line 24:         shutil.copy2(source_path, target_path)
+Line 25:         rel_to_work = os.path.join(USER_KNOWLEDGE_REL_DIR, target_name).replace(
+Line 26:             os.sep, "/"
+Line 27:         )
+Line 28:         entries.append({
+Line 29:             "source_path": source_path,
+Line 30:             "staged_path": f"fm_agent/{rel_to_work}",
+Line 31:         })
+Line 32:     manifest_path = os.path.join(tmp_dir, USER_KNOWLEDGE_MANIFEST)
+Line 33:     with open(manifest_path, "w", encoding="utf-8") as f:
+Line 34:         json.dump({"files": entries}, f, indent=2, ensure_ascii=False)
+Line 35:     os.makedirs(parent_dir, exist_ok=True)
+Line 36:     shutil.rmtree(target_dir, ignore_errors=True)
+Line 37:     os.replace(tmp_dir, target_dir)
+Line 38:     return list_staged_domain_knowledge_relpaths(work_dir)
+```
+
+Additional context:
+resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir)
+Pre-condition: paths is a non-empty sequence of file path strings. base_dir is an absolute path to an existing directory. fallback_base_dir is an absolute path to an existing directory.
+Post-condition: Returns a list of absolute, validated paths to existing markdown files. Every returned path is a valid markdown file accessible on the filesystem.
+
+_safe_staged_name(source_path, used_names) -> str
+Pre-condition: source_path is an absolute path to an existing file. used_names is a set of strings representing already-reserved staged filenames.
+Post-condition: Returns a filename string that is derived from the source file's basename with all special characters replaced by underscores. The returned name is guaranteed distinct from every name in used_names. When the derived name is not in used_names, it is returned as-is; when it collides with a name in used_names, a numeric suffix is appended to produce a unique name.
+
+list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+Pre-condition: work_dir is an absolute path to an existing, FM-Agent-managed workspace directory. The directory spec_prompts/domain_context/user_knowledge/ exists under work_dir.
+Post-condition: Returns a sorted list of relative path strings (using `/` separator, prefixed with `fm_agent/`) to every markdown file present in the user knowledge directory under work_dir. The list is in lexicographic ascending order.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

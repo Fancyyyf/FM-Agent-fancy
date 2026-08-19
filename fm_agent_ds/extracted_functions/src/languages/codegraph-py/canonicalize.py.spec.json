@@ -1,0 +1,5 @@
+{
+  "signature": "canonicalize(func_name: str) -> str",
+  "pre_condition": "func_name is a string representing a function name or identifier that may contain characters unsafe for filesystem paths or fully-qualified names.",
+  "post_condition": "Returns a string where every occurrence of '/' has been replaced with '_'. The returned string is safe for use as a filesystem path component and as a segment in a '::'-delimited fully-qualified name. If func_name is falsy, returns it unchanged."
+}

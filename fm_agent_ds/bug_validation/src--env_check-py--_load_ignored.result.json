@@ -1,0 +1,11 @@
+{
+  "id": "src--env_check-py--_load_ignored",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/env_check-py/_load_ignored.py",
+  "function_name": "_load_ignored",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--env_check-py--_load_ignored.py",
+  "detail_file": "fm_agent/bug_validation/src--env_check-py--_load_ignored.md",
+  "probe_stdout": "CONFIRMED — UnicodeDecodeError propagated instead of returning empty set\\n",
+  "trigger_summary": "Writing invalid UTF-8 bytes to .env_check_memory causes UnicodeDecodeError to propagate instead of returning an empty set."
+}

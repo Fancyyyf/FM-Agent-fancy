@@ -1,0 +1,5 @@
+{
+  "signature": "_wait_opencode_process(proc, command, stage, timeout_seconds) -> (int, str | None)",
+  "pre_condition": "proc is a running subprocess.Popen instance whose process has not yet been waited on. command is a non-empty sequence of strings. stage is a non-empty string. timeout_seconds is a positive integer.",
+  "post_condition": "Blocks until the process in proc completes or the timeout expires. Returns a 2-tuple (exit_code, error). When the process exits within timeout_seconds: exit_code is the integer process exit code and error is None. When the process does not exit within timeout_seconds: proc is terminated (SIGTERM), then force-killed (SIGKILL) if termination does not complete within a 10-second grace period; exit_code is the process exit code after forced termination, mapped to -15 when that exit code is falsy (0 or None); error is a descriptive string indicating the timeout condition."
+}

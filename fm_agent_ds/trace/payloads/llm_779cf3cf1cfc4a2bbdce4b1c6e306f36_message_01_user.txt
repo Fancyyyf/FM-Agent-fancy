@@ -1,0 +1,40 @@
+Programming language: Python
+
+Pre-condition:
+self._proc references an active ELP subprocess and self._reader references an active background reader thread.
+
+Code block:
+```python
+Line 1:     def close(self):
+Line 2:         proc = self._proc
+Line 3:         if proc is None:
+Line 4:             return
+Line 5:         try:
+Line 6:             if proc.poll() is None:
+Line 7:                 try:
+Line 8:                     self.request("shutdown")
+Line 9:                 except Exception:
+Line 10:                     pass
+Line 11:                 try:
+Line 12:                     self.notify("exit")
+Line 13:                 except Exception:
+Line 14:                     pass
+Line 15:                 try:
+Line 16:                     proc.wait(timeout=5)
+Line 17:                 except subprocess.TimeoutExpired:
+Line 18:                     proc.terminate()
+Line 19:                     try:
+Line 20:                         proc.wait(timeout=5)
+Line 21:                     except subprocess.TimeoutExpired:
+Line 22:                         proc.kill()
+Line 23:         finally:
+Line 24:             for stream in (proc.stdin, proc.stdout):
+Line 25:                 if stream:
+Line 26:                     try:
+Line 27:                         stream.close()
+Line 28:                     except OSError:
+Line 29:                         pass
+Line 30:             self._proc = None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

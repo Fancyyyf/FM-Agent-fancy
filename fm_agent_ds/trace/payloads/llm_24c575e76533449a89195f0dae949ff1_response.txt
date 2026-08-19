@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a flat list containing all non‑empty strings from the input `values` (or an empty list if `values` is `None`). Recursively, for any nested list or tuple, all its elements are flattened in depth‑first order, preserving the original sequence. Falsy strings (e.g., empty strings) are omitted. Formally, define function flatten(x) as: if x is None or x is empty iterable: []; else if x is a string: [x] if x != '' else []; else if x is a list or tuple: concatenation over e in x of flatten(e). Then the return value R satisfies R = flatten(values)."
+}

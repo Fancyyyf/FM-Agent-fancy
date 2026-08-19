@@ -1,0 +1,5 @@
+{
+  "signature": "_metadata_body() -> dict",
+  "pre_condition": "None.",
+  "post_condition": "Returns a dict structured as {'metadata': {'user_id': <string>}} where <string> is a stable, non-empty user identifier suitable for injection into LLM API request bodies. The returned dict is safe for shallow merging into an API request payload. The user_id value is consistent across repeated calls within the same execution environment."
+}

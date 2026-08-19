@@ -1,0 +1,5 @@
+{
+  "signature": "_extract_backtick_idents(issue_text: str) -> set[str]",
+  "pre_condition": "issue_text is a non-empty string.",
+  "post_condition": "Returns a set of lowercase strings, each a valid identifier token (a contiguous sequence beginning with a letter or underscore, followed by zero or more alphanumeric or underscore characters) of length at least 2, extracted from single-backtick-quoted spans and triple-backtick-fenced code blocks within issue_text. Identifier tokens matching a programming-language keyword are excluded. Identifier tokens matching a predefined stop-word set are excluded. Within single-backtick spans, any leading RST/Sphinx role-annotation prefix (a colon-separated pair of lowercase words followed by optional whitespace) is removed before identifier extraction. Leading underscores are stripped from each candidate before keyword and stop-word comparison."
+}

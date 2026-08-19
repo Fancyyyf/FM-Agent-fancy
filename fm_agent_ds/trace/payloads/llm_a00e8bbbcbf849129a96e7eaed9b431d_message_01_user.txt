@@ -1,0 +1,90 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def rank_functions_in_file(
+Line 2:     filepath: str,
+Line 3:     src_path: Path,
+Line 4:     issue: str,
+Line 5:     signals: dict[str, set[str]],
+Line 6:     top_k: int = TOP_K,
+Line 7:     llm_client: Any = None,
+Line 8:     llm_model: str = '',
+Line 9:     llm_trigger: int = LLM_TRIGGER_FUNCS,
+Line 10:     llm_top_k: int = LLM_TOP_K,
+Line 11:     llm_confidence_threshold: float = LLM_CONFIDENCE_THRESHOLD,
+Line 12:     proj_dir: str | None = None,
+Line 13: ) -> list[dict]:
+Line 14:     """
+Line 15:     Rank functions in a single file by relevance to the issue.
+Line 16:     proj_dir, when given, lets the non-Python parse path resolve function boundaries from
+Line 17:     codegraph (via extract._function_spans) instead of the regex fallback.
+Line 18:     Returns a list of dicts (file, name, lineno, end_lineno, score, reason),
+Line 19:     sorted descending by score, length ≤ top_k.
+Line 20:     """
+Line 21:     funcs_info, source_lines, classes = _parse_file(src_path, proj_dir=proj_dir)
+Line 22:     if funcs_info is None or not funcs_info:
+Line 23:         print(f"  [scope] {filepath}: no functions found, skipping")
+Line 24:         return []
+Line 25:     # Stage 1: heuristic scoring with all enrichments
+Line 26:     ranked = _rank_functions(funcs_info, classes or [], signals)
+Line 27:     # Deduplicate by name (keep highest-scored occurrence per name)
+Line 28:     seen_names: dict[str, dict] = {}
+Line 29:     deduped_ranked: list[dict] = []
+Line 30:     for f in ranked:
+Line 31:         if f['name'] not in seen_names:
+Line 32:             seen_names[f['name']] = f
+Line 33:             deduped_ranked.append(f)
+Line 34:     # ── print per-file function scores ──────────────────────────────────────
+Line 35:     print(f"\n{'─' * 70}")
+Line 36:     print(f"FILE: {filepath}  ({len(deduped_ranked)} unique functions)")
+Line 37:     if classes:
+Line 38:         class_names = [c['name'] for c in classes]
+Line 39:         print(f"  classes found: {class_names}")
+Line 40:     print(f"  {'rank':>4}  {'score':>8}  {'name'}")
+```
+
+Condition A (what the code actually does):
+Natural language: After the code block executes, one of three outcomes occurs: (1) The call to `_parse_file` raises an exception, which propagates out of the block uncaught. (2) `_parse_file` returns `funcs_info` as `None` or an empty list, in which case the function `rank_functions_in_file` returns `[]`, a message `" [scope] {filepath}: no functions found, skipping"` is printed, and no further code in the block is executed. (3) `_parse_file` returns a non‑empty `funcs_info` (a list of function‑metadata dicts). Then `source_lines` (list of str) and `classes` (list of class dicts or `None`) are also defined. The variable `ranked` is set to `_rank_functions(funcs_info, classes or [], signals)`, a list of dicts each containing a `score` key, sorted descending by score. A deduplication step creates `deduped_ranked`, a list containing the first entry from `ranked` for each distinct `name`, thereby keeping the highest‑scored occurrence per function name while preserving the descending‑score order. The dictionary `seen_names` maps each unique function name to its retained dict from `ranked`. The console output includes a separator line, a header `"FILE: {filepath}  ({len(deduped_ranked)} unique functions)"`, optionally a line listing class names if `classes` is non‑empty, and a formatted header `"  rank  score  name"`. The block then falls through (the function does not return at this point); later code would continue with `deduped_ranked`, `source_lines`, and the original arguments available.
+
+Formal logic: Let `S` be the program state immediately before the block. Input parameters `filepath`, `src_path`, `issue`, `signals`, `proj_dir`, `top_k`, `llm_client`, `llm_model`, `llm_trigger`, `llm_top_k`, `llm_confidence_threshold` are unmodified throughout the block. Let `parse_result` denote the tuple returned by `_parse_file(src_path, proj_dir=proj_dir)` in state `S`. Define three possible transitions:
+1. Exception path: If `_parse_file` raises exception `E`, then after the block the global state is as after propagating `E` (no local assignments take effect).
+2. Early‑return path: If `parse_result` is `(None, _, _)` or `(ls, _, _)` where `ls = []`, then after the block `rank_functions_in_file` has returned `[]`, the printed output contains the string `"  [scope] {filepath}: no functions found, skipping"`, and the block terminates.
+3. Normal flow: If `parse_result = (funcs_info, source_lines, classes)` with `funcs_info ≠ None ∧ len(funcs_info) > 0`, then after the block:
+   - `funcs_info`, `source_lines`, `classes` are bound to those values.
+   - `ranked = _rank_functions(funcs_info, classes or [], signals)` and satisfies:
+     * `len(ranked) = len(funcs_info)`
+     * For each `d` in `ranked`, `d` is an augmented dict with key `'score'` (float).
+     * The list `ranked` is sorted descending by `score`.
+   - Let `seen_names` be a new dict, `deduped_ranked` a new list. After the loop:
+     * `sorted_deduped = deduped_ranked`
+     * `∀ n: n ∈ { d['name'] | d ∈ ranked } → ∃! d ∈ deduped_ranked : d['name'] = n ∧ d = first occurrence of n in ranked (i.e. highest score).`
+     * `deduped_ranked` preserves the relative order of those first occurrences, hence remains sorted descending by score (ties broken by original order).
+     * `seen_names = { d['name']: d | d ∈ deduped_ranked }`
+   - The printed output contains:
+     * A line of 70 ‘─’ characters.
+     * `"FILE: {filepath}  ({len(deduped_ranked)} unique functions)"`
+     * If `classes` is non‑empty, a line `"  classes found: [names]"` where `names = [c['name'] for c in classes]`.
+     * `"  rank  score  name"` (with exact spacing).
+   - The function has not returned; execution continues after line 40 with the described bindings.
+
+Condition B (what the specification requires):
+Returns a list of dicts sorted by descending score, with length at most top_k. Each dict has keys: 'file' (the filepath string), 'name' (function name string), 'lineno' (int start line), 'end_lineno' (int end line), 'score' (float rounded to 3 decimal places), and 'reason' (string). Each function name appears at most once in the result (highest-scored occurrence retained). Returns an empty list when the source file contains no localizable functions or when the file cannot be parsed.
+
+Ranking uses heuristic signal scoring across multiple tiers: traceback function-name matches, backtick-identifier matches in function name and body, dotted Class.method reference overlap, plain identifier-name overlap, exception-type presence in the function body, and body-text word overlap with intent tokens. Scores are then propagated through the file's intra-file call graph: callees inherit a fraction of each caller's score, and callers inherit a fraction of each callee's score.
+
+When an LLM client is provided and either (a) the top heuristic score is below llm_confidence_threshold or (b) the number of unique functions is at least llm_trigger, LLM re-ranking is attempted. If the LLM returns a ranking, those functions appear first with reason='llm', followed by top heuristic-scored functions filling remaining slots with reason='heuristic_pad'. If the LLM call produces no results or fails, the heuristic ranking is used as-is with reason='heuristic'.
+
+Additional context:
+_parse_file(src_path: Path, proj_dir: str | None) -> tuple[list[dict] | None, list[str] | None, list[dict] | None]
+Pre-condition: src_path is an absolute path to an existing source file. proj_dir, when provided, is the project root directory enabling non-Python parse paths to resolve function boundaries via codegraph.
+Post-condition: Returns a tuple (funcs_info, source_lines, classes). funcs_info is a list of function-metadata dicts each containing keys for function name, start line, and end line, or None when no functions are found or parsing fails. source_lines is the file content as a list of strings (one per line), or None when reading fails. classes is a list of class-metadata dicts each with a 'name' key, or None when no classes are found.
+
+_rank_functions(funcs_info: list[dict], classes: list[dict], signals: dict[str, set[str]]) -> list[dict]
+Pre-condition: funcs_info is a non-empty list of function-metadata dicts from _parse_file. classes is a list of class-metadata dicts (possibly empty). signals is a dict of pre-parsed signal dictionaries from _parse_issue_signals with keys 'traceback_funcs', 'backtick_idents', 'dotted_refs', 'dotted_classes', 'plain_idents', 'exception_types', 'all_words'.
+Post-condition: Returns funcs_info augmented with a 'score' key (float) on each entry, sorted by descending score. Scoring applies weighted signal matching: traceback-pattern overlap, backtick-identifier matches in function name and body, dotted-reference overlap, plain-identifier overlap in name, exception-type presence in the function body, and body-word overlap with intent tokens. When classes is non-empty, class-level scoring further boosts member function scores based on class-name and docstring overlap with the intent tokens.
+
+_llm_rerank(funcs: list[dict], source_lines: list[str], filepath: str, issue: str, top_k: int, llm_client, llm_model: str) -> list[str] | None
+Pre-condition: funcs is a non-empty list of function-metadata dicts each with 'name' and 'score' keys, sorted by descending score. source_lines is the file content as a list of strings. filepath identifies the source file. issue is the developer intent string. top_k is the maximum number of functions to select. llm_client is a configured LLM API client. llm_model is the model name string.
+Post-condition: Returns a list of function name strings ordered by LLM-assessed relevance to the issue, with length at most top_k. Returns an empty list or None when the LLM call fails or produces no valid output.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

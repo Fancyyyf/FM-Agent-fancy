@@ -1,0 +1,5 @@
+{
+  "signature": "_phases_cover_current_sources(phases_json, proj_dir, submodules=None) -> bool",
+  "pre_condition": "phases_json is a string path to a JSON file; proj_dir is an existing directory path containing the project source tree; submodules, if not None, is a non-empty sequence of subdirectory paths relative to proj_dir",
+  "post_condition": "Returns True if and only if all of the following hold: (1) the file at phases_json exists, is readable, and contains valid JSON whose 'phases' key holds a list that includes at least one source file path across all modules; (2) every source file path listed under 'phases' is a normalized forward-slash path that corresponds to an existing file relative to proj_dir; (3) when submodules is not None, every listed source file path falls under at least one of the specified submodule directories; (4) the set of all source file paths listed in the phases plan is a superset of the set of project source files collected from proj_dir, scoped to submodules when provided. Returns False if any condition fails, including when the phases.json file cannot be opened or contains non-JSON content."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_setup_outputs_complete(work_dir) -> bool",
+  "pre_condition": "work_dir is a directory containing pipeline output files from the preceding stages of the pipeline",
+  "post_condition": "Returns True if and only if all of the following exist at their expected paths under work_dir: (1) phases.json, (2) spec_prompts/domain_context/engine_overview.txt, and (3) for every phase number P declared in the phases.json file, a file spec_prompts/domain_context/phase_P_types.txt"
+}

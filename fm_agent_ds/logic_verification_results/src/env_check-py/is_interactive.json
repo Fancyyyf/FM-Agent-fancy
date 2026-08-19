@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/env_check-py/is_interactive.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns True when the process's standard input is connected to a terminal (TTY); returns False otherwise. No side effects.",
+    "actual_behavior": "If the call to sys.stdin.isatty() completes without raising an exception, the function returns True if that call returned True, and False otherwise. If sys.stdin.isatty() raises an exception, the function does not return, and that exception propagates to the caller. Formally, for any successful call: result = sys.stdin.isatty(); for any exceptional call: exception = exception_from(sys.stdin.isatty()).",
+    "code_evidence": "Line 2: return sys.stdin.isatty()",
+    "trigger_condition": "The specification requires the function to return `True` when stdin is connected to a terminal and `False` otherwise. It does not allow raising exceptions. The code unconditionally delegates to `sys.stdin.isatty()`, which can raise exceptions (e.g., when stdin is closed or not a proper file object). In such cases, the code fails to meet the specification by propagating the exception instead of returning `False`."
+  }
+}

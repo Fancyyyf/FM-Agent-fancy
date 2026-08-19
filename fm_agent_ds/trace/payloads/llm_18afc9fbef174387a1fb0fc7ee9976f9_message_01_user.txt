@@ -1,0 +1,38 @@
+Programming language: Python
+
+Pre-condition:
+config is an LLMConfigInput with non-empty provider_id, provider_name, api_style, base_url, model_id, and api_key fields. config.api_style is either 'openai' or 'anthropic'. config.backend is 'opencode'. paths is a WizardPaths whose attribute paths (toml_path, env_path, opencode_config_path) exist or can be created at their corresponding filesystem locations.
+
+Code block:
+```python
+Line 1: def _preview(config: LLMConfigInput, paths: WizardPaths) -> str:
+Line 2:     secret_path = secret_path_for_provider(config)
+Line 3:     return "\n".join(
+Line 4:         [
+Line 5:             "FM-Agent LLM configuration",
+Line 6:             "",
+Line 7:             f"Provider ID:   {config.provider_id}",
+Line 8:             f"Provider name: {config.provider_name}",
+Line 9:             f"API protocol:  {config.api_style}",
+Line 10:             f"Base URL:      {config.base_url}",
+Line 11:             f"Model ID:      {config.model_id}",
+Line 12:             f"API key:       {mask_secret(config.api_key)}",
+Line 13:             "",
+Line 14:             "The following files will be updated:",
+Line 15:             f"  - {paths.toml_path}",
+Line 16:             f"  - {paths.env_path}",
+Line 17:             f"  - {paths.opencode_config_path}",
+Line 18:             f"  - {secret_path}",
+Line 19:         ]
+Line 20:     )
+```
+
+Additional context:
+secret_path_for_provider(config: LLMConfigInput) -> Path
+Pre-condition: config is the LLMConfigInput passed to _preview, with a non-empty provider_id.
+Post-condition: Returns a Path identifying the filesystem location of the provider-specific secret key file. The returned path is determined solely by config.provider_id and the platform's user configuration directory.
+
+mask_secret(value: str) -> str
+Pre-condition: value is a non-empty string (the api_key from the config passed to _preview).
+Post-condition: Returns a string derived from value that does not expose the full plaintext value in the output, suitable for display in a human-readable preview.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

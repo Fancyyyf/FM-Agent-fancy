@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--State::tail_opencode",
+  "source_file": "dashboard-py/State::tail_opencode.py",
+  "function_name": "tail_opencode",
+  "confirmation_status": "confirmed",
+  "attempts": "2",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--State::tail_opencode.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--State::tail_opencode.md",
+  "probe_stdout": "CONFIRMED — guard bypassed: .glob() called on non-directory path\n| spec_claim:  return immediately with no side effects if not a directory\n| actual:      proceeded to .glob('*.jsonl') on a non-directory path\n| guard check: .exists() returned True for a file (should use .is_dir())\n| offsets unchanged: True\n| root cause:  line 341 uses .exists() instead of .is_dir()\n",
+  "trigger_summary": "When self.opencode_dir is a regular file instead of a directory, Path.exists() returns True so the guard is bypassed and .glob('*.jsonl') is called instead of returning immediately as the spec requires."
+}

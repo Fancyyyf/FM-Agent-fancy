@@ -1,0 +1,56 @@
+Programming language: Python
+
+Pre-condition:
+caller_fqn is a non-empty string identifying an extracted function. Its corresponding source file exists and has a readable .info.json sidecar. updates is a non-empty list of (callee_name: str, callee_new_spec: dict) pairs where each callee_new_spec dict contains the string keys 'signature', 'pre_condition', and 'post_condition'. base_idx is a non-negative integer.
+
+Code block:
+```python
+Line 1:     def _reconcile_caller(caller_fqn, updates, base_idx):
+Line 2:         """
+Line 3:         Reconcile caller_fqn's .info.json against a sequence of changed callees.
+Line 4:         updates is a list of (callee_name, callee_new_spec). The entries are applied
+Line 5:         sequentially, re-reading the caller file between each, because they all edit the same
+Line 6:         file — so a single caller is one unit of work and DIFFERENT callers run concurrently
+Line 7:         (see the batch loop). base_idx + offset gives each opencode call a unique artifact name.
+Line 8:         Returns the caller's path if any reconciliation changed it, else None.
+Line 9:         """
+Line 10:         cpath = file_map.get(caller_fqn)
+Line 11:         if not cpath or not os.path.isfile(cpath):
+Line 12:             return None
+Line 13:         cext = cpath.rsplit(".", 1)[-1] if "." in os.path.basename(cpath) else ""
+Line 14:         clang = EXT_TO_LANG.get(cext)
+Line 15:         if not clang:
+Line 16:             return None
+Line 17:         changed = False
+Line 18:         for offset, (callee_name, callee_new_spec) in enumerate(updates):
+Line 19:             with open(cpath, "r", errors="replace") as f:
+Line 20:                 csource = f.read()
+Line 21:             try:
+Line 22:                 with open(f"{cpath}.info.json", "r", encoding="utf-8") as f:
+Line 23:                     c_info = json.load(f)
+Line 24:             except (OSError, json.JSONDecodeError):
+Line 25:                 continue
+Line 26:             cresult = _llm_check_caller_info_update(
+Line 27:                 proj_dir, work_dir, base_idx + offset, caller_fqn, callee_name, clang, "",
+Line 28:                 callee_new_spec, c_info, csource,
+Line 29:             )
+Line 30:             if not cresult or not cresult.get("info_updated"):
+Line 31:                 continue
+Line 32:             c_new_info = cresult.get("new_info")
+Line 33:             if not isinstance(c_new_info, dict):
+Line 34:                 continue
+Line 35:             with open(f"{cpath}.info.json", "w", encoding="utf-8") as f:
+Line 36:                 json.dump(_normalize_info_dict(c_new_info), f, indent=2, ensure_ascii=False)
+Line 37:             changed = True
+Line 38:         return cpath if changed else None
+```
+
+Additional context:
+_llm_check_caller_info_update(proj_dir, work_dir, artifact_idx, caller_fqn, callee_name, callee_lang, caller_path, callee_new_spec, caller_info, caller_source) -> dict | None
+Pre-condition: artifact_idx is a non-negative integer. caller_fqn and callee_name are non-empty strings. callee_lang is a valid language identifier string. callee_new_spec is a dict with 'signature', 'pre_condition', and 'post_condition' string fields. caller_info is a dict matching the .info.json schema. caller_source is the raw caller source code as a string.
+Post-condition: Returns a dict with key 'info_updated' (bool). When info_updated is true, also returns key 'new_info' whose value is a dict conforming to the .info.json schema with callee entries consistent with callee_new_spec. Returns None when the evaluation fails to produce a valid determination.
+
+_normalize_info_dict(info: dict) -> dict
+Pre-condition: info is a dict optionally containing a 'callees' key whose value is a list of dicts with any subset of the fields 'name', 'signature', 'pre_condition', 'post_condition'.
+Post-condition: Returns a dict with a single key 'callees' whose value is a list of dicts, each containing exactly the keys 'name', 'signature', 'pre_condition', 'post_condition' in that order. Missing fields in input callee entries are filled with empty strings. Extra keys in input callee entries are removed.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

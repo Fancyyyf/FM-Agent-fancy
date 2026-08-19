@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_function_spans",
+      "signature": "_function_spans(src_path: str, lang_key: str, proj_dir: str | None = None) -> tuple[list[tuple[str, int, int]], list[str]]",
+      "pre_condition": "src_path is a path to an existing source file. lang_key identifies a language registered in the extension-to-language mapping. proj_dir, when provided, is the project root directory.",
+      "post_condition": "Returns a tuple (spans, raw_lines). spans is a list of (name, start0, end0) tuples where name is a deduplicated function name string, and start0/end0 are 0-based line indices defining the function boundary (start0 points to the signature line). raw_lines is a list of strings representing the full file content, which may include trailing newline characters. Uses CodeGraph-based extraction when proj_dir is provided and the file is indexed; falls back to regex-based extraction otherwise. Raises an exception when the file cannot be read or its content cannot be parsed into function boundaries."
+    },
+    {
+      "name": "_generic_func_info",
+      "signature": "_generic_func_info(name: str, start0: int, end0: int, source_lines: list[str], lang_cfg: dict) -> dict",
+      "pre_condition": "name is a non-empty function name string. start0 and end0 are 0-based line indices such that 0 <= start0 < end0 < len(source_lines). source_lines is a non-empty list of strings with trailing newline characters removed. lang_cfg is a dict containing at least the language-specific configuration keys required for function parsing.",
+      "post_condition": "Returns a dict containing at least keys 'name' (string, the function name), 'lineno' (int, 1-based start line converted from start0), and 'end_lineno' (int, 1-based end line converted from end0)."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_caller_module",
+      "signature": "_caller_module(file_path: str) -> str",
+      "pre_condition": "file_path is an absolute path to a file within the analyzed Erlang project tree.",
+      "post_condition": "Returns a module identifier string derived from the path components relative to the project root."
+    },
+    {
+      "name": "_elp_argv",
+      "signature": "_elp_argv() -> list[str]",
+      "pre_condition": "None.",
+      "post_condition": "Returns the ELP command-line argument list used for the current invocation."
+    },
+    {
+      "name": "_fingerprint_digest",
+      "signature": "_fingerprint_digest(fingerprint: tuple) -> str",
+      "pre_condition": "fingerprint is a tuple.",
+      "post_condition": "Returns a string that uniquely and stably identifies fingerprint — the same fingerprint tuple always produces the same digest string."
+    }
+  ]
+}

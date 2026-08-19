@@ -1,0 +1,5 @@
+{
+  "signature": "_phase_source_files(phases_json) -> dict",
+  "pre_condition": "phases_json is a string path",
+  "post_condition": "If the file at phases_json is readable and contains a valid JSON object with a 'phases' array, returns a dict mapping each integer 'phase' value found in that array to the list of source file paths (strings) accumulated from the 'source_files' arrays of all modules belonging to that phase. Phase entries whose 'phase' key is missing or non-integer are excluded from the result. If the file cannot be read or its content is not a valid JSON object with a 'phases' array, returns an empty dict {}."
+}

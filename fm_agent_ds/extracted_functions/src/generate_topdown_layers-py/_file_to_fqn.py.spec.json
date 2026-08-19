@@ -1,0 +1,5 @@
+{
+  "signature": "_file_to_fqn(filepath, proj_dir) -> str",
+  "pre_condition": "filepath is an absolute path to an existing file located under proj_dir/extracted_functions/. proj_dir is an existing directory that contains an extracted_functions/ subdirectory.",
+  "post_condition": "Returns a fully-qualified name (FQN) string formed by: computing the path of filepath relative to proj_dir/extracted_functions, removing the file extension, splitting the result into path components, and joining the components with '::'. The returned FQN contains no file extension suffix, no 'extracted_functions/' prefix, and uses '::' as the unambiguous component separator. The result is the canonical FQN used across the pipeline to identify the function."
+}

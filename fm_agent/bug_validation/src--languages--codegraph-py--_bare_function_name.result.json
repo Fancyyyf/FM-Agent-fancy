@@ -1,11 +1,11 @@
 {
   "id": "src--languages--codegraph-py--_bare_function_name",
-  "source_file": "src/languages/codegraph.py",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_jx75d3w8/snapshot/src/languages/codegraph-py/_bare_function_name.py",
   "function_name": "_bare_function_name",
   "confirmation_status": "confirmed",
-  "attempts": 2,
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_bare_function_name.py",
   "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_bare_function_name.md",
-  "probe_stdout": "CONFIRMED — actual: 'foo' | expected: 'bar'\n",
-  "trigger_summary": "Input 'foo::bar -> int': qualifier '::' is stripped to get 'bar', but the regex on line 49 searches the original name and fails, so the fallback incorrectly returns 'foo'."
+  "probe_stdout": "CONFIRMED — free: actual='operator' expected='operator new' | qualified: actual='Vec::operator' expected='Vec::operator new'",
+  "trigger_summary": "Passing an operator overload whose name column carries appended parameter text, e.g. 'operator new(int)', makes _bare_function_name return 'operator' instead of the spec-required 'operator new' because re.fullmatch() rejects the trailing '(int)' and the generic fallback regex captures only the leading word."
 }

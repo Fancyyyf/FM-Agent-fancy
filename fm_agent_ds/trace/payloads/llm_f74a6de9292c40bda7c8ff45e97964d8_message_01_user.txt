@@ -1,0 +1,80 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def get_call_edges(self, lang_key: str) -> dict:
+Line 2:         """Return {caller_fqn: {callee_fqn, ...}} for the given language.
+Line 3:         Each FQN matches generate_topdown_layers._file_to_fqn for the
+Line 4:         corresponding extracted function (``dir::file-ext::dedup_name``). Edges
+Line 5:         are resolved by codegraph NODE ID (not by bare name), so the precise
+Line 6:         caller/callee identity codegraph computed — which file, which same-named
+Line 7:         sibling — is preserved end-to-end. This lets the call-graph builder use
+Line 8:         the edges directly instead of re-resolving bare names against every
+Line 9:         same-named function (which collapsed siblings and over-approximated
+Line 10:         across files).
+Line 11:         Constructor calls are synthesised from `instantiates` edges: when a
+Line 12:         function instantiates a class, the corresponding constructor method is
+Line 13:         added as a callee.  See _CONSTRUCTOR_FILTER for per-language details.
+Line 14:         NOTE: codegraph itself collapses calls to same-named classes in different
+Line 15:         files onto the first definition (a codegraph resolver limitation for C++,
+Line 16:         not addressable here — see issues/codegraph-samename-class-resolution).
+Line 17:         """
+Line 18:         cg_langs = _CG_LANG.get(lang_key)
+Line 19:         if not cg_langs:
+Line 20:             return {}
+Line 21:         conn = sqlite3.connect(self._db)
+Line 22:         cur = conn.cursor()
+Line 23:         placeholders = ",".join("?" * len(cg_langs))
+Line 24:         # Map every function/method node to its FQN once, using the same per-file
+Line 25:         # dedup as get_functions_by_file, then resolve edges by node id.
+Line 26:         fqn_of = _node_fqn_map(cur, cg_langs)
+Line 27:         result = defaultdict(set)
+Line 28:         # Query 1: regular function/method calls, kept as (source_id, target_id)
+Line 29:         # so each endpoint resolves to its exact node's FQN.
+Line 30:         cur.execute(
+Line 31:             f"""
+Line 32:             SELECT e.source, e.target
+Line 33:             FROM edges e
+Line 34:             JOIN nodes s ON e.source = s.id
+Line 35:             WHERE e.kind = 'calls' AND s.language IN ({placeholders})
+Line 36:             """,
+Line 37:             cg_langs,
+Line 38:         )
+Line 39:         for src_id, tgt_id in cur.fetchall():
+Line 40:             caller, callee = fqn_of.get(src_id), fqn_of.get(tgt_id)
+Line 41:             if caller and callee:
+Line 42:                 result[caller].add(callee)
+Line 43:         # Query 2: constructor calls synthesised from instantiates edges.
+Line 44:         # For each `caller instantiates ClassName` edge, find the constructor
+Line 45:         # method inside that class and add it as a synthetic callee.
+Line 46:         ctor_filter = _CONSTRUCTOR_FILTER.get(lang_key)
+Line 47:         if ctor_filter:
+Line 48:             cur.execute(
+Line 49:                 f"""
+Line 50:                 SELECT e.source, ctor.id
+Line 51:                 FROM edges e
+Line 52:                 JOIN nodes s   ON e.source = s.id
+Line 53:                 JOIN nodes cls ON e.target = cls.id AND cls.kind = 'class'
+Line 54:                 JOIN edges ce  ON ce.source = cls.id AND ce.kind = 'contains'
+Line 55:                 JOIN nodes ctor ON ce.target = ctor.id
+Line 56:                                AND ctor.kind IN ('method', 'function')
+Line 57:                 WHERE e.kind = 'instantiates' AND s.language IN ({placeholders})
+Line 58:                 AND {ctor_filter}
+Line 59:                 """,
+Line 60:                 cg_langs,
+Line 61:             )
+Line 62:             for src_id, ctor_id in cur.fetchall():
+Line 63:                 caller, callee = fqn_of.get(src_id), fqn_of.get(ctor_id)
+Line 64:                 if caller and callee:
+Line 65:                     result[caller].add(callee)
+Line 66:         conn.close()
+Line 67:         return dict(result)
+```
+
+Condition A (what the code actually does):
+If no exception is raised, then: If the lookup _CG_LANG.get(lang_key) yields a non-empty list cg_langs, then the method opens a connection to self._db, obtains a cursor, computes fqn_of = _node_fqn_map(cur, cg_langs), then constructs a mapping result where for each (src, tgt) from edges.kind='calls' with source language in cg_langs, if both fqn_of[src] and fqn_of[tgt] are not None, then result[fqn_of[src]] contains fqn_of[tgt]; additionally if a ctor_filter = _CONSTRUCTOR_FILTER.get(lang_key) exists, for each (src, ctor_id) from the second query (edges.kind='instantiates' with source language in cg_langs, target class containing a method/function matching ctor_filter), if both fqn_of[src] and fqn_of[ctor_id] are not None, then result[fqn_of[src]] contains fqn_of[ctor_id]. The connection is closed before return. The method returns dict(result). If _CG_LANG.get(lang_key) yields a falsy value, the method returns {} without any side effects. In all cases, self remains unmodified, self._db is unchanged, no resources leaked.
+
+Condition B (what the specification requires):
+Returns a dict mapping each caller FQN (str) to a non-empty set of callee FQNs (set[str]) for all direct call relationships discovered in source files of the given language within the indexed project. Both keys and values use canonicalized FQNs with :: as the component separator. Call edges include both function-call edges and constructor invocations synthesized from class-instantiation relationships. FQN identity is resolved by codegraph node ID, preserving the precise caller/callee association for same-named functions in different files. Returns an empty dict when lang_key is not a recognized language or when no call edges exist for the given language.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

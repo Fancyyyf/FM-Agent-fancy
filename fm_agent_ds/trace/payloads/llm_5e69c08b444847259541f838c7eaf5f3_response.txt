@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "path points to a file that exists and is readable by the OS but contains bytes that are not valid for the default text encoding (e.g., a file named 'broken.txt' containing the byte 0xFF when the locale encoding is UTF-8).",
+  "offending_statements": "Line 6:     except (OSError, json.JSONDecodeError):",
+  "reason": "The code only catches OSError and json.JSONDecodeError. Opening the file in text mode (line 3) may raise a UnicodeDecodeError if the file contents cannot be decoded by the default encoding. This exception is not caught, so the function raises an exception instead of returning False as required by the specification ('Never raises an exception; every error condition ... is caught and results in a False return value')."
+}

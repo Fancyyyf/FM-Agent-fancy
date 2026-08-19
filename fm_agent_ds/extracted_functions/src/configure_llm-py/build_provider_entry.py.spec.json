@@ -1,0 +1,5 @@
+{
+  "signature": "build_provider_entry(config: LLMConfigInput, opencode_secret_path: Path) -> dict",
+  "pre_condition": "config is a fully-populated LLMConfigInput with non-empty fields: provider_id, provider_name, api_style, base_url (absolute http(s) URL), model_id, api_key, and backend. opencode_secret_path is an absolute Path pointing to a file containing the API key.",
+  "post_condition": "Returns a three-key dictionary. Key 'npm' maps to a non-empty string identifying an OpenCode provider-adapter npm package derived from config.api_style. Key 'options' maps to a dictionary where 'baseURL' equals config.base_url and 'apiKey' is a file-reference string embedding opencode_secret_path as its file source. Key 'models' maps to a dictionary whose sole key equals config.model_id and whose value is an empty dictionary."
+}

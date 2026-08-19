@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "work_dir='/tmp', event_id='ev1', stage='build', status='success', started='2024-01-01T00:00:00Z', ended='2024-01-01T00:00:01Z', command='make', summary=None, function_ids=None, input_files=None, output_files=None, exit_code=0, error=None, metadata=None, opencode_log_path=None, opencode_trace_path=None",
+  "offending_statements": "Line 48: \"summary\": summary or f\"OpenCode {stage}\",",
+  "reason": "With summary=None (omitted), the code sets the record's summary to 'OpenCode build', whereas the specification requires that omitted optional fields be stored as their empty defaults (e.g., None or an empty string). This alters the supplied value and violates the exact-supplied-or-empty-default requirement."
+}

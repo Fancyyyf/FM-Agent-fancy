@@ -1,0 +1,78 @@
+Programming language: Python
+
+Pre-condition:
+phase_files is an iterable of (filepath, module_name) pairs. Each filepath is an absolute path to an existing extracted-function file under proj_dir/extracted_functions/. proj_dir is a valid filesystem directory. global_stem_to_fqns, when provided and not None, is a dict mapping function-name stems (the final segment of an FQN after the last '::') to non-empty sets of FQN strings. extra_call_edges, when provided and not None, is an iterable of supplemental edge records, each identifying a caller (by exact FQN or by callsite-name patterns) and a callee (by exact FQN with optional info_names).
+
+Code block:
+```python
+Line 1: def _build_call_graph(phase_files, proj_dir, global_stem_to_fqns=None, extra_call_edges=None):
+Line 2:     """Build callees_map and callers_map for a set of phase files.
+Line 3:     Args:
+Line 4:         phase_files: list of (filepath, module_name) tuples
+Line 5:         proj_dir: project root directory
+Line 6:         global_stem_to_fqns: optional global stem->set(fqn) mapping across all phases,
+Line 7:                              used to compute all_callees (cross-phase)
+Line 8:         extra_call_edges: optional iterable of supplemental CallEdge objects.
+Line 9:                           caller.fqn is exact; caller.callsite_names are matched
+Line 10:                           only against explicitly listed source callsite names.
+Line 11:     Returns:
+Line 12:         (callees_map, callers_map, all_callees_map, file_map, module_map,
+Line 13:         edge_aliases_map) where keys are FQNs.
+Line 14:         callees_map/callers_map contain only within-phase edges.
+Line 15:         all_callees_map contains callees from any phase.
+Line 16:         edge_aliases_map maps callee -> caller -> supplemental callee labels
+Line 17:         that may appear as callee names in a caller's .info.json sidecar.
+Line 18:     """
+Line 19:     # Build FQN mappings
+Line 20:     fqn_map = {}  
+Line 21:     stem_to_fqns = defaultdict(set)  
+Line 22:     file_map = {}  
+Line 23:     module_map = {}  
+Line 24:     for filepath, module_name in phase_files:
+Line 25:         fqn = _file_to_fqn(filepath, proj_dir)
+Line 26:         fqn_map[filepath] = fqn
+Line 27:         file_map[fqn] = filepath
+Line 28:         module_map[fqn] = module_name
+Line 29:         stem = fqn.split("::")[-1]
+Line 30:         stem_to_fqns[stem].add(fqn)
+Line 31:     phase_fqns = set(fqn_map.values())
+Line 32:     # For call-site detection, use global stems if available
+Line 33:     effective_stem_to_fqns = global_stem_to_fqns if global_stem_to_fqns else stem_to_fqns
+Line 34:     # All extracted FQNs (across phases when a global map is supplied), used to
+Line 35:     # keep only codegraph callees that correspond to an extracted function.
+Line 36:     known_fqns = {
+Line 37:         fqn
+Line 38:         for fqns in effective_stem_to_fqns.values()
+Line 39:         for fqn in fqns
+Line 40:     }
+```
+
+Additional context:
+_file_to_fqn(filepath, proj_dir) -> str
+Pre-condition: filepath is an absolute path to an existing extracted-function file. proj_dir is a valid directory path.
+Post-condition: Returns the canonical FQN string derived from the file path relative to proj_dir, using '::' as the separator and canonicalizing unsafe characters.
+
+_resolve_extra_call_edges(extra_call_edges, phase_fqns, known_fqns) -> (dict, dict)
+Pre-condition: extra_call_edges is an iterable of supplemental edge records or None. phase_fqns is a set of FQN strings from the current phase. known_fqns is a set of all known FQN strings.
+Post-condition: Returns a pair (edges_by_caller_fqn, edges_by_callsite). edges_by_caller_fqn maps exact caller FQN to the list of matching edge records. edges_by_callsite maps callsite-name to the list of matching edge records. Only edges whose callee FQN is in known_fqns are returned. When extra_call_edges is None or empty, both returned dicts are empty.
+
+_detect_lang_from_ext(filepath) -> str | None
+Pre-condition: filepath is a string representing a filesystem path.
+Post-condition: Returns a language key string if the file extension matches a registered language; returns None if no language is registered for the extension.
+
+call_edges_all(proj_dir, phase_langs) -> (dict, set)
+Pre-condition: proj_dir is a valid directory path. phase_langs is an iterable of language key strings.
+Post-condition: Returns a pair (edges, langs). edges maps caller FQN to the set of callee FQNs as resolved by the codegraph index. langs is the set of language keys for which codegraph edges were successfully retrieved. The edges dict may be empty when no codegraph index exists or no relevant edges are found.
+
+_get_keywords_for_lang(lang_key) -> set
+Pre-condition: lang_key is a language key string returned by _detect_lang_from_ext or an equivalent source.
+Post-condition: Returns a non-empty set of strings (function names, keywords, builtins) that are to be excluded from call-site detection for the given language. The returned set is never None.
+
+_find_call_sites(text, lang_key, stems_to_find, keywords) -> set
+Pre-condition: text is a string containing source code. lang_key is a language key string. stems_to_find is a set of function-name strings to search for. keywords is a set of strings to exclude from results.
+Post-condition: Returns the subset of stems_to_find whose members appear as bare-name call sites in text, excluding any member that also belongs to keywords. A call site is a position in source code where a name appears in a syntactic calling position for the given language (e.g., followed by '(' in C-like languages).
+
+_add_resolved_extra_edge(caller_fqn, edge, phase_fqns, callees_map, callers_map, all_callees_map, edge_aliases_map) -> None
+Pre-condition: caller_fqn is a canonical FQN string. edge is a supplemental edge record with a callee FQN and optional info_names. phase_fqns is a set of FQN strings. callees_map, callers_map, all_callees_map, edge_aliases_map are mutable dicts keyed by FQN strings.
+Post-condition: If edge's callee FQN differs from caller_fqn: adds callee to all_callees_map[caller_fqn]; also adds callee to callees_map[caller_fqn] and adds caller to callers_map[callee_fqn] when the callee FQN is in phase_fqns; records edge's info_names under edge_aliases_map[callee_fqn][caller_fqn]. Self-edges (caller_fqn equals callee FQN) produce no mutation to any map.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

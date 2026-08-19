@@ -1,0 +1,5 @@
+{
+  "signature": "_opencode_trace_path(work_dir, event_id) -> str",
+  "pre_condition": "work_dir is an existing directory path and event_id is a non-empty string",
+  "post_condition": "Returns a filesystem path string that uniquely identifies a trace file for the given event_id within the trace directory hierarchy derived from work_dir. The returned path is suitable for writing raw LLM request/response trace data."
+}

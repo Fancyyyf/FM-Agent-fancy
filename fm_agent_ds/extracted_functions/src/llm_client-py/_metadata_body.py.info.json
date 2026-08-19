@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_stable_user_id",
+      "signature": "_stable_user_id() -> str",
+      "pre_condition": "None.",
+      "post_condition": "Returns a non-empty string that is stable across repeated calls within the same execution environment. The string serves as an identifier for the current user, enabling prompt-cache affinity in LLM API backends."
+    }
+  ]
+}

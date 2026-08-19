@@ -1,0 +1,46 @@
+{
+  "callees": [
+    {
+      "name": "render_header",
+      "signature": "render_header(state: State)",
+      "pre_condition": "state is a populated State instance",
+      "post_condition": "Returns a Rich-renderable object displaying the dashboard title and project identification derived from state"
+    },
+    {
+      "name": "render_stages",
+      "signature": "render_stages(state: State)",
+      "pre_condition": "state is a populated State instance whose pipeline-stage progress counters have been set",
+      "post_condition": "Returns a Rich-renderable object displaying per-stage pipeline progress expressed as processed-function counts against totals for each pipeline stage"
+    },
+    {
+      "name": "render_cache",
+      "signature": "render_cache(state: State)",
+      "pre_condition": "state is a populated State instance whose cache-hit-rate attribute contains a value between 0.0 and 1.0",
+      "post_condition": "Returns a Rich-renderable object displaying prompt-cache statistics, including the hit rate expressed as a percentage derived from state.cache_hit_rate"
+    },
+    {
+      "name": "render_bugs",
+      "signature": "render_bugs(state: State)",
+      "pre_condition": "state is a populated State instance whose bug-validation summary collections have been set",
+      "post_condition": "Returns a Rich-renderable object displaying the current counts of confirmed, not-confirmed, and total bug-validation verdicts"
+    },
+    {
+      "name": "render_tokens",
+      "signature": "render_tokens(state: State)",
+      "pre_condition": "state is a populated State instance whose token-usage accumulators have been set for both verification LLM calls and OpenCode subprocess calls",
+      "post_condition": "Returns a Rich-renderable object displaying cumulative token-usage and cost figures split into verification-related subtotals, OpenCode-subprocess subtotals, and a combined total"
+    },
+    {
+      "name": "render_llm_status",
+      "signature": "render_llm_status(state: State)",
+      "pre_condition": "state is a populated State instance whose OpenCode LLM trace counters have been set",
+      "post_condition": "Returns a Rich-renderable object displaying the current LLM invocation status and related metrics"
+    },
+    {
+      "name": "render_recent",
+      "signature": "render_recent(state: State)",
+      "pre_condition": "state is a populated State instance whose event collection contains one or more structured trace events",
+      "post_condition": "Returns a Rich-renderable object displaying the most recent structured trace events from state's event collection"
+    }
+  ]
+}

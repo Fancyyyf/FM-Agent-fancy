@@ -1,0 +1,5 @@
+{
+  "signature": "new_event_id(prefix) -> str",
+  "pre_condition": "prefix is a string.",
+  "post_condition": "Returns a string consisting of prefix, the character '_', and a 32-character lowercase hexadecimal suffix. The hexadecimal suffix is derived from a UUID4, giving each invocation a uniformly distributed random suffix with negligible collision probability against all prior invocations within the same process. When prefix is empty, the returned string begins with '_'. The total length of the returned string is len(prefix) + 33."
+}

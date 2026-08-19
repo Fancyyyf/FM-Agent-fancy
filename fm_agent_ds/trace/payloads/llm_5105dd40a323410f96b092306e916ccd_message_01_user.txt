@@ -1,0 +1,60 @@
+Programming language: Python
+
+Pre-condition:
+backend is a non-empty string identifying a local CLI backend and is not 'opencode'. paths is a WizardPaths instance whose toml_path and env_path attributes are resolvable Path objects. removed_overrides is a tuple of zero or more non-empty strings each naming a dotenv entry to be removed. toml_updates is a dict mapping dot-separated TOML field paths to non-empty string values.
+
+Code block:
+```python
+Line 1: def _preview_local_backend_configuration(
+Line 2:     backend: str,
+Line 3:     paths: WizardPaths,
+Line 4:     removed_overrides: tuple[str, ...],
+Line 5:     toml_updates: dict[str, str],
+Line 6: ) -> str:
+Line 7:     lines = [
+Line 8:         "FM-Agent local CLI backend configuration",
+Line 9:         "",
+Line 10:         f"Backend: {backend}",
+Line 11:         "",
+Line 12:         "The following files will be updated:",
+Line 13:         f"  - {paths.toml_path}",
+Line 14:     ]
+Line 15:     if removed_overrides:
+Line 16:         lines.extend(
+Line 17:             [
+Line 18:                 f"  - {paths.env_path}",
+Line 19:                 "",
+Line 20:                 "The following legacy dotenv overrides will be removed so they do not",
+Line 21:                 f"shadow the selected backend: {', '.join(removed_overrides)}",
+Line 22:             ]
+Line 23:         )
+Line 24:         migrated = [
+Line 25:             f"{key}: {value!r}"
+Line 26:             for key, value in toml_updates.items()
+Line 27:             if key in {"name", "effort"}
+Line 28:         ]
+Line 29:         if migrated:
+Line 30:             lines.extend(
+Line 31:                 [
+Line 32:                     "",
+Line 33:                     "The local CLI model settings retained from .env will be written to TOML:",
+Line 34:                     *[f"  - {item}" for item in migrated],
+Line 35:                 ]
+Line 36:             )
+Line 37:     else:
+Line 38:         lines.extend(
+Line 39:             [
+Line 40:                 "",
+Line 41:                 "No legacy LLM overrides were found in the project .env file.",
+Line 42:             ]
+Line 43:         )
+Line 44:     lines.extend(
+Line 45:         [
+Line 46:             "",
+Line 47:             "No API key or OpenCode provider configuration will be changed.",
+Line 48:         ]
+Line 49:     )
+Line 50:     return "\n".join(lines)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

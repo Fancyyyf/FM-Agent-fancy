@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "CodeGraphExtractor.from_proj_dir",
+      "signature": "from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None",
+      "pre_condition": "proj_dir is a path to an existing directory",
+      "post_condition": "Returns a CodeGraphExtractor instance initialized with the project source index, or None if initialization fails"
+    },
+    {
+      "name": "get_call_edges",
+      "signature": "get_call_edges(language: str) -> dict",
+      "pre_condition": "language is a recognized language key",
+      "post_condition": "Returns a dict mapping each caller identifier to the set of callee identifiers it directly invokes, for all source files of the specified language"
+    }
+  ]
+}

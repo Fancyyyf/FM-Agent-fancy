@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_collapse_phases_to_one",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_collapse_phases_to_one.py",
+  "function_name": "_collapse_phases_to_one",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_collapse_phases_to_one.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_collapse_phases_to_one.md",
+  "probe_stdout": "CONFIRMED — description has unwanted phase prefix: actual: 'Phase 1 (Analysis Phase): First phase handles initial setup\\n\\nPhase 2 (Verification Phase): Second phase verifies the results\\n\\nPhase 3 (Cleanup Phase): Final phase does cleanup' | expected: 'First phase handles initial setup\\n\\nSecond phase verifies the results\\n\\nFinal phase does cleanup'",
+  "trigger_summary": "The code prepends a 'Phase N (Name): ' prefix before each description instead of joining just the stripped non-empty descriptions with blank lines."
+}

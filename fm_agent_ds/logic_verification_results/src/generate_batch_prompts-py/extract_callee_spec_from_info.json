@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_batch_prompts-py/extract_callee_spec_from_info.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns the first callee entry dict from info_dict[\"callees\"] whose string-typed \"name\" field is recognized as matching callee_fqn or any string in aliases. Returns None when info_dict lacks a list-typed \"callees\" key, when no dict-typed entry in the list has a string-typed \"name\" field that matches any of the candidate names derived from callee_fqn and aliases, or when the callees list is empty.",
+    "actual_behavior": "The function returns the first callee specification dictionary from info_dict['callees'] (if present and a list) whose 'name' value is a string and matches at least one name in the set formed by callee_fqn and aliases, as determined by _info_line_mentions_name. If info_dict does not contain a 'callees' list, or if no matching callee is found, the function returns None. The arguments are not modified and no exceptions are raised. Formally: Let names = _callee_match_names(callee_fqn, aliases or ()). Let callees_raw = info_dict.get('callees', []). If not isinstance(callees_raw, list), the result is None. Otherwise, the result is the first element callee in callees_raw such that isinstance(callee, dict) and callee.get('name', '') is a string name and  candidate  names: _info_line_mentions_name(name, candidate) is true; if no such element exists, the result is None.",
+    "code_evidence": "Line 14: name = callee.get(\"name\", \"\")",
+    "trigger_condition": "The code treats a missing \"name\" key as an empty string via callee.get(\"name\", \"\"), so a callee dictionary without a \"name\" field is considered to have a string-typed name. If that empty string matches a candidate (e.g., when callee_fqn is empty), the function returns that callee, but the specification requires a callee to have a string-typed \"name\" field (i.e., the key must exist). Hence the code returns a wrong value for the given input."
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "tail_opencode(self)",
+  "pre_condition": "self.opencode_dir refers to a filesystem path that may or may not exist as a directory. self._opencode_offsets is a dict mapping JSONL filenames (strings) to the byte position up to which the file has been consumed.",
+  "post_condition": "If self.opencode_dir does not exist as a directory, returns immediately with no side effects. Otherwise: for each JSONL file in the directory (in ascending lexicographic filename order), reads all bytes appended to the file since its tracked offset in self._opencode_offsets. If a file's size is strictly less than its tracked offset (indicating truncation or rotation), reading begins from byte 0. Every non-empty line that parses as valid JSON is ingested into the State's in-memory raw trace collection; empty lines and lines that fail to parse as JSON are skipped. After processing all files, the aggregate cache_window collection in the State reflects the cumulative (cached_tokens, total_input_tokens) pairs across all raw trace records ingested so far. Each file's offset in self._opencode_offsets is updated to the current end-of-file byte position for that file."
+}

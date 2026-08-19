@@ -1,0 +1,11 @@
+{
+  "id": "src--plugin-py--validate_plugin",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/plugin-py/validate_plugin.py",
+  "function_name": "validate_plugin",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--plugin-py--validate_plugin.py",
+  "detail_file": "fm_agent/bug_validation/src--plugin-py--validate_plugin.md",
+  "probe_stdout": "Invalid plugin 'my_plugin': plugin name mismatch (expected 'my_plugin', got 'different_name')\nNOT CONFIRMED — validate_plugin returned None for plugin.json with name 'different_name' in directory 'my_plugin' (code correctly rejects the name mismatch)\n",
+  "trigger_summary": "Plugin.json with name different from directory name — code correctly rejects via plugin_name != name check in _validate_plugin_json_content (line 111 of src/plugin.py); false positive."
+}

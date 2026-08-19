@@ -1,0 +1,74 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def get_functions_by_file(self, lang_key: str, proj_dir: str = None) -> dict:
+Line 2:         """Return {abs_filepath: [(func_name, body_text), ...]} for all files.
+Line 3:         body_text is the raw source lines for that function, matching the format
+Line 4:         that extract_functions_from_file returns.
+Line 5:         proj_dir must be supplied so that the relative file paths stored by
+Line 6:         codegraph can be resolved to absolute paths for opening and for dict
+Line 7:         key lookup in run_extraction.
+Line 8:         """
+Line 9:         cg_langs = _CG_LANG.get(lang_key)
+Line 10:         if not cg_langs:
+Line 11:             return {}
+Line 12:         conn = sqlite3.connect(self._db)
+Line 13:         cur = conn.cursor()
+Line 14:         placeholders = ",".join("?" * len(cg_langs))
+Line 15:         cur.execute(
+Line 16:             f"""
+Line 17:             SELECT name, qualified_name, file_path, start_line, end_line
+Line 18:             FROM nodes
+Line 19:             WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+Line 20:             ORDER BY file_path, start_line
+Line 21:             """,
+Line 22:             cg_langs,
+Line 23:         )
+Line 24:         rows = cur.fetchall()
+Line 25:         conn.close()
+Line 26:         by_file = defaultdict(list)
+Line 27:         for name, qualified_name, file_path, start_line, end_line in rows:
+Line 28:             ident = _extraction_ident(name, qualified_name)
+Line 29:             by_file[file_path].append((ident, int(start_line), int(end_line)))
+Line 30:         result = {}
+Line 31:         for file_path, funcs in by_file.items():
+Line 32:             abs_path = os.path.join(proj_dir, file_path) if proj_dir else file_path
+Line 33:             try:
+Line 34:                 with open(abs_path, "r", errors="replace") as f:
+Line 35:                     all_lines = f.readlines()
+Line 36:             except OSError:
+Line 37:                 continue
+Line 38:             ident_counts = {}
+Line 39:             file_funcs = []
+Line 40:             for ident, start_line, end_line in funcs:
+Line 41:                 # ``ident`` is the class-qualified identifier ("LocalStorage::Flush",
+Line 42:                 # or the bare name for a free function). Member functions in
+Line 43:                 # different classes are already distinct here, so the class name —
+Line 44:                 # not an opaque line-order suffix — is what tells them apart.
+Line 45:                 # A suffix is still appended only when two functions share the exact
+Line 46:                 # same qualified identifier (e.g. overloads: same class + same name,
+Line 47:                 # different parameters), which would otherwise overwrite each other
+Line 48:                 # ("LocalStorage::Flush", "LocalStorage::Flush_1"). funcs are
+Line 49:                 # line-ordered (SQL ORDER BY start_line), so the suffix is
+Line 50:                 # deterministic. run_extraction keeps the "::" in the flat filename.
+Line 51:                 count = ident_counts.get(ident, 0)
+Line 52:                 ident_counts[ident] = count + 1
+Line 53:                 deduped = ident if count == 0 else f"{ident}_{count}"
+Line 54:                 # codegraph uses 1-indexed lines, end_line is inclusive
+Line 55:                 body_lines = all_lines[start_line - 1 : end_line]
+Line 56:                 body = "".join(body_lines)
+Line 57:                 if not body.endswith("\n"):
+Line 58:                     body += "\n"
+Line 59:                 file_funcs.append((deduped, body))
+Line 60:             result[abs_path] = file_funcs
+Line 61:         return result
+```
+
+Condition A (what the code actually does):
+If _CG_LANG.get(lang_key) is falsy (None or empty), the method returns an empty dictionary and no database connection is opened. Otherwise, a SQLite connection to self._db is opened; if a sqlite3.Error or other unhandled exception occurs during the database operations (connect, cursor, execute, fetchall) or before the explicit close, the connection may not be closed, no return value is produced, and the exception propagates. If the database interaction completes without exception, the connection is closed after fetching all rows ordered by file_path, start_line. The rows are grouped by file_path into a mapping (by_file), preserving the row order, where each value is a list of tuples (ident, start_line, end_line) with ident = _extraction_ident(name, qualified_name) and start_line/end_line converted to int. Then an empty dictionary result is built. For each file_path in by_file, abs_path is computed as os.path.join(proj_dir, file_path) if proj_dir is not None, else file_path. An attempt is made to open abs_path in text mode with errors='replace'; if an OSError occurs, the file is skipped (continue), leaving the result unchanged for that path. If the file is opened successfully, its lines are read. Then for each function entry in the per-file list (ordered by start_line), a deduplicated identifier deduped is generated: if the identifier ident has appeared count times before in the same file (tracked per file), deduped = ident if count == 0 else f"{ident}_{count}". The body is extracted as the concatenation of lines[start_line - 1 : end_line]; if the resulting body does not end with '\n', a newline is appended. The pair (deduped, body) is appended to a list file_funcs in that order. After processing all functions for the file, result[abs_path] is set to file_funcs. Once all files are processed, the method returns result. If any other unexpected exception occurs during file processing after the database phase, it propagates and no return occurs. Formal logic: Let L = _CG_LANG.get(lang_key). If L is falsy, return {}. Otherwise, let R = the set of rows obtained by executing the SQL query with parameters L, ordered by file_path, start_line. Let G = group-preserving-order(R by file_path). Let F = {}. For each (fp, entries) in G.items(): let p = os.path.join(proj_dir, fp) if proj_dir else fp. If opening p raises OSError, skip this fp. Else, let lines = file.readlines(). Let C = empty map. For each (name, qname, _, start, end) in entries: ident := _extraction_ident(name, qname); cnt := C[ident] default 0; C[ident] := cnt+1; deduped := ident if cnt == 0 else ident + '_' + str(cnt); body := ''.join(lines[start-1 : end]); if not body.endswith('\n') then body += '\n'; append (deduped, body) to list L_fp. Then F[p] := L_fp. End for. Return F. The method does not modify self or its database file; side effects are limited to reading the database and file system.
+
+Condition B (what the specification requires):
+When lang_key is recognized by the code analysis backend: returns a dictionary mapping each absolute source file path (str) to a list of (function_name: str, body_text: str) tuples. Each tuple corresponds to one function or method definition in that file. function_name is a class-qualified identifier for methods or a bare function name for free functions; when multiple definitions share the same function_name within the same file, the first occurrence retains the bare name and all subsequent occurrences append a deterministic underscore-suffixed numeric index (beginning with _1) by source-order position. body_text is the complete source text of the function definition from its starting line through its ending line, with a trailing newline. Files present in the index but unreadable on disk are excluded from the returned dictionary. Returns an empty dictionary when lang_key is not recognized by the code analysis backend.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

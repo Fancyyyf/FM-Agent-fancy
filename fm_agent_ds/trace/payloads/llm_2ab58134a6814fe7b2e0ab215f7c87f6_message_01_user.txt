@@ -1,0 +1,12 @@
+Programming language: Python
+
+Pre-condition:
+None.
+
+Code block:
+```python
+Line 1: def utc_now_iso():
+Line 2:     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

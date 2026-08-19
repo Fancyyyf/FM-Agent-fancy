@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--State::_ingest_opencode",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/State::_ingest_opencode.py",
+  "function_name": "State::_ingest_opencode",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--State::_ingest_opencode.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--State::_ingest_opencode.md",
+  "probe_stdout": "NOT CONFIRMED — actual: 'function defined and callable; no SyntaxError raised'",
+  "trigger_summary": "Claimed SyntaxError at definition time due to missing closing parenthesis in _push_llm_status call — disproven: module imports and method is callable without SyntaxError."
+}

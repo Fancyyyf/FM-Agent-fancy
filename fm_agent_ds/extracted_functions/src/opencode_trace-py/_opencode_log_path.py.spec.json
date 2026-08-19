@@ -1,0 +1,5 @@
+{
+  "signature": "_opencode_log_path(work_dir, event_id) -> str",
+  "pre_condition": "work_dir is a valid directory path; event_id is a non-empty string",
+  "post_condition": "returns a filesystem path string within the trace directory structure derived from work_dir that uniquely identifies a log file for the given event_id; the returned path is derivable solely from work_dir and event_id and is suitable for writing subprocess stdout log content"
+}

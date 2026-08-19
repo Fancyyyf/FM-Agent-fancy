@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def load_plugins(plugins_dir: Path) -> Dict[str, PluginConfig]:
+Line 2:     """Scan *plugins_dir* for subdirectories, validate each, return valid plugins.
+Line 3:     Invalid plugins are printed with their error reason and skipped.
+Line 4:     """
+Line 5:     if not plugins_dir.is_dir():
+Line 6:         return {}
+Line 7:     plugins = {}
+Line 8:     for entry in sorted(plugins_dir.iterdir()):
+Line 9:         if not entry.is_dir():
+Line 10:             continue
+Line 11:         if entry.name.startswith(".") or entry.name == "__pycache__":
+Line 12:             continue
+Line 13:         config = validate_plugin(entry)
+Line 14:         if config is not None:
+Line 15:             plugins[config.name] = config
+Line 16:     return plugins
+```
+
+Condition A (what the code actually does):
+If the function terminates normally (no unhandled exception), then the return value is a dictionary mapping strings to PluginConfig objects. For every key-value pair (k, v) in the dictionary, k == v.name and v is a non‑None result of validate_plugin(d) for some subdirectory d of plugins_dir such that d is an existing directory (as determined by d.is_dir()), d.name does not start with '.' and d.name != '__pycache__'. For every such subdirectory d of plugins_dir, if validate_plugin(d) did not return None, there exists exactly one entry with key equal to the name attribute of the returned PluginConfig. All keys are non‑empty and distinct. If plugins_dir.is_dir() is false (plugins_dir does not exist, is not a directory, or is not accessible), the function returns an empty dictionary without raising an exception. If plugins_dir.is_dir() is true but iterating its contents via plugins_dir.iterdir() raises an exception (e.g. PermissionError), that exception propagates and the function does not return normally.
+
+Condition B (what the specification requires):
+Returns a dictionary mapping plugin names (str) to PluginConfig objects for all valid, non-hidden, non-__pycache__ subdirectories of plugins_dir, ordered by ascending subdirectory name. A valid plugin subdirectory is one whose contents pass PluginConfig validation (its plugin.json parses to a PluginConfig whose fields satisfy all configured validation rules). Each subdirectory that fails validation is skipped after printing its error reason; it is absent from the returned dictionary. If plugins_dir does not exist or is not a directory, returns an empty dictionary.
+
+Additional context:
+validate_plugin(plugin_dir: Path) -> Optional[PluginConfig]
+Pre-condition: plugin_dir is a pathlib.Path pointing to an existing directory whose name does not start with '.' and is not '__pycache__'.
+Post-condition: Returns None if plugin_dir does not contain a valid plugin.json whose parsed configuration satisfies all PluginConfig validation rules (non-empty name, valid version, valid stage type and configuration for each declared stage). Otherwise returns a PluginConfig whose name attribute is non-empty and serves as the plugin's registration key.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

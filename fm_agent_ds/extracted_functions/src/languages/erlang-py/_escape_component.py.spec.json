@@ -1,0 +1,5 @@
+{
+  "signature": "_escape_component(value: str) -> str",
+  "pre_condition": "value is a non-empty string.",
+  "post_condition": "Returns a string where every character in value that is an ASCII alphanumeric (a-z, A-Z, 0-9) or underscore is preserved at its original relative position, and every other character is replaced by an underscore followed by its Unicode code point expressed as a zero-padded two-digit hexadecimal number. The output is deterministic: identical input strings always produce identical output strings. Every character in the output belongs to the set [a-zA-Z0-9_]."
+}

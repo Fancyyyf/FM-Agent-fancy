@@ -1,0 +1,5 @@
+{
+  "signature": "source_for_range(self, lsp_range: dict) -> str",
+  "pre_condition": "self is a _SourceIndex instance whose source attribute contains the indexed source text. lsp_range is a dict with 'start' and 'end' entries, each a dict with 'line' (non-negative integer) and 'character' (non-negative integer representing UTF-16 code-unit offset) entries, where the start position lexicographically does not follow the end position relative to the source contents.",
+  "post_condition": "Returns the substring of self.source spanning from the byte offset corresponding to lsp_range['start'] (inclusive) to the byte offset corresponding to lsp_range['end'] (exclusive). Byte-offset resolution follows the same rules as position_to_offset: positions exceeding source boundaries are clamped to the nearest valid offset; characters above U+FFFF consume two UTF-16 code units in position mapping."
+}

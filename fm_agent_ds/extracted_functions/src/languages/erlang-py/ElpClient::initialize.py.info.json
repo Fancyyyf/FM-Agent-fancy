@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "ElpClient.request",
+      "signature": "ElpClient.request(self, method: str, params: dict) -> Any",
+      "pre_condition": "self has an active connection to the ELP server. method is the LSP method name as a string. params is a dict of JSON-serializable parameters for the LSP request.",
+      "post_condition": "Returns the 'result' field of the server's JSON-RPC response, parsed to the appropriate Python type for the method. Raises an exception when the server is unreachable, the server returns a JSON-RPC error response, or the connection is lost during the request."
+    },
+    {
+      "name": "ElpClient.notify",
+      "signature": "ElpClient.notify(self, method: str) -> None",
+      "pre_condition": "self has an active connection to the ELP server. method is the LSP notification method name as a string.",
+      "post_condition": "The notification has been delivered to the server. Does not wait for or return a server response. Raises an exception when the server is unreachable or the connection is lost during delivery."
+    },
+    {
+      "name": "ElpClient.open_document",
+      "signature": "ElpClient.open_document(self, path: str, source: str | None) -> None",
+      "pre_condition": "self has an active connection to the ELP server. path is a string representing a file URI. source is either None or a string containing source code text.",
+      "post_condition": "The server has been notified that the text document at path is open. When source is not None, the server holds the provided text content for subsequent document symbol and call-hierarchy queries. When source is None, the server associates the URI with the file content on disk. Raises an exception when the server is unreachable, the connection is lost, or the server rejects the document-open notification."
+    },
+    {
+      "name": "ElpClient._next_message",
+      "signature": "ElpClient._next_message(self, deadline: float) -> Any",
+      "pre_condition": "self has an active connection to the ELP server. deadline is an absolute monotonic time value (as returned by time.monotonic()) representing the latest acceptable arrival time for the next message.",
+      "post_condition": "Returns the next message received from the ELP server, parsed into the appropriate Python type. Blocks the caller until a message arrives. Raises an exception when no message arrives before deadline or when the server connection is lost."
+    },
+    {
+      "name": "ElpClient._handle_server_message",
+      "signature": "ElpClient._handle_server_message(self, msg: Any) -> None",
+      "pre_condition": "msg is a parsed server message received from the ELP server, in the format produced by _next_message.",
+      "post_condition": "The message has been processed. May update self._status and other internal server-state attributes on self. When the message indicates the server has reached the running status, subsequent checks of self._status reflect this. Raises an exception when the message is malformed or indicates a server error that cannot be handled."
+    }
+  ]
+}

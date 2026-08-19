@@ -1,0 +1,18 @@
+Programming language: Python
+
+Pre-condition:
+trace_dir is either a string path to a writable directory or a falsy value. event is a dict containing at minimum an 'event_id' field with a non-empty string value and a 'timestamp' field with an ISO 8601 formatted string value.
+
+Code block:
+```python
+Line 1: def record_trace_event(trace_dir, event):
+Line 2:     if not trace_dir:
+Line 3:         return
+Line 4:     append_event(trace_dir, event)
+```
+
+Additional context:
+append_event(trace_dir, event) -> None
+Pre-condition: trace_dir is a writable directory path; event is a dict containing at minimum an 'event_id' field with a non-empty string value and a 'timestamp' field with an ISO 8601 formatted string value.
+Post-condition: Thread-safely appends the event dict as a single, self-contained JSON line to the events.jsonl file within trace_dir. The persisted record preserves every top-level key from the provided event dict. The call does not modify the event dict.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

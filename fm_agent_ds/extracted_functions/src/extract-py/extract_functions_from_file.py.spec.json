@@ -1,0 +1,5 @@
+{
+  "signature": "extract_functions_from_file(filepath, lang_key) -> list[tuple[str, str]]",
+  "pre_condition": "filepath refers to an existing, readable file. lang_key is a language key present in LANG_CONFIG.",
+  "post_condition": "Returns a list of (func_name, source_text) tuples, one per function found in the file via language-specific extraction rules. Each func_name is canonicalized: unsafe characters are translated and duplicates in the file are deduplicated by appending a numeric suffix in order of first occurrence. source_text includes the full function body from start to end inclusive, line endings normalized to '\\n', and the body ends with a trailing newline. Functions appear in source order. Returns an empty list when the language has no file-local regex extraction capability."
+}

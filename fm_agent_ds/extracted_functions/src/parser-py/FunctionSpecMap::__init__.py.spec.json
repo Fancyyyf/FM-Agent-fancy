@@ -1,0 +1,5 @@
+{
+  "signature": "FunctionSpecMap.__init__(self) -> None",
+  "pre_condition": "self is an uninitialized FunctionSpecMap instance (a dict subclass).",
+  "post_condition": "self is initialized as an empty mapping with no entries and length zero. self.signatures exists as an empty dict, mapping function name strings to their signature strings. All inherited dict operations behave as on an empty dict, and self.signatures is accessible as a writable attribute."
+}

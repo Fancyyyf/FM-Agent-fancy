@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _find_call_sites(text, lang_key, known_stems, keywords):
+Line 2:     """Find call sites in source text, returning set of matched stem names."""
+Line 3:     cleaned = _strip_comments_from_source(text, lang_key)
+Line 4:     regex = _get_call_regex(lang_key)
+Line 5:     found = set()
+Line 6:     for m in regex.finditer(cleaned):
+Line 7:         ident = m.group(1)
+Line 8:         if ident in keywords:
+Line 9:             continue
+Line 10:         if ident in known_stems:
+Line 11:             found.add(ident)
+Line 12:     return found
+```
+
+Condition A (what the code actually does):
+The function returns a set `found` containing every string `ident` such that `ident ∈ known_stems`, `ident ∉ keywords`, and there exists at least one match `m` obtained by iterating over `regex.finditer(cleaned)` — where `cleaned = _strip_comments_from_source(text, lang_key)` and `regex = _get_call_regex(lang_key)` — for which `m.group(1) == ident`. No other elements are present in the returned set. No side effects occur. Formalized: `found = { ident ∈ known_stems | ident ∉ keywords ∧ ∃ m ∈ regex.finditer(cleaned) [ m.group(1) = ident ] }`.
+
+Condition B (what the specification requires):
+Returns a set of strings, each being a member of known_stems that appears in a syntactic calling position in text for the language identified by lang_key, excluding any member that also belongs to keywords. A syntactic calling position is one where a bare-name identifier is grammatically recognized as the callee of a call expression in that language. The returned set is a subset of known_stems and is disjoint from keywords.
+
+Additional context:
+_strip_comments_from_source(text, lang_key) -> str
+Pre-condition: text is a string containing source code. lang_key is a string key identifying a supported source language whose comment syntax rules are known.
+Post-condition: Returns the content of text with all comments removed according to the comment syntax rules of the language identified by lang_key. Source code tokens present in the original text appear in the returned string at the same relative positions; only comment-character ranges are elided.
+
+_get_call_regex(lang_key) -> regex
+Pre-condition: lang_key is a string key identifying a supported source language.
+Post-condition: Returns a compiled regex pattern whose iteration over source text yields matches where the first capture group contains a bare-name function-call identifier recognized as a call expression in the language identified by lang_key.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

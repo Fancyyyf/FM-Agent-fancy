@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_validate_single_bug",
+      "signature": "_validate_single_bug(result_json_rel, proj_dir, work_dir, bug_validator_path=None) -> dict",
+      "pre_condition": "result_json_rel is a relative path from proj_dir to a JSON file containing a reasoning verdict dict (with at minimum a 'verdict' field whose value is 'MISMATCH'). proj_dir is the project root directory; work_dir is the FM-Agent work directory; bug_validator_path is an optional path to a custom bug-validator prompt file.",
+      "post_condition": "Returns a dict describing the validation outcome. Produces a bug report at <work_dir>/bug_validation/<bug_id>.md when the violation is confirmed as a real bug, or determines that the spec-code discrepancy is not exploitable as a bug and does not produce a report. The report contains: specification claim, actual observed behavior, code evidence with line numbers, trigger condition, reproduction steps, a probe script, and its raw output."
+    }
+  ]
+}

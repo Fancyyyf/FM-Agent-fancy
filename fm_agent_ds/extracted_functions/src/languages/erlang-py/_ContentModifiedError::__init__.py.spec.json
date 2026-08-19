@@ -1,0 +1,5 @@
+{
+  "signature": "_ContentModifiedError.__init__(self, error: dict)",
+  "pre_condition": "error is a dict representing a JSON-RPC error object extracted from an ELP server response. The dict contains a 'code' key whose integer value equals the content-modified error code recognized by the ELP client.",
+  "post_condition": "The _ContentModifiedError instance is initialized and ready to be raised. self.error holds the same dict object passed as the error argument. The exception's string representation (str()) equals str(error). When the instance is raised, catching code can distinguish this specific error condition from other error types by checking isinstance(..., _ContentModifiedError), and can retrieve the full error dict via the .error attribute."
+}

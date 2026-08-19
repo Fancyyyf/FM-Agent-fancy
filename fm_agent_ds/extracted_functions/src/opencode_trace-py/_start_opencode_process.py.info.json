@@ -1,0 +1,34 @@
+{
+  "callees": [
+    {
+      "name": "command_stdin",
+      "signature": "command_stdin(command) -> str | None",
+      "pre_condition": "command is a non-empty list of strings",
+      "post_condition": "Returns the stdin text to feed to the subprocess when the command includes stdin content; returns None when the command has no stdin component"
+    },
+    {
+      "name": "command_argv",
+      "signature": "command_argv(command) -> list[str]",
+      "pre_condition": "command is a non-empty list of strings",
+      "post_condition": "Returns the full command-line argument list to execute, with any stdin component of the command excluded"
+    },
+    {
+      "name": "_opencode_env",
+      "signature": "_opencode_env(work_dir, event_id) -> dict[str, str]",
+      "pre_condition": "work_dir is a valid directory path and event_id is a non-empty string",
+      "post_condition": "Returns an environment variable dictionary containing configuration injections derived from work_dir and event_id"
+    },
+    {
+      "name": "_write_command_stdin",
+      "signature": "_write_command_stdin(stdin_pipe, stdin_text) -> None",
+      "pre_condition": "stdin_pipe is a writable subprocess stdin pipe and stdin_text is a non-empty string",
+      "post_condition": "Writes all of stdin_text to stdin_pipe and closes the pipe. Returns regardless of write outcome."
+    },
+    {
+      "name": "_copy_opencode_output",
+      "signature": "_copy_opencode_output(stdout_pipe, trace_log_path) -> None",
+      "pre_condition": "stdout_pipe is a readable subprocess stdout pipe and trace_log_path is a writable filesystem path",
+      "post_condition": "Copies all output from stdout_pipe to the file at trace_log_path until the pipe is exhausted. Returns when the subprocess output stream is closed."
+    }
+  ]
+}

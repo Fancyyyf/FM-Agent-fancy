@@ -1,0 +1,5 @@
+{
+  "signature": "_normalized_function_source(source) -> str",
+  "pre_condition": "source is a string.",
+  "post_condition": "Returns a string free of carriage-return characters (\\r). Every carriage-return line-feed pair (\\r\\n) in source is replaced with a single line-feed character (\\n), and every standalone carriage-return character (\\r) is replaced with a single line-feed character (\\n). All line-feed characters (\\n) originally present in source that are not part of a \\r\\n pair are preserved unchanged. The function is idempotent: applying it to its own output returns the same string."
+}

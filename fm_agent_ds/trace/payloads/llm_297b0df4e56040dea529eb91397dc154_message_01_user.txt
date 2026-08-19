@@ -1,0 +1,54 @@
+Programming language: Python
+
+Pre-condition:
+path is a Path to a filesystem entry that may or may not exist as a readable regular file.
+
+Code block:
+```python
+Line 1: def backup_file(
+Line 2:     path: Path,
+Line 3:     now: datetime | None = None,
+Line 4:     *,
+Line 5:     private: bool = False,
+Line 6: ) -> Path | None:
+Line 7:     if not path.exists():
+Line 8:         return None
+Line 9:     now = now or datetime.now()
+Line 10:     suffix = now.strftime("%Y%m%d-%H%M%S")
+Line 11:     if private:
+Line 12:         backup_dir = _private_backup_root()
+Line 13:         backup_dir.mkdir(parents=True, exist_ok=True)
+Line 14:         backup_dir.chmod(0o700)
+Line 15:         path_slug = str(path.parent.resolve()).strip(os.sep).replace(os.sep, "_") or "project"
+Line 16:         backup_base = backup_dir / f"{path_slug}__{path.name}.bak.{suffix}"
+Line 17:     else:
+Line 18:         backup_base = path.with_name(f"{path.name}.bak.{suffix}")
+Line 19:     # Reserve a distinct destination before copying so rapid or concurrent
+Line 20:     # configuration changes never overwrite an earlier backup.
+Line 21:     mode = 0o600 if private or path.name == ".env" else 0o644
+Line 22:     attempt = 0
+Line 23:     while True:
+Line 24:         backup = (
+Line 25:             backup_base
+Line 26:             if attempt == 0
+Line 27:             else backup_base.with_name(f"{backup_base.name}.{attempt}")
+Line 28:         )
+Line 29:         try:
+Line 30:             fd = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
+Line 31:         except FileExistsError:
+Line 32:             attempt += 1
+Line 33:             continue
+Line 34:         else:
+Line 35:             os.close(fd)
+Line 36:             break
+Line 37:     try:
+Line 38:         shutil.copy2(path, backup)
+Line 39:     except Exception:
+Line 40:         backup.unlink(missing_ok=True)
+Line 41:         raise
+Line 42:     if private or path.name == ".env":
+Line 43:         backup.chmod(0o600)
+Line 44:     return backup
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_StdoutTee::flush",
+  "source_file": "src/incremental_reasoner.py",
+  "function_name": "_StdoutTee::flush",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_StdoutTee::flush.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_StdoutTee::flush.md",
+  "probe_stdout": "CONFIRMED — exception propagated from console flush, but log stream flush was never called (spec requires it)",
+  "trigger_summary": "When self._console.flush() raises an exception, self._log_stream.flush() is never called, violating the spec's post-condition that the log stream must be flushed unless closed."
+}

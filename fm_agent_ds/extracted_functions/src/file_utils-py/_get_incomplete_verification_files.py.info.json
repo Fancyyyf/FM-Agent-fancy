@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_json_file_is_valid",
+      "signature": "_json_file_is_valid(file_path) -> bool",
+      "pre_condition": "file_path is a string path to a file whose existence and readability are not yet established.",
+      "post_condition": "Returns True if the file at file_path exists, is readable, and contains syntactically valid JSON; returns False otherwise. Does not raise an exception for a missing file, a permission-denied read, or malformed JSON content."
+    }
+  ]
+}

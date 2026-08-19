@@ -1,0 +1,5 @@
+{
+  "signature": "resolve_model_backend() -> str",
+  "pre_condition": "The FM-Agent runtime configuration has been loaded.",
+  "post_condition": "Returns a non-empty string from the set {\"codex-cli\", \"claude-cli\", \"opencode\"} identifying which CLI backend is configured for use. When an explicit backend is configured (not \"auto\"), the canonical form of the configured backend name is returned. When the backend is configured to auto-detect, the return value identifies the first CLI backend detected as available in the current process environment, defaulting to \"codex-cli\" when no CLI backend is detected."
+}

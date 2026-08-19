@@ -1,0 +1,3 @@
+{
+  "post_condition": "Let used_pre be the set of strings passed as `used_names` before execution, and used_post after execution. The function returns a string `ret` such that:\n- ret ∉ used_pre\n- used_post = used_pre ∪ {ret}\nDefine:\n  base = os.path.basename(source_path)\n  raw_stem, raw_ext = os.path.splitext(base)\n  cleaned = (re.sub(r\"[^A-Za-z0-9._-]+\", \"_\", raw_stem).strip(\"._-\") or \"knowledge\")\n  ext = raw_ext.lower()\nThen ret = cleaned + ext if cleaned + ext ∉ used_pre; otherwise there exists an integer n ≥ 2 such that:\n  ret = cleaned + \"_\" + str(n) + ext\n  ∀ m ∈ ℕ with 2 ≤ m < n, cleaned + \"_\" + str(m) + ext ∈ used_pre\n  cleaned + \"_\" + str(n) + ext ∉ used_pre"
+}

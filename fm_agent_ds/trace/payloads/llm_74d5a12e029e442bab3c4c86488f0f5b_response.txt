@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns the first truthy value among: (1) symbol['uri'] if symbol contains key 'uri' and its value is truthy; (2) symbol['location']['uri'] if symbol contains key 'location', its value is a dictionary, and that dictionary contains key 'uri' with a truthy value; (3) the fallback string (which is non-empty and truthy). Formally: Let result = _symbol_uri(symbol, fallback). Then result = (if 'uri' in symbol and bool(symbol['uri']) is True then symbol['uri'] else (if 'location' in symbol and isinstance(symbol['location'], dict) and 'uri' in symbol['location'] and bool(symbol['location']['uri']) is True then symbol['location']['uri'] else fallback))."
+}

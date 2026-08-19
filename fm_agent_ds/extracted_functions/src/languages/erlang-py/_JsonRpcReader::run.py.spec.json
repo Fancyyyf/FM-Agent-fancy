@@ -1,0 +1,5 @@
+{
+  "signature": "_JsonRpcReader::run(self)",
+  "pre_condition": "self._stream is an open readable binary stream. self._messages is a thread-safe queue.",
+  "post_condition": "Each complete JSON-RPC message received on self._stream — framed by HTTP-style headers that terminate with an empty line and contain a Content-Length field — is decoded from JSON and placed as a Python object onto self._messages, in the order received. When self._stream reaches EOF, or when a payload is shorter than its declared Content-Length, an EOFError is placed on self._messages and the method returns. When any other exception is raised during processing, that exception is placed on self._messages and the method returns. The method never raises an exception to its caller."
+}

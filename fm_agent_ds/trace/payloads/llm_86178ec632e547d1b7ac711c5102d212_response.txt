@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "text = '{\"edges\": [{}]}', source_path = 'example'",
+  "offending_statements": "Line 15: edges.append(_edge_from_mapping(item, item_source))",
+  "reason": "When an element of the 'edges' array is a dict but not convertible to a CallEdge (e.g., missing required keys), _edge_from_mapping may raise a non-ValueError exception (such as KeyError or TypeError). The specification requires raising ValueError with source_path in the message for such invalid elements. The code does not intercept exceptions from _edge_from_mapping to re-raise as ValueError, violating the spec."
+}

@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one Python file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("python", filepath) if cg else None
+```
+
+Condition A (what the code actually does):
+Given that proj_dir is a directory path and filepath is a path to a Python source file contained within proj_dir, the function may terminate normally or raise an exception. If it terminates normally, the return value R satisfies: ( (∃ cg : cg = CodeGraphExtractor.from_proj_dir(proj_dir) ∧ cg is falsy) ⇒ R = None ) ∧ ( (∃ cg : cg = CodeGraphExtractor.from_proj_dir(proj_dir) ∧ cg is truthy) ⇒ ( (cg.get_function_spans('python', filepath) = None) ⇒ R = None ) ∧ ( (cg.get_function_spans('python', filepath) = L where L is a list) ⇒ R = L ) ). Here L is a list of tuples (name, start_idx, end_idx) where name is a string, start_idx and end_idx are integers representing 0-indexed inclusive line indices of a function definition in filepath; the list may be empty. If an exception E is raised during the evaluation of CodeGraphExtractor.from_proj_dir(proj_dir) or during the call to cg.get_function_spans('python', filepath) when cg is truthy, the function raises E.
+
+Condition B (what the specification requires):
+Returns a list of (name, start_idx, end_idx) tuples, one per top-level function defined in filepath, where start_idx and end_idx are 0-indexed inclusive line numbers bounding each function's body, if a CodeGraph index exists for proj_dir and covers the file. Returns None if CodeGraph is unavailable or the file is not indexed, signalling the caller to fall back to regex-based extraction
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str)
+Pre-condition: proj_dir is a directory path
+Post-condition: Returns a CodeGraphExtractor instance initialized for proj_dir if a CodeGraph index exists and is accessible; returns a falsy value otherwise
+
+get_function_spans(language: str, filepath: str)
+Pre-condition: The instance is a valid CodeGraphExtractor obtained from from_proj_dir; language is a registered language key string; filepath is a path to a source file within the indexed project
+Post-condition: Returns a list of (name, start_idx, end_idx) tuples for all functions in filepath if the language and file are indexed by CodeGraph; returns None if the file or language is not indexed
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

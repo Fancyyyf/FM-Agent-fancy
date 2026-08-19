@@ -1,0 +1,62 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def render_cache(state):
+Line 2:     def bar_line(label, rows):
+Line 3:         rate, cr, tot = _cache_rate(rows)
+Line 4:         if tot == 0:
+Line 5:             return f"[dim]{label:<14}(no data)[/]"
+Line 6:         pct = rate * 100
+Line 7:         bar_w = 20
+Line 8:         filled = int(bar_w * rate)
+Line 9:         bar = "█" * filled + "░" * (bar_w - filled)
+Line 10:         color = "green" if pct >= 80 else ("yellow" if pct >= 50 else "red")
+Line 11:         return (
+Line 12:             f"{label:<10}[bold {color}]{pct:5.1f}%[/]  [{color}]{bar}[/] "
+Line 13:             f"[dim]{_fmt_tokens(cr)} / {_fmt_tokens(tot)}[/]"
+Line 14:         )
+Line 15:     n_cr = state.totals.get("cache_read", 0)
+Line 16:     n_in = state.totals.get("input", 0) + state.totals.get("cache_write", 0)
+Line 17:     o_cr = state.opencode_token_totals.get("cache_read", 0)
+Line 18:     o_in = (state.opencode_token_totals.get("input", 0)
+Line 19:             + state.opencode_token_totals.get("cache_write", 0))
+Line 20:     total_cr = n_cr + o_cr
+Line 21:     total_input = n_in + o_in
+Line 22:     rows = list(state.cache_window)
+Line 23:     lines = [
+Line 24:         bar_line("latest 10", rows[-10:]),
+Line 25:         bar_line("latest 100", rows[-100:]),
+Line 26:         bar_line("overall", [(total_cr, total_cr + total_input)]),
+Line 27:         "[dim]coverage = cache_read / (input + cache_write + cache_read)[/]",
+Line 28:     ]
+Line 29:     # cost-savings estimate: cache_read tokens would otherwise have been
+Line 30:     # billed as fresh input (cache_write is its own cost, already in TOTAL).
+Line 31:     p = _price_for(state.model_seen or "")
+Line 32:     if p:
+Line 33:         in_per = p.get("input_cost_per_token") or 0
+Line 34:         cr_per = p.get("cache_read_input_token_cost") or 0
+Line 35:         if in_per > 0 and total_cr > 0:
+Line 36:             saved = total_cr * (in_per - cr_per)
+Line 37:             actual = state.cost_native + state.opencode_cost
+Line 38:             if saved > 0:
+Line 39:                 pct = saved / (actual + saved) * 100 if actual + saved > 0 else 0
+Line 40:                 lines.append(
+Line 41:                     f"[bold green]saved ~${saved:.2f} by cache[/]"
+Line 42:                     f"  [dim]({pct:.0f}% off no-cache)[/]"
+Line 43:                 )
+Line 44:     if total_cr + total_input == 0:
+Line 45:         text = Text.from_markup("[dim](no token data yet)[/]")
+Line 46:     else:
+Line 47:         text = Text.from_markup("\n".join(lines))
+Line 48:     return Panel(Align.center(text, vertical="middle"),
+Line 49:                  title="Cache Coverage", border_style="green")
+```
+
+Condition A (what the code actually does):
+The state object (`state`) is unchanged: all its attributes (`totals`, `opencode_token_totals`, `cache_window`, `model_seen`, `cost_native`, `opencode_cost`) retain their original values and types. The function either returns an instance of `Panel` (if no exception occurs) or propagates an exception raised by a called function (`_cache_rate`, `_fmt_tokens`, `_price_for`, `Text.from_markup`, `Panel`); in either case the state remains unmodified. Formally: \(state' = state \land (\textit{returns} \Rightarrow \text{type}(\textit{retval}) = \text{Panel}) \land (\textit{raises} \Rightarrow state' = state)\).
+
+Condition B (what the specification requires):
+Returns a Rich Panel renderable titled "Cache Coverage" with green border. When the sum of cache_read and input tokens (aggregated across both verification-LLM and OpenCode categories) equals zero, the panel contains centered dimmed text "(no token data yet)". Otherwise the panel contains text with: (a) three cache-coverage bar lines labeled "latest 10", "latest 100", and "overall", each displaying a percentage value color-coded by threshold (green when ≥ 80%, yellow when ≥ 50%, red otherwise), a 20-character visual bar where the filled proportion ("█") equals the percentage and the remainder is "░", and a dimmed token-count breakdown showing cache_read tokens over total tokens; (b) a dimmed line stating the coverage formula; and (c) when pricing data for the model is available via state.model_seen and total cache_read tokens exceed zero, a cost-savings line showing the estimated USD amount saved by cache reads and the percentage reduction versus a no-cache baseline. The state argument is not mutated by this call.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

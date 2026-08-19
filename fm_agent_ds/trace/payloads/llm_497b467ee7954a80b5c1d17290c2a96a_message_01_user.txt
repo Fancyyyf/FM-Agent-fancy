@@ -1,0 +1,32 @@
+Programming language: Python
+
+Pre-condition:
+self.bug_dir is a Path attribute. The directory self.bug_dir, when present, may contain zero or more .result.json files. Each such file, when valid JSON, has a 'confirmation_status' key whose value is a string.
+
+Code block:
+```python
+Line 1:     def scan_bugs(self):
+Line 2:         self.bugs_confirmed = 0
+Line 3:         self.bugs_not_confirmed = 0
+Line 4:         if not self.bug_dir.exists():
+Line 5:             return
+Line 6:         for path in self.bug_dir.glob("*.result.json"):
+Line 7:             try:
+Line 8:                 with open(path, "r", encoding="utf-8") as f:
+Line 9:                     d = json.load(f)
+Line 10:             except Exception:
+Line 11:                 continue
+Line 12:             status = (d.get("confirmation_status") or "").lower()
+Line 13:             if "not" in status:
+Line 14:                 self.bugs_not_confirmed += 1
+Line 15:             elif "confirm" in status:
+Line 16:                 self.bugs_confirmed += 1
+Line 17:             else:
+Line 18:                 self.bugs_not_confirmed += 1  
+Line 19:         # pending = bug_validation opencode_calls with success status, minus results files
+Line 20:         bv = self.stage_counts.get("bug_validation", {})
+Line 21:         bv_done = sum(bv.values())
+Line 22:         self.bugs_pending = max(0, bv_done - (self.bugs_confirmed + self.bugs_not_confirmed))
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

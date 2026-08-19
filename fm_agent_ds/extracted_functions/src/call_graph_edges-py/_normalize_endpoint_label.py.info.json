@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_clean_label",
+      "signature": "_clean_label(label: str) -> str",
+      "pre_condition": "label is a string.",
+      "post_condition": "Returns label with any leading and trailing whitespace stripped."
+    },
+    {
+      "name": "_is_path_function_label",
+      "signature": "_is_path_function_label(label: str) -> bool",
+      "pre_condition": "label is a cleaned string.",
+      "post_condition": "Returns True when label contains '::' and the substring before the last '::' consists of one or more POSIX-path-like components; returns False otherwise."
+    }
+  ]
+}

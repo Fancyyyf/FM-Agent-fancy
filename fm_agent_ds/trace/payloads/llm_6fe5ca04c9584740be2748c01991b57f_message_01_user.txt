@@ -1,0 +1,27 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a string referring to a filesystem path. The path may be either the original Erlang source project root or a pipeline workspace directory derived from it.
+
+Code block:
+```python
+Line 1: def _callgraph_project_root(proj_dir: str) -> str:
+Line 2:     """Resolve a pipeline workspace back to the original source-project root."""
+Line 3:     root = os.path.abspath(proj_dir)
+Line 4:     if not os.path.isdir(os.path.join(root, "extracted_functions")):
+Line 5:         return root
+Line 6:     parent = os.path.dirname(root)
+Line 7:     if parent == root:
+Line 8:         return root
+Line 9:     # The parent scan ignores fm_agent via _SKIP_DIRS, so only original project
+Line 10:     # sources qualify; extracted function files cannot trigger this redirect.
+Line 11:     if next(_iter_project_files(parent, {".erl"}), None) is not None:
+Line 12:         return parent
+Line 13:     return root
+```
+
+Additional context:
+_iter_project_files(dir_path: str, exts: set[str]) -> Iterator[str]
+Pre-condition: dir_path is a string referring to an existing directory. exts is a non-empty set of file extension strings, each including the leading dot.
+Post-condition: Returns an iterator that yields, one at a time, the absolute paths of files under dir_path (recursively) whose file extension is a member of exts. Only yields files belonging to the original project source tree — files under pipeline workspace artifact directories are excluded. If no matching files exist under dir_path, the iterator is immediately exhausted (the first call to next() raises StopIteration).
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

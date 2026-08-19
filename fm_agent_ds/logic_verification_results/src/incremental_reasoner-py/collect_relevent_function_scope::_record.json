@@ -1,0 +1,5 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/collect_relevent_function_scope::_record.py",
+  "verdict": "MATCH",
+  "gaps": null
+}

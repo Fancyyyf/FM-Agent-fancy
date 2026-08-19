@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_payload_dir.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a filesystem path string that names a subdirectory called 'payloads' located directly under trace_dir; the directory named by the returned path exists on the filesystem after the call returns",
+    "actual_behavior": "After normal execution, the function returns the string path = os.path.join(trace_dir, 'payloads') and the directory at that path exists (os.path.isdir(path) is true). If an OSError is raised, the directory at path does not exist (os.path.isdir(path) is false). The argument trace_dir remains unchanged. Formally: (return_value = path  isdir(path))  (OSError raised  isdir(path)) where path = os.path.join(trace_dir, 'payloads').",
+    "code_evidence": "Line 2: path = os.path.join(trace_dir, \"payloads\")\nLine 3: os.makedirs(path, exist_ok=True)",
+    "trigger_condition": "The specification requires the function to return a path and ensure the directory exists, but when os.makedirs raises an OSError (e.g., FileExistsError because trace_dir is a file), the code raises an exception, returns nothing, and the directory does not exist. This violates the unconditional guarantee of a returned path and an existing directory."
+  }
+}

@@ -1,0 +1,26 @@
+Programming language: Python
+
+Pre-condition:
+self._console and self._log_stream are file-like objects with a write(str) method. data is a str.
+
+Code block:
+```python
+Line 1:     def write(self, data):
+Line 2:         self._console.write(data)
+Line 3:         # The log stream is owned by the logging FileHandler; at interpreter shutdown (or if
+Line 4:         # the handler is closed) it may already be closed, so tolerate that rather than raise
+Line 5:         # — the console copy still gets through.
+Line 6:         if not self._log_stream.closed:
+Line 7:             self._log_stream.write(data)
+Line 8:         return len(data)
+```
+
+Additional context:
+write(data: str) -> int
+Pre-condition: The console stream is open. data is a str.
+Post-condition: The string data is written to the console stream. Returns the number of characters written.
+
+write(data: str) -> int
+Pre-condition: The log stream is open (not closed). data is a str.
+Post-condition: The string data is written to the log stream. Returns the number of characters written.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

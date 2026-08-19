@@ -1,0 +1,5 @@
+{
+  "signature": "main(argv: list[str] | None) -> int",
+  "pre_condition": "None required; when argv is None, the system argument list is used instead.",
+  "post_condition": "Returns 0 on successful completion of the requested configuration operation. Returns 1 if execution is interrupted by KeyboardInterrupt. Returns 2 if the operation fails due to invalid inputs, file access errors, or malformed existing configuration, with a descriptive error message written to stderr. On successful completion (return 0): the fm-agent.toml file at the project root (derived from the script's own filesystem location) reflects the configuration changes requested; the API key is persisted to the project .env file; the OpenCode provider configuration references the chosen provider. On failure (return 2): no configuration files are modified beyond any backups created before the failure point. The project root is resolved relative to the script's own location, not from the current working directory or any argument."
+}

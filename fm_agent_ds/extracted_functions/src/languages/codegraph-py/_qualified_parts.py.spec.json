@@ -1,0 +1,5 @@
+{
+  "signature": "_qualified_parts(name: str, qualified_name: str) -> list[str]",
+  "pre_condition": "name and qualified_name are string values from a codegraph nodes table row.",
+  "post_condition": "Returns a non-empty list of identifier component strings whose final element is name. If qualified_name is empty or does not end with name, the result is [name]. Otherwise, the portion of qualified_name that precedes name is split on each occurrence of '::' or '.', empty components are discarded, and the surviving non-empty components form the prefix of the returned list in the left-to-right order they appear in qualified_name."
+}

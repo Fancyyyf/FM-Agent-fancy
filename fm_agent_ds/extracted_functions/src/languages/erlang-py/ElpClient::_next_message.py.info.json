@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "self._messages.get",
+      "signature": "self._messages.get(timeout: float) -> Any",
+      "pre_condition": "timeout is a non-negative number representing seconds to wait. self._messages is a thread-safe blocking queue containing items.",
+      "post_condition": "Blocks until an item is available in the queue, or timeout seconds elapse. Returns the retrieved item when available. Raises queue.Empty when timeout expires before an item becomes available."
+    }
+  ]
+}

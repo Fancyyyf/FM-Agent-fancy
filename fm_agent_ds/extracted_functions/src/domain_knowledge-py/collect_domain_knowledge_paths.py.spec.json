@@ -1,0 +1,5 @@
+{
+  "signature": "collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None)",
+  "pre_condition": "cli_paths is an iterable of path strings; base_dir is a string path to an existing directory; fallback_base_dir, if provided, is a string path to an existing directory",
+  "post_condition": "Returns a list of absolute file paths as strings. The result consists of all paths from the FM_AGENT_DOMAIN_KNOWLEDGE environment variable split by the system path separator, merged with all paths from cli_paths (flattened if nested). Each returned path is an absolute path on the filesystem, resolved against base_dir. When a path does not exist under base_dir and fallback_base_dir is provided, it is resolved against fallback_base_dir instead. Only paths that resolve to existing files are included."
+}

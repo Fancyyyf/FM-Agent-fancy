@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code correctly handles all cases required by the specification: it returns immediately if the domain-context directory does not exist; deletes files for non-None removed phase numbers if they exist; leaves files untouched when old_num equals new_num; renames files from old to new when they exist, using a two-step rename to avoid data loss in chains; and finally cleans up temporary files. Under the intended valid inputs where renumbered is a complete mapping of surviving phases, the result matches the specification."
+}

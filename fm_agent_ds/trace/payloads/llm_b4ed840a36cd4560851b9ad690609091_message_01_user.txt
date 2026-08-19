@@ -1,0 +1,50 @@
+Programming language: Python
+
+Pre-condition:
+The function definition contains a syntax error (missing indented block for the 'for' loop on line 40). Python raises an IndentationError when the code block is parsed; the function `_update_specs_for_intent` is never created. All passed arguments (`proj_dir`, `work_dir`, `developer_intent`, `changed_functions`, `relevant_rel_files`, `extra_call_edges`) remain unchanged, and no local variables (`extracted_dir`, `callees_map`, `callers_map`, `file_map`, `edge_aliases_map`, `seed`, `changed_targets`) are assigned. The program state after the code block is identical to the given pre-condition, except that a runtime exception is propagated.
+
+Code block:
+```python
+Line 41:         seed.add(_file_to_fqn(os.path.join(extracted_dir, rel), work_dir))
+Line 42:     if not seed:
+Line 43:         logging.info("    [specs] no changed or relevant functions to update; skipping.")
+Line 44:         return []
+Line 45:     logging.info(
+Line 46:         "    [specs] seeded %d function(s) for spec re-generation (%d changed, %d relevant).",
+Line 47:         len(seed), len(changed_targets), len(relevant_rel_files),
+Line 48:     )
+Line 49:     # Top-down order (callers before the callees they depend on); FQNs absent from the layer
+Line 50:     # graph sort last, by name.
+Line 51:     topdown = _topdown_ordered_fqns(work_dir, extra_call_edges=extra_call_edges)
+Line 52:     order_index = {fqn: i for i, fqn in enumerate(topdown)}
+Line 53:     def _order_key(fqn):
+Line 54:         return (order_index.get(fqn, len(order_index)), fqn)
+Line 55:     def _plan_spec_update(fqn, idx):
+Line 56:         """
+Line 57:         Decide fqn's new metadata sidecars and return an apply-plan, or None to skip.
+Line 58:         Makes the opencode LLM call (the slow part) but performs NO file writes, so a batch of
+Line 59:         mutually independent functions can run this concurrently. The returned plan carries the
+Line 60:         exact file content to write plus what the serial apply phase needs for downward
+Line 61:         propagation; None means the function does not exist, is an unsupported language, or its
+Line 62:         spec did not change.
+Line 63:         """
+Line 64:         fpath = file_map.get(fqn)
+Line 65:         if not fpath or not os.path.isfile(fpath):
+Line 66:             return None
+Line 67:         ext = fpath.rsplit(".", 1)[-1] if "." in os.path.basename(fpath) else ""
+Line 68:         lang_key = EXT_TO_LANG.get(ext)
+Line 69:         if not lang_key:
+Line 70:             return None
+Line 71:         with open(fpath, "r", errors="replace") as f:
+Line 72:             source = f.read()
+Line 73:         callee_names = sorted({c.split("::")[-1] for c in callees_map.get(fqn, ())})
+Line 74:         try:
+Line 75:             with open(f"{fpath}.spec.json", "r", encoding="utf-8") as f:
+Line 76:                 old_spec = json.load(f)
+Line 77:             with open(f"{fpath}.info.json", "r", encoding="utf-8") as f:
+Line 78:                 old_info = json.load(f)
+Line 79:         except (OSError, json.JSONDecodeError):
+Line 80:             old_spec, old_info = None, None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "batch_extract(proj_dir: str) -> dict",
+  "pre_condition": "proj_dir is a string path to a project directory that may contain a code indexing database and JavaScript source files.",
+  "post_condition": "When the project's code analysis backend is available, returns a dict mapping each absolute filepath string to a list of (func_name: str, body_text: str) tuples — one tuple per function defined in that JavaScript source file — where body_text is the function's complete source code text. When the backend is unavailable for the project, returns an empty dict, indicating that no JavaScript functions were extracted through the backend."
+}

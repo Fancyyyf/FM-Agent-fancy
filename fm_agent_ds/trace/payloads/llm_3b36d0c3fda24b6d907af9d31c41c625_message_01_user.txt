@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+data is a dict parsed from a JSON file.
+
+Code block:
+```python
+Line 1: def _is_valid_spec_json(data):
+Line 2:     """Check that .spec.json contains exactly the supported fields."""
+Line 3:     if not isinstance(data, dict):
+Line 4:         return False
+Line 5:     if set(data) != _SPEC_FIELDS:
+Line 6:         return False
+Line 7:     return all(isinstance(data[field], str) for field in _SPEC_FIELDS)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_extracted_file_to_source_rel(extracted_rel: str) -> str",
+  "pre_condition": "extracted_rel is a relative file path formed by joining the '::'-separated components of a valid FQN with the platform path separator, corresponding to a function extracted under the extracted_functions/ directory tree.",
+  "post_condition": "Returns the project-relative path (using platform-native path separators) of the original source file from which the function at extracted_rel was extracted. The mapping inverts the extraction directory convention: a path component ending in '-<ext>' where <ext> denotes a recognized programming-language file extension maps back to '<base>.<ext>' by replacing the trailing hyphen-and-extension with a dot-and-extension. The returned path is stable across all function files extracted from the same original source, including class-qualified member functions within the same module, such that any two extracted-rel paths that originate from the same source file produce identical return values."
+}

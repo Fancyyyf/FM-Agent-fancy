@@ -1,0 +1,42 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _check_comment_checker():
+Line 2:     if not os.path.exists(OH_MY_OPENAGENT_CONFIG):
+Line 3:         return False, f"oh-my-openagent config not found at {OH_MY_OPENAGENT_CONFIG}"
+Line 4:     try:
+Line 5:         with open(OH_MY_OPENAGENT_CONFIG, "r") as f:
+Line 6:             cfg = json.load(f)
+Line 7:     except (json.JSONDecodeError, IOError) as e:
+Line 8:         return False, f"Failed to read {OH_MY_OPENAGENT_CONFIG}: {e}"
+Line 9:     if "comment-checker" not in cfg.get("disabled_hooks", []):
+Line 10:         return False, (
+Line 11:             "comment-checker hook is NOT disabled. FM-Agent writes function "
+Line 12:             "specifications as comment blocks, which the comment-checker may "
+Line 13:             "intercept, wasting tokens or deleting specs. Add "
+Line 14:             '"disabled_hooks": ["comment-checker"] to ' + OH_MY_OPENAGENT_CONFIG
+Line 15:         )
+Line 16:     return True, None
+```
+
+Condition A (what the code actually does):
+After the call to _check_comment_checker(), if the function returns normally (i.e., does not propagate an exception), the return value is a tuple (status, msg) where status is a boolean and msg is either None or a string. Let path denote the value of the constant OH_MY_OPENAGENT_CONFIG.
+
+- If status is True, then msg is None exactly when the file at path exists, contains a valid JSON object cfg, and 'comment-checker' is an element of the list returned by cfg.get('disabled_hooks', []).
+- If status is False, then msg is a non-None string that describes the failure:
+  * If the file does not exist (os.path.exists(path) == False), msg = 'oh-my-openagent config not found at ' + path.
+  * Else if an IOError or json.JSONDecodeError was raised during the attempt to open or parse the file, msg = 'Failed to read ' + path + ': ' + str(e) where e is the caught exception.
+  * Else (the file was successfully parsed into cfg) and 'comment-checker' is not in cfg.get('disabled_hooks', []), msg = (the multi-line string starting with 'comment-checker hook is NOT disabled...' and ending with the path).
+
+If the function terminates by raising an exception, this indicates that after the file existence check passed (the file exists), an unexpected exception not of type IOError or json.JSONDecodeError occurred during open() or json.load(). No return value is produced and the exception propagates upward.
+
+Formally, for any execution that reaches a return statement without raising an exception:
+  (ret = True) ⇔ [ os.path.exists(path) ∧ (∃ cfg: parse_json(file_at_path, cfg) ∧ 'comment-checker' ∈ cfg.get('disabled_hooks', []) ) ]
+  (ret = False) ⇔ [ ¬os.path.exists(path) ∨ (os.path.exists(path) ∧ (caught_IOError_or_JSONDecodeError ∨ (parse_successful ∧ 'comment-checker' ∉ cfg.get('disabled_hooks', []))) ) ]
+with the corresponding msg values as described above.
+
+Condition B (what the specification requires):
+Returns (True, None) when the file at OH_MY_OPENAGENT_CONFIG exists, contains valid JSON with a top-level object, and that object's 'disabled_hooks' value (an array when present, otherwise an empty list) includes the string 'comment-checker'. Returns (False, error_message) when: the file does not exist at the expected path; the file exists but its contents are not valid JSON or cannot be read; the file is valid JSON but 'disabled_hooks' does not include 'comment-checker'. In all failure cases, the error_message string describes which specific condition was detected. Does not modify any files on disk.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

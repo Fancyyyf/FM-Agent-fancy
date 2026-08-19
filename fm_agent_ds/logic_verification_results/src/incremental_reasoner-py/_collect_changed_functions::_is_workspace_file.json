@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_collect_changed_functions::_is_workspace_file.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns True when rel_path, after replacing every backslash with a forward slash, equals the exact string \"fm_agent\" or has the prefix \"fm_agent/\". Returns False in all other cases, including when rel_path is empty, contains only the fm_agent directory name but with additional path components that do not form a descendant path under fm_agent/, or represents a file whose normalized path falls outside the fm_agent/ workspace tree.",
+    "actual_behavior": "The function _is_workspace_file returns True if the normalized version of rel_path, obtained by replacing every backslash '\\' with a forward slash '/', equals the string 'fm_agent' or starts with 'fm_agent/'; otherwise it returns False. The function has no side effects and does not modify rel_path. Formally:  rel_path  Strings, _is_workspace_file(rel_path)  (rel_path.replace('\\\\', '/') = 'fm_agent')  (rel_path.replace('\\\\', '/').startswith('fm_agent/')).",
+    "code_evidence": "Line 3: return norm == \"fm_agent\" or norm.startswith(\"fm_agent/\")",
+    "trigger_condition": "The code uses a simple string prefix check after replacing backslashes. For the input 'fm_agent/..', normalization yields 'fm_agent/..', which starts with 'fm_agent/', so the code returns True. However, the specification requires False when the path does not form a descendant path under fm_agent/, and '..' escapes the directory, making it a nondescendant. The string prefix alone does not detect such escapes, violating the specification."
+  }
+}

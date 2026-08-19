@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "rows=[]",
+  "offending_statements": "Line 5: return None, cr_total, in_total",
+  "reason": "When in_total is 0, the specification requires rate=0.0, but the code returns None for rate."
+}

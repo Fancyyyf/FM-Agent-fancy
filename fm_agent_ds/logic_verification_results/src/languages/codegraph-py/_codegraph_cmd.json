@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/_codegraph_cmd.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a non-empty string. If the file formed by expanding the user home directory in the configured codegraph.bin_dir and appending 'codegraph' is executable by the calling process, returns the absolute path to that file. Otherwise, returns the bare string 'codegraph'.",
+    "actual_behavior": "The function terminates normally without raising an exception. The global state, including the value of `settings.codegraph.bin_dir`, remains unchanged. The return value is a string. Let `expanded = os.path.expanduser(settings.codegraph.bin_dir)` and `local = os.path.join(expanded, 'codegraph')`. If `os.access(local, os.X_OK)` evaluates to True, the return value equals `local`; otherwise, the return value equals `'codegraph'`. Formally: (return = os.path.join(os.path.expanduser(settings.codegraph.bin_dir), 'codegraph')  os.access(return, os.X_OK))  (return = 'codegraph'  os.access(os.path.join(os.path.expanduser(settings.codegraph.bin_dir), 'codegraph'), os.X_OK)).",
+    "code_evidence": "Line 13: local = os.path.join(bin_dir, \"codegraph\")\nLine 14: return local if os.access(local, os.X_OK) else \"codegraph\"",
+    "trigger_condition": "Specification requires returning an absolute path when the file is executable. The code returns the path as constructed from os.path.join(os.path.expanduser(...), 'codegraph'), which yields a relative path if the configured bin_dir is relative (e.g., '.'). This violates the absolute-path requirement."
+  }
+}

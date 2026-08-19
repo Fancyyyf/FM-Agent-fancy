@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_name_parts",
+      "signature": "_name_parts(name: str) -> set[str]",
+      "pre_condition": "name is a non-empty string representing a class identifier.",
+      "post_condition": "Returns a set of lowercase string tokens obtained by splitting the class name on word boundaries — including underscore separators and transitions between lowercase and uppercase letters — such that each returned token is a semantic constituent part of the original identifier."
+    }
+  ]
+}

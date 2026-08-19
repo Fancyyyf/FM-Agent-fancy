@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_extract_backtick_idents",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_extract_backtick_idents.py",
+  "function_name": "_extract_backtick_idents",
+  "confirmation_status": "confirmed",
+  "attempts": "3",
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_extract_backtick_idents.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_extract_backtick_idents.md",
+  "probe_stdout": "CONFIRMED — backtick-path correctly finds 2-char idents ({1,} quantifier) | code-block-path regex (line 136) has wrong quantifier {2,} (misses \"ab\", \"cd\") | corrected {1,} finds them | buggy_matches=[], corrected_matches=['ab', 'cd', 'ab']",
+  "trigger_summary": "Two-letter identifiers in triple-backtick code blocks are silently dropped because the regex on line 136 uses {2,} quantifier instead of {1,}, requiring total identifier length >= 3 instead of the spec-mandated >= 2."
+}

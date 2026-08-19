@@ -1,0 +1,5 @@
+{
+  "signature": "_trim_source_file(filepath, keep_names, proj_dir=None) -> (int, int)",
+  "pre_condition": "filepath is a path to an existing writable source file. keep_names is a set of function name strings identifying which functions to retain. proj_dir, when provided, is a directory path for project-context function detection.",
+  "post_condition": "If the file's extension maps to a recognized language key and the file contains at least one detected function: the file at filepath is rewritten in place to contain only the body lines of functions whose names are members of keep_names, together with all lines that are not part of any detected function body; returns a tuple (kept, removed) where kept is the count of detected functions whose names are in keep_names, and removed is the count of detected functions whose names are absent from keep_names. If the file's extension maps to no recognized language key, or if no functions are detected in the file: the file is left unchanged and (0, 0) is returned."
+}

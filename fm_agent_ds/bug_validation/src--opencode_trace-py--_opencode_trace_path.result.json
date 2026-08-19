@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_opencode_trace_path",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_opencode_trace_path.py",
+  "function_name": "_opencode_trace_path",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_opencode_trace_path.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_opencode_trace_path.md",
+  "probe_stdout": "CONFIRMED — path traversal: event_id='../other' → /tmp/tmpkvvgwabw/trace/other.jsonl escapes /tmp/tmpkvvgwabw/trace/opencode",
+  "trigger_summary": "The code does not sanitize event_id, allowing path traversal characters (e.g., '../other') to produce a path that escapes the intended opencode/ subdirectory, violating the uniqueness and containment guarantees required by the specification."
+}

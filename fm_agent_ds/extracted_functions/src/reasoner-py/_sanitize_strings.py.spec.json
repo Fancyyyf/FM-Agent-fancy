@@ -1,0 +1,5 @@
+{
+  "signature": "_sanitize_strings(obj: any) -> any",
+  "pre_condition": "obj is an arbitrary Python object.",
+  "post_condition": "Returns a value structurally equivalent to obj in which every string nested within dict values and list elements has been transformed to contain only characters from the ASCII character set — any character whose Unicode code point exceeds U+007F (127) that appeared in the original string is removed. Dict keys are preserved unmodified; only the values of dict entries are recursively sanitized. Non-string values, list element ordering, and the overall nesting shape of dict and list containers are preserved unchanged."
+}

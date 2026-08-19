@@ -1,0 +1,40 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _phases_cover_current_sources(phases_json, proj_dir, submodules=None):
+Line 2:     """Return whether phases.json is valid for the current source-file set."""
+Line 3:     try:
+Line 4:         with open(phases_json, "r") as f:
+Line 5:             data = json.load(f)
+Line 6:     except (OSError, ValueError):
+Line 7:         return False
+Line 8:     listed = set()
+Line 9:     for phase in data.get("phases", []):
+Line 10:         for module in phase.get("modules", []):
+Line 11:             for source_file in module.get("source_files", []):
+Line 12:                 listed.add(source_file.replace("\\", "/"))
+Line 13:     if not listed:
+Line 14:         return False
+Line 15:     if submodules and any(not _is_under_submodules(sf, submodules) for sf in listed):
+Line 16:         return False
+Line 17:     if any(not os.path.exists(os.path.join(proj_dir, sf)) for sf in listed):
+Line 18:         return False
+Line 19:     return _collect_project_source_files(proj_dir, submodules).issubset(listed)
+```
+
+Condition A (what the code actually does):
+Upon return, the function returns a boolean value. If an OSError or ValueError occurs while opening or parsing the file at phases_json, the function returns False and no side effects persist. Otherwise, let listed be the set of paths obtained by iterating over data.get('phases', [])→phase.get('modules', [])→module.get('source_files', []) and replacing each backslash '\' with forward slash '/'. If listed is empty, the function returns False. If submodules is not None and for some sf in listed, _is_under_submodules(sf, submodules) is False, the function returns False. If there exists sf in listed such that os.path.join(proj_dir, sf) does not exist on the file system, the function returns False. Otherwise, the function returns the result of _collect_project_source_files(proj_dir, submodules).issubset(listed). Thus the final return value is True if and only if (i) the JSON file was successfully loaded, (ii) listed is non-empty, (iii) when submodules is provided, every listed source file is under a submodule directory, (iv) every listed source file exists relative to proj_dir, and (v) every actual source file discoverable under proj_dir (restricted to submodules if submodules is not None) is mentioned in listed.
+
+Condition B (what the specification requires):
+Returns True if and only if all of the following hold: (1) the file at phases_json exists, is readable, and contains valid JSON whose 'phases' key holds a list that includes at least one source file path across all modules; (2) every source file path listed under 'phases' is a normalized forward-slash path that corresponds to an existing file relative to proj_dir; (3) when submodules is not None, every listed source file path falls under at least one of the specified submodule directories; (4) the set of all source file paths listed in the phases plan is a superset of the set of project source files collected from proj_dir, scoped to submodules when provided. Returns False if any condition fails, including when the phases.json file cannot be opened or contains non-JSON content.
+
+Additional context:
+_is_under_submodules(sf, submodules) -> bool
+Pre-condition: sf is a normalized forward-slash file path string relative to proj_dir; submodules is a non-empty sequence of subdirectory paths
+Post-condition: Returns True if and only if the path sf starts with a prefix equal to one of the submodule directory paths, where matching respects directory boundaries (concatenating the submodule path with a path separator before comparison)
+
+_collect_project_source_files(proj_dir, submodules) -> set
+Pre-condition: proj_dir is an existing directory path; submodules, if not None, is a non-empty sequence of subdirectory paths relative to proj_dir
+Post-condition: Returns a set of normalized forward-slash relative file paths for all project source files discovered under proj_dir. When submodules is not None, the returned set is restricted to files whose paths fall under at least one of the specified submodule directories.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

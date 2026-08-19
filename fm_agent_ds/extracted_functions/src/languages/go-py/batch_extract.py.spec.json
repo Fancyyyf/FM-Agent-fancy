@@ -1,0 +1,5 @@
+{
+  "signature": "batch_extract(proj_dir: str) -> dict",
+  "pre_condition": "proj_dir is a non-empty string identifying a project root directory on disk.",
+  "post_condition": "Returns a dict mapping absolute file paths to lists of (func_name, body_text) tuples for all Go source files in proj_dir when a CodeGraph index for the project is available. Returns an empty dict when CodeGraph initialization fails or is not available for the project. Each key is an absolute filepath string; each value is a list of 2-tuples whose first element is a function name and second element is the function body text."
+}

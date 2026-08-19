@@ -1,0 +1,5 @@
+{
+  "signature": "run_entry_pipeline(proj_dir, entry_func=None, end_funcs=None, resume=False, domain_knowledge_files=None, one_phase=False, extra_call_edges_path=None, only_spec=False, bug_validator_path=None, plugin_config=None) -> None",
+  "pre_condition": "entry_func is a non-None FQN string identifying a function in the project at proj_dir. proj_dir is a filesystem path to an existing directory.",
+  "post_condition": "A Hoare-style reasoning pipeline has been executed on the subset of functions reachable from entry_func in the project's call graph. When end_funcs is provided and non-empty: only functions on directed call-graph paths from entry_func to some FQN in end_funcs are processed. Each processed function has a .spec.json, .info.json, and reasoning verdict written under proj_dir/fm_agent/. Any spec–code mismatches are validated and reported under proj_dir/fm_agent/bug_validation/. If the pipeline fails partway, partial results are preserved under proj_dir/fm_agent/. The original source files under proj_dir are never modified. BUG_VALIDATION_MAX_RETRIES is set to 0 for the duration of the call."
+}

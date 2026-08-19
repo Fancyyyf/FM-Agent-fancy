@@ -1,0 +1,3 @@
+{
+  "post_condition": "Given an input value, let s = str(value). The function returns a string r defined as: if s.strip() is the empty string, then r = ''. Otherwise, let a = s.strip(); let b = a.rstrip(';').strip(); if len(b) >= 2 and b[0] == b[-1] and b[0] in {'\"', \"'\"}, then let c = b[1:-1]; else let c = b; r = c.strip()."
+}

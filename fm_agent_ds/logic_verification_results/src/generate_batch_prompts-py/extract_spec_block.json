@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_batch_prompts-py/extract_spec_block.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a formatted string composed from the 'signature', 'pre_condition', and 'post_condition' fields of the adjacent .spec.json sidecar when that sidecar exists, parses to a JSON dict, and contains all three of those keys with string values. The returned string follows the form '<signature>\\n\\nPre-condition:\\n<pre_condition>\\n\\nPost-condition:\\n<post_condition>'. Returns None when the sidecar does not exist, cannot be opened or read as UTF-8 text, contains syntactically invalid JSON, parses to a non-dict JSON value, or lacks any of the three required keys with string values.",
+    "actual_behavior": "The function returns None if any of the following occur: (1) an OSError, UnicodeDecodeError, or json.JSONDecodeError is raised during the attempt to open, read, or parse the file at the path obtained by _spec_json_path(filepath) (which appends '.spec.json' to filepath); (2) the parsed JSON value is not an instance of dict. Otherwise, the function returns the string: f\\\"{spec.get('signature', '')}\\n\\nPre-condition:\\n{spec.get('pre_condition', '')}\\n\\nPost-condition:\\n{spec.get('post_condition', '')}\\\", where spec is the dict obtained from parsing the file. Any other exception propagates. Formal: (return_value = None)  ( spec: isinstance(spec, dict)  return_value = spec.get('signature', '') + '\\n\\nPre-condition:\\n' + spec.get('pre_condition', '') + '\\n\\nPost-condition:\\n' + spec.get('post_condition', '')  valid_file_and_spec(_spec_json_path(filepath), spec)).",
+    "code_evidence": "Line 11: return (",
+    "trigger_condition": "The specification requires returning None when any of the three keys ('signature', 'pre_condition', 'post_condition') has a non-string value (e.g., integer 42), but the code ignores value types and returns a formatted string instead."
+  }
+}

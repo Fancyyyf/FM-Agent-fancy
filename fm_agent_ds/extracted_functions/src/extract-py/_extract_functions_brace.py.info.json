@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_find_brace_end",
+      "signature": "_find_brace_end(lines: list[str], open_brace_line: int) -> int",
+      "pre_condition": "lines is a list of source code lines. open_brace_line is a valid 0-based index into lines where an opening brace '{' resides.",
+      "post_condition": "Returns the 0-based index of the matching closing brace '}', accounting for nested brace pairs at any depth. The returned index is strictly greater than open_brace_line and strictly less than the length of lines."
+    },
+    {
+      "name": "_extract_func_name_brace",
+      "signature": "_extract_func_name_brace(sig_text: str, lang_cfg: dict) -> str | None",
+      "pre_condition": "sig_text is a string containing a candidate function signature spanning one or more concatenated lines. lang_cfg is a dict with language-specific keyword and prefix configuration.",
+      "post_condition": "Returns the bare function name extracted from sig_text, using language-specific keyword filtering from lang_cfg to separate the name from return types, parameter lists, and qualifiers. Returns None when sig_text does not contain a recognizable function declaration for the language."
+    }
+  ]
+}

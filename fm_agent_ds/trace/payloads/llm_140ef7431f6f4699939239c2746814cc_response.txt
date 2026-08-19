@@ -1,0 +1,6 @@
+{
+    "verdict": "MATCH",
+    "counterexample": null,
+    "offending_statements": null,
+    "reason": "The code's behavior exactly matches the specification: success returns the full analysis object with all required attributes; any exception returns an object with empty functions and edges, and it never propagates exceptions."
+}

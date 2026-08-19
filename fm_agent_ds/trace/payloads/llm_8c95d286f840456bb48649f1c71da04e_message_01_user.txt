@@ -1,0 +1,31 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def parse_existing_opencode_config(text: str) -> dict:
+Line 2:     if not text.strip():
+Line 3:         return {}
+Line 4:     try:
+Line 5:         loaded = json.loads(_strip_jsonc(text))
+Line 6:     except json.JSONDecodeError as exc:
+Line 7:         raise ConfigWizardError(
+Line 8:             "Existing OpenCode config is invalid JSON/JSONC; refusing to overwrite it."
+Line 9:         ) from exc
+Line 10:     if not isinstance(loaded, dict):
+Line 11:         raise ConfigWizardError(
+Line 12:             "Existing OpenCode config must be a JSON object at the top level."
+Line 13:         )
+Line 14:     return loaded
+```
+
+Condition A (what the code actually does):
+After execution, either a dictionary is returned or ConfigWizardError is raised. If text.strip() is empty, the function returns {}. Otherwise, let s = _strip_jsonc(text). If json.loads(s) raises json.JSONDecodeError, ConfigWizardError('Existing OpenCode config is invalid JSON/JSONC; refusing to overwrite it.') is raised. If json.loads(s) succeeds but the result is not an instance of dict, ConfigWizardError('Existing OpenCode config must be a JSON object at the top level.') is raised. If the result is a dict, that dict is returned. Formally: (text.strip() = "" ⇒ returns {}) ∧ (text.strip() ≠ "" ∧ s = _strip_jsonc(text) ⇒ ( (∃d ∈ Dict: json.loads(s) = d) ⇒ returns d ) ∧ (json.loads(s) undefined ⇒ raises ConfigWizardError_{invalid}) ∧ (json.loads(s) = x ∧ ¬isinstance(x,dict) ⇒ raises ConfigWizardError_{top_level_object}) )
+
+Condition B (what the specification requires):
+When text is non-empty and contains valid JSON after stripping JSONC comment syntax, returns a dict whose keys and values are the parsed top-level JSON object. When text is empty or whitespace-only, returns an empty dict. When text is non-empty but does not contain valid JSON (after stripping JSONC comment syntax), raises ConfigWizardError with a message indicating the config is invalid JSON.
+
+Additional context:
+_strip_jsonc(text: str) -> str
+Pre-condition: text is a string.
+Post-condition: Returns a string with all JSONC comment syntax removed (single-line // comments and block /* */ comments), preserving every other character, whitespace, and line structure unchanged from the input text.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

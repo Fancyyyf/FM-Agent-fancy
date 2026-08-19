@@ -1,11 +1,11 @@
 {
   "id": "src--llm_client-py--_retry_create",
-  "source_file": "src/llm_client.py",
+  "source_file": "src/llm_client-py/_retry_create.py",
   "function_name": "_retry_create",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
+  "confirmation_status": "not_confirmed",
+  "attempts": 3,
   "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_retry_create.py",
   "detail_file": "fm_agent/bug_validation/src--llm_client-py--_retry_create.md",
-  "probe_stdout": "CONFIRMED — actual: '' | expected: 'non-empty string (spec requirement)'",
-  "trigger_summary": "When the LLM API returns an empty response content, _retry_create returns an empty string instead of ensuring the returned text is non-empty as required by the specification."
+  "probe_stdout": "NOT CONFIRMED — actual matched expected: the Anthropic /v1/messages request carried metadata.user_id='second-stable-user-777' as the specification requires; conversation content intact: True; OpenAI-compatible control metadata.user_id='second-stable-user-777'; anthropic url='https://relay2.example.com/v1/messages'; returns (text='probe-reply', usage={'input_tokens': 11, 'output_tokens': 7}) / (text='ok', usage={'completion_tokens': 1, 'prompt_tokens': 5, 'total_tokens': 6, 'completion_tokens_details': None, 'prompt_tokens_details': None})",
+  "trigger_summary": "An Anthropic-family model with LLM_API_BASE_URL matching a provider-injection target was claimed to send the native /v1/messages request without the required metadata.user_id body, but the probe showed the metadata is attached by _anthropic_create itself."
 }

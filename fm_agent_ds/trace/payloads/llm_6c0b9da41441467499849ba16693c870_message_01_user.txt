@@ -1,0 +1,20 @@
+Programming language: Python
+
+Pre-condition:
+trace_dir is a writable directory path. event_id is a non-empty string. name is a non-empty string composed solely of characters legal in a filename on the target platform. content is a string when binary is false, or a bytes object when binary is true. binary is a boolean.
+
+Code block:
+```python
+Line 1: def write_payload(trace_dir, event_id, name, content, binary=False):
+Line 2:     payload_dir = _ensure_trace_dirs(trace_dir)
+Line 3:     path = os.path.join(payload_dir, f"{event_id}_{name}")
+Line 4:     tmp_path = path + ".tmp"
+Line 5:     mode = "wb" if binary else "w"
+Line 6:     kwargs = {} if binary else {"encoding": "utf-8"}
+Line 7:     with open(tmp_path, mode, **kwargs) as f:
+Line 8:         f.write(content)
+Line 9:     os.replace(tmp_path, path)
+Line 10:     return os.path.relpath(path, os.path.dirname(trace_dir))
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

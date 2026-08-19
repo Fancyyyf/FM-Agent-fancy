@@ -1,0 +1,1 @@
+{"callees": [{"name": "resolve_model_backend", "signature": "resolve_model_backend() -> str", "pre_condition": "The FM-Agent runtime configuration has been loaded.", "post_condition": "Returns a string identifying the currently configured LLM backend. The returned value is one of \"codex-cli\", \"claude-cli\", or \"opencode\"."}]}

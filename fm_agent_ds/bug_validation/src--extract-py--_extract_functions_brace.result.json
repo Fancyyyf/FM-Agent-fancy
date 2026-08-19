@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--_extract_functions_brace",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/extract-py/_extract_functions_brace.py",
+  "function_name": "_extract_functions_brace",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--_extract_functions_brace.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--_extract_functions_brace.md",
+  "probe_stdout": "CONFIRMED — actual: ['normal_function'] (count: 1) | expected count: 2\n  The indented \"indented_function\" was NOT extracted due to whitespace check (line[0:1].isspace() => skipped)\n  Only ['normal_function'] found instead of the expected 2 functions.\n",
+  "trigger_summary": "C/C++ function definitions with leading whitespace on the declaration line are incorrectly skipped by the indentation check, causing them to be excluded from extraction results."
+}

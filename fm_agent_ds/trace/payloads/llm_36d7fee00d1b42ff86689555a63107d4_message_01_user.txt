@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _escape_component(value: str) -> str:
+Line 2:     result = []
+Line 3:     for char in value:
+Line 4:         if char.isascii() and (char.isalnum() or char == "_"):
+Line 5:             result.append(char)
+Line 6:         else:
+Line 7:             result.append(f"_{ord(char):02x}")
+Line 8:     return "".join(result)
+```
+
+Condition A (what the code actually does):
+The function returns a string obtained by iterating over each character `c` in `value` (in order) and appending either `c` itself (if `c` is an ASCII character and either `c.isalnum()` is `True` or `c` equals `'_'`) or the string “_” followed by the lowercase zero‑padded (minimum width 2) hexadecimal representation of `ord(c)`. Formally: let `process(c) = c` if `c.isascii() and (c.isalnum() or c == '_')` else `'_' + f'{ord(c):02x}'`. Then the returned string equals `''.join(process(c) for c in value)`. The output is always non‑empty because at least one character contributes at least one character.
+
+Condition B (what the specification requires):
+Returns a string where every character in value that is an ASCII alphanumeric (a-z, A-Z, 0-9) or underscore is preserved at its original relative position, and every other character is replaced by an underscore followed by its Unicode code point expressed as a zero-padded two-digit hexadecimal number. The output is deterministic: identical input strings always produce identical output strings. Every character in the output belongs to the set [a-zA-Z0-9_].
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--render_cache::bar_line",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/render_cache::bar_line.py",
+  "function_name": "render_cache::bar_line",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--render_cache::bar_line.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--render_cache::bar_line.md",
+  "probe_stdout": "CONFIRMED — bar_line left-aligns label in no-data case\nactual:   'latest 10     (no data)'\nexpected: '    latest 10(no data)'\nfull content: 'latest 10     (no data)\\nlatest 100    (no data)\\noverall   100.0%  ████████████████████ 1 / 1\\ncoverage = cache_read / (input + cache_write + cache_read)'",
+  "trigger_summary": "bar_line left-aligns (right-pads) the label in the no-data case using {label:<14}, but the spec requires right-alignment (left-padding) with {label:>14}"
+}

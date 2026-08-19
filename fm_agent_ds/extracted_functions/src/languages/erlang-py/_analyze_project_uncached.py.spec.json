@@ -1,0 +1,5 @@
+{
+  "signature": "_analyze_project_uncached(proj_dir: str) -> ErlangAnalysis",
+  "pre_condition": "proj_dir resolves via os.path.abspath to an existing directory that contains a valid Erlang project buildable by the Erlang toolchain.",
+  "post_condition": "Returns an ErlangAnalysis with four attributes: .functions is a dict mapping each analyzed Erlang source file's absolute path to a list of (function_id, source_text) pairs covering every function defined in that file; .edges is a dict mapping (function_id, caller_module) pairs to sets of callee function_ids discovered by ELP call hierarchy; .spans is a dict mapping each analyzed file's absolute path to a list of (function_id, start_line, end_line) tuples where lines are 0-indexed and inclusive; .server_info contains ELP server metadata. When no Erlang source files are discoverable under proj_dir, .functions, .edges, and .spans are empty dicts. Raises an exception when the ELP backend is unavailable, proj_dir is not analyzable, or an unrecoverable error occurs during ELP analysis."
+}

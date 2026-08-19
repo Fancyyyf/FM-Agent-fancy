@@ -1,0 +1,5 @@
+{
+  "signature": "_flatten_paths(values)",
+  "pre_condition": "values, if provided, is an iterable whose elements may be strings or nested iterables of strings; None is treated as an empty iterable",
+  "post_condition": "Returns a flat list of string elements obtained by recursively flattening all nested iterables in values into a single list, preserving the relative order of elements from the original structure. Elements that are empty strings or otherwise falsy are excluded from the result."
+}

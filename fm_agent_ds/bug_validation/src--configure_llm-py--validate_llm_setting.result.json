@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--validate_llm_setting",
+  "source_file": "src/configure_llm.py",
+  "function_name": "validate_llm_setting",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--validate_llm_setting.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--validate_llm_setting.md",
+  "probe_stdout": "CONFIRMED — found 6 spec violation(s):\n  - 'name' key with '': returned None — spec requires ConfigWizardError for empty/whitespace trimmed value\n  - 'name' key with '   ': returned None — spec requires ConfigWizardError for empty/whitespace trimmed value\n  - 'effort' key with 'invalid': returned None — spec requires ConfigWizardError for value outside ('', 'low', 'medium', 'high')\n  - 'effort' key with 'x': returned None — spec requires ConfigWizardError for value outside ('', 'low', 'medium', 'high')\n  - 'effort' key with 'super_high': returned None — spec requires ConfigWizardError for value outside ('', 'low', 'medium', 'high')\n  - 'effort' key with 'unknown_effort': returned None — spec requires ConfigWizardError for value outside ('', 'low', 'medium', 'high')\n(base_url and api_style correctly raise ConfigWizardError; the bug is that 'name' and 'effort' keys have no validation against their spec constraints)",
+  "trigger_summary": "The 'name' and 'effort' recognized keys have no validation — validate_llm_setting('name', '') and validate_llm_setting('effort', 'invalid') return None instead of raising ConfigWizardError as the spec requires."
+}

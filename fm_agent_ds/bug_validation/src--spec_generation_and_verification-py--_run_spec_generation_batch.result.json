@@ -1,0 +1,11 @@
+{
+  "id": "src--spec_generation_and_verification-py--_run_spec_generation_batch",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/spec_generation_and_verification-py/_run_spec_generation_batch.py",
+  "function_name": "_run_spec_generation_batch",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--spec_generation_and_verification-py--_run_spec_generation_batch.py",
+  "detail_file": "fm_agent/bug_validation/src--spec_generation_and_verification-py--_run_spec_generation_batch.md",
+  "probe_stdout": "CONFIRMED — prompt instructs rewriting BOTH sidecars when only one may be invalid\n  Matched buggy keywords in prompt: ['either sidecar', 'rewrite the complete', '.spec.json and .info.json files']\n  Spec requires: individually preserve valid sidecars, regenerate only invalid ones\n  Actual prompt: instructs rewriting the complete .spec.json and .info.json when either is bad",
+  "trigger_summary": "For attempt > 1, the prompt tells the OpenCode subprocess to rewrite BOTH .spec.json and .info.json when either sidecar is invalid, rather than individually preserving each valid sidecar as the spec requires."
+}

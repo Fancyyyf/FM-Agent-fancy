@@ -1,0 +1,5 @@
+{
+  "signature": "_load_json_edges(text: str, source_path: str) -> list[CallEdge]",
+  "pre_condition": "text is a non-empty string containing valid JSON whose top-level object contains an 'edges' key mapping to a JSON array. source_path is a string identifying the provenance of the JSON data for use in error messages.",
+  "post_condition": "Returns a list of CallEdge objects in the same order as the elements appear in the 'edges' JSON array. Raises ValueError (with source_path included in the message) when text is not valid JSON (wrapping the underlying JSONDecodeError), when the parsed JSON is not a dict, when the 'edges' key is absent or its value is not a list, or when any element of the 'edges' array is not a dict convertible to a CallEdge."
+}

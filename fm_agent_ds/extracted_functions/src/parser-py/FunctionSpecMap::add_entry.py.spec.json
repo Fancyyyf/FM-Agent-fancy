@@ -1,0 +1,1 @@
+{"signature": "FunctionSpecMap::add_entry(self, function_name, signature, spec) -> None", "pre_condition": "function_name and signature are strings; spec is a string", "post_condition": "self[function_name] equals spec; self.signatures[function_name] equals signature; all other entries in self and in self.signatures are unchanged from their values before the call"}

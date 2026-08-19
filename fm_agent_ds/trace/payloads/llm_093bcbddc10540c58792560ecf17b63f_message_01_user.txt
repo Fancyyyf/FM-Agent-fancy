@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _price_for(model):
+Line 2:     if not model:
+Line 3:         return None
+Line 4:     key = model
+Line 5:     if key in _MODEL_COST:
+Line 6:         return _MODEL_COST[key]
+Line 7:     # try stripping a "provider/" prefix
+Line 8:     if "/" in key:
+Line 9:         bare = key.split("/", 1)[1]
+Line 10:         if bare in _MODEL_COST:
+Line 11:             return _MODEL_COST[bare]
+Line 12:     return None
+```
+
+Condition A (what the code actually does):
+The function returns a value v determined as follows: If model is falsy (None or an empty string), v = None. Otherwise, if model is a key present in the dictionary _MODEL_COST, v = _MODEL_COST[model]. Otherwise, if the character '/' is present in model, let bare = model.split('/', 1)[1]; if bare is a key in _MODEL_COST, v = _MODEL_COST[bare]; otherwise v = None. Otherwise (model is truthy, not in _MODEL_COST, and '/' absent), v = None. Formally: v = None if (not model) ∨ ((model ∉ _MODEL_COST) ∧ (( '/' ∉ model) ∨ (bare ∉ _MODEL_COST))); v = _MODEL_COST[model] if model ∈ _MODEL_COST; v = _MODEL_COST[bare] if (model ∉ _MODEL_COST) ∧ ('/' ∈ model) ∧ (bare ∈ _MODEL_COST). No side effects on global or local state occur.
+
+Condition B (what the specification requires):
+Returns a dict whose keys are pricing field names and values are non-negative float per-token costs in US dollars when model is a recognized model identifier. Returns None when model is None or unrecognized. A model identifier is recognized when either the complete identifier or the portion after a leading '<provider>/' segment maps to a known pricing entry.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

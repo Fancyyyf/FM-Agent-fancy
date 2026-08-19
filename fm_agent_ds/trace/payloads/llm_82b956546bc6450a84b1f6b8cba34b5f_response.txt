@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "phase_data = {\"modules\": [{\"name\": \"core\", \"source_files\": [\"utils/helper.cpp\"]}, {\"name\": \"extra\", \"source_files\": [\"utils/helper.cpp\"]}], proj_dir = \"/project\" such that directory \"/project/extracted_functions/utils/helper-cpp\" exists and contains a regular file \"somefunc.cpp\".",
+  "offending_statements": "Line 7: for module in phase_data.get(\"modules\", []):\nLine 9:     for src_file in module.get(\"source_files\", []):\nLine 28:                     if os.path.isfile(fpath) and not _is_metadata_sidecar(fname):\nLine 29:                         results.append((fpath, module_name))",
+  "reason": "The code can produce duplicate fpath entries when the same extracted-function directory is traversed more than once (e.g., because the same source file appears in multiple modules), violating the specification’s requirement that each fpath be unique in the returned list."
+}

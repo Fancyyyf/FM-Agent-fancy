@@ -1,0 +1,274 @@
+{
+  "project": "FM-Agent",
+  "languages": [
+    "python"
+  ],
+  "file_extensions": [
+    "py"
+  ],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Initialization & Configuration",
+      "description": "Loads configuration, validates the runtime environment, checks prerequisites, manages git repository state, and sets up LLM backends.",
+      "modules": [
+        {
+          "name": "configuration",
+          "description": "Loads and validates all configuration from fm-agent.toml, .env, and environment variables using Pydantic. Also provides an interactive wizard for configuring LLM providers, API keys, and backend selection, automatically updating fm-agent.toml and the OpenCode provider config.",
+          "source_files": [
+            "config.py",
+            "src/configure_llm.py"
+          ]
+        },
+        {
+          "name": "environment",
+          "description": "Pre-flight checks that verify the runtime environment is suitable before launching the pipeline \u2014 validates the LLM API key is set, checks that oh-my-openagent plugin is installed and its comment-checker hook is disabled, and ensures required tools are available.",
+          "source_files": [
+            "src/env_check.py"
+          ]
+        },
+        {
+          "name": "git_utils",
+          "description": "Git helpers for the pipeline: checks whether a directory is a git repository, retrieves the HEAD commit, records processed commit identifiers for incremental runs, and builds frozen git worktree snapshots for isolated execution.",
+          "source_files": [
+            "src/git.py"
+          ]
+        },
+        {
+          "name": "package",
+          "description": "Python package marker for the src module.",
+          "source_files": [
+            "src/__init__.py"
+          ]
+        }
+      ],
+      "depends_on_phases": []
+    },
+    {
+      "phase": 2,
+      "name": "Language Backend & Function Extraction",
+      "description": "Parses source files across 12 supported languages, extracts individual function bodies and signatures, builds call graphs via CodeGraph, and processes supplemental caller-callee edge data.",
+      "modules": [
+        {
+          "name": "language_handlers",
+          "description": "Per-language extraction and call-graph backends implementing batch_extract, call_edges, and function_spans interfaces for C, C++, Python, Go, Java, Rust, JavaScript, TypeScript, and Erlang. Dispatched through a central registry that maps file extensions to their handler.",
+          "source_files": [
+            "src/languages/__init__.py",
+            "src/languages/registry.py",
+            "src/languages/c.py",
+            "src/languages/cpp.py",
+            "src/languages/python.py",
+            "src/languages/go.py",
+            "src/languages/java.py",
+            "src/languages/rust.py",
+            "src/languages/javascript.py",
+            "src/languages/typescript.py",
+            "src/languages/erlang.py"
+          ]
+        },
+        {
+          "name": "codegraph",
+          "description": "CodeGraph SQLite backend that indexes the target project and provides fast function extraction and call-graph queries. Handles canonicalization of function names for filesystem-safe FQNs and manages the .codegraph/codegraph.db index lifecycle.",
+          "source_files": [
+            "src/languages/codegraph.py"
+          ]
+        },
+        {
+          "name": "extraction",
+          "description": "Orchestrates batch function extraction from project source files across all supported languages. Includes a regex-based fallback extractor with language-specific comment handling, keyword filtering, and brace/indent block detection for languages without a native parser backend.",
+          "source_files": [
+            "src/extract.py"
+          ]
+        },
+        {
+          "name": "call_graph_edges",
+          "description": "Parses and normalizes supplemental caller-to-callee edge definitions from JSON files. Supports exact FQN matching, callsite-name-based matching, and info-name mapping for callee identification in generated metadata files.",
+          "source_files": [
+            "src/call_graph_edges.py"
+          ]
+        }
+      ],
+      "depends_on_phases": [
+        1
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Pipeline Planning & Domain Knowledge",
+      "description": "Analyzes the target codebase to generate a machine-readable phase plan (phases.json) and per-phase domain context files, manages user-provided domain knowledge, and loads pipeline plugins.",
+      "modules": [
+        {
+          "name": "pipeline_setup",
+          "description": "Orchestrates the Stage 1 and Stage 2 agents that generate the phase plan and domain context. Invokes OpenCode to analyze the codebase structure, produces phases.json with module groupings and source-file assignments, deduplicates files across phases, and regenerates domain-context type files when source files change.",
+          "source_files": [
+            "src/pipeline_setup.py"
+          ]
+        },
+        {
+          "name": "domain_knowledge",
+          "description": "Collects, validates, and stages user-provided domain-knowledge markdown files into the run workspace under fm_agent/spec_prompts/domain_context/user_knowledge/. Maintains a manifest.json and provides formatting helpers for injecting knowledge bullets into agent prompts.",
+          "source_files": [
+            "src/domain_knowledge.py"
+          ]
+        },
+        {
+          "name": "plugins",
+          "description": "Loads, validates, and manages FM-Agent plugins from the plugins/ directory. Each plugin defines per-stage behavior overrides (pass, replace, or modify) with optional custom command execution for the generate_phase_plan and generate_domain_context stages.",
+          "source_files": [
+            "src/plugin.py",
+            "plugins/__init__.py"
+          ]
+        }
+      ],
+      "depends_on_phases": [
+        1
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "LLM Communication & Tracing",
+      "description": "Provides the abstraction layer for communicating with LLM backends via OpenAI-compatible APIs or CLI agents, along with structured event tracing and prompt template generation.",
+      "modules": [
+        {
+          "name": "llm_client",
+          "description": "OpenAI-compatible LLM client with exponential backoff retry logic, JSON response parsing, and routing between direct API calls and CLI backends (OpenCode, Codex CLI, Claude CLI). Handles Anthropic-native /v1/messages endpoint specifics and builds CLI commands for file-oriented LLM tasks.",
+          "source_files": [
+            "src/llm_client.py"
+          ]
+        },
+        {
+          "name": "cli_backend",
+          "description": "Abstraction layer for CLI-based LLM backends. Normalizes backend aliases (codex, claude, opencode), builds agent command argv and stdin payloads, and detects whether a CLI backend is enabled based on configuration.",
+          "source_files": [
+            "src/cli_backend.py"
+          ]
+        },
+        {
+          "name": "opencode_trace",
+          "description": "Wraps OpenCode subprocess execution with structured tracing, capturing stdout, stderr, exit codes, timing, and tool-specific stats. Produces traced event entries in fm_agent/trace/events.jsonl and optionally collects raw LLM request-response pairs via the OpenCode trace plugin.",
+          "source_files": [
+            "src/opencode_trace.py"
+          ]
+        },
+        {
+          "name": "trace_writer",
+          "description": "Thread-safe writer for structured trace events and binary payloads. Generates unique event IDs, writes newline-delimited JSON events to events.jsonl, and stores payload content under fm_agent/trace/payloads/ with atomic temporary-file writes.",
+          "source_files": [
+            "src/trace_writer.py"
+          ]
+        },
+        {
+          "name": "prompts",
+          "description": "Generates LLM prompt templates for specification checking and post-condition implication verification. Loads and parses structured JSON responses from spec-check calls using the shared response parser, maintaining the checker's object-only contract.",
+          "source_files": [
+            "src/prompts.py"
+          ]
+        }
+      ],
+      "depends_on_phases": [
+        1
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Specification & Verification Utilities",
+      "description": "Provides shared utilities for function file management, specification parsing and formatting, and batch prompt generation used by the reasoning and verification engine.",
+      "modules": [
+        {
+          "name": "file_utils",
+          "description": "Collects, deduplicates, and writes function file lists. Detects metadata sidecar files (.spec.json, .info.json), validates spec JSON structure, filters test files, checks function readiness, and provides project-source-file iteration with submodule filtering.",
+          "source_files": [
+            "src/file_utils.py"
+          ]
+        },
+        {
+          "name": "parser",
+          "description": "Parses function specification JSON files and reconstructs reasoner-facing text representations. Provides FunctionSpecMap for aggregating multiple function specs with signatures, and formats pre-condition and post-condition blocks for the reasoning pipeline.",
+          "source_files": [
+            "src/parser.py"
+          ]
+        },
+        {
+          "name": "batch_prompts",
+          "description": "Generates per-layer specification batch prompts from topdown layer metadata. Extracts callee specs from info.json files, builds function-specific prompt context including domain knowledge references, and produces batch JSON files consumed by the spec generation agent.",
+          "source_files": [
+            "src/generate_batch_prompts.py"
+          ]
+        }
+      ],
+      "depends_on_phases": [
+        1
+      ]
+    },
+    {
+      "phase": 6,
+      "name": "Reasoning & Verification Engine",
+      "description": "The core analysis pipeline \u2014 builds call graphs and dependency layers, generates behavioral specifications, performs Hoare-style code reasoning, validates candidate bugs, and supports both full and incremental analysis modes.",
+      "modules": [
+        {
+          "name": "topdown_layers",
+          "description": "Builds the call graph from extracted functions and supplemental edges, computes dependency layers for phased top-down reasoning (ensuring callees are reasoned before callers), and generates layer metadata consumed by batch prompt generation.",
+          "source_files": [
+            "src/generate_topdown_layers.py"
+          ]
+        },
+        {
+          "name": "scope_analysis",
+          "description": "Locates the specific functions within scoped files that are most relevant to a developer intent (feature request, change description, or bug report). Uses multi-tier heuristic scoring including traceback matching, identifier extraction, and intra-file call-graph propagation, with optional LLM refinement.",
+          "source_files": [
+            "src/scope.py"
+          ]
+        },
+        {
+          "name": "reasoner",
+          "description": "Block-level Hoare-style reasoning engine that splits functions into granularity-controlled blocks, computes brace-depth-aware block boundaries, generates block post-conditions, and checks whether block post-conditions jointly imply the function specification.",
+          "source_files": [
+            "src/reasoner.py"
+          ]
+        },
+        {
+          "name": "verification",
+          "description": "Orchestrates streaming spec reasoning and bug validation. Runs the reasoner on function code against its specification, detects post-condition violations, dispatches bug validation agents to confirm suspected bugs by building and running probe scripts, and produces structured bug reports.",
+          "source_files": [
+            "src/verification.py"
+          ]
+        },
+        {
+          "name": "spec_orchestrator",
+          "description": "Stage 6 orchestrator that manages batch spec generation and streaming verification across all phases and layers. Handles concurrent batch execution with worker pools, resume support for partial progress, and coordinates spec generation with downstream verification.",
+          "source_files": [
+            "src/spec_generation_and_verification.py"
+          ]
+        },
+        {
+          "name": "entry_pipeline",
+          "description": "Entry-point-driven focused reasoning pipeline. Given an entry function and optional end functions, restricts the call graph to chains connecting them, builds targeted topdown layers, and runs spec generation and verification only on the relevant call chain.",
+          "source_files": [
+            "src/entry_reasoning_pipeline.py"
+          ]
+        },
+        {
+          "name": "incremental_pipeline",
+          "description": "Incremental reasoning pipeline for modified codebases. Diffs the current code against the previous run's recorded commit, identifies changed functions, determines affected callers, regenerates specs only for changed scope, and re-verifies impacted call chains.",
+          "source_files": [
+            "src/incremental_reasoner.py"
+          ]
+        },
+        {
+          "name": "orchestration",
+          "description": "CLI entry point that orchestrates the full 6-stage pipeline \u2014 phase planning, domain context generation, function extraction, file-list collection, topdown layering, and spec generation with verification. Also provides a standalone terminal-UI dashboard for live progress visualization of token usage, stage progress, and bug validation verdicts.",
+          "source_files": [
+            "main.py",
+            "dashboard.py"
+          ]
+        }
+      ],
+      "depends_on_phases": [
+        2,
+        3,
+        4,
+        5
+      ]
+    }
+  ]
+}

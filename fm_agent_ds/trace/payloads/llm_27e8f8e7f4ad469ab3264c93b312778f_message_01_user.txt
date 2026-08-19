@@ -1,0 +1,66 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir and work_dir are valid directory paths; fqn is a non-empty fully-qualified function name string; lang_key is a recognized language identifier; source is the complete source code text of the function (non-empty string); callee_names is a list of callee function name strings (may be empty); caller_context is an iterable of (caller_fqn, caller_spec_dict_or_None, caller_expectation_or_None) tuples where caller_spec_dict_or_None is either a dict with 'signature', 'pre_condition', 'post_condition' keys or None, and caller_expectation_or_None is either a string describing what the caller expects from this function or None; developer_intent is a non-empty string describing the intended code modification; comment_prefix is the language's comment prefix string; idx is a non-negative integer unique to this invocation.
+
+Code block:
+```python
+Line 1: def _opencode_generate_spec(proj_dir, work_dir, idx, fqn, lang_key, comment_prefix,
+Line 2:                             developer_intent, callee_names, source, caller_context):
+Line 3:     """
+Line 4:     Ask opencode to generate brand-new .spec.json and .info.json objects from scratch for a
+Line 5:     function that has no existing metadata sidecars — e.g. a function
+Line 6:     freshly added by the modification.
+Line 7:     Mirrors the full run's spec generation (run_pipeline Stage 6) but for a single function:
+Line 8:     opencode reads the project's spec format rules (fm_agent/spec_prompts/system_prompt.md),
+Line 9:     is given the same caller context the full run provides (each caller's .spec.json and what
+Line 10:     that caller's .info.json expects from this function, in caller_context as returned by
+Line 11:     _collect_caller_context), and produces the objects directly. Returns the parsed decision
+Line 12:     in the SAME shape as _opencode_check_spec_update so the caller can splice and propagate it
+Line 13:     identically.
+Line 14:     Returns the parsed result dict — keys: "spec_updated" (bool, true when .spec.json was
+Line 15:     produced), "new_spec" (dict), "info_updated" (bool), "new_info" (dict), "updated_callees"
+Line 16:     (list[str]) — or None when opencode produced nothing usable.
+Line 17:     """
+Line 18:     result_relpath = os.path.join("fm_agent", f"spec_generate_{idx}.json")
+Line 19:     prompt_relpath = os.path.join("fm_agent", f"spec_generate_{idx}.md")
+Line 20:     # Caller context (callers' own specs + what each caller's .info.json expects from this
+Line 21:     # function), mirroring run_pipeline's "EARLIER-LAYER CALLER SPECS" / "CALLEE EXPECTATIONS
+Line 22:     # FROM CALLERS" sections so the generated spec satisfies what callers depend on.
+Line 23:     caller_specs = [
+Line 24:         (cfqn, spec) for cfqn, spec, _ in caller_context if spec
+Line 25:     ]
+Line 26:     caller_expectations = [
+Line 27:         (cfqn, exp) for cfqn, _, exp in caller_context if exp
+Line 28:     ]
+Line 29:     caller_section = ""
+Line 30:     if caller_specs:
+Line 31:         caller_section += "## Specs of this function's callers\n\n"
+Line 32:         for cfqn, spec in caller_specs:
+Line 33:             caller_section += f"
+Line 34:     if caller_expectations:
+Line 35:         caller_section += (
+Line 36:             "## What callers expect from this function (from their .info.json files)\n\n"
+Line 37:             "Your generated .spec.json must be consistent with these expectations.\n\n"
+Line 38:         )
+Line 39:         for cfqn, exp in caller_expectations:
+Line 40:             caller_section += f"### According to {cfqn}\n\n{exp.strip()}\n\n"
+```
+
+Additional context:
+list_staged_domain_knowledge_relpaths(work_dir)
+Pre-condition: work_dir is a valid directory path.
+Post-condition: Returns a list of relative file path strings to domain knowledge markdown files that have been staged under work_dir for the current run. Returns an empty list when no domain knowledge files are staged.
+
+format_domain_knowledge_bullets(paths)
+Pre-condition: paths is a list of file path strings.
+Post-condition: Returns a string where each path is formatted as a markdown bullet item line, suitable for embedding as a numbered reading step in a prompt.
+
+_opencode_select_json(proj_dir, work_dir, prompt_relpath, prompt_content, result_relpath, stage, input_files)
+Pre-condition: proj_dir and work_dir are valid directory paths; prompt_relpath and result_relpath are relative file paths under work_dir; prompt_content is a non-empty string; stage is a recognized pipeline stage identifier; input_files is a list of relative file paths to contextual files that opencode may read.
+Post-condition: Writes prompt_content to prompt_relpath on disk, then invokes opencode with that prompt and the listed input_files as readable context. When opencode succeeds, reads and returns the parsed JSON content from result_relpath. Returns None when opencode exits with a non-zero code, result_relpath does not exist or is empty after execution, or the file content is not valid JSON.
+
+_validate_spec_update(result)
+Pre-condition: result is a dict potentially produced by an opencode spec generation or spec-update run.
+Post-condition: When result contains the expected keys with the expected types (spec_updated is bool; new_spec, when spec_updated is true, is a dict with 'signature', 'pre_condition', 'post_condition' string values; info_updated is bool; new_info is a dict with a 'callees' key; updated_callees is a list of strings), returns result unchanged. Returns None when any key is missing, has an unexpected type, or the value of a boolean key is not a boolean.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

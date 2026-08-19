@@ -1,0 +1,5 @@
+{
+  "signature": "_edge_from_mapping(item: dict, source: str) -> CallEdge",
+  "pre_condition": "item is a dict containing 'caller' and 'callee' sub-objects whose fields satisfy CallerSelector and CalleeTarget construction respectively. source is a provenance string used for error messages.",
+  "post_condition": "Returns a CallEdge whose caller field is a CallerSelector derived from item['caller'], whose callee field is a CalleeTarget derived from item['callee'], and whose source field is a provenance string derived from evidence entries in item combined with the provided source parameter. Raises an error whose message includes source when item is missing required sub-objects or when a sub-object is malformed."
+}

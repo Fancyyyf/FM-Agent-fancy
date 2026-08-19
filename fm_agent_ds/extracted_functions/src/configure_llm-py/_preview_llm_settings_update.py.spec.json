@@ -1,0 +1,5 @@
+{
+  "signature": "_preview_llm_settings_update(updates: dict[str, str], toml_path: Path) -> str",
+  "pre_condition": "updates is a non-empty dict whose keys are dot-separated field-path strings within the LLM section of the TOML file at toml_path, and whose values are non-empty strings representing the new configuration values. toml_path is a Path identifying an existing, readable TOML file.",
+  "post_condition": "Returns a human-readable multi-line string. For each key in updates, the string contains a human-readable label identifying the field and both the field's current value as read from the TOML file at toml_path and the new value from updates. The string also lists toml_path as the sole file that will be modified under a section header to that effect."
+}

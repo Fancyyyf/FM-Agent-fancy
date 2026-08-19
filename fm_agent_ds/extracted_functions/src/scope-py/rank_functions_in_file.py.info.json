@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_parse_file",
+      "signature": "_parse_file(src_path: Path, proj_dir: str | None) -> tuple[list[dict] | None, list[str] | None, list[dict] | None]",
+      "pre_condition": "src_path is an absolute path to an existing source file. proj_dir, when provided, is the project root directory enabling non-Python parse paths to resolve function boundaries via codegraph.",
+      "post_condition": "Returns a tuple (funcs_info, source_lines, classes). funcs_info is a list of function-metadata dicts each containing keys for function name, start line, and end line, or None when no functions are found or parsing fails. source_lines is the file content as a list of strings (one per line), or None when reading fails. classes is a list of class-metadata dicts each with a 'name' key, or None when no classes are found."
+    },
+    {
+      "name": "_rank_functions",
+      "signature": "_rank_functions(funcs_info: list[dict], classes: list[dict], signals: dict[str, set[str]]) -> list[dict]",
+      "pre_condition": "funcs_info is a non-empty list of function-metadata dicts from _parse_file. classes is a list of class-metadata dicts (possibly empty). signals is a dict of pre-parsed signal dictionaries from _parse_issue_signals with keys 'traceback_funcs', 'backtick_idents', 'dotted_refs', 'dotted_classes', 'plain_idents', 'exception_types', 'all_words'.",
+      "post_condition": "Returns funcs_info augmented with a 'score' key (float) on each entry, sorted by descending score. Scoring applies weighted signal matching: traceback-pattern overlap, backtick-identifier matches in function name and body, dotted-reference overlap, plain-identifier overlap in name, exception-type presence in the function body, and body-word overlap with intent tokens. When classes is non-empty, class-level scoring further boosts member function scores based on class-name and docstring overlap with the intent tokens."
+    },
+    {
+      "name": "_llm_rerank",
+      "signature": "_llm_rerank(funcs: list[dict], source_lines: list[str], filepath: str, issue: str, top_k: int, llm_client, llm_model: str) -> list[str] | None",
+      "pre_condition": "funcs is a non-empty list of function-metadata dicts each with 'name' and 'score' keys, sorted by descending score. source_lines is the file content as a list of strings. filepath identifies the source file. issue is the developer intent string. top_k is the maximum number of functions to select. llm_client is a configured LLM API client. llm_model is the model name string.",
+      "post_condition": "Returns a list of function name strings ordered by LLM-assessed relevance to the issue, with length at most top_k. Returns an empty list or None when the LLM call fails or produces no valid output."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+Programming language: Python
+
+Pre-condition:
+extracted_dir is a path to an existing directory. Each file in the directory tree is a function extraction file with an extension. registry_langs, when provided, is a set of language key strings.
+
+Code block:
+```python
+Line 1: def _validate_extraction(extracted_dir, registry_langs=None):
+Line 2:     """Re-parse every extracted file and verify each contains exactly one function.
+Line 3:     Files for languages that returned data from their REGISTRY backend are skipped:
+Line 4:     those backends write exactly one function body per file by construction, so
+Line 5:     regex re-parsing adds no safety and produces false negatives for forms the
+Line 6:     regex cannot recognise (async def, class methods, arrow functions).
+Line 7:     Returns a list of (file_path, function_count) for files that fail validation.
+Line 8:     """
+Line 9:     failures = []
+Line 10:     for root, _, files in os.walk(extracted_dir):
+Line 11:         for fname in files:
+Line 12:             ext = fname.rsplit('.', 1)[-1] if '.' in fname else ''
+Line 13:             lang_key = EXT_TO_LANG.get(ext)
+Line 14:             if not lang_key:
+Line 15:                 continue
+Line 16:             if registry_langs and lang_key in registry_langs:
+Line 17:                 continue
+Line 18:             fpath = os.path.join(root, fname)
+Line 19:             funcs = extract_functions_from_file(fpath, lang_key)
+Line 20:             if len(funcs) != 1:
+Line 21:                 failures.append((fpath, len(funcs)))
+Line 22:     return failures
+```
+
+Additional context:
+extract_functions_from_file(file_path, lang_key)
+Pre-condition: file_path is a path to an existing extracted function file; lang_key is a language key string present in EXT_TO_LANG values
+Post-condition: Returns a list of (function_name, function_body_text) tuples extracted from the file by regex-based parsing for the given language. The length of the returned list is the count of functions the regex parser identifies in the file.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "cls = {'name': 'MyClass', 'docstring': 'naïve'}; signals = {'backtick_idents': set(), 'plain_idents': set(), 'all_words': {'naïve'}, 'dotted_classes': set()}; All weights positive, e.g., W_CLASS_DOC_MATCH = 1.0.",
+  "offending_statements": "Line 15: re.findall(r'\\b([a-zA-Z]{4,})\\b', cls['docstring'].lower())",
+  "reason": "The regex restricts word extraction to ASCII letters [a-zA-Z], but the specification requires extraction of all alphabetic words (including non-ASCII letters). For docstring 'naïve', the code finds no matching words and scores 0, while the specification would score W_CLASS_DOC_MATCH because 'naïve' is an alphabetic word of five characters and appears in signals['all_words']."
+}

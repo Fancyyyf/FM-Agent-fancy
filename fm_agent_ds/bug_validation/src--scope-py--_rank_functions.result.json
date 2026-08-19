@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_rank_functions",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_rank_functions.py",
+  "function_name": "_rank_functions",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_rank_functions.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_rank_functions.md",
+  "probe_stdout": "CONFIRMED — duplicate entries share inflated call-graph bonus: actual scores=[16.0, 16.0] | expected (independent, bonus applied once)=13.0 | buggy (bonus doubled)=16.0 | caller_base_score=10.0, CALLEE_INHERIT=0.3",
+  "trigger_summary": "Duplicate entries (same name and start line) cause name_to_linenos to collect duplicate start lines, leading the call-graph propagation loop to increment the start-line-keyed bonus multiple times for the same position, inflating scores for all duplicates."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "REGISTRY contains two languages: 'langA' and 'langB' (iterated in that order). For proj_dir, handlerA.batch_extract returns {'/abs/path/file.py': [('funcA', 'bodyA')]}; handlerB.batch_extract returns {'/abs/path/file.py': [('funcB', 'bodyB')]}. The code produces ({'/abs/path/file.py': [('funcB', 'bodyB')]}, {'langA', 'langB'}), but the specification requires ({'/abs/path/file.py': [('funcA', 'bodyA'), ('funcB', 'bodyB')]}, {'langA', 'langB'}) because all functions across supported languages must be combined for the same file.",
+  "offending_statements": "Line 11: funcs.update(result)",
+  "reason": "The code uses dict.update to merge extraction results, which overwrites the list for a file path when multiple languages produce functions for the same file. The specification explicitly requires a combination of all functions from that file across all supported languages, not just the functions from the last language. This loss of functions from earlier languages violates the specification."
+}

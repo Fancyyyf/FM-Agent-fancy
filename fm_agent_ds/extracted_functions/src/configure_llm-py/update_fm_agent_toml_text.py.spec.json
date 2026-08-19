@@ -1,0 +1,5 @@
+{
+  "signature": "update_fm_agent_toml_text(text: str, config: LLMConfigInput) -> str",
+  "pre_condition": "text is a string containing valid TOML content with an [llm] section; config is an LLMConfigInput whose model_id, provider_id, base_url, backend, and api_style fields are all non-empty strings.",
+  "post_condition": "Returns TOML content where, under the [llm] section, the name field is set to config.model_id, the provider field to config.provider_id, the base_url field to config.base_url, the backend field to config.backend, and the api_style field to config.api_style. Every other TOML section, every field outside [llm], and every comment is preserved unchanged."
+}

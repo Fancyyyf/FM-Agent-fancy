@@ -1,0 +1,58 @@
+{
+  "callees": [
+    {
+      "name": "_prompt_backend",
+      "signature": "_prompt_backend() -> str",
+      "pre_condition": "None required.",
+      "post_condition": "Displays the available LLM backend options to the user via stdout, reads the user's selection from stdin, and returns the selected backend identifier as a non-empty string that is one of: 'opencode', 'auto', 'codex-cli', or 'claude-cli'. Re-prompts until the input is recognized as a valid backend identifier."
+    },
+    {
+      "name": "run_local_backend_configuration",
+      "signature": "run_local_backend_configuration(project_root: Path, backend: str) -> int",
+      "pre_condition": "project_root is a Path identifying a directory containing a readable fm-agent.toml file; backend is a non-empty string identifying a local CLI backend and is not 'opencode'.",
+      "post_condition": "Returns 0 when the fm-agent.toml file has been updated to set the LLM backend to the provided backend value, with a backup of the original file created. Returns non-zero when the update cannot be completed because the TOML file is not writable. No API key, .env modification, or OpenCode provider configuration is performed."
+    },
+    {
+      "name": "default_paths",
+      "signature": "default_paths(project_root: Path) -> WizardPaths",
+      "pre_condition": "project_root is a Path identifying an existing directory.",
+      "post_condition": "Returns a WizardPaths object whose toml_path, env_path, and opencode_config_path attributes refer to existing or creatable filesystem paths derived from project_root. toml_path is resolved from the FM_AGENT_CONFIG environment variable when set, otherwise from <project_root>/fm-agent.toml. env_path is <project_root>/.env. opencode_config_path is resolved from OPENCODE_CONFIG when set, otherwise from the platform-specific OpenCode configuration directory."
+    },
+    {
+      "name": "prompt_for_config",
+      "signature": "prompt_for_config() -> tuple[LLMConfigInput, bool]",
+      "pre_condition": "None required.",
+      "post_condition": "Prompts the user interactively via stdout/stdin for each required configuration field: provider ID, provider name, API style, base URL, model ID, and API key. Returns a tuple of (LLMConfigInput, validate_flag) where LLMConfigInput is a frozen dataclass containing the user-provided values as non-empty strings and the API style as a valid ApiStyle enum value, and validate_flag is a boolean indicating whether the user requested syntax validation. Re-prompts for any field whose input does not satisfy per-field validation rules."
+    },
+    {
+      "name": "_preview",
+      "signature": "_preview(config: LLMConfigInput, paths: WizardPaths) -> str",
+      "pre_condition": "config is an LLMConfigInput with non-empty provider_id, provider_name, api_style, base_url, model_id, and api_key fields; paths is a WizardPaths whose attribute paths exist or can be created.",
+      "post_condition": "Returns a human-readable string summarizing which files will be modified and the configuration values that will be written to each: the fm-agent.toml LLM section settings (provider, name, base_url, api_style), the .env API key entry, and the OpenCode provider configuration changes."
+    },
+    {
+      "name": "warn_live_llm_environment_overrides",
+      "signature": "warn_live_llm_environment_overrides() -> None",
+      "pre_condition": "None required.",
+      "post_condition": "Prints a warning to stdout when any LLM-related environment variable (from the set of variables listed in _ENV_MAP whose target section is 'llm') is currently set in the process environment, indicating that the live environment value will take precedence over any value written to configuration files. Prints nothing when no such variables are set."
+    },
+    {
+      "name": "live_llm_environment_overrides",
+      "signature": "live_llm_environment_overrides() -> bool",
+      "pre_condition": "None required.",
+      "post_condition": "Returns True when at least one LLM-related environment variable (from the set of variables listed in _ENV_MAP whose target section is 'llm') is currently set in the process environment; returns False otherwise. The result depends only on the current process environment, not on any file contents."
+    },
+    {
+      "name": "_prompt_yes_no",
+      "signature": "_prompt_yes_no(message: str, *, default: bool = True) -> bool",
+      "pre_condition": "message is a non-empty string; default is True or False.",
+      "post_condition": "Prints message followed by a [Y/n] or [y/N] prompt to stdout reflecting the default value. Reads one line from stdin. Returns True when the user responds with a yes-affirming pattern (case-insensitive 'y' or 'yes') or when the input is empty and default is True. Returns False when the user responds with a no-affirming pattern (case-insensitive 'n' or 'no') or when the input is empty and default is False."
+    },
+    {
+      "name": "apply_configuration",
+      "signature": "apply_configuration(config: LLMConfigInput, paths: WizardPaths, *, validate: bool = False) -> list[tuple[Path, Path | None]]",
+      "pre_condition": "config is an LLMConfigInput with non-empty provider_id, provider_name, api_style, base_url, model_id, and api_key; paths is a WizardPaths whose attribute paths exist or can be created; validate is True when syntax validation against the target configuration formats is requested.",
+      "post_condition": "Writes the API key to the .env file at paths.env_path, inserting or replacing the LLM_API_KEY line without affecting other entries. Writes the non-secret LLM settings (provider, name, base_url, api_style) to the LLM section of fm-agent.toml at paths.toml_path, preserving all other sections and fields unchanged. Updates the OpenCode provider configuration at paths.opencode_config_path to reference the chosen provider and API style, creating the file if it does not exist. Backs up each modified file to a timestamp-suffixed copy in the same directory before writing. When validate is True, verifies that the written TOML content is syntactically valid and that the OpenCode configuration parses correctly. Returns a list of (modified_file_path, backup_path_or_None) tuples, one per modified file, ordered by the sequence of writes."
+    }
+  ]
+}

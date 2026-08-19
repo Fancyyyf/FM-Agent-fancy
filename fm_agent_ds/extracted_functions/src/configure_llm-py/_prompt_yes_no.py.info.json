@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_prompt",
+      "signature": "_prompt(message: str) -> str",
+      "pre_condition": "message is a non-empty string.",
+      "post_condition": "Displays message to stdout without a trailing newline, reads one line from stdin, and returns the line after stripping leading and trailing whitespace."
+    }
+  ]
+}

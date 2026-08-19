@@ -1,0 +1,5 @@
+{
+  "signature": "_domain_knowledge_prompt_section(work_dir) -> str",
+  "pre_condition": "work_dir is a directory path that may contain domain-knowledge markdown files staged from the --domain-knowledge pipeline argument.",
+  "post_condition": "Returns a string. When work_dir contains no domain-knowledge files, the returned string is the empty string. When domain-knowledge files are present, returns a string that begins with the header line '## User-provided domain knowledge', followed by two newlines, followed by the concatenated contents of all domain-knowledge files, followed by two newlines. The returned string is suitable for inclusion as a section of an LLM prompt."
+}

@@ -1,0 +1,3 @@
+{
+  "post_condition": "The stream object is closed (stream.closed == True), except in the rare case where the close() method itself raises an exception and fails to complete. If the function returns normally (no exception propagates), the full string 'text' has been written to the stream and the stream's buffer has been flushed (i.e., write(text) and flush() succeeded). If an exception propagates from write() or flush(), the stream is still closed (because the finally block executes close()), but the write/flush operations may have been partial or not executed. Formally: Let E be the set of exceptions that may propagate. Post-condition is: (stream.closed ∨ (close_exception ∈ E)) ∧ ( (E = ∅) → (written = text ∧ flushed) )."
+}

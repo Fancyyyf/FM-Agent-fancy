@@ -1,0 +1,1 @@
+{"post_condition": "The function returns True if and only if `value` is a string and the string obtained by stripping leading and trailing whitespace from `value` is non-empty; otherwise it returns False. Formally: _nonempty_string(value) ⇔ (isinstance(value, str) ∧ len(value.strip()) > 0)."}

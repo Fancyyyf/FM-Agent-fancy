@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_is_metadata_sidecar",
+      "signature": "_is_metadata_sidecar(fname) -> bool",
+      "pre_condition": "fname is a filename string with no directory component.",
+      "post_condition": "Returns True when fname matches the naming pattern of a specification or information sidecar file (e.g., .spec.json, .info.json); returns False for all other filenames."
+    },
+    {
+      "name": "_write_file_names",
+      "signature": "_write_file_names(file_names, output_path) -> list[str]",
+      "pre_condition": "file_names is a list of file path strings. output_path is a writable file path.",
+      "post_condition": "Returns a sorted list of unique strings derived from file_names, with duplicates removed. Atomically writes the same sorted, deduplicated list as a JSON array to output_path. The sort order is ascending string order."
+    }
+  ]
+}

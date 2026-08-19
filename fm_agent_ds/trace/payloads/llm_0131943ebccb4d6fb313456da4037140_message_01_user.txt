@@ -1,0 +1,59 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _node_fqn_map(cur, cg_langs) -> dict:
+Line 2:     """Return {node_id: fqn} for every function/method node in the given languages.
+Line 3:     The per-file name dedup (``Flush``, ``Flush_1``, ...) uses the SAME rule and
+Line 4:     ordering as get_functions_by_file (``ORDER BY file_path, start_line``, then a
+Line 5:     per-(file, name) counter), so the FQN assigned to a node here matches the FQN
+Line 6:     the extracted file for that node receives. Keeping the two in lockstep is what
+Line 7:     makes the call-edge identities line up with the extracted-function identities.
+Line 8:     """
+Line 9:     placeholders = ",".join("?" * len(cg_langs))
+Line 10:     cur.execute(
+Line 11:         f"""
+Line 12:         SELECT id, name, qualified_name, file_path, start_line
+Line 13:         FROM nodes
+Line 14:         WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+Line 15:         ORDER BY file_path, start_line
+Line 16:         """,
+Line 17:         cg_langs,
+Line 18:     )
+Line 19:     counts: dict = {}
+Line 20:     result: dict = {}
+Line 21:     for node_id, name, qualified_name, file_path, _start in cur.fetchall():
+Line 22:         ident = _extraction_ident(name, qualified_name)
+Line 23:         key = (file_path, ident)
+Line 24:         c = counts.get(key, 0)
+Line 25:         counts[key] = c + 1
+Line 26:         deduped = ident if c == 0 else f"{ident}_{c}"
+Line 27:         result[node_id] = _fqn_for(file_path, deduped)
+Line 28:     return result
+```
+
+Condition A (what the code actually does):
+The function returns a dictionary mapping each integer node identifier (id) of the rows from the nodes table that satisfy kind IN ('function', 'method') AND language IN cg_langs, to a fully‑qualified name string. The rows are fetched and processed in the order determined by ORDER BY file_path, start_line. Let the result of the query be a list L = [(id, name, qualified_name, file_path, start_line), …] sorted lexicographically by file_path, then by start_line. For each row r = (node_id, name, qualified_name, file_path, start_line) in L, let ident = _extraction_ident(name, qualified_name). Define a counter for each pair (file_path, ident) that tracks how many times that pair has been encountered before the current row in L. For the first occurrence (counter = 0), the deduplicated identifier is ident; for the c‑th remaining occurrence (counter = c > 0), it is the string ident followed by '_' and the decimal representation of c. Then the fully‑qualified name fqn = _fqn_for(file_path, deduped) is assigned to the node_id. The resultant dictionary maps each node_id to its fqn. The computation is deterministic, does not modify the database, and has no side effects other than reading from the cursor. Formally:
+Return = { node_id : _fqn_for(file_path, deduped)  |
+    r = (node_id, name, qualified_name, file_path, start_line) ∈ L,
+    ident = _extraction_ident(name, qualified_name),
+    count = |{ s ∈ L 
+              | s precedes r or (s = r and we consider s before increment),
+                s.file_path = file_path,
+                _extraction_ident(s.name, s.qualified_name) = ident }|,
+    deduped = ident if count = 0 else ident + '_' + str(count - 1) 
+  },
+where L is the list of rows returned by the SELECT query sorted by (file_path ASC, start_line ASC).
+
+Condition B (what the specification requires):
+Returns a dict mapping each node ID (int) to its canonicalized fully-qualified name (str). The FQN uses '::' as the component separator. Every function and method node in the given languages is included. For multiple nodes sharing the same base identifier within the same file, the first occurrence by ascending file_path then start_line order receives the bare canonicalized name; each subsequent occurrence appends '_N' where N is the 1-based count of prior occurrences of that identifier in that file. Returns an empty dict when no function or method nodes exist for any of the given languages.
+
+Additional context:
+_extraction_ident(name: str, qualified_name: str) -> str
+Pre-condition: name and qualified_name are string values obtained from a codegraph nodes table row.
+Post-condition: Returns a class-qualified, canonicalized function identifier string using '::' as the component separator.
+
+_fqn_for(file_path: str, deduped: str) -> str
+Pre-condition: file_path is a relative source file path string. deduped is a canonicalized, deduplicated function identifier string.
+Post-condition: Returns the fully-qualified name string for the function, combining the file-path-derived components and the deduplicated identifier with '::' separators.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

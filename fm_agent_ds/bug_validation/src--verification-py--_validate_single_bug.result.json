@@ -1,0 +1,11 @@
+{
+  "id": "src--verification-py--_validate_single_bug",
+  "source_file": "src/verification.py",
+  "function_name": "_validate_single_bug",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--verification-py--_validate_single_bug.py",
+  "detail_file": "fm_agent/bug_validation/src--verification-py--_validate_single_bug.md",
+  "probe_stdout": "NOT CONFIRMED — actual: 'dispatch called' | expected: 'dispatch called' | output_files=['fm_agent/bug_validation/src--verification-py--_validate_single_bug.md', 'fm_agent/bug_validation/src--verification-py--_validate_single_bug.result.json'] | stage=bug_validation | summary=OpenCode bug validation for src--verification-py--_validate_single_bug\\n",
+  "trigger_summary": "When resume=False and no result marker exists, the function correctly dispatches a bug-validation agent via run_opencode_traced — the verification was a false positive caused by incomplete control-flow analysis stopping at line 80."
+}

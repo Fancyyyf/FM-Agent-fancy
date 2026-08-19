@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_parse_callee",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_parse_callee.py",
+  "function_name": "_parse_callee",
+  "confirmation_status": "not_confirmed",
+  "attempts": "2",
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_parse_callee.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_parse_callee.md",
+  "probe_stdout": "NOT CONFIRMED — actual matched expected: ValueError raised: /tmp/tmpi2ixxqf8.json:edges[1]: 'callee.info_names' must be a string array\nNOT CONFIRMED — actual matched expected: ValueError raised: /tmp/tmpnekbqqna.json:edges[1]: callee.info_names[2] must be a string\nNOT CONFIRMED — actual matched expected: ValueError raised: /tmp/tmps19__59p.json:edges[1]: 'callee.info_names' must be a string array",
+  "trigger_summary": "callee.info_names set to a non-list value (integer 123) in a supplemental edge JSON — claimed to be silently treated as empty tuple, but code correctly raises ValueError."
+}

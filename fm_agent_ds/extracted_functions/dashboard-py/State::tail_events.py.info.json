@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_ingest_event",
+      "signature": "_ingest_event(self, ev)",
+      "pre_condition": "ev is a dict parsed from a valid JSON object line in the events.jsonl trace file.",
+      "post_condition": "ev is appended to the State's in-memory list of structured trace events. Event order across all tail_events calls is preserved as read from the file."
+    }
+  ]
+}

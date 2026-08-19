@@ -1,0 +1,6 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/reasoner-py/_split_into_blocks.py",
+  "verdict": "ERROR",
+  "gaps": null,
+  "error": "Could not parse a valid structured JSON verdict from spec-check response."
+}

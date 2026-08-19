@@ -1,0 +1,5 @@
+{
+  "signature": "format_domain_knowledge_bullets(relpaths) -> str",
+  "pre_condition": "relpaths is a list of string values",
+  "post_condition": "Returns a string. When relpaths is empty or falsy, the returned string is empty. When relpaths is non-empty, the returned string is the concatenation of each element of relpaths formatted as a markdown list item in the `- \\`{path_value}\\`` form, joined by newline characters and preserving the original element order. The returned string contains no header, footer, or additional whitespace beyond the formatted list items and the newline separators between them."
+}

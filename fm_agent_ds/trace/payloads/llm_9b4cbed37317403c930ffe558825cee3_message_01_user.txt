@@ -1,0 +1,127 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def run_entry_pipeline(
+Line 2:     proj_dir,
+Line 3:     entry_func=None,
+Line 4:     end_funcs=None,
+Line 5:     resume=False,
+Line 6:     domain_knowledge_files=None,
+Line 7:     one_phase=False,
+Line 8:     extra_call_edges_path=None,
+Line 9:     only_spec=False,
+Line 10:     bug_validator_path=None,
+Line 11:     plugin_config=None,
+Line 12: ):
+Line 13:     """Run the entry-point-scoped reasoning pipeline.
+Line 14:     Algorithm:
+Line 15:       1. Collect the functions related to ``entry_func`` — those reachable from
+Line 16:          it, optionally restricted to call chains ending at ``end_funcs`` — by
+Line 17:          freshly extracting every function into a temporary workspace and
+Line 18:          building the static call graph. No previous run_pipeline() is assumed.
+Line 19:       2. Copy the project's sources into a separate run directory, then delete
+Line 20:          the unrelated functions and source files from that copy. ``proj_dir``
+Line 21:          itself is never modified.
+Line 22:       3. Invoke the standard ``run_pipeline`` directly on the run directory:
+Line 23:          because only the related functions remain, it naturally specs, reasons
+Line 24:          about, and bug-validates exactly that set, writing results to
+Line 25:          ``<run_dir>/fm_agent/``.
+Line 26:       4. Copy the generated ``fm_agent/`` workspace back into ``proj_dir`` and
+Line 27:          discard the run directory. The copy-back runs even when the pipeline
+Line 28:          fails, so partial results are preserved, and any stray edits the
+Line 29:          pipeline's agents made stay confined to the discarded run directory.
+Line 30:     The run directory lives beside the project at ``<proj_dir>.fm-entry-run``
+Line 31:     while the pipeline runs and is removed afterwards; a leftover one from an
+Line 32:     interrupted run is discarded and remade, since the pristine sources always
+Line 33:     remain in ``proj_dir``.
+Line 34:     Args:
+Line 35:         proj_dir: path to the project directory.
+Line 36:         entry_func: FQN of the entry point to start reasoning from.
+Line 37:         end_funcs: list of FQNs at which to stop. If None (or empty), no chain
+Line 38:             restriction is applied and the whole call graph reachable from
+Line 39:             ``entry_func`` is selected.
+Line 40:         resume: forwarded directly to the standard pipeline.
+Line 41:         one_phase: forwarded directly to the standard pipeline.
+Line 42:         extra_call_edges_path: optional file containing supplemental caller/callee
+Line 43:             edges used for entry reachability and later top-down layer generation.
+Line 44:     """
+Line 45:     if entry_func is None:
+Line 46:         raise ValueError("entry_func is required to run the entry pipeline")
+Line 47:     proj_dir = os.path.abspath(proj_dir)
+Line 48:     work_dir = os.path.join(proj_dir, "fm_agent")
+Line 49:     config.BUG_VALIDATION_MAX_RETRIES = 0
+Line 50:     # The entry_func's source file may match the test-file heuristics (a test
+Line 51:     # directory or test-like name). Exempt it so neither the selection extraction
+Line 52:     # below nor run_pipeline's extraction skips it — the entry point must always
+Line 53:     # be reasoned about. Cleared in the finally so the exemption never leaks into
+Line 54:     # a later run in the same process.
+Line 55:     add_test_file_exemption(_entry_func_source_rel(entry_func))
+Line 56:     try:
+Line 57:         _run_entry_pipeline_inner(
+Line 58:             proj_dir,
+Line 59:             work_dir,
+Line 60:             entry_func,
+Line 61:             end_funcs,
+Line 62:             resume,
+Line 63:             domain_knowledge_files=domain_knowledge_files,
+Line 64:             one_phase=one_phase,
+Line 65:             extra_call_edges_path=extra_call_edges_path,
+Line 66:             only_spec=only_spec,
+Line 67:             bug_validator_path=bug_validator_path,
+Line 68:             plugin_config=plugin_config,
+Line 69:         )
+Line 70:     finally:
+Line 71:         clear_test_file_exemptions()
+```
+
+Condition A (what the code actually does):
+After the execution of run_entry_pipeline (whether it returns normally or propagates an exception), the following hold:
+
+1. All test-file exemptions previously registered via add_test_file_exemption (including the exemption for the source file containing entry_func) are removed; no test-file exemptions remain active in the process.
+
+2. The global configuration variable config.BUG_VALIDATION_MAX_RETRIES is set to 0.
+
+3. The directory '<proj_dir>/fm_agent' exists and contains the output (possibly partial) of the entry-point-scoped reasoning pipeline. If the pipeline raised an exception, the output may be incomplete but will reflect everything saved before the failure.
+
+4. The original project directory 'proj_dir' is not modified except for the addition/update of the 'fm_agent' subdirectory; all other source files remain unchanged.
+
+5. The temporary run directory '<proj_dir>.fm-entry-run' (located beside proj_dir) no longer exists; it has been deleted even if an error occurred during pipeline execution.
+
+Formally, letting
+  P(proj_dir, entry_func) be the pre-condition that proj_dir is an existing directory and entry_func is a non‑None FQN of a function within proj_dir,
+the post-condition after run_entry_pipeline(proj_dir, entry_func, ...) is:
+
+  ( ∀ x ∈ test_file_exemptions⁰ ) → x is removed
+  ∧ config.BUG_VALIDATION_MAX_RETRIES = 0
+  ∧ dir_exists(proj_dir / "fm_agent") ∧ contains_output(proj_dir / "fm_agent")
+  ∧ ( ∀ f ∈ src_files(proj_dir) \ { files_under(proj_dir / "fm_agent") } ) → untouched(f)
+  ∧ ¬ dir_exists( proj_dir.parent / (proj_dir.name + ".fm-entry-run") )
+
+where
+  - test_file_exemptions⁰ is the set of exemptions present before the call (including the one for entry_func's source file)
+  - contains_output(d) means d holds the results (or partial results) of the entry pipeline
+  - src_files returns the set of original source files in the project
+  - files_under returns files recursively under a directory
+  - proj_dir.parent is the parent directory of proj_dir.
+
+Condition B (what the specification requires):
+A Hoare-style reasoning pipeline has been executed on the subset of functions reachable from entry_func in the project's call graph. When end_funcs is provided and non-empty: only functions on directed call-graph paths from entry_func to some FQN in end_funcs are processed. Each processed function has a .spec.json, .info.json, and reasoning verdict written under proj_dir/fm_agent/. Any spec–code mismatches are validated and reported under proj_dir/fm_agent/bug_validation/. If the pipeline fails partway, partial results are preserved under proj_dir/fm_agent/. The original source files under proj_dir are never modified. BUG_VALIDATION_MAX_RETRIES is set to 0 for the duration of the call.
+
+Additional context:
+_entry_func_source_rel(entry_func: str) -> str
+Pre-condition: entry_func is a non-empty FQN string
+Post-condition: Returns the relative source file path within proj_dir that contains the function identified by entry_func
+
+add_test_file_exemption(rel_path: str) -> None
+Pre-condition: rel_path is a relative file path string
+Post-condition: The file at rel_path is exempted from test-file filtering for all subsequent extraction operations in the current process
+
+_run_entry_pipeline_inner(proj_dir, work_dir, entry_func, end_funcs, resume, domain_knowledge_files, one_phase, extra_call_edges_path, only_spec, bug_validator_path, plugin_config) -> None
+Pre-condition: proj_dir is an existing directory. entry_func is a non-empty FQN string. work_dir is proj_dir/fm_agent/.
+Post-condition: Extracts all functions from proj_dir, builds the call graph, identifies functions on paths from entry_func to end_funcs (or all reachable when end_funcs is None or empty), creates an isolated worktree copy at <proj_dir>.fm-entry-run containing only those functions' source files, runs the full reasoning pipeline on the trimmed copy, and copies the resulting fm_agent/ workspace into proj_dir before discarding the run directory
+
+clear_test_file_exemptions() -> None
+Pre-condition: None
+Post-condition: All test-file exemptions previously registered via add_test_file_exemption are removed
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

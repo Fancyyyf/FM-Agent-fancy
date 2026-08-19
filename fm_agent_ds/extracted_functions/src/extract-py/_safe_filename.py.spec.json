@@ -1,0 +1,5 @@
+{
+  "signature": "_safe_filename(name: str, ext: str) -> str",
+  "pre_condition": "name is a string (possibly empty) representing a function identifier that may contain characters unsafe for filesystem paths; ext is a string representing a file extension.",
+  "post_condition": "Returns a filename string formed by applying these transformations to name: (1) every '/' (forward slash) character in name is replaced with '_' (underscore); (2) if the resulting string after all '/' substitutions is empty (because name was empty or consisted solely of '/' characters), the base component becomes '_function'; otherwise the transformed string itself is used as the base component; (3) the base component is joined with '.' followed by ext to form the final filename. Characters other than '/' — including leading and trailing underscores (e.g., from '__init__' or '_private'), class-qualifier separators ('::'), and all other printable characters — are preserved without modification in the base component. The returned string always contains exactly one path separator: the '.' between the base component and ext. If ext is empty, the returned string ends with '.'."
+}

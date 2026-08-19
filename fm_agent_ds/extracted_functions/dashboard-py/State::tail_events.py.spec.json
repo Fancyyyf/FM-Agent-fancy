@@ -1,0 +1,5 @@
+{
+  "signature": "tail_events(self)",
+  "pre_condition": "self.events_path refers to a filesystem path that may or may not exist as a regular file. self._events_offset contains the byte position up to which previous tail_events calls have consumed the file.",
+  "post_condition": "If self.events_path does not exist as a file, returns immediately with no side effects. Otherwise: reads all bytes appended to the file since self._events_offset. If file size is strictly less than self._events_offset (indicating truncation or rotation), reading begins from byte 0. Every non-empty line that parses as valid JSON is appended to the State's in-memory event list; empty lines and lines that fail to parse as JSON are skipped. The order of appended events matches the line order in the file. self._events_offset is updated to the current end-of-file byte position."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir contains a Rust file that triggers an exception in CodeGraphExtractor.get_functions_by_file, e.g., a file with invalid syntax causing a parse error.",
+  "offending_statements": "Line 4: return cg.get_functions_by_file(\"rust\", proj_dir) if cg else {}",
+  "reason": "If get_functions_by_file raises an exception, the function propagates the exception instead of returning a dict. The specification states that the function returns a dict (empty on initialization failure, full mapping on success) and does not allow exceptions to propagate."
+}

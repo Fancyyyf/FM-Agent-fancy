@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_build_module_description_prompt",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_build_module_description_prompt",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_build_module_description_prompt.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_build_module_description_prompt.md",
+  "probe_stdout": "CONFIRMED — actual: None | expected: non-empty prompt string listing phase 1 module A",
+  "trigger_summary": "Duplicate module entries in the same phase cause source_files_by_key dict overwrite — the first module with source files is overwritten by a second empty-named module, so the lookup finds no source files and returns None instead of a prompt."
+}

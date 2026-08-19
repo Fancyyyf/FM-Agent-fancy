@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_cache_rate",
+      "signature": "_cache_rate(rows: list[tuple[int, int]]) -> tuple[float, int, int]",
+      "pre_condition": "rows is a list of (cache_read_count, total_count) tuples where both elements are non-negative integers and, for each tuple, cache_read_count ≤ total_count.",
+      "post_condition": "Returns a tuple (rate, total_cr, total_tokens) where: rate is the quotient of the sum of all cache_read_counts divided by the sum of all total_counts, or 0.0 when the denominator sum is zero; total_cr is the sum of all cache_read_counts; total_tokens is the sum of all total_counts. All three values are non-negative and rate is in [0.0, 1.0]."
+    },
+    {
+      "name": "_fmt_tokens",
+      "signature": "_fmt_tokens(n: int) -> str",
+      "pre_condition": "n is a non-negative integer.",
+      "post_condition": "Returns a human-readable string representation of n using appropriate magnitude suffixes (e.g., K, M, B) and at most one decimal place of precision. The returned string contains no Rich markup and is suitable for inline display."
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is an existing directory containing a project copy. all_by_source is a dict mapping source file paths relative to proj_dir to sets of all function identifiers from those files. keep_by_source is a dict mapping source file paths relative to proj_dir to sets of function identifiers to preserve, where every key in keep_by_source is also a key in all_by_source.
+
+Code block:
+```python
+Line 1: def _trim_project_in_place(proj_dir, all_by_source, keep_by_source):
+Line 2:     """Delete the unselected functions and source files from proj_dir.
+Line 3:     Source files with at least one selected function are trimmed to keep only
+Line 4:     the selected function bodies (plus all non-function context lines); source
+Line 5:     files whose functions are all unselected are deleted outright. Files that
+Line 6:     contributed no extracted functions (configs, docs, unsupported languages,
+Line 7:     test files) are left untouched.
+Line 8:     """
+Line 9:     total_kept = total_removed = deleted_files = 0
+Line 10:     for source_rel in sorted(all_by_source):
+Line 11:         src_path = os.path.join(proj_dir, source_rel)
+Line 12:         if not os.path.isfile(src_path):
+Line 13:             continue
+Line 14:         keep_names = keep_by_source.get(source_rel)
+Line 15:         if not keep_names:
+Line 16:             os.remove(src_path)
+Line 17:             deleted_files += 1
+Line 18:             continue
+Line 19:         kept, removed = _trim_source_file(src_path, keep_names, proj_dir)
+Line 20:         total_kept += kept
+Line 21:         total_removed += removed
+Line 22:     print(
+Line 23:         f"[EntryPipeline] Trimmed {proj_dir}: kept {total_kept} function(s), "
+Line 24:         f"removed {total_removed} function(s), deleted {deleted_files} source file(s)."
+Line 25:     )
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

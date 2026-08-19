@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a string formed by first splitting `identifier` with the regular expression `::|\\.` and taking the last element, then removing any trailing substring that matches the pattern `_\\d+$` (an underscore followed by one or more digits). Formally, if `parts = re.split(r'::|\\.', identifier)`, then the returned value equals `re.sub(r'_\\d+$', '', parts[-1])`."
+}

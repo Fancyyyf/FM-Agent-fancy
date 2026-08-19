@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_collect_changed_functions::_git",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_collect_changed_functions::_git.py",
+  "function_name": "_git",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_collect_changed_functions::_git.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_collect_changed_functions::_git.md",
+  "probe_stdout": "WARNING:root:CodeGraph could not provide both revisions for crash.py; using legacy regex comparison.\nCONFIRMED - UnicodeDecodeError: 'utf-8' codec can't decode byte 0x80 in position 0: invalid start byte",
+  "trigger_summary": "When _funcs_from_commit calls _git('show', 'commit:binary_file') on a file whose git blob is binary (non-UTF-8), text=True in subprocess.run raises UnicodeDecodeError instead of returning a string."
+}

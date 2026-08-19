@@ -1,0 +1,5 @@
+{
+  "signature": "_is_valid_info_json(data) -> bool",
+  "pre_condition": "data is a dict parsed from a JSON file.",
+  "post_condition": "Returns True when data contains exactly the key \"callees\" whose value is an array, and every element of that array is a dict containing exactly the string-valued keys \"name\", \"signature\", \"pre_condition\", and \"post_condition\". Returns False in all other cases: data is not a dict, data has keys other than or missing \"callees\", the value of \"callees\" is not an array, any element of that array is not a dict, any element lacks any of the four required keys, or any key's value is not of type str."
+}

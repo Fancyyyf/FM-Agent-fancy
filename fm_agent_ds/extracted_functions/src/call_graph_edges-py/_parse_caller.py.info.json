@@ -1,0 +1,28 @@
+{
+  "callees": [
+    {
+      "name": "_optional_string",
+      "signature": "_optional_string(value, label: str, source: str) -> str",
+      "pre_condition": "value is the result of a dict key lookup — either a string or a default value (e.g., empty string) substituted when the key is missing. label identifies the field name for error context. source is a provenance string.",
+      "post_condition": "Returns the string value when value is a non-empty string. Returns an empty string when value is absent or empty. Raises ValueError whose message contains source and label when value is present but has a type other than string."
+    },
+    {
+      "name": "_string_list",
+      "signature": "_string_list(value, label: str, source: str) -> tuple[str, ...]",
+      "pre_condition": "value is the result of a dict key lookup expected to be a sequence of strings. label identifies the field name for error context. source is a provenance string.",
+      "post_condition": "Returns a tuple of strings extracted from value when value is a valid sequence of strings. Raises ValueError whose message contains source and label when value is present but is not a valid sequence of strings."
+    },
+    {
+      "name": "normalize_fqn_label",
+      "signature": "normalize_fqn_label(label: str) -> str",
+      "pre_condition": "label is a non-empty string in file-path notation representing a FQN (e.g., 'path/to/file.c::func').",
+      "post_condition": "Returns the label with path-segment separators ('/') replaced by FM-Agent FQN separators ('::') and the file-extension dot before the function separator replaced by a hyphen, yielding the canonical form (e.g., 'path::to::file-c::func')."
+    },
+    {
+      "name": "CallerSelector",
+      "signature": "CallerSelector(fqn: str, callsite_names: tuple[str, ...]) -> CallerSelector",
+      "pre_condition": "fqn is a (possibly empty) string. callsite_names is a (possibly empty) tuple of strings.",
+      "post_condition": "Returns a frozen CallerSelector instance holding the given fqn and callsite_names values."
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _copy_opencode_output(stream, trace_log_path=None):
+Line 2:     trace_log = None
+Line 3:     try:
+Line 4:         if trace_log_path:
+Line 5:             trace_log = open(trace_log_path, "w", encoding="utf-8", errors="replace")
+Line 6:         for chunk in iter(lambda: stream.read(4096), ""):
+Line 7:             if not chunk:
+Line 8:                 break
+Line 9:             if trace_log:
+Line 10:                 trace_log.write(chunk)
+Line 11:                 trace_log.flush()
+Line 12:     finally:
+Line 13:         if trace_log:
+Line 14:             trace_log.close()
+Line 15:     stream.close()
+```
+
+Condition A (what the code actually does):
+After the function completes (whether normally or via an unhandled exception), the following holds: (1) The `stream` object is closed. (2) If `trace_log_path` was not `None` and the attempt to open the file succeeded, then a file at `trace_log_path` exists, is closed, and its content equals the concatenation of a finite prefix of the strings returned by `stream.read(4096)` — specifically, all chunks successfully read before the stream was exhausted or an error occurred. (3) If `trace_log_path` was not `None` but the file could not be opened (the `open()` call raised an exception), then the file at that path remains unchanged and no content was written. (4) If `trace_log_path` was `None`, no file was opened or written. Formally:
+
+stream.closed = True  ∧
+( (trace_log_path ≠ None)  →
+    ( ( ∃ prefix P of stream_chunks : file_content(trace_log_path) = concat(P)  ∧  file_closed(trace_log_path) )
+      ∨  ( file_unchanged(trace_log_path) ∧ ¬ opened(trace_log_path) )
+    )
+)
+
+where `stream_chunks` is the sequence of strings obtained by repeatedly calling `stream.read(4096)` until exhaustion or an exception.
+
+Condition B (what the specification requires):
+stream is closed; if trace_log_path is not None, a file exists at trace_log_path containing the concatenation of every byte read from stream before exhaustion, the file is closed, and its content is UTF-8 encoded with unencodable characters replaced; if trace_log_path is None, no file is created; stream is closed and (if opened) the trace log file is closed under all execution paths, including when an exception is raised during reading or writing
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

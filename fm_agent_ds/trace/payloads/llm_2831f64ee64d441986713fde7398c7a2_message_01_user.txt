@@ -1,0 +1,19 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _write_command_stdin(stream, text):
+Line 2:     try:
+Line 3:         stream.write(text)
+Line 4:         stream.flush()
+Line 5:     finally:
+Line 6:         stream.close()
+```
+
+Condition A (what the code actually does):
+The stream object is closed (stream.closed == True), except in the rare case where the close() method itself raises an exception and fails to complete. If the function returns normally (no exception propagates), the full string 'text' has been written to the stream and the stream's buffer has been flushed (i.e., write(text) and flush() succeeded). If an exception propagates from write() or flush(), the stream is still closed (because the finally block executes close()), but the write/flush operations may have been partial or not executed. Formally: Let E be the set of exceptions that may propagate. Post-condition is: (stream.closed ∨ (close_exception ∈ E)) ∧ ( (E = ∅) → (written = text ∧ flushed) ).
+
+Condition B (what the specification requires):
+all characters of text are written to stream and the write is flushed before stream is closed; stream is closed under all execution paths, including when an exception is raised during writing or flushing
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "call_edges(proj_dir: str) -> dict | None",
+  "pre_condition": "proj_dir is a string representing the path to an existing project directory",
+  "post_condition": "If the CodeGraph backend is available for the project, returns a dictionary whose keys are caller identifiers (each a tuple of the form (caller_stem, caller_module)) and whose values are sets of callee identifiers for TypeScript source files in the project. If a caller has no callees, its entry maps to an empty set. If the CodeGraph backend cannot be initialized for the project, returns None."
+}

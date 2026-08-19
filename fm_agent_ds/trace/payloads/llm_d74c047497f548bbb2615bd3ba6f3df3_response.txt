@@ -1,0 +1,1 @@
+{"post_condition": "If self._console has an attribute named name, the method returns the value of that attribute; otherwise, AttributeError is raised. The state of self is unchanged. Formally: (hasattr(self._console, name) → result = getattr(self._console, name)) ∧ (¬ hasattr(self._console, name) → raises AttributeError)."}

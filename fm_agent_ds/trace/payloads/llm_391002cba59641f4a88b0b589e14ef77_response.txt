@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code block is a preamble that sets up the workflow file and enters a retry loop. It never returns normally in the non‑pass/non‑replace cases, so its intermediate post‑condition does not conflict with specification B, which only applies after a normal return. All early returns are for 'pass' or 'replace' types, which B explicitly allows as satisfying domain context responsibility."
+}

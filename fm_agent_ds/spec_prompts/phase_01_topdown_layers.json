@@ -1,0 +1,918 @@
+{
+  "phase": 1,
+  "phase_name": "Initialization & Configuration",
+  "total_functions": 62,
+  "total_layers": 7,
+  "layers": [
+    {
+      "layer": 0,
+      "functions": [
+        {
+          "name": "config-py::Settings::settings_customise_sources",
+          "file": "extracted_functions/config-py/Settings::settings_customise_sources.py",
+          "unit": "configuration",
+          "phase1_callers": [],
+          "phase1_callees": [
+            "config-py::_LayeredSource::__init__"
+          ],
+          "all_callees": [
+            "config-py::_LayeredSource::__init__"
+          ]
+        },
+        {
+          "name": "config-py::_LayeredSource::__call__",
+          "file": "extracted_functions/config-py/_LayeredSource::__call__.py",
+          "unit": "configuration",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "config-py::_LayeredSource::get_field_value",
+          "file": "extracted_functions/config-py/_LayeredSource::get_field_value.py",
+          "unit": "configuration",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::build_provider_entry",
+          "file": "extracted_functions/src/configure_llm-py/build_provider_entry.py",
+          "unit": "configuration",
+          "phase1_callers": [],
+          "phase1_callees": [
+            "src::configure_llm-py::adapter_for_api_style"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::adapter_for_api_style"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::main",
+          "file": "extracted_functions/src/configure_llm-py/main.py",
+          "unit": "configuration",
+          "phase1_callers": [],
+          "phase1_callees": [
+            "src::configure_llm-py::_parse_args",
+            "src::configure_llm-py::run_llm_settings_update",
+            "src::configure_llm-py::run_wizard"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_parse_args",
+            "src::configure_llm-py::run_llm_settings_update",
+            "src::configure_llm-py::run_wizard"
+          ]
+        },
+        {
+          "name": "src::env_check-py::_check_comment_checker",
+          "file": "extracted_functions/src/env_check-py/_check_comment_checker.py",
+          "unit": "environment",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::env_check-py::_check_oh_my_openagent",
+          "file": "extracted_functions/src/env_check-py/_check_oh_my_openagent.py",
+          "unit": "environment",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::env_check-py::run",
+          "file": "extracted_functions/src/env_check-py/run.py",
+          "unit": "environment",
+          "phase1_callers": [],
+          "phase1_callees": [
+            "src::env_check-py::_check_codegraph_version",
+            "src::env_check-py::_check_llm_api_key",
+            "src::env_check-py::_load_ignored",
+            "src::env_check-py::_save_ignored",
+            "src::env_check-py::is_interactive"
+          ],
+          "all_callees": [
+            "src::cli_backend-py::is_cli_backend_enabled",
+            "src::env_check-py::_check_codegraph_version",
+            "src::env_check-py::_check_llm_api_key",
+            "src::env_check-py::_load_ignored",
+            "src::env_check-py::_save_ignored",
+            "src::env_check-py::is_interactive"
+          ]
+        },
+        {
+          "name": "src::git-py::_get_head_commit",
+          "file": "extracted_functions/src/git-py/_get_head_commit.py",
+          "unit": "git_utils",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::git-py::_is_git_repo",
+          "file": "extracted_functions/src/git-py/_is_git_repo.py",
+          "unit": "git_utils",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::git-py::_record_version",
+          "file": "extracted_functions/src/git-py/_record_version.py",
+          "unit": "git_utils",
+          "phase1_callers": [],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::git-py::frozen_worktree",
+          "file": "extracted_functions/src/git-py/frozen_worktree.py",
+          "unit": "git_utils",
+          "phase1_callers": [],
+          "phase1_callees": [
+            "src::git-py::frozen_worktree::_git"
+          ],
+          "all_callees": [
+            "src::git-py::frozen_worktree::_git"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "functions": [
+        {
+          "name": "config-py::_LayeredSource::__init__",
+          "file": "extracted_functions/config-py/_LayeredSource::__init__.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "config-py::Settings::settings_customise_sources"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_parse_args",
+          "file": "extracted_functions/src/configure_llm-py/_parse_args.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::main"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::run_llm_settings_update",
+          "file": "extracted_functions/src/configure_llm-py/run_llm_settings_update.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::main"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_preview_llm_settings_update",
+            "src::configure_llm-py::_prompt_yes_no",
+            "src::configure_llm-py::apply_llm_settings_update",
+            "src::configure_llm-py::default_paths",
+            "src::configure_llm-py::live_llm_environment_overrides",
+            "src::configure_llm-py::warn_dotenv_overrides_for_updates",
+            "src::configure_llm-py::warn_live_llm_environment_overrides"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_preview_llm_settings_update",
+            "src::configure_llm-py::_prompt_yes_no",
+            "src::configure_llm-py::apply_llm_settings_update",
+            "src::configure_llm-py::default_paths",
+            "src::configure_llm-py::live_llm_environment_overrides",
+            "src::configure_llm-py::warn_dotenv_overrides_for_updates",
+            "src::configure_llm-py::warn_live_llm_environment_overrides"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::run_wizard",
+          "file": "extracted_functions/src/configure_llm-py/run_wizard.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::main"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_preview",
+            "src::configure_llm-py::_prompt_backend",
+            "src::configure_llm-py::_prompt_yes_no",
+            "src::configure_llm-py::apply_configuration",
+            "src::configure_llm-py::default_paths",
+            "src::configure_llm-py::live_llm_environment_overrides",
+            "src::configure_llm-py::prompt_for_config",
+            "src::configure_llm-py::run_local_backend_configuration",
+            "src::configure_llm-py::warn_live_llm_environment_overrides"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_preview",
+            "src::configure_llm-py::_prompt_backend",
+            "src::configure_llm-py::_prompt_yes_no",
+            "src::configure_llm-py::apply_configuration",
+            "src::configure_llm-py::default_paths",
+            "src::configure_llm-py::live_llm_environment_overrides",
+            "src::configure_llm-py::prompt_for_config",
+            "src::configure_llm-py::run_local_backend_configuration",
+            "src::configure_llm-py::warn_live_llm_environment_overrides"
+          ]
+        },
+        {
+          "name": "src::env_check-py::_check_codegraph_version",
+          "file": "extracted_functions/src/env_check-py/_check_codegraph_version.py",
+          "unit": "environment",
+          "phase1_callers": [
+            "src::env_check-py::run"
+          ],
+          "phase1_callees": [],
+          "all_callees": [
+            "src::languages::codegraph-py::_codegraph_cmd",
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::env_check-py::_check_llm_api_key",
+          "file": "extracted_functions/src/env_check-py/_check_llm_api_key.py",
+          "unit": "environment",
+          "phase1_callers": [
+            "src::env_check-py::run"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::env_check-py::_load_ignored",
+          "file": "extracted_functions/src/env_check-py/_load_ignored.py",
+          "unit": "environment",
+          "phase1_callers": [
+            "src::env_check-py::run"
+          ],
+          "phase1_callees": [
+            "src::env_check-py::_memory_path"
+          ],
+          "all_callees": [
+            "src::env_check-py::_memory_path"
+          ]
+        },
+        {
+          "name": "src::env_check-py::_save_ignored",
+          "file": "extracted_functions/src/env_check-py/_save_ignored.py",
+          "unit": "environment",
+          "phase1_callers": [
+            "src::env_check-py::run"
+          ],
+          "phase1_callees": [
+            "src::env_check-py::_memory_path"
+          ],
+          "all_callees": [
+            "src::env_check-py::_memory_path"
+          ]
+        },
+        {
+          "name": "src::env_check-py::is_interactive",
+          "file": "extracted_functions/src/env_check-py/is_interactive.py",
+          "unit": "environment",
+          "phase1_callers": [
+            "src::env_check-py::run"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::git-py::frozen_worktree::_git",
+          "file": "extracted_functions/src/git-py/frozen_worktree::_git.py",
+          "unit": "git_utils",
+          "phase1_callers": [
+            "src::git-py::frozen_worktree"
+          ],
+          "phase1_callees": [],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 2,
+      "functions": [
+        {
+          "name": "src::configure_llm-py::_preview",
+          "file": "extracted_functions/src/configure_llm-py/_preview.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_wizard"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::mask_secret",
+            "src::configure_llm-py::secret_path_for_provider"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::mask_secret",
+            "src::configure_llm-py::secret_path_for_provider"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::_preview_llm_settings_update",
+          "file": "extracted_functions/src/configure_llm-py/_preview_llm_settings_update.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_llm_settings_update"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_prompt_backend",
+          "file": "extracted_functions/src/configure_llm-py/_prompt_backend.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_wizard"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_prompt"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_prompt"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::apply_configuration",
+          "file": "extracted_functions/src/configure_llm-py/apply_configuration.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_wizard"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::atomic_write",
+            "src::configure_llm-py::backup_file",
+            "src::configure_llm-py::merge_opencode_config",
+            "src::configure_llm-py::parse_existing_opencode_config",
+            "src::configure_llm-py::secret_path_for_provider",
+            "src::configure_llm-py::update_env_text",
+            "src::configure_llm-py::update_fm_agent_toml_text",
+            "src::configure_llm-py::validate_generated_state",
+            "src::configure_llm-py::validate_input"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::atomic_write",
+            "src::configure_llm-py::backup_file",
+            "src::configure_llm-py::merge_opencode_config",
+            "src::configure_llm-py::parse_existing_opencode_config",
+            "src::configure_llm-py::secret_path_for_provider",
+            "src::configure_llm-py::update_env_text",
+            "src::configure_llm-py::update_fm_agent_toml_text",
+            "src::configure_llm-py::validate_generated_state",
+            "src::configure_llm-py::validate_input"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::apply_llm_settings_update",
+          "file": "extracted_functions/src/configure_llm-py/apply_llm_settings_update.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_llm_settings_update"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::atomic_write",
+            "src::configure_llm-py::backup_file",
+            "src::configure_llm-py::update_llm_settings_toml_text"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::atomic_write",
+            "src::configure_llm-py::backup_file",
+            "src::configure_llm-py::update_llm_settings_toml_text"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::prompt_for_config",
+          "file": "extracted_functions/src/configure_llm-py/prompt_for_config.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_wizard"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_prompt",
+            "src::configure_llm-py::_prompt_yes_no"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_prompt",
+            "src::configure_llm-py::_prompt_yes_no"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::run_local_backend_configuration",
+          "file": "extracted_functions/src/configure_llm-py/run_local_backend_configuration.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_wizard"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_preview_local_backend_configuration",
+            "src::configure_llm-py::_prompt_yes_no",
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::apply_local_backend_configuration",
+            "src::configure_llm-py::default_paths",
+            "src::configure_llm-py::live_llm_environment_overrides",
+            "src::configure_llm-py::local_backend_toml_updates",
+            "src::configure_llm-py::remove_legacy_llm_env_overrides",
+            "src::configure_llm-py::warn_live_llm_environment_overrides"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_preview_local_backend_configuration",
+            "src::configure_llm-py::_prompt_yes_no",
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::apply_local_backend_configuration",
+            "src::configure_llm-py::default_paths",
+            "src::configure_llm-py::live_llm_environment_overrides",
+            "src::configure_llm-py::local_backend_toml_updates",
+            "src::configure_llm-py::remove_legacy_llm_env_overrides",
+            "src::configure_llm-py::warn_live_llm_environment_overrides"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::warn_dotenv_overrides_for_updates",
+          "file": "extracted_functions/src/configure_llm-py/warn_dotenv_overrides_for_updates.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_llm_settings_update"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::remove_legacy_llm_env_overrides"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::remove_legacy_llm_env_overrides"
+          ]
+        },
+        {
+          "name": "src::env_check-py::_memory_path",
+          "file": "extracted_functions/src/env_check-py/_memory_path.py",
+          "unit": "environment",
+          "phase1_callers": [
+            "src::env_check-py::_load_ignored",
+            "src::env_check-py::_save_ignored"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "functions": [
+        {
+          "name": "src::configure_llm-py::_preview_local_backend_configuration",
+          "file": "extracted_functions/src/configure_llm-py/_preview_local_backend_configuration.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_local_backend_configuration"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_prompt_yes_no",
+          "file": "extracted_functions/src/configure_llm-py/_prompt_yes_no.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::prompt_for_config",
+            "src::configure_llm-py::run_llm_settings_update",
+            "src::configure_llm-py::run_local_backend_configuration",
+            "src::configure_llm-py::run_wizard"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_prompt"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_prompt"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::apply_local_backend_configuration",
+          "file": "extracted_functions/src/configure_llm-py/apply_local_backend_configuration.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_local_backend_configuration"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::atomic_write",
+            "src::configure_llm-py::backup_file",
+            "src::configure_llm-py::local_backend_toml_updates",
+            "src::configure_llm-py::remove_legacy_llm_env_overrides",
+            "src::configure_llm-py::update_llm_settings_toml_text"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_read_text_if_exists",
+            "src::configure_llm-py::atomic_write",
+            "src::configure_llm-py::backup_file",
+            "src::configure_llm-py::local_backend_toml_updates",
+            "src::configure_llm-py::remove_legacy_llm_env_overrides",
+            "src::configure_llm-py::update_llm_settings_toml_text"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::default_paths",
+          "file": "extracted_functions/src/configure_llm-py/default_paths.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_llm_settings_update",
+            "src::configure_llm-py::run_local_backend_configuration",
+            "src::configure_llm-py::run_wizard"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_fm_agent_config_path",
+            "src::configure_llm-py::detect_opencode_config_path"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_fm_agent_config_path",
+            "src::configure_llm-py::detect_opencode_config_path"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::mask_secret",
+          "file": "extracted_functions/src/configure_llm-py/mask_secret.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::_preview"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::merge_opencode_config",
+          "file": "extracted_functions/src/configure_llm-py/merge_opencode_config.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::adapter_for_api_style"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::adapter_for_api_style"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::parse_existing_opencode_config",
+          "file": "extracted_functions/src/configure_llm-py/parse_existing_opencode_config.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_strip_jsonc"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_strip_jsonc"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::secret_path_for_provider",
+          "file": "extracted_functions/src/configure_llm-py/secret_path_for_provider.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::_preview",
+            "src::configure_llm-py::apply_configuration"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_private_opencode_secret_dir"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_private_opencode_secret_dir"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::update_env_text",
+          "file": "extracted_functions/src/configure_llm-py/update_env_text.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::update_fm_agent_toml_text",
+          "file": "extracted_functions/src/configure_llm-py/update_fm_agent_toml_text.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::update_llm_settings_toml_text"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::update_llm_settings_toml_text"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::validate_generated_state",
+          "file": "extracted_functions/src/configure_llm-py/validate_generated_state.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::adapter_for_api_style",
+            "src::configure_llm-py::validate_input"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::adapter_for_api_style",
+            "src::configure_llm-py::validate_input"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::warn_live_llm_environment_overrides",
+          "file": "extracted_functions/src/configure_llm-py/warn_live_llm_environment_overrides.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_llm_settings_update",
+            "src::configure_llm-py::run_local_backend_configuration",
+            "src::configure_llm-py::run_wizard"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::live_llm_environment_overrides"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::live_llm_environment_overrides"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 4,
+      "functions": [
+        {
+          "name": "src::configure_llm-py::_fm_agent_config_path",
+          "file": "extracted_functions/src/configure_llm-py/_fm_agent_config_path.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::default_paths"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_private_opencode_secret_dir",
+          "file": "extracted_functions/src/configure_llm-py/_private_opencode_secret_dir.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::secret_path_for_provider"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_prompt",
+          "file": "extracted_functions/src/configure_llm-py/_prompt.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::_prompt_backend",
+            "src::configure_llm-py::_prompt_yes_no",
+            "src::configure_llm-py::prompt_for_config"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_read_text_if_exists",
+          "file": "extracted_functions/src/configure_llm-py/_read_text_if_exists.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration",
+            "src::configure_llm-py::apply_llm_settings_update",
+            "src::configure_llm-py::apply_local_backend_configuration",
+            "src::configure_llm-py::run_local_backend_configuration",
+            "src::configure_llm-py::warn_dotenv_overrides_for_updates"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_strip_jsonc",
+          "file": "extracted_functions/src/configure_llm-py/_strip_jsonc.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::parse_existing_opencode_config"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_remove_trailing_commas"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_remove_trailing_commas"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::atomic_write",
+          "file": "extracted_functions/src/configure_llm-py/atomic_write.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration",
+            "src::configure_llm-py::apply_llm_settings_update",
+            "src::configure_llm-py::apply_local_backend_configuration"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::backup_file",
+          "file": "extracted_functions/src/configure_llm-py/backup_file.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration",
+            "src::configure_llm-py::apply_llm_settings_update",
+            "src::configure_llm-py::apply_local_backend_configuration"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_private_backup_root"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_private_backup_root"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::detect_opencode_config_path",
+          "file": "extracted_functions/src/configure_llm-py/detect_opencode_config_path.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::default_paths"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::live_llm_environment_overrides",
+          "file": "extracted_functions/src/configure_llm-py/live_llm_environment_overrides.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::run_llm_settings_update",
+            "src::configure_llm-py::run_local_backend_configuration",
+            "src::configure_llm-py::run_wizard",
+            "src::configure_llm-py::warn_live_llm_environment_overrides"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::local_backend_toml_updates",
+          "file": "extracted_functions/src/configure_llm-py/local_backend_toml_updates.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_local_backend_configuration",
+            "src::configure_llm-py::run_local_backend_configuration"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::validate_llm_setting"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::validate_llm_setting"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::remove_legacy_llm_env_overrides",
+          "file": "extracted_functions/src/configure_llm-py/remove_legacy_llm_env_overrides.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_local_backend_configuration",
+            "src::configure_llm-py::run_local_backend_configuration",
+            "src::configure_llm-py::warn_dotenv_overrides_for_updates"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::update_llm_settings_toml_text",
+          "file": "extracted_functions/src/configure_llm-py/update_llm_settings_toml_text.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_llm_settings_update",
+            "src::configure_llm-py::apply_local_backend_configuration",
+            "src::configure_llm-py::update_fm_agent_toml_text"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::_quote_toml_string",
+            "src::configure_llm-py::validate_llm_setting"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::_quote_toml_string",
+            "src::configure_llm-py::validate_llm_setting"
+          ]
+        },
+        {
+          "name": "src::configure_llm-py::validate_input",
+          "file": "extracted_functions/src/configure_llm-py/validate_input.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::apply_configuration",
+            "src::configure_llm-py::validate_generated_state"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::adapter_for_api_style",
+            "src::configure_llm-py::validate_base_url",
+            "src::configure_llm-py::validate_llm_setting"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::adapter_for_api_style",
+            "src::configure_llm-py::validate_base_url",
+            "src::configure_llm-py::validate_llm_setting"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 5,
+      "functions": [
+        {
+          "name": "src::configure_llm-py::_private_backup_root",
+          "file": "extracted_functions/src/configure_llm-py/_private_backup_root.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::backup_file"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_quote_toml_string",
+          "file": "extracted_functions/src/configure_llm-py/_quote_toml_string.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::update_llm_settings_toml_text"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::_remove_trailing_commas",
+          "file": "extracted_functions/src/configure_llm-py/_remove_trailing_commas.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::_strip_jsonc"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::validate_llm_setting",
+          "file": "extracted_functions/src/configure_llm-py/validate_llm_setting.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::local_backend_toml_updates",
+            "src::configure_llm-py::update_llm_settings_toml_text",
+            "src::configure_llm-py::validate_input"
+          ],
+          "phase1_callees": [
+            "src::configure_llm-py::adapter_for_api_style",
+            "src::configure_llm-py::validate_base_url"
+          ],
+          "all_callees": [
+            "src::configure_llm-py::adapter_for_api_style",
+            "src::configure_llm-py::validate_base_url"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 6,
+      "functions": [
+        {
+          "name": "src::configure_llm-py::adapter_for_api_style",
+          "file": "extracted_functions/src/configure_llm-py/adapter_for_api_style.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::build_provider_entry",
+            "src::configure_llm-py::merge_opencode_config",
+            "src::configure_llm-py::validate_generated_state",
+            "src::configure_llm-py::validate_input",
+            "src::configure_llm-py::validate_llm_setting"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::configure_llm-py::validate_base_url",
+          "file": "extracted_functions/src/configure_llm-py/validate_base_url.py",
+          "unit": "configuration",
+          "phase1_callers": [
+            "src::configure_llm-py::validate_input",
+            "src::configure_llm-py::validate_llm_setting"
+          ],
+          "phase1_callees": [],
+          "all_callees": []
+        }
+      ]
+    }
+  ]
+}

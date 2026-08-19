@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "write_payload",
+      "signature": "write_payload(trace_dir, event_id, name, content) -> str",
+      "pre_condition": "trace_dir is a writable directory path. event_id is a non-empty string. name is a non-empty string suitable as a filename. content is a string.",
+      "post_condition": "Atomically writes content to a file under trace_dir keyed by both event_id and name. Returns the relative filesystem path to the written file."
+    },
+    {
+      "name": "record_trace_event",
+      "signature": "record_trace_event(trace_dir, event) -> None",
+      "pre_condition": "trace_dir is either a writable directory path or a falsy value. event is a dict containing trace event fields including at minimum 'event_id' (non-empty string) and 'timestamp' (ISO 8601 string).",
+      "post_condition": "When trace_dir is truthy, thread-safely appends the event dict as a single JSON line to the trace events file under trace_dir. When trace_dir is falsy, is a no-op."
+    }
+  ]
+}

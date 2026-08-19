@@ -1,0 +1,5 @@
+{
+  "signature": "_prompt(prompt: str, default: str | None = None) -> str",
+  "pre_condition": "prompt is a non-empty string.",
+  "post_condition": "Displays prompt to stdout, followed by the default hint in brackets when default is not None, followed by ': '. Reads one line from stdin and strips surrounding whitespace from the received text. Returns the stripped input when it is a non-empty string. When the stripped input is empty and default is a non-empty string, returns default. When the stripped input is empty and default is None or empty, returns an empty string."
+}

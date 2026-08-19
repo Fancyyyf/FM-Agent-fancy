@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_compute_layers",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_topdown_layers-py/_compute_layers.py",
+  "function_name": "_compute_layers",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_compute_layers.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_compute_layers.md",
+  "probe_stdout": "CONFIRMED — caller A at layer 0, callee B at layer 1 (callee_layer >= caller_layer, but spec requires callee_layer < caller_layer)",
+  "trigger_summary": "Code uses callers_map for layer readiness, placing callers in lower layers than callees — opposite of spec requirement (callee < caller). Any input with one call edge triggers the mismatch."
+}

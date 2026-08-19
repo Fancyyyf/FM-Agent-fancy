@@ -1,11 +1,11 @@
 {
   "id": "src--git-py--frozen_worktree",
-  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/git-py/frozen_worktree.py",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/git-py/frozen_worktree.py",
   "function_name": "frozen_worktree",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--git-py--frozen_worktree.py",
   "detail_file": "fm_agent/bug_validation/src--git-py--frozen_worktree.md",
-  "probe_stdout": "[Pipeline] Snapshot created at: /tmp/fm_agent_wt_repo_54som_02/snapshot\n[Pipeline] Snapshot is kept after the run. Remove with: git -C /tmp/probe_fwt_frax15ct/repo worktree remove --force /tmp/fm_agent_wt_repo_54som_02/snapshot\nCONFIRMED — nested fm_agent/ present in snapshot at /tmp/fm_agent_wt_repo_54som_02/snapshot/testdata/fm_agent (contains: ['nested.txt']) — spec requires exclusion at all depths",
-  "trigger_summary": "frozen_worktree() uses git rm --cached with only top-level exclude names, so nested directories with the same name (e.g. testdata/fm_agent/) remain in the commit and leak into the snapshot."
+  "probe_stdout": "CONFIRMED - snapshot is missing nested src/fm_agent/old_results.json, which the spec requires to be present (only the top-level fm_agent directory may be excluded). nested_present=False, toplevel_fm_agent_present=False, readme_present=True",
+  "trigger_summary": "In the non-git fallback path, shutil.ignore_patterns(*exclude) matches exclude names against basenames at every depth of the tree, so a nested src/fm_agent/ directory is dropped from the snapshot even though only the top-level fm_agent directory may be excluded."
 }

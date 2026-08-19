@@ -1,0 +1,5 @@
+{
+  "signature": "_bare_function_name(identifier) -> str",
+  "pre_condition": "identifier is a non-empty string.",
+  "post_condition": "Returns the rightmost segment of identifier after splitting on any occurrence of '::' or '.', with any suffix matching the pattern _<digits> (underscore followed by one or more decimal digits at the end of that segment) removed. When identifier contains no '::' or '.' separators, the entire identifier is returned with any trailing _<digits> suffix stripped. The returned string is non-empty (empty-return is possible only when the input contains no characters beyond the stripped suffix)."
+}

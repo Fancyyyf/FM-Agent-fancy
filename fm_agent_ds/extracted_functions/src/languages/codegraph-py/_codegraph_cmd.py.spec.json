@@ -1,0 +1,5 @@
+{
+  "signature": "_codegraph_cmd() -> str",
+  "pre_condition": "The configuration key codegraph.bin_dir is set to a string value.",
+  "post_condition": "Returns a non-empty string. If the file formed by expanding the user home directory in the configured codegraph.bin_dir and appending 'codegraph' is executable by the calling process, returns the absolute path to that file. Otherwise, returns the bare string 'codegraph'."
+}

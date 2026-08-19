@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "{\"type\": \"llm_call\", \"status\": \"mismatch\", \"metadata\": {\"purpose\": \"other_thing\"}, \"start_time\": \"2023-01-01T00:00:00Z\", \"end_time\": \"2023-01-01T00:01:00Z\"}",
+  "offending_statements": "Line 44:             elif status == \"mismatch\":\nLine 46:             elif status == \"error\":",
+  "reason": "The specification requires verification counters to be incremented only when purpose is 'check_post_implies_spec', but these branches increment self.verification_mismatch and self.verification_error unconditionally, so a non-verification llm_call event with status 'mismatch' or 'error' incorrectly increments the respective counter."
+}

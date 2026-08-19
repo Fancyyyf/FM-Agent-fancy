@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_merge_descriptions",
+      "signature": "_merge_descriptions(target_desc, source_desc) -> str",
+      "pre_condition": "target_desc is a string (an existing description); source_desc is a non-empty string (description text to append)",
+      "post_condition": "Returns a string formed by appending source_desc to target_desc. If both are non-empty, a single space separates them. If target_desc already contains the full text of source_desc, source_desc is not appended and target_desc is returned unchanged."
+    }
+  ]
+}

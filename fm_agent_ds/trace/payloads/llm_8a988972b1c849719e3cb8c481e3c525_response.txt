@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "argv = ['set', '--base-url', 'http://example.com', '--api-style', 'openai']",
+  "offending_statements": "Line 12: dest=\"base_url\" (specification requires key 'base-url'); Line 25: dest=\"api_style\" (specification requires key 'api-style')",
+  "reason": "When the 'set' command is used with --base-url and --api-style, the code stores the values in the 'updates' dictionary under keys 'base_url' and 'api_style' (derived from the argparse destination names), but the specification explicitly requires the keys to be the TOML field names 'base-url' and 'api-style'. This mismatch in dictionary keys violates the required post-condition."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "{\"proj_dir\": \"/home/user/project\", \"work_dir\": \"/tmp/work\", \"script_dir\": \"/opt/scripts\", \"workflow_filename\": \"instructions.md\", \"source_content\": \"- `phases[*].modules[*].source_files` — relative paths from repo root of all source files that belong to this module. \\n\", \"user_knowledge_files\": []}",
+  "offending_statements": "Line 14: old = (\"- `phases[*].modules[*].source_files` — relative paths from repo root of all source files \"\nLine 15:        \"that belong to this module.\")",
+  "reason": "The specification requires that the source_files instruction string is rewritten to reference the absolute project root and include the concrete example. However, the code's replacement string (old) exactly matches only a specific literal string without any trailing whitespace. If the source file contains a trailing space after the period (e.g., '... this module. '), str.replace(old, new, 1) will fail to find a match, leaving the old instruction intact and producing a workflow file that still references 'repo root' instead of the project root. This violates Condition B."
+}

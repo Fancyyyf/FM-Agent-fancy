@@ -1,0 +1,5 @@
+{
+  "signature": "_git(*args) -> str",
+  "pre_condition": "proj_dir is bound in the enclosing scope to a directory path within a git repository. args is a non-empty tuple of strings forming a valid git subcommand and its arguments.",
+  "post_condition": "Executes the command git -C proj_dir <args> in a subprocess and returns the captured standard output as a string. Raises subprocess.CalledProcessError when the git command exits with a non-zero status code; the captured standard error is available in the exception's stderr attribute."
+}

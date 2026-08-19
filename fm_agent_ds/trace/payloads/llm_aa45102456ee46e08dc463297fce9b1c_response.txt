@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/valid/go/project' containing a file with package 'main' and function 'Foo'. CodeGraphExtractor.from_proj_dir returns a valid instance, and cg.get_call_edges('go') returns {('main', 'Foo'): set()}. The function returns this dict, but the specification demands keys as canonicalized FQNs with '::' separator, e.g., 'main::Foo'.",
+  "offending_statements": "Line 2: \"\"\"Return {(caller_stem, caller_module): {callee_stems}} for Go.\"\"\"\nLine 4: return cg.get_call_edges(\"go\") if cg else None",
+  "reason": "The code returns keys as tuples (caller_stem, caller_module) instead of canonicalized strings using '::' as the namespace separator, violating the specification's requirement for the dict key format."
+}

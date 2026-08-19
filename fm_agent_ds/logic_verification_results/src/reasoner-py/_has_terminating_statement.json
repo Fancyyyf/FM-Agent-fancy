@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/reasoner-py/_has_terminating_statement.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns True when the block contains at least one statement that unconditionally terminates or transfers control flow (such as a return, break, continue, raise, exit, or the language-equivalent) in the given language, so that statements after the block would not execute along that path. Returns False when no such terminating statement is present in the block.",
+    "actual_behavior": "After normal execution, the function returns True if re.search(pattern, block) found a match, otherwise False. The pattern is derived from _TERMINATING_PATTERNS.get(language.lower()) if that value is truthy, else it defaults to the regex r'\\b(return\\b|exit\\s*\\(|raise\\s|throw\\s|abort\\s*\\()'. If the pattern is not a valid regular expression, re.error is raised. No side effects occur. Formal logic (normal path): (let p = _TERMINATING_PATTERNS.get(language.lower()); let pattern = p if p else r'\\b(return\\b|exit\\s*\\(|raise\\s|throw\\s|abort\\s*\\()'; result = (re.search(pattern, block) is not None))  (no side effects); exceptional path: re.error may propagate.",
+    "code_evidence": "Line 4: pattern = r'\\b(return\\b|exit\\s*\\(|raise\\s|throw\\s|abort\\s*\\()'",
+    "trigger_condition": "The default regex pattern omits 'break' and 'continue', which are unconditional control transfer statements required by the specification. For any language not in _TERMINATING_PATTERNS, a block containing only 'break' or 'continue' causes the function to return False instead of True."
+  }
+}

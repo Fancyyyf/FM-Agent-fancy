@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+spec is a dict with string-typed keys "signature", "pre_condition", and "post_condition"
+
+Code block:
+```python
+Line 1: def format_spec_for_reasoner(spec):
+Line 2:     """Rebuild reasoner-facing spec text from one .spec.json object."""
+Line 3:     return (
+Line 4:         f"{spec.get('signature', '')}\n\n"
+Line 5:         f"Pre-condition:\n{spec.get('pre_condition', '')}\n\n"
+Line 6:         f"Post-condition:\n{spec.get('post_condition', '')}"
+Line 7:     )
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

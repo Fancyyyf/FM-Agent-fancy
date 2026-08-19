@@ -1,0 +1,42 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a valid directory path within a git repository. modified_functions is a dict whose keys are absolute source file paths and whose values are dicts each containing 'added', 'modified', and 'removed' keys, where each key maps to a list of function name strings. A source file path key may correspond to a file that no longer exists on disk (deleted source file).
+
+Code block:
+```python
+Line 1: def _remove_stale_extracted(proj_dir, modified_functions):
+Line 2:     """
+Line 3:     Reconcile the extracted-function tree against what codegraph now produces,
+Line 4:     deleting any file that no longer corresponds to a current source function and
+Line 5:     pruning emptied directories.
+Line 6:     We reconcile every source file in the current phases.json plus any file
+Line 7:     reported changed or deleted — not only files whose regex-visible function names
+Line 8:     changed. A qualifier-only edit (e.g. renaming a C++ namespace around an
+Line 9:     otherwise identical ``void foo(){...}``) moves the extracted file to a new
+Line 10:     qualified directory without changing the regex name or body, so the old
+Line 11:     qualified file would otherwise linger as a stale, orphaned spec. Reconciling by
+Line 12:     path rather than by (class-less) name handles it.
+Line 13:     """
+Line 14:     srcs = set(modified_functions)  
+Line 15:     try:
+Line 16:         phases_data = _load_phases(os.path.join(proj_dir, "fm_agent"))
+Line 17:         for phase in phases_data.get("phases", []):
+Line 18:             for module in phase.get("modules", []):
+Line 19:                 for rel in module.get("source_files", []):
+Line 20:                     srcs.add(os.path.abspath(os.path.join(proj_dir, rel)))
+Line 21:     except (OSError, ValueError, KeyError):
+Line 22:         pass
+Line 23:     for abs_src in srcs:
+Line 24:         _reconcile_extracted_dir(proj_dir, abs_src)
+```
+
+Additional context:
+_load_phases(phases_dir_path)
+Pre-condition: phases_dir_path is a valid directory path.
+Post-condition: Returns a dict containing a 'phases' key whose value is a list of phase dicts, each phase dict containing a 'modules' key whose value is a list of module dicts, each module dict containing a 'source_files' key whose value is a list of relative source file path strings. When phases.json does not exist at the expected location or its content is unparseable, raises an OSError, ValueError, or KeyError — the function does not return a partial or empty dict on failure.
+
+_reconcile_extracted_dir(proj_dir, abs_src_path)
+Pre-condition: proj_dir is a valid directory path; abs_src_path is an absolute path to a source file (may point to a file that no longer exists on disk).
+Post-condition: For the extracted-function directory corresponding to abs_src_path under extracted_functions/, removes from disk every extracted function file whose source function does not exist in abs_src_path, along with any adjacent .spec.json and .info.json sidecar files for the removed function. When abs_src_path does not exist on disk (deleted source file), removes the entire corresponding extracted directory and all its contents. When abs_src_path exists but contains no functions, the extracted directory is removed if it exists and is empty or contains no extracted function files. If the extracted directory becomes empty after removal of all its extracted function files, the directory itself is removed. Does not modify the source file at abs_src_path.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

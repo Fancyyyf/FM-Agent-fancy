@@ -1,0 +1,40 @@
+{
+  "callees": [
+    {
+      "name": "_strip_star",
+      "signature": "_strip_star(d)",
+      "pre_condition": "d is a dict whose string keys may carry a leading '*' prefix from streaming-delta decorators.",
+      "post_condition": "Returns a dict with the same key-value pairs as d, except that any leading '*' character in a string key is removed."
+    },
+    {
+      "name": "_parse_iso",
+      "signature": "_parse_iso(ts)",
+      "pre_condition": "ts is a string value extracted from the rec dict's timestamp field, or None if the field was absent or falsy.",
+      "post_condition": "Returns a parsed datetime value if ts is a valid ISO 8601 timestamp string. Returns None if ts is None or cannot be parsed as a valid timestamp."
+    },
+    {
+      "name": "_trace_value",
+      "signature": "_trace_value(d, *keys)",
+      "pre_condition": "d is a dict derived from a raw trace record. keys is a sequence of string field names to probe in order.",
+      "post_condition": "Returns the value of the first key in keys for which d has a truthy value. Returns None if none of the keys are present or all have falsy values."
+    },
+    {
+      "name": "_get_nested",
+      "signature": "_get_nested(d, *keys)",
+      "pre_condition": "d is a dict. keys is a sequence of string field names forming a nested key path.",
+      "post_condition": "Returns the value at the nested path specified by keys within d. Returns None if any intermediate key in the path is missing."
+    },
+    {
+      "name": "_cost_from_usage",
+      "signature": "_cost_from_usage(model, usage)",
+      "pre_condition": "model is a string model identifier or None. usage is a dict containing token-count fields reflecting a single LLM request's consumption.",
+      "post_condition": "Returns the monetary cost in dollars for the given model and token counts. Returns 0.0 if model is None or unrecognized."
+    },
+    {
+      "name": "_push_llm_status",
+      "signature": "_push_llm_status(self, ts, source, label, status, model, code, detail)",
+      "pre_condition": "ts is a datetime or None. source is the string 'opencode'. label, status, model, code, and detail are strings describing the LLM call outcome.",
+      "post_condition": "A new entry is appended to self's in-memory LLM-status timeline, recording the timestamp, source, label, status, model, status code, and detail. Entries are appended in call order."
+    }
+  ]
+}

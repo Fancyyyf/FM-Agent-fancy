@@ -1,0 +1,5 @@
+{
+  "signature": "_quote_toml_string(value: str) -> str",
+  "pre_condition": "value is a string.",
+  "post_condition": "Returns a double-quoted string such that, when the returned string is placed verbatim after an equals sign in a TOML key-value pair, a TOML-compliant parser recovers value as the parsed value of that key. Characters in value that would otherwise break TOML basic-string syntax — including double-quote characters, backslashes, and Unicode control characters in the range U+0000–U+001F — are escape-encoded in the returned string. Non-ASCII characters in value are preserved as literal code points rather than being encoded as escape sequences."
+}

@@ -1,0 +1,3 @@
+{
+  "post_condition": "After normal execution, the function returns True if re.search(pattern, block) found a match, otherwise False. The pattern is derived from _TERMINATING_PATTERNS.get(language.lower()) if that value is truthy, else it defaults to the regex r'\\b(return\\b|exit\\s*\\(|raise\\s|throw\\s|abort\\s*\\()'. If the pattern is not a valid regular expression, re.error is raised. No side effects occur. Formal logic (normal path): (let p = _TERMINATING_PATTERNS.get(language.lower()); let pattern = p if p else r'\\b(return\\b|exit\\s*\\(|raise\\s|throw\\s|abort\\s*\\()'; result = (re.search(pattern, block) is not None)) ∧ (no side effects); exceptional path: re.error may propagate."
+}

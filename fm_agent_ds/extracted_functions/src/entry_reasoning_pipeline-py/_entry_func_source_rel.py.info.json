@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_extracted_file_to_source_rel",
+      "signature": "_extracted_file_to_source_rel(extracted_rel: str) -> str",
+      "pre_condition": "extracted_rel is a string formed by joining the '::'-separated components of a valid FQN with the platform's path separator, producing a relative path that corresponds to an extracted function file path beneath the extracted_functions/ directory tree.",
+      "post_condition": "Returns the project-relative path (using platform-native path separators) of the original source file from which the function at the path represented by extracted_rel was extracted. The mapping respects the <base>-<ext> directory convention, such that multiple function paths extracted from the same source file (including class-qualified member functions from the same module) resolve to the same returned path."
+    }
+  ]
+}

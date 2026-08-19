@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_llm_check_spec_update",
+  "source_file": "src/incremental_reasoner-py/_llm_check_spec_update",
+  "function_name": "_llm_check_spec_update",
+  "confirmation_status": "not_confirmed",
+  "attempts": "3",
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_llm_check_spec_update.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_llm_check_spec_update.md",
+  "probe_stdout": "NOT CONFIRMED — validator correctly validates info structure depth.\n  3a: REJECTED extra top-level keys ✓\n  3b: REJECTED extra callee keys ✓\n  3c: REJECTED missing callee fields ✓",
+  "trigger_summary": "spec_updated=true with new_spec={} (empty dict) expected to bypass validation but was correctly rejected."
+}

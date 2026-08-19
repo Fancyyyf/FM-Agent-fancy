@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/file_utils-py/_is_metadata_sidecar.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns True when file_path ends with a filename suffix belonging to the set of function-metadata sidecar suffixes; returns False when file_path ends with any other suffix.",
+    "actual_behavior": "The function `_is_metadata_sidecar` is defined in the current scope. For any string `file_path` with no directory component, calling `_is_metadata_sidecar(file_path)` returns `True` if and only if there exists a suffix `s` in `_METADATA_SIDECAR_SUFFIXES` such that `file_path.endswith(s)` evaluates to `True`; otherwise returns `False`. The function has no side effects and does not modify `file_path`.",
+    "code_evidence": "Line 3: return str(file_path).endswith(_METADATA_SIDECAR_SUFFIXES)",
+    "trigger_condition": "The code calls str.endswith with a list, which raises TypeError, failing to return a boolean as required by the specification. The specification expects False for a file_path ending with a suffix not in the set, but the code crashes."
+  }
+}

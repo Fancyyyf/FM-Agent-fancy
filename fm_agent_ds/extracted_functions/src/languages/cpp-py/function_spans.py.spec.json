@@ -1,0 +1,5 @@
+{
+  "signature": "function_spans(proj_dir: str, filepath: str) -> list | None",
+  "pre_condition": "proj_dir is a string path to a project directory; filepath is a string path to a source file within the project",
+  "post_condition": "When a CodeGraph index can be initialized for the project and the file is indexed, returns a list of (name: str, start_idx: int, end_idx: int) tuples for every C++ function definition found in the file, with start_idx and end_idx both 0-indexed and inclusive. When CodeGraph initialization fails or the file cannot be indexed, returns None."
+}

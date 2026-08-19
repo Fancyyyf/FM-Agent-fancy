@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_collect_changed_functions::_path_exists_in_commit",
+  "source_file": "src/incremental_reasoner.py",
+  "function_name": "_path_exists_in_commit",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_collect_changed_functions::_path_exists_in_commit.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_collect_changed_functions::_path_exists_in_commit.md",
+  "probe_stdout": "CONFIRMED — FileNotFoundError propagated: [Errno 2] No such file or directory: 'git'\n",
+  "trigger_summary": "subprocess.run raises FileNotFoundError when git is missing from PATH, propagating uncaught instead of returning False."
+}

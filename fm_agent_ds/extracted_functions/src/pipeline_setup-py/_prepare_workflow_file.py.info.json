@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "list_staged_domain_knowledge_relpaths",
+      "signature": "list_staged_domain_knowledge_relpaths(work_dir) -> list[str]",
+      "pre_condition": "work_dir is a writable directory that may contain staged domain knowledge files under its spec_prompts/domain_context/user_knowledge/ subdirectory",
+      "post_condition": "Returns a sorted list of relative path strings from the workspace root to every user-provided domain knowledge markdown file staged under work_dir. Returns an empty list if no files are staged."
+    },
+    {
+      "name": "format_domain_knowledge_bullets",
+      "signature": "format_domain_knowledge_bullets(paths) -> str",
+      "pre_condition": "paths is a non-empty list of relative path strings to markdown files",
+      "post_condition": "Returns a string where each path in the input list is formatted as a bullet point with a workspace-relative prefix, suitable for injection into an agent instruction prompt."
+    }
+  ]
+}

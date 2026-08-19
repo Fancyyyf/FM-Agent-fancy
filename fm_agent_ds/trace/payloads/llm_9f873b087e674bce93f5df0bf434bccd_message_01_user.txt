@@ -1,0 +1,44 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _parse_callee(value, source: str) -> CalleeTarget:
+Line 2:     if not isinstance(value, dict):
+Line 3:         raise ValueError(f"{source}: missing object 'callee'")
+Line 4:     fqn = _required_string(value.get("fqn"), "callee.fqn", source)
+Line 5:     info_names = _string_list(value.get("info_names", []), "callee.info_names", source)
+Line 6:     return CalleeTarget(fqn=fqn, info_names=info_names)
+```
+
+Condition A (what the code actually does):
+Post-condition (natural language): The function either raises a ValueError (with a message containing source and describing a missing or invalid 'callee' specification) or returns a CalleeTarget object. A ValueError is raised if `value` is not a dict; if `value` is a dict but `value['fqn']` is missing, None, empty, or not a string; or if `value['info_names']` exists and is not a list or contains any element that is not a string. If no ValueError is raised, `value` is a dict, `value['fqn']` is a non-empty string, and `value.get('info_names', [])` is either an empty list, a non-list (treated as empty), or a list of strings, and the function returns `CalleeTarget(fqn=value['fqn'], info_names=tuple(value.get('info_names', [])))`.
+
+Formal logic: 
+( isinstance(value, dict) 
+  ∧ (let raw_fqn = value.get('fqn') in raw_fqn is non-empty string) 
+  ∧ (let raw_info = value.get('info_names', []) in raw_info is empty or a list of strings) )
+ ⇒ (result = CalleeTarget(fqn=raw_fqn, info_names=tuple(raw_info)))
+∧
+( ¬isinstance(value, dict) ⇒ (raise ValueError(f"{source}: missing object 'callee'")) )
+∧
+( isinstance(value, dict) 
+  ∧ (let raw_fqn = value.get('fqn') in raw_fqn is None ∨ raw_fqn is empty ∨ ¬isinstance(raw_fqn, str)) 
+  ⇒ (raise ValueError whose message contains source and 'callee.fqn') )
+∧
+( isinstance(value, dict) 
+  ∧ (let raw_fqn = value.get('fqn') in raw_fqn is non-empty string) 
+  ∧ (let raw_info = value.get('info_names', []) in raw_info is not a list or contains a non-string element) 
+  ⇒ (raise ValueError whose message contains source and 'callee.info_names') )
+
+Condition B (what the specification requires):
+When value is a dict, returns a CalleeTarget whose fqn is a required non-empty string from the dict and whose info_names is a tuple of string names from the dict (defaulting to an empty tuple when the corresponding field is absent or empty). When value is not a dict, raises ValueError with a message that includes source.
+
+Additional context:
+_required_string(raw_value, field_name: str, source: str) -> str
+Pre-condition: raw_value is the value to validate. field_name identifies the field for error messages. source is a provenance string.
+Post-condition: Returns raw_value as a string when raw_value is a non-empty string. Raises an error with a message that includes field_name and source when raw_value is None, empty, or not a string.
+
+_string_list(raw_value, field_name: str, source: str) -> tuple[str, ...]
+Pre-condition: raw_value is expected to be an iterable of strings. field_name identifies the field for error messages. source is a provenance string.
+Post-condition: Returns a tuple of strings derived from raw_value. When raw_value is an empty or non-list value, returns an empty tuple. When raw_value is a non-empty list of strings, returns those strings as a tuple. Raises an error with a message that includes field_name and source when any element of raw_value is not a string.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_push_llm_status(self, ts, source, label, status, model=None, code=None, detail=None)",
+  "pre_condition": "ts is a datetime.datetime or None. source is a string identifying the log origin. label, status, model, code, and detail are each either a string or None.",
+  "post_condition": "A new entry is stored in self's in-memory LLM-status timeline, preserving the order of successive calls. The entry records the timestamp formatted as HH:MM:SS when ts is truthy, or an empty string when ts is None or falsy; the source argument verbatim; the label argument when truthy, or the string 'llm_call' otherwise; the status argument when truthy, or the string '?' otherwise; the model argument verbatim; the code argument when truthy, or the status argument when truthy, or the string '?' otherwise; and the detail argument verbatim. The count of entries in the timeline increases by exactly one. All entries present before the call retain their values and relative ordering."
+}

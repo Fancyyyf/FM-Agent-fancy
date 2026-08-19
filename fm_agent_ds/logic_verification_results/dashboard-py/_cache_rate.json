@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_cache_rate.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a tuple (rate, cr_sum, in_sum) where cr_sum is the sum of all cache_read_count values across rows, in_sum is the sum of all total_count values across rows, and rate is cr_sum / in_sum when in_sum > 0, or 0.0 when in_sum equals 0. rate is in the closed interval [0.0, 1.0]. Both cr_sum and in_sum are non-negative integers. The original rows argument is not mutated.",
+    "actual_behavior": "After the function executes, it returns a triple (ratio, cr_sum, in_sum) where cr_sum is the sum of all first elements (cache_read_count) of the tuples in rows, and in_sum is the sum of all second elements (total_count). If in_sum is 0, ratio is None; otherwise ratio is cr_sum divided by in_sum (as a float). No exceptions are raised and no external state is modified. Formally, given rows = [(c_i, t_i)] with 0  c_i  t_i, define CR =  c_i and IN =  t_i. The return value r satisfies r[1] = CR, r[2] = IN, and (IN == 0  r[0] = None)  (IN > 0  r[0] = CR / IN).",
+    "code_evidence": "Line 5: return None, cr_total, in_total",
+    "trigger_condition": "When in_total is 0, the specification requires rate=0.0, but the code returns None for rate."
+  }
+}

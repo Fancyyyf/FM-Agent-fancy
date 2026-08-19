@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--javascript-py--call_edges",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/javascript-py/call_edges.py",
+  "function_name": "call_edges",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--javascript-py--call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--javascript-py--call_edges.md",
+  "probe_stdout": "CONFIRMED — call_edges() propagated IndexError from CodeGraphExtractor.from_proj_dir instead of catching it and returning None. The specification requires that ALL initialization failures cause call_edges() to return None. Raised: Simulated codegraph index initialization failure",
+  "trigger_summary": "call_edges() calls CodeGraphExtractor.from_proj_dir() without try-except, so exceptions during initialization (e.g. IndexError) propagate instead of returning None as the spec requires."
+}

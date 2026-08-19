@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--ElpClient::__init__",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::__init__.py",
+  "function_name": "ElpClient::__init__",
+  "confirmation_status": "not_confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::__init__.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::__init__.md",
+  "probe_stdout": "NOT CONFIRMED — _timeout_seconds() returns max(1, settings.erlang.timeout_s), always >= 1\n  _timeout_seconds() returned: 180\n  client.timeout: 180\n",
+  "trigger_summary": "self.timeout is assigned from _timeout_seconds() which uses max(1, ...) ensuring a positive value - the spec is satisfied."
+}

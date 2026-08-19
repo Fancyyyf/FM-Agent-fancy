@@ -1,0 +1,18 @@
+Programming language: Python
+
+Pre-condition:
+symbol_range is a dict with a 'start' key and an 'end' key, each mapping to a dict that contains a 'line' key with an integer value; each sub-dict may also contain a 'character' key with an integer value
+
+Code block:
+```python
+Line 1: def _symbol_line_span(symbol_range: dict) -> tuple[int, int]:
+Line 2:     """Convert an LSP half-open range to a 0-based inclusive line span."""
+Line 3:     start = max(0, int(symbol_range["start"].get("line", 0)))
+Line 4:     end_position = symbol_range["end"]
+Line 5:     end = max(start, int(end_position.get("line", start)))
+Line 6:     if end > start and int(end_position.get("character", 0)) == 0:
+Line 7:         end -= 1
+Line 8:     return start, end
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

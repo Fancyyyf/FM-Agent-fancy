@@ -1,0 +1,32 @@
+Programming language: Python
+
+Pre-condition:
+layer_files is an iterable of relative file path strings. output_dir is a string path to a directory containing verification result JSON files. work_dir is a string path to a directory potentially containing a bug_validation/ subdirectory.
+
+Code block:
+```python
+Line 1: def _get_incomplete_verification_files(layer_files, input_dir, output_dir, work_dir):
+Line 2:     """Return layer files missing verification or required bug validation output."""
+Line 3:     incomplete = []
+Line 4:     for rel in layer_files:
+Line 5:         result_path = os.path.join(output_dir, os.path.splitext(rel)[0] + ".json")
+Line 6:         try:
+Line 7:             with open(result_path, "r") as f:
+Line 8:                 result = json.load(f)
+Line 9:         except (OSError, json.JSONDecodeError):
+Line 10:             incomplete.append(rel)
+Line 11:             continue
+Line 12:         if result.get("verdict") != "MISMATCH":
+Line 13:             continue
+Line 14:         bug_id = os.path.splitext(rel)[0].replace(os.sep, "--").replace("/", "--")
+Line 15:         validation_path = os.path.join(work_dir, "bug_validation", f"{bug_id}.result.json")
+Line 16:         if not _json_file_is_valid(validation_path):
+Line 17:             incomplete.append(rel)
+Line 18:     return incomplete
+```
+
+Additional context:
+_json_file_is_valid(file_path) -> bool
+Pre-condition: file_path is a string path to a file whose existence and readability are not yet established.
+Post-condition: Returns True if the file at file_path exists, is readable, and contains syntactically valid JSON; returns False otherwise. Does not raise an exception for a missing file, a permission-denied read, or malformed JSON content.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,19 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a string path to an existing directory. submodules is either None or a non-empty list of subdirectory names.
+
+Code block:
+```python
+Line 1: def _has_source_code(proj_dir, submodules=None):
+Line 2:     """Check whether proj_dir contains at least one source code file."""
+Line 3:     for _ in _iter_project_source_files(proj_dir, submodules):
+Line 4:         return True
+Line 5:     return False
+```
+
+Additional context:
+_iter_project_source_files(proj_dir, submodules=None) -> Iterator[(str, str)]
+Pre-condition: proj_dir is a string path to an existing directory. submodules is either None or a non-empty list of subdirectory names.
+Post-condition: Yields (abs_path, rel_path) tuples for every source file under proj_dir that is not a test file. When submodules is not None, yields only files whose relative path begins with one of the submodule directory names. Terminates after yielding all matching files; yields zero tuples when no files match.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

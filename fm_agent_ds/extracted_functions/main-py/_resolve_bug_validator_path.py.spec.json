@@ -1,0 +1,5 @@
+{
+  "signature": "_resolve_bug_validator_path(raw_path: str | None) -> str | None",
+  "pre_condition": "raw_path is a string or None.",
+  "post_condition": "Returns None if raw_path is falsy (None or empty string). Otherwise, returns the absolute, user-expanded (tilde-resolved) filesystem path to a regular file that exists and is readable. Raises ValueError if the resolved path does not name an existing regular file, or if the file exists but cannot be opened for reading."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_symbol_uri(symbol: dict, fallback: str) -> str",
+  "pre_condition": "symbol is a dict that may contain a string key 'uri' and may contain a key 'location' whose value, if present, is a dict that may contain a string key 'uri'. fallback is a non-empty string.",
+  "post_condition": "Returns a non-empty string. When symbol['uri'] exists and is truthy, returns its value. Otherwise, when symbol['location'] exists as a dict and symbol['location']['uri'] is truthy, returns that value. Otherwise, returns fallback unchanged."
+}

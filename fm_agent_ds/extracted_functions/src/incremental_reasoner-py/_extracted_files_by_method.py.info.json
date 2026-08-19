@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_is_metadata_sidecar",
+      "signature": "_is_metadata_sidecar(filename) -> bool",
+      "pre_condition": "filename is a non-empty string representing a file basename found during directory traversal.",
+      "post_condition": "Returns True when filename identifies a generated FM-Agent metadata sidecar file — a specification or callee-information file that must be excluded from the extracted function file listing; returns False when filename identifies an extracted function source file or any other non-sidecar file."
+    }
+  ]
+}

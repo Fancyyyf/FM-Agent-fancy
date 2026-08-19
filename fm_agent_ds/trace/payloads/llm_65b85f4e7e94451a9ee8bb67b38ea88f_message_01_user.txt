@@ -1,0 +1,76 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir resolves via os.path.abspath to an existing directory. fingerprint is a tuple that identifies the project state. analysis is an ErlangAnalysis object whose .functions, .edges, .spans, and .server_info attributes are populated.
+
+Code block:
+```python
+Line 1: def _persist_analysis(proj_dir: str, fingerprint: tuple, analysis: ErlangAnalysis):
+Line 2:     """Persist successful ELP output for diagnostics and reproducible inspection."""
+Line 3:     root = os.path.abspath(proj_dir)
+Line 4:     output_dir = os.path.join(root, ".codegraph")
+Line 5:     output_path = os.path.join(output_dir, "erlang_callgraph.json")
+Line 6:     functions = []
+Line 7:     caller_files = {}
+Line 8:     for path, file_functions in sorted(analysis.functions.items()):
+Line 9:         rel_path = os.path.relpath(path, root).replace(os.sep, "/")
+Line 10:         caller_module = _caller_module(path)
+Line 11:         for function_id, _source in file_functions:
+Line 12:             functions.append({"id": function_id, "file": rel_path})
+Line 13:             caller_files[(function_id, caller_module)] = rel_path
+Line 14:     edges = [
+Line 15:         {
+Line 16:             "caller": caller,
+Line 17:             "caller_module": caller_module,
+Line 18:             "caller_file": caller_files.get((caller, caller_module)),
+Line 19:             "callee": callee,
+Line 20:         }
+Line 21:         for (caller, caller_module), callees in sorted(analysis.edges.items())
+Line 22:         for callee in sorted(callees)
+Line 23:     ]
+Line 24:     document = {
+Line 25:         "schema_version": 1,
+Line 26:         "status": "success",
+Line 27:         "backend": "elp",
+Line 28:         "server_info": analysis.server_info,
+Line 29:         "elp_command": list(_elp_argv()),
+Line 30:         "project_fingerprint": _fingerprint_digest(fingerprint),
+Line 31:         "functions": functions,
+Line 32:         "edges": edges,
+Line 33:     }
+Line 34:     os.makedirs(output_dir, exist_ok=True)
+Line 35:     temp_path = None
+Line 36:     try:
+Line 37:         with tempfile.NamedTemporaryFile(
+Line 38:             mode="w",
+Line 39:             encoding="utf-8",
+Line 40:             dir=output_dir,
+Line 41:             prefix=".erlang_callgraph.",
+Line 42:             suffix=".tmp",
+Line 43:             delete=False,
+Line 44:         ) as stream:
+Line 45:             temp_path = stream.name
+Line 46:             json.dump(document, stream, indent=2, ensure_ascii=False)
+Line 47:             stream.write("\n")
+Line 48:         os.replace(temp_path, output_path)
+Line 49:     finally:
+Line 50:         if temp_path and os.path.exists(temp_path):
+Line 51:             try:
+Line 52:                 os.unlink(temp_path)
+Line 53:             except OSError:
+Line 54:                 pass
+```
+
+Additional context:
+_caller_module(file_path: str) -> str
+Pre-condition: file_path is an absolute path to a file within the analyzed Erlang project tree.
+Post-condition: Returns a module identifier string derived from the path components relative to the project root.
+
+_elp_argv() -> list[str]
+Pre-condition: None.
+Post-condition: Returns the ELP command-line argument list used for the current invocation.
+
+_fingerprint_digest(fingerprint: tuple) -> str
+Pre-condition: fingerprint is a tuple.
+Post-condition: Returns a string that uniquely and stably identifies fingerprint — the same fingerprint tuple always produces the same digest string.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

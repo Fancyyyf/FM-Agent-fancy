@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def add_entry(self, function_name, signature, spec):
+Line 2:         self[function_name] = spec
+Line 3:         self.signatures[function_name] = signature
+```
+
+Condition A (what the code actually does):
+The method adds or updates an entry for `function_name`. After execution, `self[function_name]` holds the string `spec`, and `self.signatures[function_name]` holds the string `signature`. If previous entries existed under the same key, they are overwritten. Formally: `function_name in self ∧ self[function_name] = spec ∧ function_name in self.signatures ∧ self.signatures[function_name] = signature`.
+
+Condition B (what the specification requires):
+self[function_name] equals spec; self.signatures[function_name] equals signature; all other entries in self and in self.signatures are unchanged from their values before the call
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

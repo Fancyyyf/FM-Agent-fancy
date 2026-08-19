@@ -1,0 +1,28 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def record_trace_event(trace_dir, event):
+Line 2:     if not trace_dir:
+Line 3:         return
+Line 4:     append_event(trace_dir, event)
+```
+
+Condition A (what the code actually does):
+Upon successful completion, if `trace_dir` was falsy before the call, no side effects occur; otherwise, the function has thread-safely appended the contents of `event` as a single, self-contained JSON line to the file `events.jsonl` located inside the directory `trace_dir`. The `event` dict is not modified. No value is returned.
+
+Formally, let `S` denote the file system state and `E` the `event` dict. Define `old(trace_dir)` as the value of `trace_dir` at entry. The post-condition `Q` is:
+```
+(old(trace_dir) is falsy  ⇒  S' = S  ∧  E' = E)
+∧
+(old(trace_dir) is truthy  ⇒  S' = S except that the file (old(trace_dir)/events.jsonl) has a new line containing a JSON object whose top-level keys and values match those of old(E) and are serialised in a thread-safe manner  ∧  E' = old(E))
+```
+
+Condition B (what the specification requires):
+When trace_dir is falsy, no side effects occur and the function returns without observable change. When trace_dir is truthy, the event dict is thread-safely appended as a single, complete JSON line to the events.jsonl file within trace_dir. The appended line is self-contained: every top-level key from the provided event dict is present in the persisted record. The function does not modify the event dict.
+
+Additional context:
+append_event(trace_dir, event) -> None
+Pre-condition: trace_dir is a writable directory path; event is a dict containing at minimum an 'event_id' field with a non-empty string value and a 'timestamp' field with an ISO 8601 formatted string value.
+Post-condition: Thread-safely appends the event dict as a single, self-contained JSON line to the events.jsonl file within trace_dir. The persisted record preserves every top-level key from the provided event dict. The call does not modify the event dict.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

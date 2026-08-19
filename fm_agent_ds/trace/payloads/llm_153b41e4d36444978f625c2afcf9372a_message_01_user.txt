@@ -1,0 +1,29 @@
+Programming language: Python
+
+Pre-condition:
+issue_text is a non-empty string.
+
+Code block:
+```python
+Line 1: def _extract_backtick_idents(issue_text: str) -> set[str]:
+Line 2:     """Extract meaningful identifiers from backtick spans and code blocks.
+Line 3:     Filters out Python keywords, common builtins, and RST/Sphinx role prefixes
+Line 4:     (e.g. ``py:class`` → keep nothing; ``Literal`` → keep 'literal').
+Line 5:     """
+Line 6:     result: set[str] = set()
+Line 7:     def _add(token: str) -> None:
+Line 8:         t = token.lower().strip('_')
+Line 9:         if len(t) >= 2 and t not in _PY_KEYWORDS and t not in _STOP:
+Line 10:             result.add(t)
+Line 11:     for raw in re.findall(r'`([^`]+)`', issue_text):
+Line 12:         # Strip RST/Sphinx role prefix (e.g. "py:class", "ref:", "meth:")
+Line 13:         raw = re.sub(r'^[a-z]+:[a-z]+\s*', '', raw.strip())
+Line 14:         for part in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]{1,}', raw):
+Line 15:             _add(part)
+Line 16:     for block in re.findall(r'```.*?```', issue_text, re.DOTALL):
+Line 17:         for ident in re.findall(r'\b([a-zA-Z_][a-zA-Z0-9_]{2,})\b', block):
+Line 18:             _add(ident)
+Line 19:     return result
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

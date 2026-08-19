@@ -1,0 +1,6 @@
+{
+  "verdict": "MATCH",
+  "counterexample": null,
+  "offending_statements": null,
+  "reason": "The code's behavior matches the specification for all valid inputs. Every case in condition B is covered by condition A: empty stripped source_desc returns target_desc, S in target_desc returns target_desc, empty target_desc with non-empty S returns S, otherwise returns concatenation with separator."
+}

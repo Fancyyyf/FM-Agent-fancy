@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--_read_text_if_exists",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/_read_text_if_exists.py",
+  "function_name": "_read_text_if_exists",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--_read_text_if_exists.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--_read_text_if_exists.md",
+  "probe_stdout": "CONFIRMED — UnicodeDecodeError raised for file with invalid UTF-8 bytes: 'utf-8' codec can't decode byte 0xff in position 5: invalid start byte\n",
+  "trigger_summary": "A file containing invalid UTF-8 bytes causes UnicodeDecodeError instead of returning a string, violating the specification's return guarantee."
+}

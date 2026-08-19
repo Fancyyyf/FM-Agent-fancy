@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_parse_caller",
+      "signature": "_parse_caller(caller_data: dict | None, source: str) -> CallerSelector",
+      "pre_condition": "caller_data is either None or a dict containing the fields required to construct a CallerSelector. source is a provenance string.",
+      "post_condition": "Returns a CallerSelector whose fqn and callsite_names are populated from the corresponding fields in caller_data. When caller_data is None or missing required fields, raises an error whose message includes source."
+    },
+    {
+      "name": "_parse_callee",
+      "signature": "_parse_callee(callee_data: dict | None, source: str) -> CalleeTarget",
+      "pre_condition": "callee_data is either None or a dict containing the fields required to construct a CalleeTarget. source is a provenance string.",
+      "post_condition": "Returns a CalleeTarget whose fqn and info_names are populated from the corresponding fields in callee_data. When callee_data is None or missing required fields, raises an error whose message includes source."
+    },
+    {
+      "name": "_edge_source",
+      "signature": "_edge_source(item: dict, source: str) -> str",
+      "pre_condition": "item is a dict that may contain evidence entries. source is a base provenance string.",
+      "post_condition": "Returns a provenance string that incorporates available evidence information from item, or the original source string when no evidence is present."
+    }
+  ]
+}

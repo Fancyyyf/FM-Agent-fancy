@@ -1,0 +1,5 @@
+{
+  "signature": "update_llm_settings_toml_text(text: str, updates: dict[str, str]) -> str",
+  "pre_condition": "text is a string; updates is a dict mapping dot-separated LLM section field path strings to their desired string values.",
+  "post_condition": "Raises ConfigWizardError when updates is empty. Raises ConfigWizardError when any key-value pair in updates fails validation (the key is not a recognized LLM configuration field name, or the value does not conform to the expected format for that field). Raises ConfigWizardError when text is not parseable as valid TOML by the standard library parser, or when text decodes to a non-table TOML value. Otherwise returns a string containing valid TOML in which: for every key in updates, the corresponding field under the [llm] section is set to updates[key]; every other TOML section, every field outside the updated keys, every comment, and all whitespace outside the updated field values is preserved unchanged from text. When text does not contain an [llm] section, a new [llm] section is appended containing all fields from updates."
+}

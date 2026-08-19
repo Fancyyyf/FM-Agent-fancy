@@ -1,0 +1,5 @@
+{
+  "signature": "command_argv(command) -> list[str]",
+  "pre_condition": "command is a non-None value that is either an AgentCommand instance whose argv attribute is a list of strings, or an iterable of strings.",
+  "post_condition": "Returns the argument vector of command as a list of strings, preserving the order of arguments as they appear in command. Each element is a string exactly as provided by the argument representation. The returned list excludes any standard-input content associated with the command."
+}

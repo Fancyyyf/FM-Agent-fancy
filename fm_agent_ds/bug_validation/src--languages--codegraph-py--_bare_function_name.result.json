@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--codegraph-py--_bare_function_name",
+  "source_file": "src/languages/codegraph.py",
+  "function_name": "_bare_function_name",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--_bare_function_name.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--_bare_function_name.md",
+  "probe_stdout": "CONFIRMED — actual: 'foo' | expected: 'bar'\n",
+  "trigger_summary": "Input 'foo::bar -> int': qualifier '::' is stripped to get 'bar', but the regex on line 49 searches the original name and fails, so the fallback incorrectly returns 'foo'."
+}

@@ -1,0 +1,26 @@
+Programming language: Python
+
+Pre-condition:
+rel is a filesystem path (relative to the batch output directory) to a file whose reasoning verdict has been produced. The enclosing scope provides output_dir (the directory tree containing reasoning result JSON files), proj_dir (the project root directory), work_dir (the FM-Agent work directory), and bug_validator_path (an optional path to a custom bug-validator prompt file; None when the built-in validator is used).
+
+Code block:
+```python
+Line 1:     def _validate(rel):
+Line 2:         result_json_rel = os.path.join(
+Line 3:             os.path.relpath(output_dir, proj_dir),
+Line 4:             os.path.splitext(rel)[0] + ".json",
+Line 5:         )
+Line 6:         _validate_single_bug(
+Line 7:             result_json_rel,
+Line 8:             proj_dir,
+Line 9:             work_dir,
+Line 10:             bug_validator_path=bug_validator_path,
+Line 11:         )
+Line 12:         return rel
+```
+
+Additional context:
+_validate_single_bug(result_json_rel, proj_dir, work_dir, bug_validator_path=None) -> dict
+Pre-condition: result_json_rel is a relative path from proj_dir to a JSON file containing a reasoning verdict dict (with at minimum a 'verdict' field whose value is 'MISMATCH'). proj_dir is the project root directory; work_dir is the FM-Agent work directory; bug_validator_path is an optional path to a custom bug-validator prompt file.
+Post-condition: Returns a dict describing the validation outcome. Produces a bug report at <work_dir>/bug_validation/<bug_id>.md when the violation is confirmed as a real bug, or determines that the spec-code discrepancy is not exploitable as a bug and does not produce a report. The report contains: specification claim, actual observed behavior, code evidence with line numbers, trigger condition, reproduction steps, a probe script, and its raw output.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+file_path is a string representing a file path; suffix is a string
+
+Code block:
+```python
+Line 1: def _load_sidecar_json(file_path, suffix):
+Line 2:     """Read one JSON sidecar next to file_path, or return None when unavailable."""
+Line 3:     try:
+Line 4:         with open(f"{file_path}{suffix}", "r", encoding="utf-8") as file:
+Line 5:             return json.load(file)
+Line 6:     except (OSError, json.JSONDecodeError):
+Line 7:         return None
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

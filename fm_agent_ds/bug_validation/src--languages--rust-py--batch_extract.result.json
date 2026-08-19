@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--rust-py--batch_extract",
+  "source_file": "src/languages/rust.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--rust-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--rust-py--batch_extract.md",
+  "probe_stdout": "CONFIRMED — batch_extract raised exception instead of returning a dict: DatabaseError: file is not a database\n",
+  "trigger_summary": "batch_extract propagates sqlite3.DatabaseError when .codegraph/codegraph.db exists but is not a valid SQLite database, instead of returning an empty dict as the spec requires."
+}

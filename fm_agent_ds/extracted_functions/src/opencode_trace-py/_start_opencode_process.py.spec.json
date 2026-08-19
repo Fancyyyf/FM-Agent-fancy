@@ -1,0 +1,5 @@
+{
+  "signature": "_start_opencode_process(proj_dir, work_dir, event_id, command, trace_log_path) -> (subprocess.Popen, threading.Thread, threading.Thread | None)",
+  "pre_condition": "proj_dir and work_dir are valid filesystem directory paths; event_id is a non-empty string; command is a non-empty list of strings; trace_log_path is a writable filesystem path",
+  "post_condition": "Returns a 3-tuple of (proc, log_thread, stdin_thread). proc is a running subprocess.Popen instance that executes the command in proj_dir with combined stdout/stderr capture and an environment configured from work_dir and event_id. log_thread is a running daemon thread that copies the subprocess's combined stdout/stderr output to trace_log_path until the subprocess terminates. stdin_thread is a running daemon thread that writes the command's stdin content to the subprocess when the command includes stdin content; stdin_thread is None when the command has no stdin content. The subprocess uses text-mode UTF-8 encoding."
+}

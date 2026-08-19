@@ -1,0 +1,11 @@
+{
+  "id": "src--domain_knowledge-py--list_staged_domain_knowledge_relpaths",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/domain_knowledge-py/list_staged_domain_knowledge_relpaths.py",
+  "function_name": "list_staged_domain_knowledge_relpaths",
+  "confirmation_status": "not_confirmed",
+  "attempts": "3",
+  "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--list_staged_domain_knowledge_relpaths.py",
+  "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--list_staged_domain_knowledge_relpaths.md",
+  "probe_stdout": "  [chmod 0o000 subdir]: NOT CONFIRMED — Returned normally: ['fm_agent/spec_prompts/domain_context/user_knowledge/test.md']\n  [chmod 0o444 subdir (no execute)]: NOT CONFIRMED — Returned normally: ['fm_agent/spec_prompts/domain_context/user_knowledge/restricted/hidden.md', 'fm_agent/spec_prompts/domain_context/user_knowledge/test.md']\n  [remove execute from parent dir]: NOT CONFIRMED — Returned normally: []\nNOT CONFIRMED — All attempts failed to reproduce the bug.\n  Last result: Returned normally: []",
+  "trigger_summary": "A staging directory with a permission-restricted (chmod 000) subdirectory should trigger OSError from os.walk, but Python 3.12's os.walk silently absorbs scandir errors by default."
+}

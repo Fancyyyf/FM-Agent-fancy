@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/domain_knowledge-py/_flatten_paths.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a flat list of string elements obtained by recursively flattening all nested iterables in values into a single list, preserving the relative order of elements from the original structure. Elements that are empty strings or otherwise falsy are excluded from the result.",
+    "actual_behavior": "The function returns a flat list containing all nonempty strings from the input `values` (or an empty list if `values` is `None`). Recursively, for any nested list or tuple, all its elements are flattened in depthfirst order, preserving the original sequence. Falsy strings (e.g., empty strings) are omitted. Formally, define function flatten(x) as: if x is None or x is empty iterable: []; else if x is a string: [x] if x != '' else []; else if x is a list or tuple: concatenation over e in x of flatten(e). Then the return value R satisfies R = flatten(values).",
+    "code_evidence": "Line 6: elif value:\nLine 7:             paths.append(value)",
+    "trigger_condition": "The specification requires a flat list of string elements, but the code appends any truthy non-list/non-tuple value directly, including non-strings like integers. This violates the output type requirement."
+  }
+}

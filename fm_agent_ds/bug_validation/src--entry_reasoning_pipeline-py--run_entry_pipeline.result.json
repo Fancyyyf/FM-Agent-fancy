@@ -1,0 +1,11 @@
+{
+  "id": "src--entry_reasoning_pipeline-py--run_entry_pipeline",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/run_entry_pipeline.py",
+  "function_name": "run_entry_pipeline",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--entry_reasoning_pipeline-py--run_entry_pipeline.py",
+  "detail_file": "fm_agent/bug_validation/src--entry_reasoning_pipeline-py--run_entry_pipeline.md",
+  "probe_stdout": "CONFIRMED — run_entry_pipeline exempts only entry_func's source file (tests/entry_main.py); other reachable functions in tests/test_helpers.py remain classified as test files and are silently skipped",
+  "trigger_summary": "When entry_func or reachable callees reside in test directories, only the entry_func's source file receives a test-file exemption; other reachable functions in test-like files remain flagged as test code and are silently excluded from extraction and reasoning, violating the specification that ALL reachable functions are processed."
+}

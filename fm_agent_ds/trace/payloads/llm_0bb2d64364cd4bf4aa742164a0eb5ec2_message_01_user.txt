@@ -1,0 +1,146 @@
+Programming language: Python
+
+Code block:
+```python
+Line 121:                             parts = parts[len(prefix):]
+Line 122:                         elif parts.startswith("fm_agent/logic_verification_results/"):
+Line 123:                             parts = parts[len("fm_agent/logic_verification_results/"):]
+Line 124:                         bug_id = os.path.splitext(parts)[0].replace(os.sep, "--").replace("/", "--")
+Line 125:                         result_path = os.path.join(work_dir, "bug_validation", f"{bug_id}.result.json")
+Line 126:                         confirmed = False
+Line 127:                         if os.path.exists(result_path):
+Line 128:                             with open(result_path) as rf:
+Line 129:                                 result_data = json.load(rf)
+Line 130:                             confirmed = result_data.get("confirmation_status") == "confirmed"
+Line 131:                         if confirmed:
+Line 132:                             print(f"[{count}/{num_functions}] {rel_path}: \033[31m✘\033[0m")
+Line 133:                         else:
+Line 134:                             print(f"[{count}/{num_functions}] {rel_path}: \033[32m✔\033[0m")
+Line 135:                         logging.info(f"Validation completed: {fpath} (confirmed={confirmed})")
+Line 136:                     except Exception as exc:
+Line 137:                         logging.error(f"Validation error for {fpath}: {exc}")
+Line 138:                 # Check if all expected files have been processed
+Line 139:                 all_reasoning_done = (
+Line 140:                     expected_files is not None
+Line 141:                     and processed >= expected_files
+Line 142:                     and not reasoning_futures
+Line 143:                 )
+Line 144:                 if all_reasoning_done and not validation_futures:
+Line 145:                     logging.info("All files verified and validated. Done.")
+Line 146:                     break
+Line 147:                 # Detect if spec generation subprocesses exited before all files are ready
+Line 148:                 _all_procs = spec_procs if spec_procs else None
+Line 149:                 if _all_procs is not None and all(_spec_task_done(p) for p in _all_procs):
+Line 150:                     unready = (expected_files or set()) - processed
+Line 151:                     if unready and not reasoning_futures and not validation_futures:
+Line 152:                         exit_codes = [_spec_task_exit_code(p) for p in _all_procs]
+Line 153:                         if not processed:
+Line 154:                             # No function got a spec at all – this is an error
+Line 155:                             logging.warning(
+Line 156:                                 f"Spec generation process(es) exited (codes {exit_codes}) "
+Line 157:                                 f"but no .spec.json/.info.json sidecar pairs were created."
+Line 158:                             )
+Line 159:                         else:
+Line 160:                             # Some functions are missing specs; leave them pending for retry.
+Line 161:                             logging.warning(
+Line 162:                                 f"Spec generation process(es) exited (codes {exit_codes}), "
+Line 163:                                 f"{len(unready)} files missing specs, leaving them pending for retry."
+Line 164:                             )
+Line 165:                             for uf in sorted(unready):
+Line 166:                                 rel_path = os.path.relpath(uf, proj_dir) if proj_dir else os.path.relpath(uf, input_dir)
+Line 167:                                 print(f"[pending] {rel_path}: no spec yet; will retry")
+Line 168:                         break
+Line 169:                 time.sleep(poll_interval)
+Line 170:     except KeyboardInterrupt:
+Line 171:         logging.info("Stopping watcher...")
+Line 172:         # Wait for in-flight tasks
+Line 173:         all_futures = {}
+Line 174:         all_futures.update(reasoning_futures)
+Line 175:         all_futures.update(validation_futures)
+Line 176:         for future in all_futures:
+Line 177:             fpath = all_futures[future]
+Line 178:             try:
+Line 179:                 future.result()
+Line 180:                 logging.info(f"Completed: {fpath}")
+Line 181:             except Exception as exc:
+Line 182:                 logging.error(f"Error for {fpath}: {exc}")
+Line 183:         logging.info("Done.")
+Line 184:     # Generate validation summary after all work is done
+Line 185:     if proj_dir is not None:
+Line 186:         _generate_validation_summary(work_dir)
+Line 187:     return processed
+```
+
+Condition A (what the code actually does):
+The function returns the set `processed`. The following three mutually exclusive scenarios describe the state upon return:
+
+1. **All files processed (break at line 146):**
+   - `expected_files` is not None.
+   - `processed` ⊇ `expected_files` (all expected files have been processed).
+   - `reasoning_futures` is empty.
+   - `validation_futures` is empty.
+   - The enclosing loop is exited, then if `proj_dir ≠ None`, `_generate_validation_summary(work_dir)` is called.
+
+2. **Missing specs (break at line 168):**
+   - `spec_procs` is not None and every subprocess `p` in `spec_procs` satisfies `_spec_task_done(p)` (all done).
+   - `expected_files` is not None.
+   - `processed` ⊂ `expected_files` (proper subset, there are unready files).
+   - For each file `u` in `expected_files \ processed`, a warning is logged and a "[pending]" message is printed.
+   - `reasoning_futures` is empty.
+   - `validation_futures` is empty.
+   - The loop is broken, then summary generation if applicable.
+
+3. **KeyboardInterrupt (lines 170-183):**
+   - A `KeyboardInterrupt` occurred inside the `try` body.
+   - In the exception handler, a dictionary `all_futures` is formed as the union of the then-current `reasoning_futures` and `validation_futures`.
+   - For every future `f` in `all_futures`, `f.result()` is called. If a future raises an exception, it is caught and logged.
+   - After the handler, all futures that existed at the moment of the interrupt are completed and their results consumed; the dictionaries `reasoning_futures` and `validation_futures` still contain those futures.
+   - `processed` and `completed_count` remain as they were at the time of the interrupt (which may include the pre-condition addition of `fpath` if the interrupt occurred after that point).
+   - Summary generation if applicable.
+
+In all cases:
+- If `proj_dir` is not None, `_generate_validation_summary(work_dir)` is executed, producing a bug validation summary file.
+- The returned `processed` set contains the file `fpath` that was added in the pre-condition (since the pre-condition describes the state immediately prior to this block).
+
+Formally:
+Let `P_final` be the returned `processed` set.
+
+( (EXP ≠ None ∧ P_final ⊇ EXP ∧ RF = ∅ ∧ VF = ∅) 
+  ∨ 
+  (SP ≠ None ∧ ∀p∈SP . done(p) ∧ EXP ≠ None ∧ P_final ⊂ EXP ∧ RF = ∅ ∧ VF = ∅ ∧ ∀u ∈ EXP \ P_final : (warning_logged(u) ∧ print_pending(u))) 
+  ∨ 
+  (KeyboardInterrupt ∧ ∀f ∈ dom(RF_int) ∪ dom(VF_int) : result_called(f) ∧ (raises_exception(f) → logged_exc(f)) ∧ RF = RF_int ∧ VF = VF_int ∧ P_final = P_int ∧ completed_count = completed_count_int)
+)
+∧ (proj_dir ≠ None → _generate_validation_summary(work_dir) called)
+∧ fpath ∈ P_final   (from pre-condition, since the interruption point always postdates the pre‑condition state)
+
+`EXP` denotes `expected_files`, `RF` denotes `reasoning_futures`, `VF` denotes `validation_futures`, `SP` denotes `spec_procs`.
+
+Condition B (what the specification requires):
+For every function in scope whose .spec.json and .info.json sidecars become complete during the polling window (as determined by is_file_ready), whose path is not in already_processed, and which has not already been submitted in this invocation: runs block-level Hoare-style reasoning that produces a verdict JSON file under output_dir. The verdict JSON contains a 'verdict' key with value MATCH, MISMATCH, or SKIPPED. For each MISMATCH verdict when proj_dir is not None: dispatches a bug validation that builds and executes a probe script, producing a bug_validation/<bug_id>.md report and a bug_validation/<bug_id>.result.json file whose 'confirmation_status' is 'confirmed' when the probe script reproduces the violation. For each processed function, prints a progress line with a unicode checkmark for MATCH, SKIPPED, and unconfirmed-MISMATCH verdicts, and a unicode crossmark for confirmed MISMATCH verdicts. When spec_procs is provided and all spec-generation futures have completed while in-scope files remain unready and no reasoning or validation futures are pending: prints a pending notice for each unready file and exits the polling loop. On KeyboardInterrupt: waits for all in-flight reasoning and validation futures to complete before returning. When proj_dir is not None: after the polling loop exits, generates bug_validation/summary.json aggregating total, confirmed, and not-confirmed bug counts across all validation results. Returns the set of all function file paths marked as processed during this invocation, including those already present in already_processed.
+
+Additional context:
+is_file_ready(file_path)
+Pre-condition: file_path is the path to an extracted function file.
+Post-condition: Returns True iff both a .spec.json and a .info.json sidecar file exist for the function at file_path and are valid; returns False otherwise.
+
+_verify_single_file(file_path, input_dir, output_dir, language, work_dir, resume)
+Pre-condition: file_path identifies an extracted function file with complete .spec.json and .info.json sidecars. input_dir is the extracted_functions/ directory. output_dir is the destination directory for verdict JSON. language is a string identifying the programming language. work_dir is the workspace directory. resume is a boolean.
+Post-condition: Returns a tuple of (return_code, verdict_dict) where verdict_dict contains a 'verdict' key with value MATCH, MISMATCH, or SKIPPED, and writes the verdict_dict as a JSON file to output_dir. Produces no side-effects on the function source file.
+
+_validate_single_bug(result_json_rel, proj_dir, work_dir, resume, bug_validator_path)
+Pre-condition: result_json_rel is a relative path to a verification result JSON file under output_dir whose 'verdict' is MISMATCH. proj_dir is the project root. work_dir is the workspace directory. resume is a boolean. bug_validator_path is a path to custom bug-validator instructions or None.
+Post-condition: Builds a probe script that exercises the claimed violation, executes it, and produces a bug_validation/<bug_id>.md report describing the specification claim, actual behavior, code evidence, trigger condition, and reproduction steps. Also writes a bug_validation/<bug_id>.result.json file whose 'confirmation_status' is 'confirmed' when the probe output corroborates the violation, or 'not_confirmed' when it does not.
+
+_generate_validation_summary(work_dir)
+Pre-condition: work_dir is the workspace directory containing a bug_validation/ subdirectory with .result.json files from prior bug validations.
+Post-condition: Writes bug_validation/summary.json containing counts of total reported bugs, confirmed bugs (where confirmation_status is 'confirmed'), and not-confirmed bugs, aggregated across all .result.json files found under bug_validation/.
+
+_spec_task_done(future)
+Pre-condition: future is a concurrent.futures.Future object or None.
+Post-condition: Returns True iff future is not None and has completed (is done or cancelled); returns False otherwise.
+
+_spec_task_exit_code(future)
+Pre-condition: future is a completed concurrent.futures.Future object representing a spec-generation subprocess.
+Post-condition: Returns the integer exit code of the subprocess.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

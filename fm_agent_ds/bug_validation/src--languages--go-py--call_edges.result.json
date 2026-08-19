@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--go-py--call_edges",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/go-py/call_edges.py",
+  "function_name": "call_edges",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--go-py--call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--go-py--call_edges.md",
+  "probe_stdout": "NOT CONFIRMED — keys are strings (['main-go::main::main']), ::-separated FQN format present: True. This matches the spec (keys are canonicalized caller FQNs using :: as namespace separator), not the claimed bug (tuple keys).",
+  "trigger_summary": "The claim is that keys are returned as tuples instead of ::-separated strings; probing a minimal codegraph DB shows the actual keys are ::-separated FQN strings."
+}

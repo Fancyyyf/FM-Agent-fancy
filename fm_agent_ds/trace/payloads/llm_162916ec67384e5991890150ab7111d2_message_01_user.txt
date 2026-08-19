@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+text is a string, possibly empty.
+
+Code block:
+```python
+Line 1: def parse_existing_opencode_config(text: str) -> dict:
+Line 2:     if not text.strip():
+Line 3:         return {}
+Line 4:     try:
+Line 5:         loaded = json.loads(_strip_jsonc(text))
+Line 6:     except json.JSONDecodeError as exc:
+Line 7:         raise ConfigWizardError(
+Line 8:             "Existing OpenCode config is invalid JSON/JSONC; refusing to overwrite it."
+Line 9:         ) from exc
+Line 10:     if not isinstance(loaded, dict):
+Line 11:         raise ConfigWizardError(
+Line 12:             "Existing OpenCode config must be a JSON object at the top level."
+Line 13:         )
+Line 14:     return loaded
+```
+
+Additional context:
+_strip_jsonc(text: str) -> str
+Pre-condition: text is a string.
+Post-condition: Returns a string with all JSONC comment syntax removed (single-line // comments and block /* */ comments), preserving every other character, whitespace, and line structure unchanged from the input text.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

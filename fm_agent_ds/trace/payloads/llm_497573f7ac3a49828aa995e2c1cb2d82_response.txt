@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "code=0, status=None",
+  "offending_statements": "Line 2: text = str(code or status or \"?\")",
+  "reason": "The specification requires the label to be the string representation of whichever of code or status is non-None, but the code uses truthiness with 'or', causing falsy non-None values like 0 to be ignored and fall back to '?'. For code=0 and status=None, the code returns ('red', '?') while the specification demands ('red', '0')."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "main-py--_clean_previous_run",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/main-py/_clean_previous_run.py",
+  "function_name": "_clean_previous_run",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_main-py--_clean_previous_run.py",
+  "detail_file": "fm_agent/bug_validation/main-py--_clean_previous_run.md",
+  "probe_stdout": "CONFIRMED \\u2014 shutil.rmtree raised OSError on symlink (Cannot call rmtree on a symbolic link); target directory and contents untouched at: '/tmp/tmpj6g9l18x/real_target'\\n  marker file intact: '/tmp/tmpj6g9l18x/real_target/important_data.txt'",
+  "trigger_summary": "When work_dir is a symlink to a directory, os.path.isdir returns True but shutil.rmtree raises OSError (Python 3.12+) or removes only the symlink, leaving the target directory untouched."
+}

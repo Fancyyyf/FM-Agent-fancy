@@ -1,0 +1,1 @@
+{"callees": [{"name": "_memory_path", "signature": "_memory_path(work_dir) -> str", "pre_condition": "work_dir is a path to an existing directory.", "post_condition": "Returns the path identifying the ignored-checks memory file under work_dir. The returned path resides under the directory work_dir."}]}

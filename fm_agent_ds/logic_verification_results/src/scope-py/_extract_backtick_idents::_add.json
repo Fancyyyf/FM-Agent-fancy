@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_extract_backtick_idents::_add.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "If the lowercased form of token with all leading underscores removed has length at least 2, is not a Python reserved keyword, and is not a member of the stop-word set, then that cleaned form is inserted into the enclosing function's mutable result collection. If any of those conditions fails, the function returns without modifying any observed state.",
+    "actual_behavior": "After execution, the set `result` is updated as follows: let `t = token.lower().strip('_')`. If `len(t) >= 2` and `t  _PY_KEYWORDS` and `t  _STOP`, then `result = result_old  {t}`, otherwise `result = result_old`, where `result_old` denotes the set `result` immediately before the call.",
+    "code_evidence": "Line 2: t = token.lower().strip('_')",
+    "trigger_condition": "The code uses strip('_') which removes trailing underscores. The specification requires removing only leading underscores, so for token 'foo_', the code inserts 'foo' instead of the required 'foo_'."
+  }
+}

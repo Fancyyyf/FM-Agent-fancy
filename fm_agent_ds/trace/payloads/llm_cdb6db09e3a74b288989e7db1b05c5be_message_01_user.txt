@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+handle is either a concurrent.futures.Future object, a subprocess.Popen object, or None.
+
+Code block:
+```python
+Line 1: def _spec_task_done(handle):
+Line 2:     # spec_procs may be subprocess.Popen handles or executor futures.
+Line 3:     if hasattr(handle, "poll"):
+Line 4:         return handle.poll() is not None
+Line 5:     if hasattr(handle, "done"):
+Line 6:         return handle.done()
+Line 7:     return True
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

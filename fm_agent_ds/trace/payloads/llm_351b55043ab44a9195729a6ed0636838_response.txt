@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function call raises a TypeError exception because `re.search` expects a string, but `spec` is a dict. No normal return occurs. Formal: ¬(∃ pre, post · (pre, post) = _parse_spec_conditions(spec)) ∧ TypeRaised(TypeError)"
+}

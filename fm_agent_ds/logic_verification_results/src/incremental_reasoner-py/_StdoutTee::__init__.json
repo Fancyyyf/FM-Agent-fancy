@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_StdoutTee::__init__.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "The _StdoutTee instance stores references to console and log_stream such that subsequent write() calls on this instance forward every written string to both the stored console and log_stream objects.",
+    "actual_behavior": "After execution, the instance attribute `self._console` holds a reference to the writable stream object passed as `console`, and `self._log_stream` holds a reference to the writable stream object passed as `log_stream`. Formally: `self._console is console` and `self._log_stream is log_stream`. Both objects remain writable streams.",
+    "code_evidence": "Line 1: def __init__(self, console, log_stream):\nLine 2:     self._console = console\nLine 3:     self._log_stream = log_stream",
+    "trigger_condition": "The __init__ method only stores references; it does not provide the write() method needed to forward strings to both streams. After construction, calling instance.write('test') raises AttributeError, failing to forward to console and log_stream as required."
+  }
+}

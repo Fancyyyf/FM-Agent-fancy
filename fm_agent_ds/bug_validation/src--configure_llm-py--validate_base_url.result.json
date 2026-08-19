@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--validate_base_url",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/validate_base_url.py",
+  "function_name": "validate_base_url",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--validate_base_url.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--validate_base_url.md",
+  "probe_stdout": "CONFIRMED — validate_base_url accepted an invalid URL (url='http://example.com:abc') but the spec requires raising ConfigWizardError\n",
+  "trigger_summary": "URL with non-numeric port (http://example.com:abc) passes urlparse netloc check but is syntactically invalid per RFC 3986; the spec requires ConfigWizardError to be raised."
+}

@@ -1,11 +1,11 @@
 {
   "id": "src--languages--erlang-py--ElpClient::_wait_for_response",
-  "source_file": "src/languages/erlang-py/ElpClient::_wait_for_response.py",
-  "function_name": "ElpClient::_wait_for_response",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_l5vkw0lv/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::_wait_for_response.py",
+  "function_name": "_wait_for_response",
   "confirmation_status": "confirmed",
-  "attempts": 1,
+  "attempts": 2,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--ElpClient::_wait_for_response.py",
   "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--ElpClient::_wait_for_response.md",
-  "probe_stdout": "CONFIRMED — actual: None | expected: RuntimeError for any non-content-modified error object",
-  "trigger_summary": "An empty error dict {} in a matching JSON-RPC response is falsy in Python, causing the code to skip error handling and return None instead of raising RuntimeError."
+  "probe_stdout": "CONFIRMED \u2014 actual: None (silent sentinel for a server-error response) | expected: an exception raised for {'jsonrpc': '2.0', 'id': 1, 'error': {}}",
+  "trigger_summary": "ElpClient.request receives a JSON-RPC error response whose 'error' value is falsy (e.g. {\"id\": 1, \"error\": {}}); the truthiness guard `if error:` skips both exception branches and returns None, silently treating a server error as a successful result-less reply instead of raising an exception."
 }

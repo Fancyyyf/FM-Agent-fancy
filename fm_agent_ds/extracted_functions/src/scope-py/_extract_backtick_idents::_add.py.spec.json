@@ -1,0 +1,5 @@
+{
+  "signature": "_add(token: str) -> None",
+  "pre_condition": "token is a non-empty string representing an identifier candidate extracted from a backtick-quoted span or a triple-backtick-fenced code block within issue text.",
+  "post_condition": "If the lowercased form of token with all leading underscores removed has length at least 2, is not a Python reserved keyword, and is not a member of the stop-word set, then that cleaned form is inserted into the enclosing function's mutable result collection. If any of those conditions fails, the function returns without modifying any observed state."
+}

@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/adapter_for_api_style.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "When api_style matches a recognized API style identifier, returns a non-empty string that identifies the OpenCode npm provider-adapter package corresponding to that style; each distinct recognized API style identifier maps to a distinct non-empty package name string. Raises ConfigWizardError when api_style does not match any recognized API style identifier.",
+    "actual_behavior": "(api_style = 'anthropic' => returns '@ai-sdk/anthropic')  (api_style = 'openai' => returns '@ai-sdk/openai-compatible')  (api_style  {'anthropic','openai'} => raises ConfigWizardError with message 'Unsupported API style: ' + api_style)",
+    "code_evidence": "Line 4:     if api_style == \"openai\":\nLine 5:         return \"@ai-sdk/openai-compatible\"",
+    "trigger_condition": "For the recognized API style 'openai', the code returns '@ai-sdk/openai-compatible', which is the package for generic OpenAI-compatible providers, not the package corresponding to the 'openai' style itself. The correct package for the 'openai' style is '@ai-sdk/openai'. Therefore the code's output violates the specification's requirement that it returns the package name that identifies the provider-adapter for that specific style."
+  }
+}

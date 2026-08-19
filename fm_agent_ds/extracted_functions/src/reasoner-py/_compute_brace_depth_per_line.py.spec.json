@@ -1,0 +1,5 @@
+{
+  "signature": "_compute_brace_depth_per_line(lines: list[str]) -> list[int]",
+  "pre_condition": "lines is a non-empty list of strings, each representing one line of source code.",
+  "post_condition": "Returns a list of integers of the same length as lines. For each index i, the element at position i equals the net count of unmatched '{' characters minus unmatched '}' characters in the combined text of lines[0] through lines[i], where '{' and '}' occurring inside any double-quoted string literal, single-quoted character literal, line comment (from '//' to end of line), or block comment (between '/*' and '*/') are excluded from counting regardless of whether the comment spans multiple lines. The initial depth before the first line is 0."
+}

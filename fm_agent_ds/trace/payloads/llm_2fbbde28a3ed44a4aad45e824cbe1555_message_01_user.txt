@@ -1,0 +1,50 @@
+Programming language: Python
+
+Pre-condition:
+block is a non-empty string containing source code. pre_condition is a string describing program state before block executes. language is a non-empty string identifying the programming language of block. knowledge is a string (may be empty).
+
+Code block:
+```python
+Line 1: def _generate_block_post_condition(block, pre_condition, knowledge, language,
+Line 2:                                    trace_dir=None, trace_meta=None):
+Line 3:     info_str = f"\nAdditional context:\n{knowledge}" if knowledge else ""
+Line 4:     messages = [
+Line 5:         {"role": "system", "content": (
+Line 6:             f"You are an expert in formal verification of {language} programs. "
+Line 7:             f"Given a {language} code block and its pre-condition, generate the post-condition "
+Line 8:             "that describes the program state after the code block finishes execution. "
+Line 9:             "Cover all execution paths including early returns, exceptions, and normal flow-through. "
+Line 10:             f"Apply {language}-specific semantics (ownership, lifetimes, error handling, etc.) as appropriate. "
+Line 11:             "Be precise and unambiguous. Express the post-condition in natural language and formal logic."
+Line 12:         )},
+Line 13:         {"role": "user", "content": (
+Line 14:             f"Programming language: {language}\n\n"
+Line 15:             f"Pre-condition:\n{pre_condition}\n\n"
+Line 16:             f"Code block:\n```{language.lower()}\n{block}\n```\n"
+Line 17:             f"{info_str}\n"
+Line 18:             "Generate the post-condition. Return only a valid JSON object with this "
+Line 19:             "required field: {\"post_condition\": \"...\"}. Do not include Markdown, "
+Line 20:             "tags, or prose outside the JSON object."
+Line 21:         )}
+Line 22:     ]
+Line 23:     meta = {
+Line 24:         "purpose": "generate_block_post_condition",
+Line 25:         "summary": "Generated post-condition for code block",
+Line 26:         **(trace_meta or {}),
+Line 27:     }
+Line 28:     return _llm_json_call(
+Line 29:         _llm_provider_client,
+Line 30:         REASONER_POST_CONDITION_MODEL,
+Line 31:         messages,
+Line 32:         _parse_post_condition_json,
+Line 33:         '{"post_condition": "non-empty string"}',
+Line 34:         trace_dir=trace_dir,
+Line 35:         trace_meta=meta,
+Line 36:     )
+```
+
+Additional context:
+_llm_json_call(client, model, messages, parser, expected_schema_desc, trace_dir=None, trace_meta=None) -> dict
+Pre-condition: client is an LLM API client callable. model is a non-empty string naming the LLM model. messages is a list of message dicts with 'role' and 'content' keys. parser is a callable that accepts a string and returns a dict. expected_schema_desc is a non-empty string describing the expected JSON schema.
+Post-condition: Returns a dict containing the parsed JSON response from the LLM, validated against the schema described by expected_schema_desc. Raises an exception if the LLM call fails or the response cannot be parsed to valid JSON matching the expected schema.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

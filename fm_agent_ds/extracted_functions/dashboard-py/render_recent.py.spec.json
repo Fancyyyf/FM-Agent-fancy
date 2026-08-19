@@ -1,0 +1,5 @@
+{
+  "signature": "render_recent(state: State) -> Rich-renderable",
+  "pre_condition": "state is a State instance whose recent_events attribute is an iterable collection of (when, stage, status, summary) tuples, where status is a string.",
+  "post_condition": "Returns a Rich Panel renderable with title 'Recent Events' and cyan border-style. The panel contains a table with columns for time, stage, status, and summary. Each tuple from state.recent_events produces exactly one table row. The status cell of each row is color-coded by a fixed mapping: the string 'success' maps to green, 'mismatch' maps to yellow, 'error' maps to red, 'format_error' maps to magenta, and any status string not matching one of these four values maps to white. The state argument is not mutated."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "config.settings.codegraph.version = \"1.0\"; config.settings.codegraph.bin_dir = \"/nonexistent\"; a codegraph binary on PATH that outputs \"1.0\" when called with --version.",
+  "offending_statements": "Line 11: cmd = _codegraph_cmd() — does not ensure the command references the binary inside the configured bin_dir. Line 14: [cmd, \"--version\"] — runs the binary without verifying its location against the bin_dir.",
+  "reason": "The specification requires checking the codegraph binary located within the configured bin_dir. The code does not enforce that the executed binary is from that directory; it relies on whatever command _codegraph_cmd() returns, which may be a binary elsewhere on PATH. This allows a True return even when the binary in bin_dir is missing or broken, violating the condition that True must come from the binary in the specified bin_dir."
+}

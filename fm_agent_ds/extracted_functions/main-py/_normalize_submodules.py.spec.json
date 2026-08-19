@@ -1,0 +1,5 @@
+{
+  "signature": "_normalize_submodules(proj_dir: str, submodules: list[str] | None) -> list[str]",
+  "pre_condition": "proj_dir names an existing directory on the filesystem. submodules is an iterable of strings or None.",
+  "post_condition": "Returns a list of non-empty, forward-slash-separated relative directory paths. Each returned path names a directory that exists and is a strict descendant of proj_dir (not proj_dir itself). No returned path is an ancestor or descendant of any other returned path — the list is collapsed so that if one path is a prefix directory of another, only the shallower path is kept. The list contains no duplicates and is sorted by increasing directory depth (fewer path components first), with ties broken lexicographically. If submodules is None, empty, or contains only empty/whitespace strings, returns an empty list. Raises ValueError for any submodule path that is non-empty and does not name an existing directory inside proj_dir."
+}

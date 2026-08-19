@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def source_for_range(self, lsp_range: dict) -> str:
+Line 2:         start = self.position_to_offset(lsp_range["start"])
+Line 3:         end = self.position_to_offset(lsp_range["end"])
+Line 4:         return self.source[start:end]
+```
+
+Condition A (what the code actually does):
+The method returns a string result such that result == self.source[start:end], where start = self.position_to_offset(lsp_range['start']) and end = self.position_to_offset(lsp_range['end']). Because the pre-condition guarantees that lsp_range['start'] does not lexicographically follow lsp_range['end'] relative to the source contents, we have start <= end. The slicing operation self.source[start:end] yields the substring from offset start (inclusive) to end (exclusive); if start equals end, the empty string is returned. No exceptions are raised.
+
+Condition B (what the specification requires):
+Returns the substring of self.source spanning from the byte offset corresponding to lsp_range['start'] (inclusive) to the byte offset corresponding to lsp_range['end'] (exclusive). Byte-offset resolution follows the same rules as position_to_offset: positions exceeding source boundaries are clamped to the nearest valid offset; characters above U+FFFF consume two UTF-16 code units in position mapping.
+
+Additional context:
+position_to_offset(self, lsp_position: dict) -> int
+Pre-condition: self is a _SourceIndex instance whose source attribute is initialized. lsp_position is a dict with 'line' (non-negative integer) and 'character' (non-negative integer; UTF-16 code units) entries.
+Post-condition: Returns the 0-indexed byte offset within self.source that corresponds to the given LSP position. Lines are zero-indexed, characters counted in UTF-16 code units (surrogate pairs consume 2 units). Out-of-range positions are clamped: a line beyond the last line resolves to the offset after the final character of the source; a character beyond the line length resolves to the offset after the last character of that line.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--run_wizard",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/run_wizard.py",
+  "function_name": "run_wizard",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--run_wizard.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--run_wizard.md",
+  "probe_stdout": "FM-Agent LLM configuration\n\nLocal CLI backends use their own authentication; no API key or OpenCode provider configuration is required.\nFM-Agent local CLI backend configuration\n\nBackend: auto\n\nThe following files will be updated:\n  - /tmp/tmpyhlwtr2u/fm-agent.toml\n\nNo legacy LLM overrides were found in the project .env file.\n\nNo API key or OpenCode provider configuration will be changed.\n\nWarning: these shell environment variables override the saved LLM settings:\n  LLM_API_KEY, LLM_API_BASE_URL, LLM_MODEL, FM_AGENT_MODEL_BACKEND, LLM_EFFORT, OPENCODE_MODEL_PROVIDER\nThe wizard cannot change the shell that launched it. Before starting FM-Agent\nin this shell, unset them to use the saved configuration:\n  unset LLM_API_KEY LLM_API_BASE_URL LLM_MODEL FM_AGENT_MODEL_BACKEND LLM_EFFORT OPENCODE_MODEL_PROVIDER\n\nCONFIRMED — run_wizard() raised PermissionError instead of ConfigWizardError for an unwritable path: [Errno 13] Permission denied: '/tmp/tmpyhlwtr2u/fm-agent.toml.bak.20260727-235010'",
+  "trigger_summary": "When a non-opencode backend is selected and the fm-agent.toml path is unwritable, run_wizard() raises PermissionError instead of the specification-required ConfigWizardError."
+}

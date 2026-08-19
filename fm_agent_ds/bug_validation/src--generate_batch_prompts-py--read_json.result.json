@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_batch_prompts-py--read_json",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_batch_prompts-py/read_json.py",
+  "function_name": "read_json",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_batch_prompts-py--read_json.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_batch_prompts-py--read_json.md",
+  "probe_stdout": "CONFIRMED — list file returned list: [1, 2, 3] | expected dict per spec",
+  "trigger_summary": "Pass a file containing non-dict JSON (e.g. a JSON array) to read_json; json.loads returns the raw type (list) instead of dict, violating the return-type specification."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "caller_fqn = 'A', edge = _ResolvedExtraEdge(callee_fqn='B', info_names={'x'}), phase_fqns = {'B'}, callees_map = {}, callers_map = {'B': set()}, all_callees_map = {'A': set()}, edge_aliases_map = {'B': {'A': set()}}",
+  "offending_statements": "Line 17: if callee_fqn in phase_fqns:\nLine 18:     callees_map[caller_fqn].add(callee_fqn)\nLine 19:     callers_map[callee_fqn].add(caller_fqn)",
+  "reason": "The specification requires that when callee_fqn is in phase_fqns, callees_map[caller_fqn] and callers_map[callee_fqn] are updated. The code does not guarantee those keys exist before calling .add(), causing a KeyError. This exception leaves all_callees_map and edge_aliases_map mutated but fails to perform the required phase-scoped mappings and does not return a boolean, violating the specification."
+}

@@ -1,1 +1,11 @@
-{"id": "src--pipeline_setup-py--_phase_plan_schema_errors", "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_phase_plan_schema_errors.py", "function_name": "_phase_plan_schema_errors", "confirmation_status": "confirmed", "attempts": 1, "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_phase_plan_schema_errors.py", "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_phase_plan_schema_errors.md", "probe_stdout": "CONFIRMED — actual: UnicodeDecodeError propagated uncaught | expected: a list of error strings (per spec)", "trigger_summary": "A file at phases_path containing non-UTF-8 bytes causes UnicodeDecodeError to propagate uncaught, violating the spec guarantee that the function always returns a list."}
+{
+  "id": "src--pipeline_setup-py--_phase_plan_schema_errors",
+  "source_file": "fm_agent/extracted_functions/src/pipeline_setup-py/_phase_plan_schema_errors.py",
+  "function_name": "_phase_plan_schema_errors",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_phase_plan_schema_errors.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_phase_plan_schema_errors.md",
+  "probe_stdout": "sanity: missing file -> returned [\"phases.json could not be read: [Errno 2] No such file or directory: '/tmp/probe_phase_plan_schema_errors_wd_390_n/does_not_exist.json'\"] (no exception)\nnote: locale preferred encoding = UTF-8\nCONFIRMED — UnicodeDecodeError escaped the function: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte | spec requires a non-empty returned list instead of any exception",
+  "trigger_summary": "Pointing the validator at a phases.json whose bytes are invalid in the default text encoding (e.g., starting with b'\\xff\\xfe') makes json.load's text read raise UnicodeDecodeError, which is neither OSError nor json.JSONDecodeError and therefore escapes both except handlers, violating the spec's never-raise error contract."
+}

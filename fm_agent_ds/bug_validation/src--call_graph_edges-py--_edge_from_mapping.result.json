@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_edge_from_mapping",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_edge_from_mapping.py",
+  "function_name": "_edge_from_mapping",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_edge_from_mapping.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_edge_from_mapping.md",
+  "probe_stdout": "[PASS] caller-as-string: raised error with source path ✓\n[PASS] callee-as-string: raised error with source path ✓\n[PASS] caller-missing-key: raised error with source path ✓\n[PASS] callee-missing-key: raised error with source path ✓\n[PASS] caller-as-list: raised error with source path ✓\n[PASS] callee-as-list: raised error with source path ✓\nNOT CONFIRMED — all malformed sub-object cases raised ValueError with source path in message, matching the spec\n",
+  "trigger_summary": "Malformed caller/callee sub-objects (string, list, missing) are passed to _parse_caller/_parse_callee; helpers validate and raise ValueError with source path included."
+}

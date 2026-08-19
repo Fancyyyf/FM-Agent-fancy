@@ -1,0 +1,87 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _function_spans(filepath, lang_key, proj_dir=None):
+Line 2:     """Return ``(spans, raw_lines)`` for a source file.
+Line 3:     ``spans`` is a list of ``(deduped_name, start_idx, end_idx)`` line ranges,
+Line 4:     one per function, named exactly as run_extraction names the extracted files
+Line 5:     (duplicate names get ``_1``, ``_2``, ... suffixes). ``raw_lines`` are the
+Line 6:     file's original lines (newline characters preserved) so callers can rewrite
+Line 7:     the file by line index.
+Line 8:     Function boundaries come from codegraph via the language registry when
+Line 9:     ``proj_dir`` is given and codegraph indexes the file; otherwise they fall
+Line 10:     back to the regex extractor (_extract_functions_brace / _indent). Both
+Line 11:     backends yield the same (name, start_idx, end_idx) shape, so the dedup
+Line 12:     naming below is identical regardless of which one is used.
+Line 13:     """
+Line 14:     lang_cfg = LANG_CONFIG[lang_key]
+Line 15:     with open(filepath, "r", errors="replace") as f:
+Line 16:         raw_lines = f.readlines()
+Line 17:     # Extraction operates on newline-stripped lines; indices line up 1:1 with
+Line 18:     # raw_lines (readlines yields one entry per line).
+Line 19:     norm_lines = [l.rstrip("\n").rstrip("\r") for l in raw_lines]
+Line 20:     raw_funcs = None
+Line 21:     if proj_dir is not None:
+Line 22:         raw_funcs = function_spans_for_file(proj_dir, filepath, lang_key)
+Line 23:     if raw_funcs is None:
+Line 24:         if lang_cfg["body"] == "brace":
+Line 25:             raw_funcs = _extract_functions_brace(norm_lines, lang_key, lang_cfg)
+Line 26:         else:
+Line 27:             raw_funcs = _extract_functions_indent(norm_lines, lang_cfg)
+Line 28:     name_counts = {}
+Line 29:     spans = []
+Line 30:     for name, start, end in raw_funcs:
+Line 31:         cname = canonicalize(name)
+Line 32:         count = name_counts.get(cname, 0)
+Line 33:         name_counts[cname] = count + 1
+Line 34:         deduped = cname if count == 0 else f"{cname}_{count}"
+Line 35:         spans.append((deduped, start, end))
+Line 36:     return spans, raw_lines
+```
+
+Condition A (what the code actually does):
+After successful execution (no uncaught exceptions), the function returns a tuple (spans, raw_lines) such that:
+
+1. raw_lines = list of strings, each representing a line from the file at `filepath`, read via `f.readlines()` with `errors='replace'`. Newline characters are preserved exactly as present in the file.
+
+2. Let `norm_lines` = [l.rstrip('\n').rstrip('\r') for l in raw_lines], `lang_cfg` = LANG_CONFIG[lang_key].
+
+3. The detection source for function boundaries is determined as:
+   - If `proj_dir is not None` and `function_spans_for_file(proj_dir, filepath, lang_key)` returns a list (i.e. not `None`), that list is used as `raw_funcs`.
+   - Otherwise, if the return value from the codegraph call is `None` (or if `proj_dir is None`), then:
+        - if `lang_cfg['body'] == 'brace'`: `raw_funcs` = _extract_functions_brace(norm_lines, lang_key, lang_cfg)
+        - else: `raw_funcs` = _extract_functions_indent(norm_lines, lang_cfg).
+   `raw_funcs` is a list of triples `(name, start_idx, end_idx)` with 0‑based inclusive line indices, possibly empty if no functions are found.
+
+4. Let `name_counts` be an initially empty dictionary, and `spans` an empty list. For each `(name, start, end)` in `raw_funcs` in order:
+   a. `cname` = canonicalize(name), which replaces all '/' characters with '_'.
+   b. `count` = current value of `name_counts[cname]` (0 if not present).
+   c. If `count == 0`, then `deduped` = `cname`; otherwise `deduped` = `f'{cname}_{count}'`.
+   d. Append `(deduped, start, end)` to `spans`.
+   e. `name_counts[cname]` = `count + 1`.
+
+5. The function returns `(spans, raw_lines)`, where `spans` is the list of deduplicated named ranges and `raw_lines` the unmodified file lines.
+
+Formally, let `DETECT` be the overall function extraction (as in step 3) that yields a sequence of m triples \( (n_i, s_i, e_i) \).  For \( i=1 \dots m \), define \( C_i = \texttt{canonicalize}(n_i) \), \( k_i = |\{ j < i \mid \texttt{canonicalize}(n_j) = C_i \}| \).  Then \(\texttt{spans} = [\, (D_i, s_i, e_i) \mid i=1\dots m \,]\) where \( D_i = C_i \) if \( k_i = 0 \), else \( D_i = C_i + \_ \! + \texttt{str}(k_i) \).  \(\texttt{raw\_lines}\) is the list of lines as described.  The returned tuple is \((\texttt{spans}, \texttt{raw\_lines})\).  No exceptions are raised because the pre‑conditions guarantee readable file, valid language configuration, and valid backup/fallback extraction functions.
+
+Condition B (what the specification requires):
+Returns a pair (spans, raw_lines). raw_lines is a list of strings containing every line of the file, each with its trailing newline character preserved; the file is decoded with replacement characters on decoding error. spans is a list of (name, start_idx, end_idx) tuples where start_idx and end_idx are 0-based inclusive line indices delimiting each function definition found in the file. Each name is the function's canonicalized identifier — free of characters unsafe for filesystem paths and FQNs — with a disambiguation suffix appended when multiple distinct functions share the same canonicalized name: the first occurrence retains the bare canonicalized name, while each subsequent occurrence appends '_N' where N is the 1-based count of prior occurrences of that canonicalized name. The ordering of spans reflects the order in which function definitions appear in the source file.
+
+Additional context:
+function_spans_for_file(proj_dir: str, filepath: str, lang_key: str) -> list[tuple[str, int, int]] | None
+Pre-condition: proj_dir is a valid project root directory path. filepath refers to a source file. lang_key is a registered language key.
+Post-condition: Returns a list of (name, start_idx, end_idx) tuples representing function definitions found in the file by the codegraph index, with start_idx and end_idx as 0-based inclusive line indices. Returns None when the index does not cover this file.
+
+_extract_functions_brace(norm_lines: list[str], lang_key: str, lang_cfg: dict) -> list[tuple[str, int, int]]
+Pre-condition: norm_lines is a list of newline-stripped source code lines from a file whose language uses brace-delimited blocks. lang_key is a registered language key. lang_cfg is the configuration dictionary for that language.
+Post-condition: Returns a list of (name, start_idx, end_idx) tuples for each function definition found via brace-matching, with start_idx and end_idx as 0-based inclusive line indices. Returns an empty list if no function definitions are found.
+
+_extract_functions_indent(norm_lines: list[str], lang_cfg: dict) -> list[tuple[str, int, int]]
+Pre-condition: norm_lines is a list of newline-stripped source code lines from a file whose language uses indentation-delimited blocks. lang_cfg is the configuration dictionary for that language.
+Post-condition: Returns a list of (name, start_idx, end_idx) tuples for each function definition found via indentation matching, with start_idx and end_idx as 0-based inclusive line indices. Returns an empty list if no function definitions are found.
+
+canonicalize(name: str) -> str
+Pre-condition: name is a string representing a function name or identifier that may contain characters unsafe for filesystem paths or FQNs.
+Post-condition: Returns a string where all occurrences of '/' have been translated to '_'. The result is safe for use as a filesystem path component and as a segment in a '::'-delimited FQN.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,12 @@
+Programming language: Python
+
+Pre-condition:
+num is an integer. domain_dir is a string path to an existing directory, accessible from the enclosing scope.
+
+Code block:
+```python
+Line 1:     def types_path(num):
+Line 2:         return os.path.join(domain_dir, f"phase_{num:02d}_types.txt")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

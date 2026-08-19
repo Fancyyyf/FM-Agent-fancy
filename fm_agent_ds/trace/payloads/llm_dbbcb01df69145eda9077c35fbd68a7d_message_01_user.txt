@@ -1,0 +1,76 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def apply_local_backend_configuration(
+Line 2:     backend: str,
+Line 3:     paths: WizardPaths,
+Line 4: ) -> tuple[list[tuple[Path, Path | None]], tuple[str, ...]]:
+Line 5:     toml_text = _read_text_if_exists(paths.toml_path)
+Line 6:     if not toml_text:
+Line 7:         raise ConfigWizardError(
+Line 8:             f"fm-agent.toml not found at {paths.toml_path}; refusing to guess a new project config."
+Line 9:         )
+Line 10:     toml_updates = local_backend_toml_updates(paths.env_path, backend)
+Line 11:     updated_toml = update_llm_settings_toml_text(toml_text, toml_updates)
+Line 12:     try:
+Line 13:         tomllib.loads(updated_toml)
+Line 14:     except tomllib.TOMLDecodeError as exc:  
+Line 15:         raise ConfigWizardError("Generated fm-agent.toml is invalid TOML.") from exc
+Line 16:     updated_env, removed_overrides = remove_legacy_llm_env_overrides(
+Line 17:         _read_text_if_exists(paths.env_path)
+Line 18:     )
+Line 19:     backups = [(paths.toml_path, backup_file(paths.toml_path))]
+Line 20:     if removed_overrides:
+Line 21:         backups.append((paths.env_path, backup_file(paths.env_path, private=True)))
+Line 22:     atomic_write(paths.toml_path, updated_toml)
+Line 23:     if removed_overrides:
+Line 24:         atomic_write(paths.env_path, updated_env)
+Line 25:     return backups, removed_overrides
+```
+
+Condition A (what the code actually does):
+Post-condition: If `_read_text_if_exists(paths.toml_path)` returns a falsy value (None or empty string), the function raises `ConfigWizardError` with a message indicating that fm-agent.toml was not found, and no files are created or modified. If `toml_text` is truthy but `tomllib.loads(updated_toml)` raises a `tomllib.TOMLDecodeError`, the function raises `ConfigWizardError` with the message 'Generated fm-agent.toml is invalid TOML.' and no files are written; both `paths.toml_path` and `paths.env_path` remain unchanged. Otherwise, the function completes normally and returns `(backups, removed_overrides)`. In this success case:
+- `updated_toml` (valid TOML incorporating backend and preserved settings) has been atomically written to `paths.toml_path`.
+- If `removed_overrides` is non-empty, `paths.env_path` has been atomically overwritten with `updated_env` (the environment content with those overrides removed); if `removed_overrides` is empty, `paths.env_path` is left in its original state (unchanged or absent if it did not exist before).
+- A backup copy of the original content of `paths.toml_path` exists at the path returned by `backup_file(paths.toml_path)`. If `removed_overrides` is non-empty, a private backup of the original `paths.env_path` also exists at `backup_file(paths.env_path, private=True)`.
+- The returned list `backups` contains `(paths.toml_path, backup_toml_path)` and, if an env backup was made, `(paths.env_path, backup_env_path)`. The second element `removed_overrides` is the tuple of environment variable names whose legacy overrides were removed.
+
+Formally:
+(¬toml_text → (raise ConfigWizardError ∧ (toml_path unchanged) ∧ (env_path unchanged))) ∧
+(toml_text ∧ ¬valid_TOML(updated_toml) → (raise ConfigWizardError ∧ (toml_path unchanged) ∧ (env_path unchanged))) ∧
+(toml_text ∧ valid_TOML(updated_toml) →
+  (∃ backup_toml = backup_file(paths.toml_path) ∧
+   atomic_write(paths.toml_path, updated_toml) ∧
+   (removed_overrides = () → env_unchanged) ∧
+   (removed_overrides ≠ () →
+      (updated_env, removed_overrides) = remove_legacy_llm_env_overrides(env_text) ∧
+      backup_env = backup_file(paths.env_path, private=True) ∧
+      atomic_write(paths.env_path, updated_env)) ∧
+   return (backups, removed_overrides) ∧
+   backuups = [(paths.toml_path, backup_toml)] ++ ([(paths.env_path, backup_env)] if removed_overrides ≠ () else [])))
+
+Condition B (what the specification requires):
+Raises ConfigWizardError when paths.toml_path does not identify a readable fm-agent.toml file. Raises ConfigWizardError when the post-update TOML content is not parseable as valid TOML; when this occurs no file has been modified. Returns a tuple (backups, removed_overrides) where: removed_overrides is a tuple of zero or more environment variable names; for every name in removed_overrides, the corresponding legacy LLM override entry that existed in the project .env file before the call is absent from paths.env_path after the call, while all other .env entries are preserved; paths.env_path is modified if and only if removed_overrides is non-empty. backups is a list of (modified_path, backup_path) pairs. Its first element maps paths.toml_path to the path of a pre-modification backup of that file. When removed_overrides is non-empty, an additional element maps paths.env_path to the path of a pre-modification backup of that file. After return, paths.toml_path contains a valid TOML document in which the LLM-section backend field equals backend and every other LLM-section field has the same value it held before the call. No API key or OpenCode provider configuration is written.
+
+Additional context:
+local_backend_toml_updates(env_path: Path, backend: str) -> dict[str, Any]
+Pre-condition: env_path is a Path that identifies a readable .env file or does not identify an existing file. backend is a non-empty string that is not 'opencode'.
+Post-condition: Returns a non-empty dict mapping dot-separated TOML field paths within the LLM section to new values along a key path that sets the LLM backend to backend. When model or effort values exist in the project .env or fm-agent.toml configuration, their current values are preserved in the returned dict.
+
+update_llm_settings_toml_text(toml_text: str, updates: dict[str, Any]) -> str
+Pre-condition: toml_text is valid TOML text. updates is a non-empty dict whose keys are dot-separated field paths that each resolve to a writable leaf location in the LLM section of toml_text.
+Post-condition: Returns valid TOML text in which every field path present in updates has been set to its corresponding value and all other content of toml_text is unchanged.
+
+remove_legacy_llm_env_overrides(env_text: str | None) -> tuple[str | None, tuple[str, ...]]
+Pre-condition: env_text is the text content of a .env file or None.
+Post-condition: Returns (updated_env, removed_overrides). removed_overrides is a tuple of environment variable names whose legacy LLM override entries were present in env_text before the call and are absent from updated_env; every other entry from the original env_text is preserved unchanged in updated_env. When env_text is None or empty, returns (env_text, ()).
+
+backup_file(path: Path) -> Path
+Pre-condition: path identifies an existing readable file.
+Post-condition: Returns a Path to a copy of the file at path whose content is byte-for-byte identical to the content path held at the time of the call.
+
+atomic_write(path: Path, content: str) -> None
+Pre-condition: path is a writable filesystem path.
+Post-condition: Upon return, path contains exactly content. The write is atomic: any concurrent reader of path observes either the complete prior content or the complete new content.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

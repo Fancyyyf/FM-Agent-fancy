@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/_fqn_for.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string composed of: (1) the non-empty segments of the file_path directory when split by '/', (2) the basename of file_path with its last occurrence of '.' replaced by '-' (unmodified when the basename contains no '.'), and (3) name. All components are joined by '::'. The returned string contains at least two '::' separators and no component in the returned string is empty.",
+    "actual_behavior": "The function returns a string FQN formed by normalizing `file_path` (replacing `os.sep` with '/'), extracting its directory and base name via `os.path.dirname` and `os.path.basename`, then replacing the last '.' in the base name (if any) with '-' to produce a dashed base name. The final result is `'::'.join([comp for comp in dirname(normalized).split('/') if comp] + [dashed_basename, name])`, where `normalized = file_path.replace(os.sep, '/')`, `dirname = os.path.dirname(normalized)`, `base = os.path.basename(normalized)`, and `dashed_basename = base[:last_dot] + '-' + base[last_dot+1:] if (last_dot := base.rfind('.')) > 0 else base`. No side effects occur, and no exceptions are raised for the given valid pre-conditions.",
+    "code_evidence": "Line 14: dashed = base[:last_dot] + \"-\" + base[last_dot + 1:] if last_dot > 0 else base",
+    "trigger_condition": "The specification requires that the last occurrence of '.' in the basename is replaced by '-' regardless of its position. The code only performs the replacement when last_dot > 0, excluding the case where the dot is the first character (e.g., basename '.hidden'). For input file_path='dir/.hidden', name='func', the code returns 'dir::.hidden::func' while the spec would require 'dir::-hidden::func', violating the specification."
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_clean_label(value) -> str",
+  "pre_condition": "value is any input; str(value) produces a string without raising an exception.",
+  "post_condition": "Returns a string. The returned string has no leading or trailing whitespace characters and no trailing semicolon characters (';'). When the non-whitespace portion of the intermediate result is at least two characters long and both its first and last characters are the same single-quote (') or double-quote (\") character, those surrounding quote characters are removed. Returns the empty string when the final content has no non-whitespace characters."
+}

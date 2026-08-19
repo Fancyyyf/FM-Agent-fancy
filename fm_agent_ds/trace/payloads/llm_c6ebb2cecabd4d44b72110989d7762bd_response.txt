@@ -1,0 +1,3 @@
+{
+  "post_condition": "After execution, the function returns the parsed JSON object from the file 'phases.json' located at proj_dir. The return value is a Python dictionary that contains the key 'phases'. The file handle is closed. No exceptions are raised under the given pre-condition. Formally: (result = _load_phases(proj_dir)) ⇒ (isinstance(result, dict) ∧ 'phases' ∈ result.keys())"
+}

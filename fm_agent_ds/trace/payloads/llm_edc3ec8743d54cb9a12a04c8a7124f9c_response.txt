@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "name='my_function', idents=set(), body_words=set(), exc_types=set(), body_lines=1, signals={'traceback_funcs': {'function'}, 'backtick_idents': set(), 'dotted_refs': set(), 'plain_idents': set(), 'all_words': set(), 'exception_types': set()}",
+  "offending_statements": "Line 11: if tf.lower() == name.lower() or tf.lower() in parts:",
+  "reason": "The specification requires that only the full name is tested case-insensitively against traceback-function signals. The code additionally matches any traceback function name against individual name parts, causing a false positive contribution (W_TRACEBACK) when a part (but not the full name) matches a traceback function."
+}

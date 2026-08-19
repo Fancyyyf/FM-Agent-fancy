@@ -1,0 +1,84 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def main(argv: list[str] | None = None) -> int:
+Line 2:     try:
+Line 3:         args = _parse_args(argv)
+Line 4:         project_root = Path(__file__).resolve().parents[1]
+Line 5:         if args.command == "set":
+Line 6:             return run_llm_settings_update(
+Line 7:                 project_root,
+Line 8:                 args.updates,
+Line 9:                 assume_yes=args.yes,
+Line 10:             )
+Line 11:         return run_wizard(project_root)
+Line 12:     except KeyboardInterrupt:
+Line 13:         print("\nAborted.")
+Line 14:         return 1
+Line 15:     except ConfigWizardError as exc:
+Line 16:         print(f"Error: {exc}", file=sys.stderr)
+Line 17:         return 2
+```
+
+Condition A (what the code actually does):
+After the code block executes, the following outcomes are possible:
+
+1. If `_parse_args(argv)` determines that the arguments are invalid or unrecognised, the process terminates (via system exit) with a non‑zero exit code before `main` returns. No further side effects from `main` occur.
+2. Otherwise, `args` is a properly parsed namespace, and `project_root` is the directory one level above the script's location. Then:
+   - If `args.command == "set"`, `run_llm_settings_update(project_root, args.updates, assume_yes=args.yes)` is invoked. This function may modify `fm-agent.toml`, create a backup, and write provider‑specific configuration files; it returns 0 on success or a non‑zero exit code on failure. `main` returns that same integer.
+   - If `args.command` is anything else, `run_wizard(project_root)` is called. It conducts an interactive configuration flow and may persist settings to `fm-agent.toml`, `.env`, and the OpenCode provider config. On success it returns 0; on user abort or validation failure it returns a non‑zero exit code. `main` returns that integer, unless `run_wizard` raises a `ConfigWizardError`, which is caught and causes `main` to return 2 after printing the error to stderr.
+3. If a `KeyboardInterrupt` is raised at any point, the handler prints `\nAborted.` and `main` returns 1.
+4. Any other exception (not `KeyboardInterrupt` or `ConfigWizardError`) propagates out of `main`; the function does not catch it, so the program may terminate with a traceback and a non‑zero exit code.
+
+Formally, let `argv` be the input list or `None`. Let `result` be the value returned by `main` if it returns, and `exception` be any exception raised but not caught. Define the predicate `parse_ok(argv)` to be true when `_parse_args` succeeds without terminating the process. The post‑condition is:
+
+```
+IF NOT parse_ok(argv) THEN
+    process_terminated_with_non_zero_exit_code
+ELSE
+    args = parsed_result
+    project_root = Path(__file__).resolve().parents[1]
+    IF args.command == "set" THEN
+        result = run_llm_settings_update(project_root, args.updates, args.yes)
+        (result = 0 ⇔ settings_updated_successfully)
+        (result ≠ 0 ⇔ update_failed)
+    ELSE
+        IF run_wizard(project_root) raises ConfigWizardError THEN
+            stderr_contains("Error: " + exc_message)
+            result = 2
+        ELSE
+            result = run_wizard(project_root)
+            (result = 0 ⇔ wizard_completed_successfully)
+            (result ≠ 0 ⇔ wizard_aborted_or_validation_failed)
+        FI
+    FI
+FI
+AND
+IF KeyboardInterrupt raised THEN
+    stdout_contains("\nAborted.")
+    result = 1
+AND
+IF any_other_exception_raised AND NOT caught THEN
+    exception = that_exception
+    program_terminates_with_non_zero_exit_code
+```
+
+In all cases where `main` returns, the return value is an integer. The side effects on files (`fm‑agent.toml`, `.env`, provider config) and terminal output are exactly those produced by the executed branches.
+
+Condition B (what the specification requires):
+Returns 0 on successful completion of the requested configuration operation. Returns 1 if execution is interrupted by KeyboardInterrupt. Returns 2 if the operation fails due to invalid inputs, file access errors, or malformed existing configuration, with a descriptive error message written to stderr. On successful completion (return 0): the fm-agent.toml file at the project root (derived from the script's own filesystem location) reflects the configuration changes requested; the API key is persisted to the project .env file; the OpenCode provider configuration references the chosen provider. On failure (return 2): no configuration files are modified beyond any backups created before the failure point. The project root is resolved relative to the script's own location, not from the current working directory or any argument.
+
+Additional context:
+_parse_args(argv: list[str] | None) -> Namespace
+Pre-condition: argv is a list of zero or more strings; when None, the parser uses the process argument list.
+Post-condition: Returns a parsed-arguments object with a 'command' attribute whose value is either 'set' or the string representing the default (non-set) mode. When command is 'set', the returned object additionally carries attributes for the updates to apply (key-value pairs mapping TOML field paths to new values) and a boolean flag indicating whether confirmation prompts should be skipped. On unrecognized flags or invalid argument values, the parser terminates the process with a non-zero exit code.
+
+run_llm_settings_update(project_root: Path, updates: dict, assume_yes: bool) -> int
+Pre-condition: project_root is a Path to a directory containing a readable fm-agent.toml file; updates is a dict whose keys are TOML field paths and values are new configuration values (strings or booleans); assume_yes is True when confirmation prompts should be suppressed.
+Post-condition: Returns 0 when the requested fields in fm-agent.toml are updated to the provided values and the original file is backed up. Returns a non-zero exit code when the update cannot be completed (e.g., file not writable, invalid key path). Before applying changes, prints the planned modifications to stdout; when assume_yes is False, prompts for confirmation first.
+
+run_wizard(project_root: Path) -> int
+Pre-condition: project_root is a Path to a directory containing a readable fm-agent.toml file.
+Post-condition: Returns 0 when the user has successfully completed the interactive configuration flow and all resulting configuration has been persisted to fm-agent.toml, .env, and the OpenCode provider config. Returns a non-zero exit code when the user aborts or when validation of user-provided values fails. May raise ConfigWizardError for unrecoverable configuration errors. The API key is written to .env and to a provider-specific key file; non-secret settings are written to fm-agent.toml; the OpenCode provider entry is synchronized with the selected backend and provider.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

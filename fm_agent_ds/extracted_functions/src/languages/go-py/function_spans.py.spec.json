@@ -1,0 +1,5 @@
+{
+  "signature": "function_spans(proj_dir: str, filepath: str) -> list | None",
+  "pre_condition": "proj_dir is a string path to an existing project directory; filepath is a string path identifying a Go source file within the project.",
+  "post_condition": "When the CodeGraph backend can index the specified Go source file, returns a list of (name, start_idx, end_idx) tuples, one tuple per function defined in the file. name is the canonicalized function name, and start_idx and end_idx are 0-indexed inclusive line indices marking the function's span. When the CodeGraph backend is unavailable or does not index the file, returns None."
+}

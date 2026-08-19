@@ -1,0 +1,5 @@
+{
+  "signature": "_bare_function_name(name: str) -> str",
+  "pre_condition": "name is a string that may contain tree-sitter decorations — including qualified name prefixes (separated by '::' or '.'), pointer/receiver syntax, type annotations, parameter lists, template bodies, and full function signatures.",
+  "post_condition": "Returns the bare unqualified function or method name with all tree-sitter decorations removed. The result is empty exactly when the input is empty or whitespace-only. For names containing the 'operator' keyword, the result is the complete operator specifier: the keyword 'operator' followed by the operator symbol or keyword suffix, with any separating whitespace collapsed. For all other names, the result is the first alphabetic or alphanumeric identifier token extracted after stripping prefix decorations and before any trailing parameter lists, template bodies, or type annotations. The returned string contains no '::' or '.' qualifier separators. If no identifier token can be extracted from a non-empty input, the stripped input is returned unchanged."
+}

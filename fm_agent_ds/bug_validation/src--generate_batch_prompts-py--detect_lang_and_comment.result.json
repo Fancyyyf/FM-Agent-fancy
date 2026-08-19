@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_batch_prompts-py--detect_lang_and_comment",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_batch_prompts-py/detect_lang_and_comment.py",
+  "function_name": "detect_lang_and_comment",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_batch_prompts-py--detect_lang_and_comment.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_batch_prompts-py--detect_lang_and_comment.md",
+  "probe_stdout": "CONFIRMED — actual: ('makefile_lang', '//') | expected: ('unknown', '//')\n",
+  "trigger_summary": "Call detect_lang_and_comment with a file path that has no extension (e.g. 'Makefile') when the empty string '' is a key in ext_to_lang; the function returns the mapped language instead of 'unknown'."
+}

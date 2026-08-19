@@ -1,0 +1,5 @@
+{
+  "signature": "_spec_task_exit_code(handle) -> int | None",
+  "pre_condition": "handle is an object representing a subprocess or asynchronous-task execution.",
+  "post_condition": "Returns the integer exit code of the execution represented by handle when the execution has reached a terminal state, or None when it has not. When handle has a 'returncode' attribute, its value is returned as the exit code. When handle has a 'done' method that returns True, the exit code is: the integer result of the handle's execution when that result is an integer; 0 when the result is a non-integer non-exceptional value; or 1 when the execution raised an exception. Returns None in all other cases."
+}

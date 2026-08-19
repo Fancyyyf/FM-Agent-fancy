@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_filter_phases_to_submodules",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_filter_phases_to_submodules.py",
+  "function_name": "_filter_phases_to_submodules",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_filter_phases_to_submodules.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_filter_phases_to_submodules.md",
+  "probe_stdout": "CONFIRMED — PermissionError raised when trying to write to read-only phases.json. Spec requires rewrite, but the function crashes instead of handling the error. Actual (spec-correct) return: {'removed': 1, 'modified_modules': [...]}. Exception: [Errno 13] Permission denied: '/tmp/probe_filter_phases_niu8qrpd/phases.json'\\n",
+  "trigger_summary": "When phases.json is read-only and at least one file is removed, the write attempt raises PermissionError instead of returning the expected result dict."
+}

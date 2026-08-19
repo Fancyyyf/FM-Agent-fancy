@@ -1,0 +1,26 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a directory path; filepath is a path to a Python source file contained within proj_dir
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one Python file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("python", filepath) if cg else None
+```
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str)
+Pre-condition: proj_dir is a directory path
+Post-condition: Returns a CodeGraphExtractor instance initialized for proj_dir if a CodeGraph index exists and is accessible; returns a falsy value otherwise
+
+get_function_spans(language: str, filepath: str)
+Pre-condition: The instance is a valid CodeGraphExtractor obtained from from_proj_dir; language is a registered language key string; filepath is a path to a source file within the indexed project
+Post-condition: Returns a list of (name, start_idx, end_idx) tuples for all functions in filepath if the language and file are indexed by CodeGraph; returns None if the file or language is not indexed
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

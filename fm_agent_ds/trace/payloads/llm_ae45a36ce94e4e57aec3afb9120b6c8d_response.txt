@@ -1,0 +1,1 @@
+{"post_condition": "The function returns a path object r such that r = p if the subdirectory 'trace' exists inside p, else r = p / 'fm_agent', where p = Path(proj_dir).resolve(). No other modifications to program state occur. Formally: let p = resolve(Path(proj_dir)) in (if is_dir(p / 'trace') then r = p else r = p / 'fm_agent')."}

@@ -1,0 +1,32 @@
+Programming language: Python
+
+Pre-condition:
+cli_paths is an iterable of path strings; base_dir is a string path to an existing directory; fallback_base_dir, if provided, is a string path to an existing directory
+
+Code block:
+```python
+Line 1: def collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None):
+Line 2:     """Collect markdown paths from CLI values plus FM_AGENT_DOMAIN_KNOWLEDGE."""
+Line 3:     paths = []
+Line 4:     paths.extend(_split_env_paths(settings.runtime.domain_knowledge_paths))
+Line 5:     paths.extend(_flatten_paths(cli_paths))
+Line 6:     return resolve_domain_knowledge_paths(
+Line 7:         paths,
+Line 8:         base_dir=base_dir,
+Line 9:         fallback_base_dir=fallback_base_dir,
+Line 10:     )
+```
+
+Additional context:
+_split_env_paths(env_value)
+Pre-condition: env_value is a string containing zero or more paths separated by the system path separator
+Post-condition: Returns a list of individual path strings obtained by splitting env_value on the system path separator, with empty segments excluded
+
+_flatten_paths(cli_paths)
+Pre-condition: cli_paths is an iterable that may contain strings and/or nested iterables of strings
+Post-condition: Returns a flat list of all string elements from cli_paths, with any nested iterables recursively flattened
+
+resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir=None)
+Pre-condition: paths is a list of string path entries; base_dir is a string path to an existing directory; fallback_base_dir, if provided, is a string path to an existing directory
+Post-condition: Returns a list of absolute file paths as strings. Each input path is first resolved against base_dir to an absolute path; if that path does not exist and fallback_base_dir is provided, the path is instead resolved against fallback_base_dir. Only paths that resolve to existing files are included in the result.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

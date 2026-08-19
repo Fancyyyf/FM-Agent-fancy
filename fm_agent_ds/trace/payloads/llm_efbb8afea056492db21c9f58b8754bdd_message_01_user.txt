@@ -1,0 +1,37 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def validate_input(config: LLMConfigInput) -> None:
+Line 2:     if not config.provider_id.strip():
+Line 3:         raise ConfigWizardError("Provider ID must not be empty.")
+Line 4:     if not config.provider_name.strip():
+Line 5:         raise ConfigWizardError("Provider name must not be empty.")
+Line 6:     if not config.model_id.strip():
+Line 7:         raise ConfigWizardError("Model ID must not be empty.")
+Line 8:     if not config.api_key.strip():
+Line 9:         raise ConfigWizardError("API key must not be empty.")
+Line 10:     validate_base_url(config.base_url.strip())
+Line 11:     adapter_for_api_style(config.api_style)
+Line 12:     validate_llm_setting("backend", config.backend)
+```
+
+Condition A (what the code actually does):
+Upon normal return (no exception raised), the function establishes the following properties of the immutable `config` input: (1) `config.provider_id.strip()` is not empty; (2) `config.provider_name.strip()` is not empty; (3) `config.model_id.strip()` is not empty; (4) `config.api_key.strip()` is not empty; (5) `config.base_url.strip()` is a syntactically valid absolute URL whose scheme is either 'http' or 'https'; (6) `config.api_style` is a recognized member of the `ApiStyle` literal set; (7) `config.backend` is a valid string for the 'backend' configuration setting. The `config` object remains unchanged. Formally: ∀ fields f ∈ {provider_id, provider_name, model_id, api_key}: strip(config.f) ≠ ""; ∀ predicates: isValidAbsoluteHttpOrHttpsUrl(config.base_url.strip()) ∧ isRecognizedApiStyle(config.api_style) ∧ isValidSetting("backend", config.backend).
+
+Condition B (what the specification requires):
+Raises ConfigWizardError when, after stripping leading and trailing whitespace, config.provider_id, config.provider_name, config.model_id, or config.api_key is empty. Raises an exception when the stripped config.base_url is not a syntactically valid absolute URL whose scheme is http or https. Raises an exception when config.api_style is not a member of the known set of valid API styles. Raises an exception when config.backend is not a member of the known set of valid backend identifiers. Returns with no effect when every field satisfies its respective validation rule.
+
+Additional context:
+validate_base_url(url: str) -> None
+Pre-condition: url is a non-empty string with leading and trailing whitespace stripped.
+Post-condition: Raises an exception when url is not a syntactically valid absolute URL whose scheme is http or https. Returns with no effect when url is valid.
+
+adapter_for_api_style(style: ApiStyle) -> None
+Pre-condition: style is an ApiStyle literal value.
+Post-condition: Raises an exception when style does not match a member of the recognized API style set. Returns with no effect when style is a known API style.
+
+validate_llm_setting(name: str, value: str) -> None
+Pre-condition: name identifies a configuration setting category, and value is the candidate string value for that setting.
+Post-condition: Raises an exception when value is not a valid member of the constraint set for the setting identified by name. Returns with no effect when value is valid.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

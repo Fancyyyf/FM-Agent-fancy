@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_function_spans",
+      "signature": "_function_spans(filepath, lang_key, proj_dir=None) -> (list[tuple], list[str])",
+      "pre_condition": "filepath is a path to an existing readable source file. lang_key is a recognized language key string. proj_dir, when provided, is a directory path for project-context function detection.",
+      "post_condition": "Returns a tuple (spans, raw_lines) where spans is a list of (name, start_line, end_line) tuples identifying every top-level function in the file by name and its 0-indexed inclusive line range, ordered by ascending start line, and raw_lines is a list of strings containing the file's original lines, one per element."
+    }
+  ]
+}

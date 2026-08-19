@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "A valid Python file with no top-level functions, e.g., a file containing only the class definition 'class Foo: pass'.",
+  "offending_statements": "Line 18: funcs, source_lines, classes = _parse_python_file(src_path)\nLine 19: if funcs is not None:\nLine 20:     return funcs, source_lines, classes\nLine 21: # AST parse failed — fall back to the generic line-based extractor.",
+  "reason": "The code uses funcs != None to decide if the AST parse succeeded, but _parse_python_file can return funcs=None after a successful AST parse when there are no top-level functions. The specification requires fallback to the generic extractor only when AST parsing fails, not when a valid Python file simply lacks top-level functions. For a .py file with a class but no functions, the code incorrectly falls back, losing the class information extracted by the AST."
+}

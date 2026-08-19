@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/render_header.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a Rich Panel renderable with cyan border containing a single line of text. The line joins four parts separated by \"  \": (a) the dashboard title \"FM-Agent Dashboard\" in bold cyan; (b) the workdir path from state.workdir labeled \"workdir:\"; (c) the model identifier from state.model_seen (or \"?\" if the value is empty) labeled \"model:\"; and (d) the elapsed time from state.elapsed() formatted as a human-readable duration string labeled \"elapsed:\". The state argument is not mutated by this call.",
+    "actual_behavior": "The function returns a new Panel instance. Its renderable is a Text object whose markup string equals: '[bold cyan]FM-Agent Dashboard[/]' + '    ' + '[dim]workdir:[/] ' + str(state.workdir) + '    ' + '[dim]model:[/] ' + str(state.model_seen or '?') + '    ' + '[dim]elapsed:[/] ' + _fmt_duration(state.elapsed()). The panel's border_style is 'cyan'. The state argument is not modified. Formally: return.type == Panel  return.renderable.type == Text  return.renderable.markup == '[bold cyan]FM-Agent Dashboard[/]    [dim]workdir:[/] ' + str(state.workdir) + '    [dim]model:[/] ' + str(state.model_seen or '?') + '    [dim]elapsed:[/] ' + _fmt_duration(state.elapsed())  return.border_style == 'cyan'  state == old(state).",
+    "code_evidence": "Line 8: return Panel(Text.from_markup(\"    \".join(parts)), border_style=\"cyan\")",
+    "trigger_condition": "The specification requires the four parts to be separated by the string '  ' (space, bullet, space). Condition A shows that the code uses the separator '    ' (two spaces before and after the bullet). This difference holds for any valid input, causing the rendered markup to differ from the specification."
+  }
+}

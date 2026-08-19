@@ -1,0 +1,46 @@
+Programming language: Python
+
+Pre-condition:
+cur is an active database cursor connected to a valid, uncorrupted codegraph database whose nodes table contains id, name, qualified_name, file_path, and start_line columns. cg_langs is a non-empty list of language key strings recognized by the codegraph database.
+
+Code block:
+```python
+Line 1: def _node_fqn_map(cur, cg_langs) -> dict:
+Line 2:     """Return {node_id: fqn} for every function/method node in the given languages.
+Line 3:     The per-file name dedup (``Flush``, ``Flush_1``, ...) uses the SAME rule and
+Line 4:     ordering as get_functions_by_file (``ORDER BY file_path, start_line``, then a
+Line 5:     per-(file, name) counter), so the FQN assigned to a node here matches the FQN
+Line 6:     the extracted file for that node receives. Keeping the two in lockstep is what
+Line 7:     makes the call-edge identities line up with the extracted-function identities.
+Line 8:     """
+Line 9:     placeholders = ",".join("?" * len(cg_langs))
+Line 10:     cur.execute(
+Line 11:         f"""
+Line 12:         SELECT id, name, qualified_name, file_path, start_line
+Line 13:         FROM nodes
+Line 14:         WHERE kind IN ('function', 'method') AND language IN ({placeholders})
+Line 15:         ORDER BY file_path, start_line
+Line 16:         """,
+Line 17:         cg_langs,
+Line 18:     )
+Line 19:     counts: dict = {}
+Line 20:     result: dict = {}
+Line 21:     for node_id, name, qualified_name, file_path, _start in cur.fetchall():
+Line 22:         ident = _extraction_ident(name, qualified_name)
+Line 23:         key = (file_path, ident)
+Line 24:         c = counts.get(key, 0)
+Line 25:         counts[key] = c + 1
+Line 26:         deduped = ident if c == 0 else f"{ident}_{c}"
+Line 27:         result[node_id] = _fqn_for(file_path, deduped)
+Line 28:     return result
+```
+
+Additional context:
+_extraction_ident(name: str, qualified_name: str) -> str
+Pre-condition: name and qualified_name are string values obtained from a codegraph nodes table row.
+Post-condition: Returns a class-qualified, canonicalized function identifier string using '::' as the component separator.
+
+_fqn_for(file_path: str, deduped: str) -> str
+Pre-condition: file_path is a relative source file path string. deduped is a canonicalized, deduplicated function identifier string.
+Post-condition: Returns the fully-qualified name string for the function, combining the file-path-derived components and the deduplicated identifier with '::' separators.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

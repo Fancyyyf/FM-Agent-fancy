@@ -1,0 +1,5 @@
+{
+  "signature": "local_backend_toml_updates(env_path: Path, backend: str) -> dict[str, str]",
+  "pre_condition": "env_path is a Path identifying either a readable .env file or a path that does not identify an existing file. backend is a non-empty string that is not 'opencode' and that satisfies LLM setting validation for the key 'backend'.",
+  "post_condition": "Returns a dict containing the key 'backend' mapped to the provided backend value. Additionally, for each environment variable name in the set of LLM model and effort variable names that map to TOML fields: if that variable is defined in the .env file at env_path, the returned dict contains the corresponding TOML field name mapped to the variable's .env value. When env_path does not identify an existing file, the returned dict contains only the 'backend' entry. Every key-value pair in the returned dict satisfies LLM setting validation for its respective key. The returned dict contains at minimum one entry (for 'backend') and at most three entries (adding 'name' and 'effort' as determined by the .env file contents)."
+}

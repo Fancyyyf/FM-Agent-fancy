@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/plugin-py/_resolve_command.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string formed by processing each whitespace-delimited token of cmd independently. For each token that starts with \"/\" or \"$\": the token is preserved unchanged. For each remaining token: if plugin_root / token resolves to an existing regular file on the filesystem, the token is replaced by the string representation of its absolute path; otherwise, the token is preserved unchanged. The relative order of tokens in the returned string matches the order in cmd.",
+    "actual_behavior": "The function returns a string r such that, letting tokens be the list of non-empty strings obtained by splitting the input cmd on whitespace, for each index i, token t = tokens[i], if t starts with '/' or '$' then r contains t at the corresponding position; otherwise, if the path plugin_root / t exists and is a file, r contains the absolute path string of that file; otherwise r contains t unchanged. The tokens are joined by a single space. Formally: Let tokens = cmd.split(); let resolved be a list of strings with length |tokens| such that for all i from 0 to |tokens|-1, (tokens[i].startswith('/')  tokens[i].startswith('$')  resolved[i] = tokens[i])  ((tokens[i].startswith('/')  tokens[i].startswith('$'))  (plugin_root / tokens[i]).is_file()  resolved[i] = str(plugin_root / tokens[i]))  ((tokens[i].startswith('/')  tokens[i].startswith('$'))  (plugin_root / tokens[i]).is_file()  resolved[i] = tokens[i]); then r = ' '.join(resolved).",
+    "code_evidence": "Line 10: if token.startswith(\"/\") or token.startswith(\"$\"):",
+    "trigger_condition": "The specification (docstring) explicitly states that tokens starting with '/', '$', or '-' must be left unchanged. The code only checks for '/' and '$', omitting the '-' case. Consequently, any token starting with '-' that happens to exist as a file under plugin_root will be replaced by its absolute path, directly violating the required behavior."
+  }
+}

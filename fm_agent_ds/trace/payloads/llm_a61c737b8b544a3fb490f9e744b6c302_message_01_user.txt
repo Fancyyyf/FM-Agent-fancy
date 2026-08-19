@@ -1,0 +1,20 @@
+Programming language: Python
+
+Pre-condition:
+None required — the function accepts no arguments and has no external state dependencies.
+
+Code block:
+```python
+Line 1: def _check_oh_my_openagent():
+Line 2:     import subprocess
+Line 3:     try:
+Line 4:         subprocess.run(
+Line 5:             ["bunx", "oh-my-openagent", "--version"],
+Line 6:             capture_output=True, text=True, timeout=10,
+Line 7:         )
+Line 8:         return True, None
+Line 9:     except Exception:
+Line 10:         return False, "oh-my-openagent is not installed (bunx unavailable or timed out)"
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

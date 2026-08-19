@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_clean_label.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string. The returned string has no leading or trailing whitespace characters and no trailing semicolon characters (';'). When the non-whitespace portion of the intermediate result is at least two characters long and both its first and last characters are the same single-quote (') or double-quote (\") character, those surrounding quote characters are removed. Returns the empty string when the final content has no non-whitespace characters.",
+    "actual_behavior": "Given an input value, let s = str(value). The function returns a string r defined as: if s.strip() is the empty string, then r = ''. Otherwise, let a = s.strip(); let b = a.rstrip(';').strip(); if len(b) >= 2 and b[0] == b[-1] and b[0] in {'\"', \"'\"}, then let c = b[1:-1]; else let c = b; r = c.strip().",
+    "code_evidence": "Line 5: text = text.rstrip(\";\").strip()\nLine 8: return text.strip()",
+    "trigger_condition": "The returned string 'ab;' contains a trailing semicolon, violating the specification that the returned string has no trailing semicolon characters."
+  }
+}

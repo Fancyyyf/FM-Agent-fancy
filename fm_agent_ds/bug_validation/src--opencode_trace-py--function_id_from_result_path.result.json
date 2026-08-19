@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--function_id_from_result_path",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/function_id_from_result_path.py",
+  "function_name": "function_id_from_result_path",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--function_id_from_result_path.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--function_id_from_result_path.md",
+  "probe_stdout": "CONFIRMED — actual: 'test' | expected: 'fm_agent::logic_verification_results::test'",
+  "trigger_summary": "Input path with backslashes that matches the prefix only after normalization causes incorrect prefix removal because the code checks the normalized string rather than the original path."
+}

@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_split_into_blocks",
+      "signature": "_split_into_blocks(func: str) -> list[str]",
+      "pre_condition": "func is a non-empty string containing source code lines.",
+      "post_condition": "Returns an ordered list of block strings whose concatenation reconstructs func. Each block except the last contains exactly GRANULARITY lines. The last block contains the remainder when fewer than 2*GRANULARITY lines remain."
+    },
+    {
+      "name": "_compute_brace_depth_per_line",
+      "signature": "_compute_brace_depth_per_line(lines: list[str]) -> list[int]",
+      "pre_condition": "lines is a non-empty list of strings representing source code lines.",
+      "post_condition": "Returns a list of integers of the same length as lines. Each element is the cumulative brace nesting depth after the corresponding line, computed with string literals, character literals, line comments starting with //, and block comments delimited by /* and */ excluded from depth calculation."
+    }
+  ]
+}

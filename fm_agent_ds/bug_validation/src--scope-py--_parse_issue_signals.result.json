@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_parse_issue_signals",
+  "source_file": "src/scope-py/_parse_issue_signals.py",
+  "function_name": "_parse_issue_signals",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_parse_issue_signals.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_parse_issue_signals.md",
+  "probe_stdout": "CONFIRMED — actual: {'MyFunc'} | expected: {'myfunc'}\n",
+  "trigger_summary": "traceback_funcs set is not lowercased: input 'in MyFunc\\n' returns {'MyFunc'} instead of spec-required {'myfunc'}"
+}

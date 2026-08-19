@@ -1,0 +1,14 @@
+Programming language: Python
+
+Pre-condition:
+symbol is a dict representing an LSP symbol response that may contain a 'range' key directly, or a 'location' key whose value is a dict containing a 'range' key; other keys may be present and are ignored
+
+Code block:
+```python
+Line 1: def _symbol_range(symbol: dict):
+Line 2:     if "range" in symbol:
+Line 3:         return symbol["range"]
+Line 4:     return (symbol.get("location") or {}).get("range")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

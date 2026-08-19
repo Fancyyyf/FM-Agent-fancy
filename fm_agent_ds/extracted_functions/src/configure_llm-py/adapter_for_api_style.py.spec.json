@@ -1,0 +1,5 @@
+{
+  "signature": "adapter_for_api_style(api_style: ApiStyle) -> str",
+  "pre_condition": "api_style is a string.",
+  "post_condition": "When api_style matches a recognized API style identifier, returns a non-empty string that identifies the OpenCode npm provider-adapter package corresponding to that style; each distinct recognized API style identifier maps to a distinct non-empty package name string. Raises ConfigWizardError when api_style does not match any recognized API style identifier."
+}

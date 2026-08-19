@@ -1,0 +1,5 @@
+{
+  "signature": "_phase_plan_complete(work_dir) -> bool",
+  "pre_condition": "work_dir is a directory path (string or path-like object)",
+  "post_condition": "Returns True if and only if a file named phases.json exists at the expected path under work_dir and its content conforms to the required phases plan schema (with no schema validation errors). Returns False if the phases.json file does not exist, cannot be read, or its content violates the required schema."
+}

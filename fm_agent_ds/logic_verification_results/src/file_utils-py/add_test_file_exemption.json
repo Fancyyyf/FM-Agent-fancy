@@ -1,0 +1,5 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/file_utils-py/add_test_file_exemption.py",
+  "verdict": "MATCH",
+  "gaps": null
+}

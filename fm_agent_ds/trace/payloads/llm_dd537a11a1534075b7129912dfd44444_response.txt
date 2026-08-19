@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "A function definition with an except clause that catches a tuple of exceptions, e.g.,\n\n```\ndef foo():\n    try:\n        pass\n    except (ValueError, TypeError):\n        pass\n```\n\nProvided to the function as `node` (the AST for `foo`) and `source_lines` as the list of source lines.",
+  "offending_statements": "Line 27:         elif isinstance(n, ast.ExceptHandler) and n.type:\nLine 28:             exc_node = n.type\nLine 29:             if isinstance(exc_node, ast.Name):\nLine 30:                 exc_types.add(exc_node.id.lower())\nLine 31:             elif isinstance(exc_node, ast.Attribute):\nLine 32:                 exc_types.add(exc_node.attr.lower())",
+  "reason": "The specification requires collecting all exception-class names referenced in except clauses. The code only handles single ast.Name or ast.Attribute nodes and does not recurse into ast.Tuple (or other compound types) when an except clause catches multiple exceptions (e.g., `except (ValueError, TypeError):`). Consequently, for such inputs the returned exc_types set is empty, violating the specification."
+}

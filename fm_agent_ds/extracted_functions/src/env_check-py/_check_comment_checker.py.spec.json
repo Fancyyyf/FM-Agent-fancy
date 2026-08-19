@@ -1,0 +1,5 @@
+{
+  "signature": "_check_comment_checker() -> (bool, str | None)",
+  "pre_condition": "OH_MY_OPENAGENT_CONFIG is a defined path constant whose value is a string filesystem path.",
+  "post_condition": "Returns (True, None) when the file at OH_MY_OPENAGENT_CONFIG exists, contains valid JSON with a top-level object, and that object's 'disabled_hooks' value (an array when present, otherwise an empty list) includes the string 'comment-checker'. Returns (False, error_message) when: the file does not exist at the expected path; the file exists but its contents are not valid JSON or cannot be read; the file is valid JSON but 'disabled_hooks' does not include 'comment-checker'. In all failure cases, the error_message string describes which specific condition was detected. Does not modify any files on disk."
+}

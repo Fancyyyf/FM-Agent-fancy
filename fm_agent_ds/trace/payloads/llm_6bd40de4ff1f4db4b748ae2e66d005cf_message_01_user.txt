@@ -1,0 +1,48 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _fuzzy_name_score(parts: set[str], signals: dict[str, set[str]]) -> float:
+Line 2:     """Return a small typo-tolerant score for long intent tokens vs function names."""
+Line 3:     intent_tokens = (
+Line 4:         signals['backtick_idents']
+Line 5:         | signals['plain_idents']
+Line 6:         | signals['dotted_refs']
+Line 7:         | signals['all_words']
+Line 8:     )
+Line 9:     intent_tokens = {
+Line 10:         t for t in intent_tokens
+Line 11:         if len(t) >= FUZZY_NAME_MIN_LEN and t not in _STOP and t not in _PY_KEYWORDS
+Line 12:     }
+Line 13:     name_tokens = {
+Line 14:         p for p in parts
+Line 15:         if len(p) >= FUZZY_NAME_MIN_LEN and p not in _STOP and p not in _PY_KEYWORDS
+Line 16:     }
+Line 17:     score = 0.0
+Line 18:     for token in intent_tokens:
+Line 19:         if token in name_tokens:
+Line 20:             continue
+Line 21:         best = 0.0
+Line 22:         for part in name_tokens:
+Line 23:             if part in intent_tokens:
+Line 24:                 continue
+Line 25:             ratio = SequenceMatcher(None, token, part).ratio()
+Line 26:             if ratio > best:
+Line 27:                 best = ratio
+Line 28:         if best >= FUZZY_NAME_THRESHOLD:
+Line 29:             score += W_FUZZY_NAME * best
+Line 30:     return score
+```
+
+Condition A (what the code actually does):
+The function returns a float `score` that is the weighted sum of fuzzy similarity ratios between certain intent tokens and certain name tokens. The inputs `parts` and `signals` are unchanged. Let:
+  I = { t | t ∈ signals['backtick_idents'] ∪ signals['plain_idents'] ∪ signals['dotted_refs'] ∪ signals['all_words'] : len(t) >= FUZZY_NAME_MIN_LEN ∧ t ∉ _STOP ∧ t ∉ _PY_KEYWORDS }
+  N = { p | p ∈ parts : len(p) >= FUZZY_NAME_MIN_LEN ∧ p ∉ _STOP ∧ p ∉ _PY_KEYWORDS }
+  For any two strings a, b, let sim(a, b) = SequenceMatcher(a, b).ratio(). Then:
+    score = W_FUZZY_NAME * ∑_{t ∈ I \ N} ( max_{p ∈ N \ I} sim(t, p)  if  max_{p ∈ N \ I} sim(t, p) ≥ FUZZY_NAME_THRESHOLD  else  0 )
+For any t ∈ I ∩ N, the contribution is 0. The returned value is exactly this sum, as a float.
+
+Condition B (what the specification requires):
+Returns a non-negative float representing a typo-tolerant similarity score between the name parts and the union of identifier-like signal tokens across the specified signal categories. For each pairwise comparison between a signal token and a name part, a non-zero contribution requires all of: both strings have length at least a minimum character threshold (not less than 5), neither string is a stop word or a Python language keyword, the two strings are not identical, and their contiguous-matching-subsequence similarity ratio meets or exceeds a fixed ratio threshold (at least 0.75). Each qualifying comparison adds a fixed per-match weight multiplied by the achieved similarity ratio. The return value is deterministic: identical parts and signals always produce identical results. The result is zero when no signal-part pair satisfies all filtering and threshold conditions.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

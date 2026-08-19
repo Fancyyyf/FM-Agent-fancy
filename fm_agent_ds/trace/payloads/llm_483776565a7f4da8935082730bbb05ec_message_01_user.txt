@@ -1,0 +1,62 @@
+Programming language: Python
+
+Code block:
+```python
+Line 41:                 for fqn in scc:
+Line 42:                     fqn_to_scc[fqn] = i
+Line 43:             # Build DAG between SCCs based on caller edges
+Line 44:             scc_callers = defaultdict(set)  # scc_idx -> set of scc_idx that call into it
+Line 45:             for fqn in remaining:
+Line 46:                 scc_i = fqn_to_scc[fqn]
+Line 47:                 for caller_fqn in callers_map.get(fqn, set()) & remaining:
+Line 48:                     scc_j = fqn_to_scc[caller_fqn]
+Line 49:                     if scc_i != scc_j:
+Line 50:                         scc_callers[scc_i].add(scc_j)
+Line 51:             # Topological sort of SCCs
+Line 52:             scc_assigned = {}
+Line 53:             scc_remaining = set(range(len(sccs)))
+Line 54:             while scc_remaining:
+Line 55:                 scc_ready = set()
+Line 56:                 for scc_idx in scc_remaining:
+Line 57:                     unassigned_scc_callers = scc_callers.get(scc_idx, set()) - set(scc_assigned.keys())
+Line 58:                     if not unassigned_scc_callers:
+Line 59:                         scc_ready.add(scc_idx)
+Line 60:                 if not scc_ready:
+Line 61:                     # Should not happen if Tarjan is correct, but handle gracefully
+Line 62:                     # Assign all remaining to the same layer
+Line 63:                     layer_idx = len(layers)
+Line 64:                     all_fqns = set()
+Line 65:                     for scc_idx in scc_remaining:
+Line 66:                         all_fqns.update(sccs[scc_idx])
+Line 67:                     for fqn in all_fqns:
+Line 68:                         assigned[fqn] = layer_idx
+Line 69:                     layers.append({"layer": layer_idx, "functions": sorted(all_fqns), "cycle_resolution": True})
+Line 70:                     remaining -= all_fqns
+Line 71:                     break
+Line 72:                 layer_idx = len(layers)
+Line 73:                 layer_fqns = set()
+Line 74:                 is_cycle = False
+Line 75:                 for scc_idx in scc_ready:
+Line 76:                     scc_assigned[scc_idx] = layer_idx
+Line 77:                     layer_fqns.update(sccs[scc_idx])
+Line 78:                     if len(sccs[scc_idx]) > 1:
+Line 79:                         is_cycle = True
+Line 80:                 for fqn in layer_fqns:
+Line 81:                     assigned[fqn] = layer_idx
+Line 82:                 layers.append({"layer": layer_idx, "functions": sorted(layer_fqns), "cycle_resolution": is_cycle})
+Line 83:                 remaining -= layer_fqns
+Line 84:                 scc_remaining -= scc_ready
+Line 85:     return layers
+```
+
+Condition A (what the code actually does):
+The variable `layers` is returned. `layers` is a list of dictionaries, each with integer key 'layer' (consecutive from 0), a boolean 'cycle_resolution', and a lexicographically sorted list of strings 'functions'. The union of all 'functions' equals the input set `phase_fqns`; layers’ 'functions' sets are pairwise disjoint. For any two functions f and g in `phase_fqns` where g ∈ callers_map[f], the layer index of g is ≤ layer index of f; if equal, the layer's 'cycle_resolution' is True. For a layer with 'cycle_resolution' False, no function has a caller within the same layer; all callers of its functions are in strictly earlier layers. In the normal case, every layer with 'cycle_resolution' True is formed from one or more strongly connected components (SCCs) that are mutually reachable via caller edges within the restricted graph, and at least one edge lies inside the layer’s functions. If the topological sort of SCCs fails (which should not occur for correct Tarjan output), all remaining unassigned functions are placed in a single final layer with 'cycle_resolution' True, which may contain multiple SCCs, but ensures termination. Formally: Let V = set(phase_fqns), E = {(u,v) | v ∈ callers_map[u] ∩ V}. Let L = layers. Then L is a list of records r_i = (layer=i, functions=F_i, cyclic=c_i) where F_i are sorted and disjoint, ∪ F_i = V. For all f,g ∈ V, if g ∈ callers_map[f], let l(f) be the layer index; then l(g) ≤ l(f), and if l(g)=l(f) then c_{l(f)} = True. For any i with c_i = False, for all f ∈ F_i, ∀ g ∈ callers_map[f] ∩ V, l(g) < i. For the normal path: each i with c_i = True is such that the SCCs assigned to layer i form a strongly connected subset of the SCC-DAG, and at least one SCC in the layer has size >1. In the error path, the final layer contains all remaining F and c_|L|-1 = True, possibly breaking the SCC property, but guarantees l(g) ≤ l(f) and c_{layer} = True for equal indices.
+
+Condition B (what the specification requires):
+Returns a list of layer dicts sorted by strictly increasing integer `layer` index starting from 0. Each dict contains: `layer` (non-negative integer, 0-indexed), `functions` (sorted list of FQN strings assigned to that layer), and `cycle_resolution` (boolean). Every FQN in phase_fqns appears in exactly one layer across the returned list. For any pair (caller, callee) where both FQNs belong to phase_fqns and the callee is reachable via callees_map, the callee's `layer` index is strictly less than the caller's `layer` index. `cycle_resolution` is false for a layer when every function in that layer was placed without breaking any dependency cycle among phase_fqns members. `cycle_resolution` is true for a layer when at least one function in that layer belongs to a non-trivial strongly connected component (a cycle involving two or more phase_fqns members where each member transitively depends on another in the cycle). When no cycles exist among phase_fqns members, all returned layer dicts have `cycle_resolution` set to false.
+
+Additional context:
+_tarjan_scc(nodes, edges) -> list
+Pre-condition: nodes is a non-empty set of FQN strings. edges is a dict mapping each FQN in nodes to a collection of FQN strings representing its in-neighbors, where every target FQN is also a member of nodes.
+Post-condition: Returns a list of lists, where each inner list is a strongly connected component (SCC) containing one or more FQN strings from nodes. Every FQN in nodes appears in exactly one SCC. For every edge u->v in edges, the SCC containing u does not appear after the SCC containing v in the returned list.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_optional_string(value, key: str, source: str) -> str",
+  "pre_condition": "key is a non-empty string identifying the field for error context. source is a non-empty provenance string used for diagnostic messages.",
+  "post_condition": "When value is None, returns an empty string. When value is not None and not of type str, raises ValueError whose message contains source and key. When value is a string, returns a string with leading and trailing whitespace removed, trailing semicolons stripped, and surrounding matching single or double quotation marks removed; returns an empty string when the cleaned content is empty."
+}

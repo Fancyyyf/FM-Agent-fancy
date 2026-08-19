@@ -1,0 +1,19 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def adapter_for_api_style(api_style: ApiStyle) -> str:
+Line 2:     if api_style == "anthropic":
+Line 3:         return "@ai-sdk/anthropic"
+Line 4:     if api_style == "openai":
+Line 5:         return "@ai-sdk/openai-compatible"
+Line 6:     raise ConfigWizardError(f"Unsupported API style: {api_style}")
+```
+
+Condition A (what the code actually does):
+(api_style = 'anthropic' => returns '@ai-sdk/anthropic') ∧ (api_style = 'openai' => returns '@ai-sdk/openai-compatible') ∧ (api_style ∉ {'anthropic','openai'} => raises ConfigWizardError with message 'Unsupported API style: ' + api_style)
+
+Condition B (what the specification requires):
+When api_style matches a recognized API style identifier, returns a non-empty string that identifies the OpenCode npm provider-adapter package corresponding to that style; each distinct recognized API style identifier maps to a distinct non-empty package name string. Raises ConfigWizardError when api_style does not match any recognized API style identifier.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

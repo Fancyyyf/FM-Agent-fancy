@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_parse_python_file",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_parse_python_file.py",
+  "function_name": "_parse_python_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_parse_python_file.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_parse_python_file.md",
+  "probe_stdout": "All functions found: ['outer', 'standalone', 'inner', 'method', 'nested_in_method']\nTop-level functions found: ['outer', 'standalone', 'method']\nNested functions found: ['inner', 'nested_in_method']\nCONFIRMED — Nested functions ['inner', 'nested_in_method'] incorrectly included. Spec expects only top-level: {'standalone', 'outer'}. Actual (buggy): {'nested_in_method', 'outer', 'standalone', 'method', 'inner'}\n",
+  "trigger_summary": "ast.walk(tree) traverses all nodes including nested function definitions inside other functions or classes, violating the spec which requires only top-level module-scope function definitions."
+}

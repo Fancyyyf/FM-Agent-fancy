@@ -1,0 +1,76 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _anthropic_create(model, messages):
+Line 2:     """Send messages via an Anthropic-native /v1/messages endpoint with prompt caching.
+Line 3:     Returns (text, usage_dict). usage_dict matches anthropic-style:
+Line 4:       {input_tokens, cache_creation_input_tokens, cache_read_input_tokens, output_tokens, ...}
+Line 5:     """
+Line 6:     system_text, an_msgs = _messages_to_anthropic(messages)
+Line 7:     sys_blocks = []
+Line 8:     if system_text:
+Line 9:         # cache_control marks the prefix as cacheable; ephemeral = 5-minute TTL.
+Line 10:         sys_blocks.append({
+Line 11:             "type": "text",
+Line 12:             "text": system_text,
+Line 13:             "cache_control": {"type": "ephemeral"},
+Line 14:         })
+Line 15:     body = {
+Line 16:         "model": model,
+Line 17:         "max_tokens": _ANTHROPIC_MAX_TOKENS,
+Line 18:         "system": sys_blocks,
+Line 19:         "messages": an_msgs or [{"role": "user", "content": ""}],
+Line 20:     }
+Line 21:     url = LLM_API_BASE_URL.rstrip("/") + "/messages"
+Line 22:     if _should_inject_user_id(LLM_API_BASE_URL):
+Line 23:         body.update(_metadata_body())
+Line 24:     req = urllib.request.Request(
+Line 25:         url,
+Line 26:         data=json.dumps(body).encode("utf-8"),
+Line 27:         headers={
+Line 28:             "Authorization": f"Bearer {LLM_API_KEY}",
+Line 29:             "Content-Type": "application/json",
+Line 30:             "anthropic-version": "2023-06-01",
+Line 31:         },
+Line 32:         method="POST",
+Line 33:     )
+Line 34:     with urllib.request.urlopen(req, timeout=600) as r:
+Line 35:         status = getattr(r, "status", None) or r.getcode()
+Line 36:         body_bytes = r.read()
+Line 37:     try:
+Line 38:         data = json.loads(body_bytes)
+Line 39:     except json.JSONDecodeError as exc:
+Line 40:         # The relay returned a non-JSON / empty body (e.g. an empty 200 or an
+Line 41:         # HTML error page truncated by the proxy under load). Surface the raw
+Line 42:         # body + status — otherwise only "Expecting value: line 1 column 1" leaks
+Line 43:         # and the actual relay response is lost.
+Line 44:         snippet = body_bytes[:800].decode("utf-8", "replace")
+Line 45:         raise RuntimeError(
+Line 46:             f"non-JSON response from relay (HTTP {status}, {len(body_bytes)} bytes): {snippet!r}"
+Line 47:         ) from exc
+Line 48:     # Anthropic content is a list of blocks; concatenate text blocks.
+Line 49:     text = "".join(c.get("text", "") for c in data.get("content", []) if c.get("type") == "text")
+Line 50:     usage = data.get("usage", {}) or {}
+Line 51:     return text, usage
+```
+
+Condition A (what the code actually does):
+After execution of _anthropic_create, the program state is one of the following: (1) The function returns a 2-tuple (text, usage_dict). text is a non-empty string obtained by concatenating the "text" fields of all response content blocks whose "type" is "text". usage_dict is a dictionary containing the token usage information from the API (keys such as input_tokens, cache_creation_input_tokens, cache_read_input_tokens, output_tokens) or an empty dictionary if the response lacks a "usage" key. (2) The function raises a RuntimeError if the API response body cannot be decoded as JSON (JSONDecodeError); the exception message includes the HTTP status code, the length of the response body, and a snippet of the raw body. (3) The function propagates any exception occurring during the HTTP request (e.g., HTTPError, URLError, socket.timeout) without modification. Formal logic: R ∈ {Return(text, usage) | isinstance(text, str) ∧ text = concat({c["text"] | c ∈ data["content"] ∧ c["type"] == "text"}) ∧ usage = data.get("usage", {}) } ∪ {Raise(RuntimeError) | message contains "non-JSON response from relay" ∧ cause is JSONDecodeError} ∪ {Raise(E) | E is any exception from urllib.request.urlopen or json.loads' chain }, where data is the JSON-parsed response dict when parsing succeeds.
+
+Condition B (what the specification requires):
+Sends a prompt-cached chat completion request to the Anthropic /v1/messages API and returns a 2-tuple (text, usage). text is the non-empty string formed by concatenating, in order, all text-type content blocks from the API response. usage is a dict mapping token-usage metric names to their integer counts from the API response (empty dict when no usage data is present). The system-role messages from the input are transmitted with ephemeral cache-control annotations. When the input messages consist solely of system-role messages, a minimal user message is included to satisfy the API requirement. Requests are made with a fixed maximum token budget. On receipt of a response body that is not valid JSON, raises RuntimeError whose message includes the HTTP status code and a prefix of the raw response bytes. HTTP transport failures propagate to the caller as HTTPError or URLError.
+
+Additional context:
+_messages_to_anthropic(messages) -> tuple
+Pre-condition: messages is a non-empty list of message dicts, each with keys 'role' (non-empty string) and 'content' (string).
+Post-condition: Returns a 2-tuple (system_text, anthropic_messages). system_text is a string containing the concatenated content of all system-role messages (empty string when no system-role messages are present). anthropic_messages is a list of message dicts with 'role' and 'content' keys, containing all non-system messages in their original input order.
+
+_should_inject_user_id(base_url) -> bool
+Pre-condition: base_url is a string representing the LLM API base URL.
+Post-condition: Returns True when the base_url matches a configured host pattern for which user-identity metadata injection is enabled; returns False otherwise.
+
+_metadata_body() -> dict
+Pre-condition: None (no arguments required).
+Post-condition: Returns a dict containing metadata key-value pairs for injection into the API request body.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

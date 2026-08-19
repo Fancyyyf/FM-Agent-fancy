@@ -1,0 +1,5 @@
+{
+  "signature": "_symbol_line_span(symbol_range: dict) -> tuple[int, int]",
+  "pre_condition": "symbol_range is a dict with a 'start' key and an 'end' key, each mapping to a dict that contains a 'line' key with an integer value; each sub-dict may also contain a 'character' key with an integer value",
+  "post_condition": "Returns (start, end) where both are non-negative integers and start <= end. start is the value of symbol_range['start']['line'] clamped to minimum 0. end is the value of symbol_range['end']['line'] clamped to minimum of start. When end > start and symbol_range['end']['character'] equals 0, end is reduced by 1, because an LSP half-open range ending at column 0 of line N contains no content on line N. The returned span is 0-indexed and inclusive."
+}

@@ -1,11 +1,11 @@
 {
   "id": "src--domain_knowledge-py--stage_domain_knowledge_files",
-  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/domain_knowledge-py/stage_domain_knowledge_files.py",
+  "source_file": "/tmp/fm_agent_wt_FM-Agent_l5vkw0lv/snapshot/fm_agent/extracted_functions/src/domain_knowledge-py/stage_domain_knowledge_files.py",
   "function_name": "stage_domain_knowledge_files",
   "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--stage_domain_knowledge_files.py",
   "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--stage_domain_knowledge_files.md",
-  "probe_stdout": "CONFIRMED — actual: 'directory was missing between rmtree and replace (atomicity violated)' | expected: 'atomically cleared and repopulated (no window where directory missing)'\n",
-  "trigger_summary": "Any non-empty markdown_paths triggers shutil.rmtree before os.replace, creating an observable window where target_dir does not exist, violating the atomicity requirement."
+  "probe_stdout": "CONFIRMED — staging dir absent during swap window; observer saw neither the old nor the new file set | pre_call=['old_notes.md'] pre_swap_exists=False pre_swap_listing=None post_call=['manifest.json', 'new_notes.md'] neither_old_nor_new_samples=240 total_samples=241 | expected: target present at swap time and every sample in {['old_notes.md'], ['manifest.json', 'new_notes.md']}",
+  "trigger_summary": "The staging directory is swapped via shutil.rmtree(target_dir) followed by os.replace(tmp_dir, target_dir), leaving a window in which the staging directory does not exist at all, so observers see neither the complete previous nor the complete new file set, violating the spec's atomic-replacement guarantee."
 }

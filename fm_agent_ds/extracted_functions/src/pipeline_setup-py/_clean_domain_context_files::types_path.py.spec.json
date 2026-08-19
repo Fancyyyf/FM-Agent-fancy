@@ -1,0 +1,1 @@
+{"signature": "types_path(num)", "pre_condition": "num is an integer. domain_dir is a string path to an existing directory, accessible from the enclosing scope.", "post_condition": "Returns an os-appropriate path string formed by joining domain_dir with the filename phase_{num:02d}_types.txt, where {num:02d} is the two-digit zero-padded decimal representation of num."}

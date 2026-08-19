@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_edge_source.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a provenance string. The return value is the highest-priority non-empty provenance source found in item, ordered as: an explicit 'source' string, up to four semicolon-joined 'evidence' list entries, or a single 'evidence' string. Each provenance value extracted from item has leading and trailing whitespace removed. When item contains no non-empty provenance under any recognized key, returns fallback exactly as given.",
+    "actual_behavior": "Natural language: The function returns a string. If item['source'] exists, is a string, and has non-whitespace characters after stripping, the return value is that stripped string. Otherwise, if item['evidence'] exists and is a list, the function extracts up to four non-empty (after stripping) string representations of its elements, preserving order; if any such strings are found, they are joined with '; ' and returned. Otherwise, if item['evidence'] exists, is a string, and has non-whitespace characters after stripping, that stripped string is returned. Otherwise, fallback is returned.\n\nFormal logic:\nreturn = let s = item.get('source') in\n  if s  None  isinstance(s, str)  strip(s)  \"\" then strip(s)\n  else let ev = item.get('evidence') in\n    if ev  None  isinstance(ev, list) then\n      let vals = [strip(str(v)) | v in ev, strip(str(v))  \"\"] in\n        if vals  [] then \"; \".join(vals[:4])\n        else fallback\n    else if ev  None  isinstance(ev, str)  strip(ev)  \"\" then strip(ev)\n    else fallback",
+    "code_evidence": "Line 7: values = [str(value).strip() for value in evidence if str(value).strip()]",
+    "trigger_condition": "The specification expects evidence list entries to be strings (since only strings can have whitespace stripped). The code converts every entry with str(), treating nonstrings as valid provenance values. This produces a result where the specification would return the fallback."
+  }
+}

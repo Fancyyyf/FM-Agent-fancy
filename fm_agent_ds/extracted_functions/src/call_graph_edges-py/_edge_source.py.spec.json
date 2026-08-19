@@ -1,0 +1,5 @@
+{
+  "signature": "_edge_source(item: dict, fallback: str) -> str",
+  "pre_condition": "item is a dict that may contain provenance metadata under 'source' and 'evidence' keys. fallback is a string.",
+  "post_condition": "Returns a provenance string. The return value is the highest-priority non-empty provenance source found in item, ordered as: an explicit 'source' string, up to four semicolon-joined 'evidence' list entries, or a single 'evidence' string. Each provenance value extracted from item has leading and trailing whitespace removed. When item contains no non-empty provenance under any recognized key, returns fallback exactly as given."
+}

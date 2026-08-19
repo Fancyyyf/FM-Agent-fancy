@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_prepare_workflow_file",
+  "source_file": "src/pipeline_setup-py/_prepare_workflow_file.py",
+  "function_name": "_prepare_workflow_file",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_prepare_workflow_file.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_prepare_workflow_file.md",
+  "probe_stdout": "CONFIRMED — bug reproduced: 'repo root' still in output, replacement of source_files instruction failed because whitespace variation in template prevented str.replace() match\n",
+  "trigger_summary": "str.replace uses exact substring matching; any whitespace variation in the template (e.g. double space instead of single) silently prevents the source_files instruction from being rewritten, leaving the old 'repo root' text intact."
+}

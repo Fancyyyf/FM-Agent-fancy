@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Assume proj_dir is an existing directory, entry_func is a valid fully-qualified function name, end_funcs is empty, and all other arguments are valid. Suppose work_dir (os.path.join(proj_dir, 'fm_agent')) already exists and contains a file with no write permission (e.g., mode 0) so that shutil.rmtree(work_dir) on line 65 raises PermissionError. The function will attempt to remove work_dir, fail, and propagate the exception without reaching line 68. Consequently, run_dir (proj_dir + '.fm-entry-run') is not deleted and remains on disk, leaving a temporary file/directory at the prohibited path.",
+  "offending_statements": "Line 65: shutil.rmtree(work_dir)",
+  "reason": "Specification B requires that no temporary files or directories remain at the path formed by joining proj_dir with '.fm-entry-run'. When shutil.rmtree(work_dir) raises an exception inside the finally block, the subsequent cleanup of run_dir on line 68 is skipped, and run_dir persists. Even if the exception is from a file permission problem that could be considered an environmental error, the concrete input described produces a violation of the absolute 'no leftovers' requirement."
+}

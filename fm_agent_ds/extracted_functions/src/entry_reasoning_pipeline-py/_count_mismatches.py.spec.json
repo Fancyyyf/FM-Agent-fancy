@@ -1,0 +1,5 @@
+{
+  "signature": "_count_mismatches(results_dir)",
+  "pre_condition": "results_dir is a filesystem path.",
+  "post_condition": "Returns a non-negative integer equal to the count of JSON files reachable by recursively walking the directory tree rooted at results_dir whose deserialized 'verdict' field equals the literal string 'MISMATCH'. A JSON file that cannot be opened for reading or whose content is not valid JSON does not contribute to the count. When results_dir does not exist as a directory, returns 0."
+}

@@ -1,0 +1,27 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _get_call_regex(lang_key):
+Line 2:     """Return the call-site regex for the given language."""
+Line 3:     if lang_key in ("cpp", "c", "java", "typescript", "javascript", "cuda", "arkts"):
+Line 4:         # identifier, optional template args, open paren
+Line 5:         return re.compile(r"\b(\w+)\s*(?:<[^>]*>)?\s*\(")
+Line 6:     elif lang_key == "rust":
+Line 7:         # identifier, optional turbofish, open paren
+Line 8:         return re.compile(r"\b(\w+)\s*(?:::<[^>]*>)?\s*\(")
+Line 9:     elif lang_key == "go":
+Line 10:         # identifier, optional type params [T], open paren
+Line 11:         return re.compile(r"\b(\w+)\s*(?:\[[^\]]*\])?\s*\(")
+Line 12:     else:
+Line 13:         # Python, Ruby, Shell, SQL, etc.
+Line 14:         return re.compile(r"\b(\w+)\s*\(")
+```
+
+Condition A (what the code actually does):
+Returns a compiled regular expression (re.Pattern) for matching function call sites in the language given by lang_key. The returned regex captures the function name in group 1 and ensures an opening parenthesis follows. The exact pattern depends on lang_key: for 'cpp','c','java','typescript','javascript','cuda','arkts' it includes optional template arguments `<...>`; for 'rust' it includes optional turbofish `::<...>`; for 'go' it includes optional type parameters `[...]`; and for any other lang_key (e.g., 'python','ruby') it matches a plain identifier followed by optional whitespace and '('. Formally: let L = {'cpp','c','java','typescript','javascript','cuda','arkts'}, then (lang_key ∈ L) ⇒ return = re.compile(r"\\b(\\w+)\\s*(?:<[^>]*>)?\s*\(") ∧ (lang_key = 'rust') ⇒ return = re.compile(r"\\b(\\w+)\\s*(?:::<[^>]*>)?\s*\(") ∧ (lang_key = 'go') ⇒ return = re.compile(r"\\b(\\w+)\\s*(?:\\[[^\\]]*\])?\s*\(") ∧ (lang_key ∉ L ∪ {'rust','go'}) ⇒ return = re.compile(r"\\b(\\w+)\\s*\(").
+
+Condition B (what the specification requires):
+Returns a compiled regular expression. When applied to source text from which comments have been stripped, the first capture group of each match yields a bare-word identifier that precedes an opening parenthesis '(' at a syntactic call position for the language identified by lang_key. Any type-argument syntax (e.g., angle-bracket-delimited or square-bracket-delimited generic parameters) permitted by the language between the identifier and the parenthesis is tolerated. Whitespace is allowed between the identifier, optional type arguments, and the parenthesis.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

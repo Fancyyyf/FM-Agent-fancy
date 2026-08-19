@@ -1,0 +1,11 @@
+{
+  "id": "src--file_utils-py--_is_metadata_sidecar",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/file_utils-py/_is_metadata_sidecar.py",
+  "function_name": "_is_metadata_sidecar",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--_is_metadata_sidecar.py",
+  "detail_file": "fm_agent/bug_validation/src--file_utils-py--_is_metadata_sidecar.md",
+  "probe_stdout": "NOT CONFIRMED — _is_metadata_sidecar correctly returns boolean. _METADATA_SIDECAR_SUFFIXES is a tuple, str.endswith(tuple) works in Python. No TypeError occurs. The function satisfies its specification.",
+  "trigger_summary": "The trigger condition incorrectly assumes _METADATA_SIDECAR_SUFFIXES is a list; it is actually a tuple which str.endswith() accepts natively in Python."
+}

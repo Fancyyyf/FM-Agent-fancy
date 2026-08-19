@@ -1,0 +1,1 @@
+{"signature": "_timeout_seconds() -> int", "pre_condition": "The erlang.timeout_s configuration value has been loaded and is an integer.", "post_condition": "Returns an integer no less than 1, representing the maximum wait duration in seconds for ELP communication."}

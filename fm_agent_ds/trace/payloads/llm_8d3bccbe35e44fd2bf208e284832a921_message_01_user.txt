@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def phase_callers_key(func: dict, phase: int) -> str:
+Line 2:     target = f"phase{phase}_callers"
+Line 3:     if target in func:
+Line 4:         return target
+Line 5:     for key in func.keys():
+Line 6:         if key.endswith("_callers") and key.startswith("phase"):
+Line 7:             return key
+Line 8:     return target
+```
+
+Condition A (what the code actually does):
+The function returns a string. The input dictionary `func` and integer `phase` are unchanged. Let `target = 'phase' + str(phase) + '_callers'`. If `target` is a key in `func`, the return value equals `target`. Otherwise, if there exists any key `k` in `func` such that `k.startswith('phase')` and `k.endswith('_callers')`, then the return value is the first such key in the iteration order of `func.keys()`. If no such key exists, the return value equals `target`. Formally, for the returned string `r`:  
+(1) `target ∈ func ⇒ r = target`.  
+(2) `target ∉ func ∧ ∃k ∈ keys(func) : k.startswith('phase') ∧ k.endswith('_callers') ⇒ r = the minimal k in iteration order of func.keys() satisfying the condition`.  
+(3) `target ∉ func ∧ ¬∃k ∈ keys(func) : k.startswith('phase') ∧ k.endswith('_callers') ⇒ r = target`.
+
+Condition B (what the specification requires):
+Returns the string key in func that stores the list of caller FQN strings corresponding to the given phase number, when func contains a key matching the phase-caller naming convention for that phase. Returns the computed key for the given phase as a fallback when func contains no matching key. The returned value is always a non-empty string.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

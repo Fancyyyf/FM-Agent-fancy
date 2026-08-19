@@ -1,0 +1,5 @@
+{
+  "signature": "_parse_spec_check_json(response) -> tuple",
+  "pre_condition": "response is a string containing an LLM output that may include a JSON object.",
+  "post_condition": "Returns a 4-tuple (has_mismatch, offending_statements, reason, data). has_mismatch is True when the parsed JSON verdict is MISMATCH, False when MATCH. For MISMATCH: offending_statements and reason are non-empty strings. For MATCH: offending_statements is None and reason is None. data is a dict containing the full parsed and validated JSON object with verdict normalized to uppercase and keys: verdict, counterexample, offending_statements, reason. Raises ValueError when the response does not contain a valid spec-check JSON object: JSON is malformed, the parsed result is not a JSON object, any of the four required fields is missing, verdict is not 'MATCH' or 'MISMATCH' (case-insensitive), any field has an invalid type, or a MISMATCH verdict's counterexample, offending_statements, or reason is not a non-empty string."
+}

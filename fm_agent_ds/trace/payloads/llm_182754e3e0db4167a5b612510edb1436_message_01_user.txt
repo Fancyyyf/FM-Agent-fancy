@@ -1,0 +1,25 @@
+Programming language: Python
+
+Pre-condition:
+settings_cls is a Pydantic BaseSettings subclass whose model config enforces extra='forbid'; init_settings is a Pydantic InitSettingsSource instance; _CONFIG_PATH is accessible in this scope
+
+Code block:
+```python
+Line 1:     def settings_customise_sources(
+Line 2:         cls,
+Line 3:         settings_cls,
+Line 4:         init_settings,
+Line 5:         env_settings,
+Line 6:         dotenv_settings,
+Line 7:         file_secret_settings,
+Line 8:     ):
+Line 9:         # init (programmatic) wins; everything else is folded into _LayeredSource,
+Line 10:         # which already applies env > toml > field defaults.
+Line 11:         return (init_settings, _LayeredSource(settings_cls, _CONFIG_PATH))
+```
+
+Additional context:
+_LayeredSource.__init__(self, settings_cls, config_path)
+Pre-condition: settings_cls is a Pydantic BaseSettings subclass with model fields defined; config_path is a string that may reference a non-existent file
+Post-condition: Invoking __call__() on the instance returns a dict where each key is a model field name of settings_cls and each value is the value for that field resolved by merging TOML file contents with process environment variable overrides, falling back to the field's Pydantic default when no configuration source provides a value
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

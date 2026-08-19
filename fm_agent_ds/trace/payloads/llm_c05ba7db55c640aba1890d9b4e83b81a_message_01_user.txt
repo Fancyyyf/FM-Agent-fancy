@@ -1,0 +1,54 @@
+Programming language: Python
+
+Pre-condition:
+filepath refers to an existing, readable file. lang_key is a language key present in LANG_CONFIG.
+
+Code block:
+```python
+Line 1: def extract_functions_from_file(filepath, lang_key):
+Line 2:     """Extract all functions from a single source file.
+Line 3:     Returns a list of (function_name, source_text) tuples.
+Line 4:     """
+Line 5:     lang_cfg = LANG_CONFIG[lang_key]
+Line 6:     with open(filepath, 'r', errors='replace') as f:
+Line 7:         lines = f.readlines()
+Line 8:     # Normalize line endings
+Line 9:     lines = [l.rstrip('\n').rstrip('\r') for l in lines]
+Line 10:     if lang_cfg["body"] == "brace":
+Line 11:         raw_funcs = _extract_functions_brace(lines, lang_key, lang_cfg)
+Line 12:     elif lang_cfg["body"] == "indent":
+Line 13:         raw_funcs = _extract_functions_indent(lines, lang_cfg)
+Line 14:     else:
+Line 15:         # Semantic-only languages (currently Erlang) are extracted by their
+Line 16:         # registered backend and have no reliable file-local fallback.
+Line 17:         return []
+Line 18:     # Deduplicate names (applied after canonicalize so operator overloads
+Line 19:     # produce safe filenames and FQN components).
+Line 20:     name_counts = {}
+Line 21:     results = []
+Line 22:     for name, start, end in raw_funcs:
+Line 23:         cname = canonicalize(name)
+Line 24:         count = name_counts.get(cname, 0)
+Line 25:         name_counts[cname] = count + 1
+Line 26:         if count > 0:
+Line 27:             deduped = f"{cname}_{count}"
+Line 28:         else:
+Line 29:             deduped = cname
+Line 30:         source = '\n'.join(lines[start:end + 1]) + '\n'
+Line 31:         results.append((deduped, source))
+Line 32:     return results
+```
+
+Additional context:
+_extract_functions_brace(lines: list[str], lang_key: str, lang_cfg: dict) -> list[tuple[str, int, int]]
+Pre-condition: lines is a non-empty list of strings with normalized line endings. lang_key is a recognized language key. lang_cfg is the LANG_CONFIG entry for that language with body type 'brace'.
+Post-condition: Returns a list of (func_name, start_index, end_index) tuples identifying each top-level function in the file by brace matching, using language-specific keyword and prefix filtering from lang_cfg. Indices are 0-based and inclusive.
+
+_extract_functions_indent(lines: list[str], lang_cfg: dict) -> list[tuple[str, int, int]]
+Pre-condition: lines is a non-empty list of strings with normalized line endings. lang_cfg is the LANG_CONFIG entry for a language with body type 'indent'.
+Post-condition: Returns a list of (func_name, start_index, end_index) tuples identifying each top-level function in the file by indentation boundaries, using language-specific keyword and prefix filtering from lang_cfg. Indices are 0-based and inclusive.
+
+canonicalize(func_name: str) -> str
+Pre-condition: func_name is a raw function name string that may contain characters unsafe for filesystem paths or FQN separators.
+Post-condition: Returns a filesystem-safe, FQN-compatible string with '/' characters translated to '_'. The result is suitable for use in file paths and FQN components.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

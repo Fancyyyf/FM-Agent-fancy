@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "CodeGraphExtractor.from_proj_dir",
+      "signature": "from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None",
+      "pre_condition": "proj_dir is a string path to an existing project directory.",
+      "post_condition": "Returns a CodeGraphExtractor instance backed by the project's CodeGraph index when the index exists and is readable; returns None when the index is absent or could not be loaded."
+    },
+    {
+      "name": "CodeGraphExtractor.get_call_edges",
+      "signature": "get_call_edges(language: str) -> dict",
+      "pre_condition": "language is a string identifying a registered language key (e.g. \"javascript\"); the receiver is a valid CodeGraphExtractor instance.",
+      "post_condition": "Returns a dict whose keys are canonicalized caller FQNs and whose values are collections of canonicalized callee FQNs for all call relationships in source files of the given language indexed by CodeGraph."
+    }
+  ]
+}

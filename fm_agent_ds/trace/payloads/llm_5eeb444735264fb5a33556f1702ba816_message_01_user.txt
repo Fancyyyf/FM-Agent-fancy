@@ -1,0 +1,46 @@
+Programming language: Python
+
+Pre-condition:
+node is a Python AST FunctionDef or AsyncFunctionDef node with a complete body and valid lineno and end_lineno attributes. source_lines is a list of strings containing the full source file content, where the string at index N-1 corresponds to line number N. node.lineno and node.end_lineno are within the bounds of source_lines (1-indexed).
+
+Code block:
+```python
+Line 1: def _collect_func_idents(node: ast.FunctionDef | ast.AsyncFunctionDef,
+Line 2:                           source_lines: list[str]) -> tuple[set[str], set[str], set[str]]:
+Line 3:     """Return (identifier_set, body_words_set, raised_exception_types)."""
+Line 4:     idents: set[str] = set()
+Line 5:     exc_types: set[str] = set()
+Line 6:     for n in ast.walk(node):
+Line 7:         if isinstance(n, ast.Name):
+Line 8:             idents.add(n.id.lower())
+Line 9:         elif isinstance(n, ast.Attribute):
+Line 10:             idents.add(n.attr.lower())
+Line 11:         elif isinstance(n, ast.arg):
+Line 12:             idents.add(n.arg.lower())
+Line 13:         elif isinstance(n, ast.Constant) and isinstance(n.value, str):
+Line 14:             for w in re.findall(r'[a-zA-Z_][a-zA-Z0-9_]{2,}', n.value):
+Line 15:                 idents.add(w.lower())
+Line 16:         # collect raised exception types
+Line 17:         elif isinstance(n, ast.Raise):
+Line 18:             if n.exc:
+Line 19:                 exc_node = n.exc
+Line 20:                 if isinstance(exc_node, ast.Call):
+Line 21:                     exc_node = exc_node.func
+Line 22:                 if isinstance(exc_node, ast.Name):
+Line 23:                     exc_types.add(exc_node.id.lower())
+Line 24:                 elif isinstance(exc_node, ast.Attribute):
+Line 25:                     exc_types.add(exc_node.attr.lower())
+Line 26:         # collect caught exception types
+Line 27:         elif isinstance(n, ast.ExceptHandler) and n.type:
+Line 28:             exc_node = n.type
+Line 29:             if isinstance(exc_node, ast.Name):
+Line 30:                 exc_types.add(exc_node.id.lower())
+Line 31:             elif isinstance(exc_node, ast.Attribute):
+Line 32:                 exc_types.add(exc_node.attr.lower())
+Line 33:     body_text = '\n'.join(source_lines[node.lineno - 1: node.end_lineno])
+Line 34:     body_words = {w for w in re.findall(r'\b([a-zA-Z]{4,})\b', body_text.lower())
+Line 35:                   if w not in _STOP}
+Line 36:     return idents, body_words, exc_types
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_run_generate_phases",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_run_generate_phases.py",
+  "function_name": "_run_generate_phases",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_run_generate_phases.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_run_generate_phases.md",
+  "probe_stdout": "CONFIRMED — mtime_changed=True, coverage_ok=False, buggy_phase_plan_ready=True, expected_phase_plan_ready=False",
+  "trigger_summary": "In incremental mode, the mtime-based OR check at lines 1034-1037 accepts a phases.json rewrite even when coverage is incomplete, bypassing the required _phases_cover_current_sources verification."
+}

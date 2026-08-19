@@ -1,0 +1,3 @@
+{
+  "post_condition": "After execution, if no exception is raised, the return value r is a boolean determined as follows: let choice = (the stripped and lowercased user input line read by _prompt). If choice is empty, r equals default. If choice is 'y' or 'yes', r is True. If choice is 'n' or 'no', r is False. Otherwise, a ConfigWizardError with message 'Please answer yes or no.' is raised. Formally: (choice = '' ⇒ r = default) ∧ (choice ∈ {'y', 'yes'} ⇒ r = True) ∧ (choice ∈ {'n', 'no'} ⇒ r = False) whenever the function returns normally; and (choice ∉ {''} ∪ {'y', 'yes', 'n', 'no'}) ⇒ ConfigWizardError raised."
+}

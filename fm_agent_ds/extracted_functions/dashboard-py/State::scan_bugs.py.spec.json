@@ -1,0 +1,5 @@
+{
+  "signature": "State.scan_bugs(self)",
+  "pre_condition": "self.bug_dir is a Path attribute. The directory self.bug_dir, when present, may contain zero or more .result.json files. Each such file, when valid JSON, has a 'confirmation_status' key whose value is a string.",
+  "post_condition": "self.bugs_confirmed, self.bugs_not_confirmed, and self.bugs_pending are updated to reflect the current state of self.bug_dir. When the directory exists, every .result.json file is classified: a file whose confirmation_status (case-insensitive) contains the substring 'confirm' without containing 'not' increments bugs_confirmed; any other file increments bugs_not_confirmed. self.bugs_pending is max(0, completed_bug_validation_stages − (bugs_confirmed + bugs_not_confirmed)). When self.bug_dir does not exist, all three counters are zero."
+}

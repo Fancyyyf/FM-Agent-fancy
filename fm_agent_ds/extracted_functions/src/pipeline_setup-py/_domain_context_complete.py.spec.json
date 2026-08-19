@@ -1,0 +1,5 @@
+{
+  "signature": "_domain_context_complete(work_dir)",
+  "pre_condition": "work_dir is a directory path",
+  "post_condition": "Returns True if and only if all of the following hold: (1) work_dir contains a valid phases.json file — a readable, parseable JSON file whose top-level object has a 'phases' array where each element has a non-None integer 'phase' key; (2) the file work_dir/spec_prompts/domain_context/engine_overview.txt exists; (3) for every phase number P present in the 'phases' array, the file work_dir/spec_prompts/domain_context/phase_P_types.txt exists, where P is formatted as a zero-padded two-digit integer. Returns False if any of these conditions is not met, including when phases.json is missing, unreadable, not valid JSON, or has a 'phases' array containing an element whose 'phase' key is missing or None. The function does not modify any files on the filesystem."
+}

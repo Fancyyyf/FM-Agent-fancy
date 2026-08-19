@@ -1,0 +1,11 @@
+{
+  "id": "src--prompts-py--_check_post_implies_spec",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/src/prompts.py",
+  "function_name": "_check_post_implies_spec",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--prompts-py--_check_post_implies_spec.py",
+  "detail_file": "fm_agent/bug_validation/src--prompts-py--_check_post_implies_spec.md",
+  "probe_stdout": "CONFIRMED — Function returned (False, 'Line 3: return x // y', 'The function returns the sum of two integers. It always succeeds and does not raise any exceptions.', 'Hallucinated: code may divide by zero when y is 0.') instead of (True, None, None, None). The code unconditionally trusts an LLM MISMATCH verdict even when post_condition and spec_post_condition are identical. stmts='Line 3: return x // y' reason='Hallucinated: code may divide by zero when y is 0.'",
+  "trigger_summary": "When the LLM returns a MISMATCH verdict despite identical post_condition and spec_post_condition, the function unconditionally trusts the LLM and reports a false violation as (False, ...) instead of returning (True, None, None, None)."
+}

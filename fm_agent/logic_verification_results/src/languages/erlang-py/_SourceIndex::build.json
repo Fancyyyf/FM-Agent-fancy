@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/_SourceIndex::build.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "Returns a _SourceIndex instance that indexes source by line boundaries. The returned instance contains the full source text verbatim (with all line-ending characters preserved) and a list of zero-indexed byte offsets where each line begins within source. The first offset is always 0. Successive offsets increase monotonically  each offset equals the sum of byte lengths of all preceding lines (including their line-ending characters). The number of offsets equals the number of newline-delimited lines in source. The returned instance enables callers to map any valid line index and character position to the corresponding byte offset within source, and to extract contiguous substrings spanning an inclusive start byte offset to an exclusive end byte offset.",
-    "actual_behavior": "Returns an instance r of _SourceIndex such that r.source == source, r.lines == source.splitlines(keepends=True), and for all i in 0..len(r.lines)-1: r.line_offsets[i] == sum(len(r.lines[j]) for j in range(i)).",
-    "code_evidence": "Line 7: offset += len(line)",
-    "trigger_condition": "The specification explicitly requires byte offsets into the source text, but the code uses len(line) which returns the number of Unicode code points (characters). For strings containing multi-byte characters (e.g., non-ASCII), character length differs from byte length, causing incorrect byte offsets. The counterexample demonstrates this with a string containing the two-byte character ''."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_l5vkw0lv/snapshot/fm_agent/extracted_functions/src/languages/erlang-py/_SourceIndex::build.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

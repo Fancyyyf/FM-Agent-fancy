@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input source = \"café\\nhello\". In UTF-8, the first line 'café\\n' is 6 bytes, but len('café\\n') returns 5. The code computes line_offsets = [0, 5], while the specification requires byte offsets, so the correct starting byte offset for the second line is 6. The returned instance fails to provide the correct byte offset.",
+  "offending_statements": "Line 7: offset += len(line)",
+  "reason": "The specification explicitly requires byte offsets into the source text, but the code uses len(line) which returns the number of Unicode code points (characters). For strings containing multi-byte characters (e.g., non-ASCII), character length differs from byte length, causing incorrect byte offsets. The counterexample demonstrates this with a string containing the two-byte character 'é'."
+}

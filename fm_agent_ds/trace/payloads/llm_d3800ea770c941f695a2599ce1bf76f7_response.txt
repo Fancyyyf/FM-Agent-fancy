@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/tmp/test_project' with an empty file at '/tmp/test_project/.codegraph/codegraph.db' (or any non-CodeGraph SQLite file). The method returns an instance, but it does not support function-extraction, function-span, or call-edge queries, failing the specification's guarantee for non-None returns.",
+  "offending_statements": "Line 9: if os.path.exists(db_path):\nLine 10: return cls(db_path)",
+  "reason": "The code only checks file existence and never validates that the database is a valid CodeGraph database supporting required queries. When the file exists but is invalid or empty, the returned instance violates the specification's required guarantee."
+}

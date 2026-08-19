@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/function_id_from_extracted_path.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string that is the canonical fully-qualified function name (FQN) for the function whose extracted body resides at the given path. The FQN is derived by: removing any leading extracted-functions directory prefix (the longest matching prefix among 'fm_agent/extracted_functions/' and 'extracted_functions/') from a normalized form of the path; stripping the file extension; and replacing all remaining path-component separators with '::' (double colon). The returned string contains no file extension and uniquely identifies a function within the project's FQN namespace.",
+    "actual_behavior": "The function returns a string derived from the input `path` by applying the following transformations: (1) replace all backslashes with forward slashes; (2) if the resulting string starts with 'fm_agent/extracted_functions/', remove that prefix; otherwise, if it starts with 'extracted_functions/', remove that prefix; (3) remove the file extension (the part from the last '.' onward, including the dot) via os.path.splitext, keeping only the root; (4) replace all forward slashes with '::'. Formally, let s = path.replace('\\\\', '/'); let t = s[30:] if s.startswith('fm_agent/extracted_functions/') else (s[21:] if s.startswith('extracted_functions/') else s); then the returned value R(path) = os.path.splitext(t)[0].replace('/', '::'). The transformation is deterministic and does not raise exceptions for any nonempty string input.",
+    "code_evidence": "Line 2",
+    "trigger_condition": "The specification requires removing the prefix from a normalized form of the path, and then replacing path-component separators with '::'. Normalization typically includes collapsing consecutive separators. The code only replaces backslashes (Line 2) and does not collapse multiple slashes. For 'extracted_functions/foo//bar.py', the code returns 'foo::::bar', whereas the normalized form yields 'foo::bar'."
+  }
+}

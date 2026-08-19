@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "self._console.write",
+      "signature": "write(data: str) -> int",
+      "pre_condition": "The console stream is open. data is a str.",
+      "post_condition": "The string data is written to the console stream. Returns the number of characters written."
+    },
+    {
+      "name": "self._log_stream.write",
+      "signature": "write(data: str) -> int",
+      "pre_condition": "The log stream is open (not closed). data is a str.",
+      "post_condition": "The string data is written to the log stream. Returns the number of characters written."
+    }
+  ]
+}

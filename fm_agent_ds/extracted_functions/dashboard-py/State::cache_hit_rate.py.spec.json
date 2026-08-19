@@ -1,0 +1,5 @@
+{
+  "signature": "cache_hit_rate(self) -> float | None",
+  "pre_condition": "self.cache_window is a non-None iterable of 2-element iterables, each representing a pair of (cached_token_count, total_input_token_count) for a segment of accumulated trace data.",
+  "post_condition": "When self.cache_window is non-empty and the sum of all second elements across the window is positive, returns the sum of all first elements divided by the sum of all second elements (the aggregate cache-hit ratio). Returns None when self.cache_window is empty or when the aggregate total-input-token count is zero."
+}

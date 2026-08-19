@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input: phase_source_files={1: ['a.py']}, phase_cleanup={'renumbered': {None: 2}}. Code returns a prompt with overview_rule = '- engine_overview.txt does not need updating; touch it only if it explicitly names a phase number that changed.' The specification requires an instruction to update engine_overview.txt because after filtering out None-valued entries (the entry's value is 2, not None) and identity renumberings, there remains a renumbered phase where old (None) differs from new (2).",
+  "offending_statements": "Line 31:     renumbered_changes = {\nLine 32:         old: new for old, new in renumbered.items()\nLine 33:         if old is not None and new is not None and old != new\nLine 34:     }",
+  "reason": "The specification says to filter out 'None-valued entries' from the renumbered mapping, which conventionally means entries whose value is None. The code additionally filters out entries where the key (old) is None. For an input like {None: 2}, the specification would retain the entry and thus require an engine_overview.txt update instruction. The code discards it, resulting in a different instruction string."
+}

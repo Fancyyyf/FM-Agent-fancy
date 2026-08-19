@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/_prompt_backend.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a non-empty string that is one of: 'opencode', 'auto', 'codex-cli', or 'claude-cli'. The returned value corresponds to the user's confirmed choice from the displayed backend selection and is the first user-provided input that maps to a valid backend identifier. The function does not return until a valid selection is obtained.",
+    "actual_behavior": "After execution, the menu lines have been printed to standard output. If the value read by `_prompt('Select', '1')` (defaulting to '1' on empty input) is `'1'`, `'2'`, `'3'`, or `'4'`, the function returns the corresponding backend string: `'opencode'`, `'auto'`, `'codex-cli'`, or `'claude-cli'` respectively. Otherwise, the function raises `ConfigWizardError` with the message `'Backend selection must be 1, 2, 3, or 4.'`.",
+    "code_evidence": "Line 15:     try:\nLine 16:         return backends[selected]\nLine 17:     except KeyError as exc:\nLine 18:         raise ConfigWizardError(\"Backend selection must be 1, 2, 3, or 4.\") from exc",
+    "trigger_condition": "The specification requires the function to not return until a valid selection is obtained, meaning it must repeatedly prompt. The code instead raises ConfigWizardError on any invalid input, terminating without retrying, which violates the 'does not return until a valid selection is obtained' contract."
+  }
+}

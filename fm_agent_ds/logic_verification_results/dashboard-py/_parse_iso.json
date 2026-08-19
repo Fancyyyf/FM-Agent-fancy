@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_parse_iso.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns None when ts is None or any falsy value. When ts is a string, interprets it as an ISO 8601 timestamp and returns a datetime object representing that moment if parsing succeeds. A trailing 'Z' suffix on the timestamp string denotes the UTC timezone offset. Returns None without raising an exception when ts is not a valid ISO 8601 timestamp string (including malformed strings, invalid date or time components, or otherwise unparseable input). The function never raises an exception to its caller.",
+    "actual_behavior": "If `ts` is falsy (e.g., `None`, empty string, or any other false value), the function returns `None`. If `ts` is a truthy string (a non-empty string), then before parsing, any trailing 'Z' is replaced by '+00:00'. The function then attempts to call `datetime.fromisoformat` on that resulting string. If the call succeeds without raising an exception, the function returns the created `datetime` object. If any exception is raised (for example, due to an invalid ISO-8601 format), the function catches it and returns `None`. Formally: result = (None if not ts else (let s = ts[:-1] + '+00:00' if ts.endswith('Z') else ts in (datetime.fromisoformat(s) if no exception occurs else None))).",
+    "code_evidence": "Line 7: return datetime.fromisoformat(ts)",
+    "trigger_condition": "The specification requires that any valid ISO 8601 timestamp string be successfully parsed and returned as a datetime object. The code delegates parsing to datetime.fromisoformat, which does not support all ISO 8601 formats. For example, the ordinal date timestamp '2021-001T00:00:00Z' is valid per ISO 8601 but fromisoformat cannot parse it, causing the function to return None instead of a datetime, violating the specification."
+  }
+}

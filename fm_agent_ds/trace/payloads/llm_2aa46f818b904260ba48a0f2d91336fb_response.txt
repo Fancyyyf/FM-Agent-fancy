@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "request_id=1, deadline far ahead, _next_message returns {'id': 1, 'error': {}, 'result': 'data'} (no 'method' key).",
+  "offending_statements": "Line 6: if error:",
+  "reason": "An error object that is an empty dict is falsy in Python, causing the code to skip error handling and return the result. However, the specification requires that any error object other than the specific content-modified one must raise RuntimeError. This violates the specification when a matching response contains an empty 'error' object."
+}

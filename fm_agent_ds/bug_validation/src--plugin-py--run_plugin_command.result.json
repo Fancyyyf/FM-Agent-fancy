@@ -1,0 +1,11 @@
+{
+  "id": "src--plugin-py--run_plugin_command",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/plugin-py/run_plugin_command.py",
+  "function_name": "run_plugin_command",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--plugin-py--run_plugin_command.py",
+  "detail_file": "fm_agent/bug_validation/src--plugin-py--run_plugin_command.md",
+  "probe_stdout": "hello\nCONFIRMED — actual cwd: '/tmp/probe_p41_nvvx/proj_dir' | expected cwd: '/tmp/probe_p41_nvvx/plugin_root'",
+  "trigger_summary": "The bug is triggered when proj_dir != plugin_root; subprocess.run() receives cwd=proj_dir instead of the spec-required cwd=plugin_root."
+}

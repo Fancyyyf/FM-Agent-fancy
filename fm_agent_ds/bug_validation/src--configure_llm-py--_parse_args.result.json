@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--_parse_args",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/_parse_args.py",
+  "function_name": "_parse_args",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--_parse_args.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--_parse_args.md",
+  "probe_stdout": "CONFIRMED — actual keys: ['api_style', 'base_url'] | spec-expected keys: ['api-style', 'base-url'] | code-defines keys as: ['api_style', 'base_url'] | values: {'api_style': 'openai', 'base_url': 'https://example.com/api'}",
+  "trigger_summary": "When 'set' subcommand is used with --base-url and --api-style flags, the updates dict uses underscore keys (base_url, api_style) matching argparse dest names, but the specification requires hyphenated TOML field names (base-url, api-style)."
+}

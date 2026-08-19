@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_collect_changed_functions",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_collect_changed_functions.py",
+  "function_name": "_collect_changed_functions",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_collect_changed_functions.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_collect_changed_functions.md",
+  "probe_stdout": "scoped (submodules=['mylib']): ['mylib/utils.py']\nfull    (submodules=None):      ['main.py', 'mylib/utils.py']\ninside file in scoped: True\noutside file in scoped: False\nfull has both: True\nNOT CONFIRMED — submodule filtering works correctly: main.py excluded from scoped result, both files in full result",
+  "trigger_summary": "When submodules is a non-empty list and a changed file lies outside those submodules, the code correctly excludes it via _is_under_submodules."
+}

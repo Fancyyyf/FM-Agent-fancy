@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _read_error_body(exc, limit=800):
+Line 2:     """The raw response body of an HTTPError (the relay's actual error page),
+Line 3:     which str(exc) drops — only `HTTP Error 504: Gateway Time-out` survives
+Line 4:     otherwise. Read-once and tolerant; returns '' if unavailable."""
+Line 5:     try:
+Line 6:         raw = exc.read()
+Line 7:     except Exception:
+Line 8:         return ""
+Line 9:     if not raw:
+Line 10:         return ""
+Line 11:     text = raw.decode("utf-8", "replace").strip()
+Line 12:     return text[:limit] + ("…" if len(text) > limit else "")
+```
+
+Condition A (what the code actually does):
+The function returns a string value. Let R be the result of attempting exc.read() (ignoring exceptions). If exc.read() raises an exception, the function returns the empty string. Otherwise, if the bytes read are empty (falsey), the function returns the empty string. Otherwise, let T be the string obtained by decoding the bytes as UTF-8 with error replacement and stripping leading/trailing whitespace. The function then returns T[:limit] if len(T) <= limit, else T[:limit] + '…'. The HTTPError object's response body is consumed after a successful read; subsequent reads will return empty or raise.
+
+Condition B (what the specification requires):
+When the response body is readable and contains non-empty content, returns the body decoded as UTF-8 text, truncated to limit characters with a trailing ellipsis ("…") appended when the decoded text length exceeds limit. When the body is empty, unreadable, or reading raises an exception, returns None.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

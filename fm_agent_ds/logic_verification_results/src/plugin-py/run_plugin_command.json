@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/plugin-py/run_plugin_command.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Executes cmd as a shell subprocess. Relative file paths in cmd are interpreted relative to plugin_root. The subprocess runs with working directory set to plugin_root and the environment variable FM_AGENT_PLUGIN_ROOT set to the string representation of plugin_root. If the command exits with a non-zero code, a diagnostic message identifying the label, the command string, and the exit code is printed to stdout, then subprocess.CalledProcessError is raised. If the command exits with code zero, the function returns without error.",
+    "actual_behavior": "The function either returns None after the resolved shell command (with relative paths resolved under plugin_root) ran successfully (exit code 0) in directory proj_dir with FM_AGENT_PLUGIN_ROOT set to plugin_root and no error message was printed, or it raises a subprocess.CalledProcessError exception after printing an error message containing the label, return code, and resolved command to stdout. In both cases no other program state is modified. Formal: (result = None  resolved_cmd = _resolve_command(cmd, plugin_root)  subprocess_success(resolved, proj_dir, plugin_root)  printed_error)  (exception = CalledProcessError  resolved_cmd = _resolve_command(cmd, plugin_root)  subprocess_failed(resolved, proj_dir, plugin_root, exit_code)  printed_error(resolved, exit_code, label)  exit_code  0)",
+    "code_evidence": "Line 11: subprocess.run(resolved, shell=True, check=True, cwd=proj_dir, env=env)",
+    "trigger_condition": "The specification requires the subprocess to run with working directory set to plugin_root, but the code sets cwd=proj_dir. For any input where proj_dir != plugin_root, the working directory differs, violating the specification. For example, with the given input, the command 'pwd' would output '/home/user' instead of '/tmp/plugin'."
+  }
+}

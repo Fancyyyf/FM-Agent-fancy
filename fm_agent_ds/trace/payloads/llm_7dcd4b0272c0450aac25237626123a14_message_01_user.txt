@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return [(name, start_idx, end_idx)] for one TypeScript file, or None.
+Line 3:     Line indices are 0-indexed and inclusive. None means codegraph is
+Line 4:     unavailable or does not index the file, so the caller falls back to the
+Line 5:     regex extractor.
+Line 6:     """
+Line 7:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 8:     return cg.get_function_spans("typescript", filepath) if cg else None
+```
+
+Condition A (what the code actually does):
+After execution, the function returns a value. If `CodeGraphExtractor.from_proj_dir(proj_dir)` returns a non‑None instance `cg`, the result is `cg.get_function_spans("typescript", filepath)` — either a list of `(name: str, start_idx: int, end_idx: int)` with 0‑indexed inclusive line spans, or `None` if the file is not indexed. If `from_proj_dir` returns `None`, the function returns `None`. No side effects occur. Formally, let `cg = CodeGraphExtractor.from_proj_dir(proj_dir)`. Then the post‑condition is: `(cg ≠ None) ⇒ (result = cg.get_function_spans("typescript", filepath))` ∧ `(cg = None) ⇒ (result = None)` ∧ `(result ≠ None) ⇒ (result is a list of (str, int, int) tuples with 0‑indexed inclusive indices)`.
+
+Condition B (what the specification requires):
+If the CodeGraph backend is available for the project and can index the given file, returns a list of tuples where each tuple is (name: str, start_idx: int, end_idx: int). start_idx and end_idx are zero-based inclusive line numbers delimiting the span of the function named name within the file. The list is empty if the file contains no functions. If the CodeGraph backend is unavailable or cannot index the file, returns None.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string representing the path to an existing project directory
+Post-condition: Returns a CodeGraphExtractor instance initialized for the given project directory and ready to answer extraction queries, or None if the CodeGraph backend is unavailable or cannot be initialized for this project
+
+CodeGraphExtractor.get_function_spans(language: str, filepath: str) -> list | None
+Pre-condition: language is a string identifying a supported language (e.g., "typescript"); filepath is the absolute path to a source file; the CodeGraphExtractor instance has been successfully initialized for the project
+Post-condition: Returns a list of tuples (name: str, start_idx: int, end_idx: int) describing the zero-based inclusive line spans of functions in the given file, or None if the file is not indexed by CodeGraph
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

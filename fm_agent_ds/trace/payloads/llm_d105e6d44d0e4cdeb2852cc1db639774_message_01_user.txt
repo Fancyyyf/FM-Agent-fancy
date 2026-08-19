@@ -1,0 +1,59 @@
+Programming language: Python
+
+Pre-condition:
+plugin_dir is a pathlib.Path pointing to a directory containing plugin.json; name is the directory name of plugin_dir (non-empty string); data is a dict parsed from plugin.json.
+
+Code block:
+```python
+Line 1: def _validate_plugin_json_content(
+Line 2:     plugin_dir: Path, name: str, data: dict
+Line 3: ) -> Optional[PluginConfig]:
+Line 4:     """Validate the content of a parsed plugin.json; returns PluginConfig or None."""
+Line 5:     plugin_name = data.get("name", "")
+Line 6:     if plugin_name != name:
+Line 7:         print(
+Line 8:             f"Invalid plugin '{name}': plugin name mismatch "
+Line 9:             f"(expected '{name}', got '{plugin_name}')"
+Line 10:         )
+Line 11:         return None
+Line 12:     if not data.get("version"):
+Line 13:         print(f"Invalid plugin '{name}': 'version' field is missing or empty")
+Line 14:         return None
+Line 15:     stages = {}
+Line 16:     stages_data = data.get("stages", {})
+Line 17:     if not isinstance(stages_data, dict):
+Line 18:         print(f"Invalid plugin '{name}': 'stages' must be a JSON object")
+Line 19:         return None
+Line 20:     for stage_name, stage_data in stages_data.items():
+Line 21:         if not isinstance(stage_data, dict):
+Line 22:             print(
+Line 23:                 f"Invalid plugin '{name}': stage '{stage_name}' "
+Line 24:                 "must be a JSON object"
+Line 25:             )
+Line 26:             return None
+Line 27:         stage = PluginStageConfig.from_dict(stage_data)
+Line 28:         errors = stage.validated()
+Line 29:         if errors:
+Line 30:             for err in errors:
+Line 31:                 print(
+Line 32:                     f"Invalid plugin '{name}': stage '{stage_name}' — {err}"
+Line 33:                 )
+Line 34:             return None
+Line 35:         if stage.type == "modify" and stage.input_md:
+Line 36:             input_path = plugin_dir / stage.input_md
+Line 37:             if not input_path.is_file():
+Line 38:                 print(
+Line 39:                     f"Invalid plugin '{name}': stage '{stage_name}' — "
+Line 40:                     f"input_md '{stage.input_md}' not found in plugin directory"
+Line 41:                 )
+Line 42:                 return None
+Line 43:         stages[stage_name] = stage
+Line 44:     return PluginConfig(
+Line 45:         name=plugin_name,
+Line 46:         version=data["version"],
+Line 47:         root=plugin_dir,
+Line 48:         stages=stages,
+Line 49:     )
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

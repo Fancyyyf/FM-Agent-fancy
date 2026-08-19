@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_edge_from_mapping.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a CallEdge whose caller field is a CallerSelector derived from item['caller'], whose callee field is a CalleeTarget derived from item['callee'], and whose source field is a provenance string derived from evidence entries in item combined with the provided source parameter. Raises an error whose message includes source when item is missing required sub-objects or when a sub-object is malformed.",
+    "actual_behavior": "If the pre-condition holds, the function returns a CallEdge instance whose 'caller' is the CallerSelector obtained by parsing item['caller'] with _parse_caller, whose 'callee' is the CalleeTarget obtained by parsing item['callee'] with _parse_callee, and whose 'source' is the provenance string returned by _edge_source(item, source). No exceptions are raised. Formally:  item, source satisfying Pre  ( e  CallEdge (e.caller = _parse_caller(item['caller'], source)  e.callee = _parse_callee(item['callee'], source)  e.source = _edge_source(item, source)  _edge_from_mapping(item, source) returns e  no exception is raised)).",
+    "code_evidence": "Line 2: caller = _parse_caller(item.get('caller'), source)\nLine 3: callee = _parse_callee(item.get('callee'), source)",
+    "trigger_condition": "The function does not validate that item['caller'] and item['callee'] are dicts or None before passing them to _parse_caller and _parse_callee. If a sub-object is of an incorrect type (e.g., a string), the helper functions' behavior is unspecified; they might not raise an error, or might raise an error without the source string, violating the requirement that a malformed sub-object raises an error whose message includes source."
+  }
+}

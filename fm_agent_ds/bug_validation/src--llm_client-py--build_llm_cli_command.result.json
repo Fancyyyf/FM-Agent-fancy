@@ -1,0 +1,11 @@
+{
+  "id": "src--llm_client-py--build_llm_cli_command",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/src/llm_client-py/build_llm_cli_command.py",
+  "function_name": "build_llm_cli_command",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--build_llm_cli_command.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--build_llm_cli_command.md",
+  "probe_stdout": "CONFIRMED — actual: 'AgentCommand' (not a list) | expected: list",
+  "trigger_summary": "When CLI backend is enabled via FM_AGENT_MODEL_BACKEND=codex-cli, build_llm_cli_command returns an AgentCommand object instead of a list of argument strings as required by the specification."
+}

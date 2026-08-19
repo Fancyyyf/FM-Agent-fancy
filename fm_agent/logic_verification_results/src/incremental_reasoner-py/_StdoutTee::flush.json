@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_StdoutTee::flush.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "All buffered data written to the console stream is flushed to the underlying device. All buffered data written to the log stream is flushed to the underlying file, unless the log stream is closed, in which case no flush is attempted and no exception is raised. Returns None.",
-    "actual_behavior": "If the method returns normally (no exception raised), then all buffered data in the console stream has been committed to the underlying device, and if the log stream was not closed at the time of the call, all buffered data in the log stream has been committed to the underlying file. If an exception is raised during the execution of either flush() call, the method does not complete normally, and the state of the stream buffers is unspecified: the console flush may have partially succeeded or not started, and the log flush may not have been called. Formal logic: For normal termination: (flush_call_console(succeed)  ( log_stream_not_closed_at_call_time  flush_call_log(succeed) ) ). For abnormal termination: raised(exception)  {FlushError, IOError, ...}.",
-    "code_evidence": "Line 2: self._console.flush()",
-    "trigger_condition": "The specification requires that after the call, all buffered data in the log stream is flushed (unless the log stream is closed). The code does not flush the log stream when the console flush raises an exception, violating that post-condition."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_jx75d3w8/snapshot/fm_agent/extracted_functions/src/incremental_reasoner-py/_StdoutTee::flush.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

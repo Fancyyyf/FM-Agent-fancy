@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_strip_star.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a dict containing the same key-value pairs as d. For every string key: if the key in d starts with '*', the leading '*' is removed in the returned dict; otherwise the key is identical. Non-string keys are unchanged.",
+    "actual_behavior": "If the input `d` is not a dictionary, the function returns `d` unchanged. If `d` is a dictionary, the function returns a new dictionary where for each key-value pair `k, v` in `d`, if `k` is a string starting with `'*'`, the key in the returned dictionary is `k[1:]` (the substring after the first character); otherwise the key remains `k`. The returned dictionary contains exactly the same set of values as the input dictionary, associated with the modified keys. The original input dictionary is not mutated. Formally: For any variable `d` satisfying the pre-condition, after `_strip_star(d)` executes, the result `r` satisfies: ( `not isinstance(d, dict)` implies `r is d` )  ( `isinstance(d, dict)` implies ( `r` is a new dictionary  ` (k, v)  d. ( (isinstance(k, str)  k.startswith('*'))  (k[1:], v)  r )  ( (isinstance(k, str)  k.startswith('*'))  (k, v)  r ) )  `len(r)` = `len(d)` ) ).",
+    "code_evidence": "Line 5: return {(k[1:] if k.startswith(\"*\") else k): v for k, v in d.items()}",
+    "trigger_condition": "The code unconditionally calls k.startswith(\"*\") for every key k. When k is a non-string (e.g., the integer 1), it raises an AttributeError because integers do not have a startswith method. The specification requires that non-string keys be left unchanged, which would result in the dictionary {1: 'a'} being returned without an error. Thus the code's behavior (raising an exception) violates the specification for the valid input {1: 'a'}."
+  }
+}

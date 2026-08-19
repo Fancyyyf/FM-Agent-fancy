@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_extract_classes",
+  "source_file": "src/scope-py/_extract_classes.py",
+  "function_name": "_extract_classes",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_extract_classes.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_extract_classes.md",
+  "probe_stdout": "CONFIRMED — actual classes: ['Inner', 'Outer', 'TopLevel'] | expected: ['Outer', 'TopLevel'] (nested class \"Inner\" unwantedly appears due to ast.walk)\n",
+  "trigger_summary": "Module with both top-level and nested class definitions causes ast.walk to include nested classes in the output."
+}

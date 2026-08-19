@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a string result. Let `text` be the return value of `load_staged_domain_knowledge_text(work_dir)`, which is the concatenated contents of all domain-knowledge markdown files under `work_dir`, or the empty string if none are present. If `text` is non-empty, the function returns `'## User-provided domain knowledge\\n\\n' + text + '\\n\\n'`. If `text` is empty, the function returns `''`. No side effects occur. Formal post-condition: `(text ≠ '' ⇒ result = '## User-provided domain knowledge\\n\\n' + text + '\\n\\n') ∧ (text = '' ⇒ result = '')`."
+}

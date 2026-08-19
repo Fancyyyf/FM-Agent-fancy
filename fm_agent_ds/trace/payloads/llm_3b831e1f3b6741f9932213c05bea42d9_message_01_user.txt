@@ -1,0 +1,39 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _validate_extraction(extracted_dir, registry_langs=None):
+Line 2:     """Re-parse every extracted file and verify each contains exactly one function.
+Line 3:     Files for languages that returned data from their REGISTRY backend are skipped:
+Line 4:     those backends write exactly one function body per file by construction, so
+Line 5:     regex re-parsing adds no safety and produces false negatives for forms the
+Line 6:     regex cannot recognise (async def, class methods, arrow functions).
+Line 7:     Returns a list of (file_path, function_count) for files that fail validation.
+Line 8:     """
+Line 9:     failures = []
+Line 10:     for root, _, files in os.walk(extracted_dir):
+Line 11:         for fname in files:
+Line 12:             ext = fname.rsplit('.', 1)[-1] if '.' in fname else ''
+Line 13:             lang_key = EXT_TO_LANG.get(ext)
+Line 14:             if not lang_key:
+Line 15:                 continue
+Line 16:             if registry_langs and lang_key in registry_langs:
+Line 17:                 continue
+Line 18:             fpath = os.path.join(root, fname)
+Line 19:             funcs = extract_functions_from_file(fpath, lang_key)
+Line 20:             if len(funcs) != 1:
+Line 21:                 failures.append((fpath, len(funcs)))
+Line 22:     return failures
+```
+
+Condition A (what the code actually does):
+If the function terminates normally (no exception raised), the return value `failures` is a list of tuples `(fpath, count)`. For every file `f` in the directory tree rooted at `extracted_dir`, let `ext` be the substring of `f` after the last '.' (or empty string if no '.'), and let `lang_key = EXT_TO_LANG.get(ext)`. If `lang_key` is not None and (`registry_langs` is None or `lang_key` not in `registry_langs`), then the function `extract_functions_from_file(f, lang_key)` is called; let `n` be the length of its returned list. The tuple `(f, n)` belongs to `failures` if and only if `n ≠ 1`. Otherwise (no `lang_key` or language skipped due to `registry_langs`), `f` contributes no entry. The order of entries in `failures` is the order in which files are encountered by `os.walk`. The arguments `extracted_dir` and `registry_langs` remain unchanged. If any call to `extract_functions_from_file` raises an exception, the function terminates abruptly by propagating that exception; no return value is produced, and the external state (including the arguments and the file system) is unmodified (local variable `failures` may be partially built but is discarded).
+
+Condition B (what the specification requires):
+Returns a list of (file_path, count) tuples, one per file under extracted_dir whose extension maps to a known language key (via the global EXT_TO_LANG mapping), whose language key is absent from registry_langs (when registry_langs is provided), and for which regex-based re-parsing yields a function count not equal to 1. Files whose extension maps to no known language key produce no entry. Files whose language key appears in registry_langs produce no entry, because backend-extracted files are known to contain exactly one function by construction. Returns an empty list when every remaining re-parsed file contains exactly one function.
+
+Additional context:
+extract_functions_from_file(file_path, lang_key)
+Pre-condition: file_path is a path to an existing extracted function file; lang_key is a language key string present in EXT_TO_LANG values
+Post-condition: Returns a list of (function_name, function_body_text) tuples extracted from the file by regex-based parsing for the given language. The length of the returned list is the count of functions the regex parser identifies in the file.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

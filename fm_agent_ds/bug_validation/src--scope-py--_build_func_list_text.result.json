@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_build_func_list_text",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_build_func_list_text.py",
+  "function_name": "_build_func_list_text",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_build_func_list_text.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_build_func_list_text.md",
+  "probe_stdout": "Test 1 (missing docstring key):\n  actual:   '- foo | def foo(): pass | '\n  expected: '- foo | def foo(): pass'\nCONFIRMED — missing docstring key produces trailing \" | \"\n\nTest 2 (empty docstring):\n  actual:   '- bar | def bar(): return 42 | '\n  expected: '- bar | def bar(): return 42'\nCONFIRMED — empty docstring produces trailing \" | \"\n\nTest 3 (with docstring - control case):\n  actual:   '- baz | def foo(): pass | Returns the answer'\n  expected: '- baz | def foo(): pass | Returns the answer'\nControl case passes (docstring works correctly)",
+  "trigger_summary": "When funcs_info entries lack a docstring key or have an empty docstring, the code unconditionally appends ' | ' followed by an empty docstring value, producing a trailing ' | ' that violates the specification requirement that nothing additional be appended."
+}

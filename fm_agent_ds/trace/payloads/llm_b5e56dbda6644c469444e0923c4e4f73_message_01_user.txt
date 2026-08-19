@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all JavaScript files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("javascript", proj_dir) if cg else {}
+```
+
+Condition A (what the code actually does):
+After the function returns, the variable 'result' (the function's return value) is a dictionary. If the call CodeGraphExtractor.from_proj_dir(proj_dir) returns a truthy value, then result equals the dictionary mapping each absolute file path of a JavaScript source file within the project directory 'proj_dir' to a list of (function_name: str, function_body: str) tuples for all functions defined in that file, as produced by the CodeGraphExtractor instance's get_functions_by_file('javascript', proj_dir) method. If CodeGraphExtractor.from_proj_dir(proj_dir) returns a falsy value, result is an empty dictionary {}. Formally: let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg: result = cg.get_functions_by_file('javascript', proj_dir); else: result = {}.
+
+Condition B (what the specification requires):
+When the project's code analysis backend is available, returns a dict mapping each absolute filepath string to a list of (func_name: str, body_text: str) tuples — one tuple per function defined in that JavaScript source file — where body_text is the function's complete source code text. When the backend is unavailable for the project, returns an empty dict, indicating that no JavaScript functions were extracted through the backend.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str)
+Pre-condition: proj_dir is a string path to a directory that may contain a code indexing database.
+Post-condition: Returns a CodeGraphExtractor instance initialized with the project's code index when the project can be indexed; returns a falsy value when indexing is not possible (e.g., database missing or incompatible).
+
+CodeGraphExtractor.get_functions_by_file(language: str, proj_dir: str) -> dict
+Pre-condition: The receiver is an initialized CodeGraphExtractor instance. language is a language key string (e.g., 'javascript'). proj_dir is the project directory path string.
+Post-condition: Returns a dict mapping each absolute filepath string to a list of (func_name: str, body_text: str) tuples for all functions defined in source files of the given language within the project — body_text is the function's complete source code.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

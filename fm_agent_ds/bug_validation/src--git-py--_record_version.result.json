@@ -1,0 +1,11 @@
+{
+  "id": "src--git-py--_record_version",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/git-py/_record_version.py",
+  "function_name": "_record_version",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--git-py--_record_version.py",
+  "detail_file": "fm_agent/bug_validation/src--git-py--_record_version.md",
+  "probe_stdout": "CONFIRMED — TypeError raised on non-string commit_id: unsupported operand type(s) for +: 'int' and 'str'\n",
+  "trigger_summary": "Passing a non-string truthy commit_id (e.g., integer 42) causes TypeError at f.write(commit_id + \"\\n\") because the code does not convert commit_id to str before concatenation."
+}

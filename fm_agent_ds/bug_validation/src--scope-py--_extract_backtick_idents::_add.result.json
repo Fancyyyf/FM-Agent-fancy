@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_extract_backtick_idents::_add",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/src/scope.py",
+  "function_name": "_add",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_extract_backtick_idents::_add.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_extract_backtick_idents::_add.md",
+  "probe_stdout": "CONFIRMED — actual: {'foo'} | expected: {'foo_'}",
+  "trigger_summary": "strip('_') removes trailing underscores, but spec requires removing only leading underscores; token 'foo_' produces 'foo' instead of 'foo_'."
+}

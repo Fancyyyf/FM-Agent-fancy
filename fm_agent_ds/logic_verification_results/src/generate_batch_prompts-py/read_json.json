@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_batch_prompts-py/read_json.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a Python dict that is the fully parsed representation of the JSON content in the file at path. Raises FileNotFoundError if no file exists at path. Raises an error if the file content is not syntactically valid JSON.",
+    "actual_behavior": "The function returns the Python value obtained by parsing the JSON content of the file at `path`. No exceptions are raised, the file remains unchanged, and the file is closed after reading. Formally, if `content = path.read_text()` before the call, then the return value `r` satisfies `r == json.loads(content)`.",
+    "code_evidence": "Line 4: return json.loads(path.read_text())",
+    "trigger_condition": "The specification requires the function to return a Python dict, but the code returns the raw output of json.loads, which can be any JSON value (list, string, number, boolean, null) if the file contains valid JSON not representing a JSON object. This violates the return type constraint."
+  }
+}

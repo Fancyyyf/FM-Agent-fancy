@@ -1,0 +1,61 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def check_last_run_existence(proj_dir, submodules=None):
+Line 2:     """
+Line 3:     Return whether a full pipeline run (run_pipeline) has already completed under proj_dir.
+Line 4:     Incremental analysis compares the current working tree against the artifacts left by a
+Line 5:     previous full run, so it can only proceed when those artifacts are present. A full run
+Line 6:     is considered to exist when, under proj_dir/fm_agent/, both:
+Line 7:       1. phases.json exists — the module/phase plan that the full run aborts without, and
+Line 8:       2. extracted_functions/ holds at least one function file and EVERY function file
+Line 9:          has both metadata sidecars (per is_file_ready) — proving
+Line 10:          the spec-generation stage ran to completion. A partially specced tree means the
+Line 11:          previous full run did not finish, so it is not a sound basis for incremental
+Line 12:          analysis.
+Line 13:     When submodules is provided, only extracted functions under those selected
+Line 14:     project-relative directories are considered. Returns True only when the
+Line 15:     selected scope has at least one ready function and no selected function is
+Line 16:     incomplete; otherwise False (so the caller can fall back to a scoped full run).
+Line 17:     """
+Line 18:     work_dir = os.path.join(proj_dir, "fm_agent")
+Line 19:     if not os.path.isfile(os.path.join(work_dir, "phases.json")):
+Line 20:         return False
+Line 21:     extracted_dir = os.path.join(work_dir, "extracted_functions")
+Line 22:     if not os.path.isdir(extracted_dir):
+Line 23:         return False
+Line 24:     saw_function = False
+Line 25:     for root, _, files in os.walk(extracted_dir):
+Line 26:         for fname in files:
+Line 27:             fpath = os.path.join(root, fname)
+Line 28:             if _is_metadata_sidecar(fpath):
+Line 29:                 continue
+Line 30:             rel = os.path.relpath(fpath, extracted_dir).replace(os.sep, "/")
+Line 31:             if submodules and not _is_under_submodules(rel, submodules):
+Line 32:                 continue
+Line 33:             saw_function = True
+Line 34:             if not is_file_ready(fpath):
+Line 35:                 return False
+Line 36:     return saw_function
+```
+
+Condition A (what the code actually does):
+The function returns True iff (1) the file <proj_dir>/fm_agent/phases.json exists, (2) the directory <proj_dir>/fm_agent/extracted_functions exists, (3) there exists at least one regular file within the extracted_functions directory tree that is not a metadata sidecar (i.e., does not end in .spec.json or .info.json) and, when submodules is provided, whose relative path from extracted_functions starts with one of the submodule paths immediately followed by a forward slash, and (4) every such file f satisfies is_file_ready(f) (i.e., both f.spec.json and f.info.json exist as reachable, valid JSON files with the required schemas). Otherwise the function returns False. Formally: let work_dir = proj_dir + '/fm_agent', extracted_dir = work_dir + '/extracted_functions'. Let E = { f | f is a file under extracted_dir (recursively) and not sidecar(f) }. Define E' = if submodules is None then E else { f in E | is_under_submodules(relpath(f, extracted_dir), submodules) }. The return value V satisfies V ⇔ ( is_file(work_dir + '/phases.json') ∧ is_dir(extracted_dir) ∧ E' ≠ ∅ ∧ ∀ f ∈ E' : ready(f) ).
+
+Condition B (what the specification requires):
+Returns True iff all of the following hold simultaneously: (a) proj_dir/fm_agent/phases.json exists as a regular file; (b) proj_dir/fm_agent/extracted_functions/ exists as a directory and contains at least one non-sidecar function file; (c) every non-sidecar function file found under extracted_functions/ (when submodules is provided, restricted to those whose relative path begins with at least one submodule path followed by a separator) has both a valid .spec.json and .info.json sidecar. Returns False if any condition (a), (b), or (c) is not met, indicating the previous run is incomplete and not a sound basis for incremental analysis. Files whose names match the metadata sidecar naming pattern (.spec.json or .info.json suffix) are excluded from the function-file count and readiness check. The function has no side effects: it reads from disk only.
+
+Additional context:
+is_file_ready(fpath: str) -> bool
+Pre-condition: fpath is an absolute path to an extracted function file within the extracted_functions/ directory.
+Post-condition: Returns True iff both {{fpath}}.spec.json and {{fpath}}.info.json exist as valid JSON files containing the required spec and info schemas respectively. Returns False if either sidecar is missing, unparseable, or does not contain the expected structure.
+
+_is_metadata_sidecar(fpath: str) -> bool
+Pre-condition: fpath is a file path within the extracted_functions/ directory tree.
+Post-condition: Returns True if the filename ends with .spec.json or .info.json; returns False otherwise.
+
+_is_under_submodules(rel: str, submodules: list[str]) -> bool
+Pre-condition: rel is a forward-slash-separated relative path from the extracted_functions/ root. submodules is a list of non-empty project-relative subdirectory paths, none containing a trailing separator.
+Post-condition: Returns True iff rel starts with one of the paths in submodules immediately followed by a path separator (e.g., '{submodule_path}/'). Returns False if rel does not begin with any submodule path in this way.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

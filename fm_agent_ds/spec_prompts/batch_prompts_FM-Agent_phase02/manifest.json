@@ -1,0 +1,19 @@
+{
+  "phase": 2,
+  "layers": "8",
+  "total_functions": 1,
+  "total_batches": 1,
+  "batches": [
+    {
+      "index": 0,
+      "file": "batch_000_layer8_extracted_b0.txt",
+      "layer": 8,
+      "is_cycle": false,
+      "num_functions": 1,
+      "num_pending": 0,
+      "functions": [
+        "fm_agent/extracted_functions/src/languages/erlang-py/ElpClient::_send.py"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"signature": "is_cli_backend_enabled() -> bool", "pre_condition": "The FM-Agent runtime configuration has been loaded.", "post_condition": "Returns True if and only if the resolved LLM backend is codex-cli or claude-cli; returns False for all other backends (including opencode)."}

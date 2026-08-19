@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a newly created FunctionSpecMap object. Let callees = info['callees'] (a list of dicts, each with keys 'name', 'signature', 'pre_condition', 'post_condition'). For each d in callees, define name = d['name'], sig = d['signature'], spec_str = 'Pre-condition: ' + d['pre_condition'] + '\\nPost-condition: ' + d['post_condition']. The resulting FunctionSpecMap stores: for each distinct name, the mappings name ↦ spec_str and name ↦ sig are taken from the last occurrence of that name in the iteration order of callees. If callees is empty, the map contains no entries. No exceptions are raised, and no external state is modified."
+}

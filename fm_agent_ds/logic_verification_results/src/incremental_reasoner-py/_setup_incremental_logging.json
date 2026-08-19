@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_setup_incremental_logging.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "The Python root logger is configured to emit all records at the INFO level and above to two destinations: a timestamped log file at work_dir/incremental_<YYYYmmdd_HHMMSS>.log (the timestamp is captured at the moment of call) and stdout, both using the format \"%(asctime)s %(levelname)s %(name)s: %(message)s\". Any handlers previously attached to the root logger are removed before the new ones are installed, so repeated invocations do not duplicate log entries. sys.stdout is replaced with an object that writes every string received via its write method (including all output from print()) to both the original stdout stream and the same log file. The wrapping is idempotent: if a prior call already wrapped sys.stdout, the original stdout is recovered before wrapping, so repeated calls produce exactly one copy of each printed line in both destinations. Returns the absolute path of the created log file.",
+    "actual_behavior": "work_dir exists and is writable; a new file is created at path log_path = os.path.join(work_dir, 'incremental_' + timestamp + '.log') where timestamp is datetime.now().strftime('%Y%m%d_%H%M%S') at call time; the function returns log_path; the root logger has level INFO, all prior handlers removed, and two handlers added: a FileHandler to log_path and a StreamHandler to the original console stream (sys.stdout._console if present else initial sys.stdout); sys.stdout is replaced by a _StdoutTee(console_stream, file_handler.stream); no exception propagates.",
+    "code_evidence": "Line 26: log_path = os.path.join(work_dir, f\"incremental_{timestamp}.log\")\nLine 47: return log_path",
+    "trigger_condition": "The specification requires returning the absolute path of the log file, but the code returns the joined path as-is, which is relative if work_dir is relative."
+  }
+}

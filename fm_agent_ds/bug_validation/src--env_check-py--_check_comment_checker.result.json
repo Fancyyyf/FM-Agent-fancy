@@ -1,0 +1,11 @@
+{
+  "id": "src--env_check-py--_check_comment_checker",
+  "source_file": "src/env_check.py",
+  "function_name": "_check_comment_checker",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--env_check-py--_check_comment_checker.py",
+  "detail_file": "fm_agent/bug_validation/src--env_check-py--_check_comment_checker.md",
+  "probe_stdout": "CONFIRMED — unhandled AttributeError when json.load returns a list: AttributeError(\"'list' object has no attribute 'get'\") | expected: should return (False, error_message) per spec instead of propagating exception\n",
+  "trigger_summary": "When the config file contains valid JSON that is not an object (e.g., an array), cfg.get() raises an uncaught AttributeError instead of returning (False, error_message)."
+}

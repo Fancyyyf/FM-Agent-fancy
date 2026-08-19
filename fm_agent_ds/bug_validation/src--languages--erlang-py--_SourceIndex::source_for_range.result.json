@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_SourceIndex::source_for_range",
+  "source_file": "src/languages/erlang-py/_SourceIndex::source_for_range",
+  "function_name": "source_for_range",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_SourceIndex::source_for_range.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_SourceIndex::source_for_range.md",
+  "probe_stdout": "Source 'a😀b' lengths: len(str)=3, len(utf8)=6\nposition_to_offset(chr 1) returned: 1\nIs code point offset? True (cp_offset==1 and source[cp_offset]==😀)\n\nAll tests passed — source_for_range correctly returns substrings\nNOT CONFIRMED — source_for_range works correctly; position_to_offset returns code point offsets, not byte offsets",
+  "trigger_summary": "The reported bug does not exist: position_to_offset returns code point offsets (Python len() counts code points, not bytes), so source_for_range slices correctly for all inputs including multi-byte Unicode characters."
+}

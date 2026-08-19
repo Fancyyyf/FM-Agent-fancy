@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Pre‑existing environment variable OPENCODE_CONFIG_CONTENT = '{\"plugins\": {\"p1\": true}}' and _opencode_provider_config() returns {\"plugins\": {\"p2\": true}}. The specification requires that provider‑defined keys override pre‑existing entries, i.e., the resulting OPENCODE_CONFIG_CONTENT should be '{\"plugins\": {\"p2\": true}}'. The code deep‑merges, producing '{\"plugins\": {\"p1\": true, \"p2\": true}}' which violates the specification.",
+  "offending_statements": "Line 25: env[\"OPENCODE_CONFIG_CONTENT\"] = json.dumps(_deep_merge(existing, provider_config))",
+  "reason": "Specification states 'provider‑defined keys override pre‑existing entries for the same key' (i.e., shallow override). The code uses _deep_merge which recursively merges nested dictionaries, causing pre‑existing nested keys to survive when they should be replaced. A concrete environment where OPENCODE_CONFIG_CONTENT contains a nested key that also appears in the provider config exposes the mismatch."
+}

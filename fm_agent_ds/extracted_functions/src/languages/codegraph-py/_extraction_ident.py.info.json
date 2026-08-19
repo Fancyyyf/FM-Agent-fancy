@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_qualified_parts",
+      "signature": "_qualified_parts(name: str, qualified_name: str) -> list[str]",
+      "pre_condition": "name and qualified_name are string values from a codegraph nodes table row.",
+      "post_condition": "Returns a list of identifier component strings obtained by splitting qualified_name on '::' and '.' boundaries; when the split yields no components, returns a single-element list containing name."
+    },
+    {
+      "name": "_bare_function_name",
+      "signature": "_bare_function_name(name: str) -> str",
+      "pre_condition": "name is a string component that may contain tree-sitter decorations (full function signature, template body, or parameter lists).",
+      "post_condition": "Returns the bare function identifier with any tree-sitter decorations, type annotations, template parameters, and parameter lists removed; the result is the unqualified function or method name only."
+    },
+    {
+      "name": "canonicalize",
+      "signature": "canonicalize(func_name: str) -> str",
+      "pre_condition": "func_name is a function identifier string.",
+      "post_condition": "Returns a filesystem- and FQN-safe version of func_name where every '/' character is replaced with '_'; all other characters are preserved unchanged."
+    }
+  ]
+}

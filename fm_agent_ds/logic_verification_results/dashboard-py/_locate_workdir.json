@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_locate_workdir.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns an absolute, resolved Path object. If the resolved path of proj_dir itself contains a subdirectory named trace/, returns that resolved path directly. Otherwise, returns the resolved path of proj_dir with fm_agent/ appended.",
+    "actual_behavior": "The function returns a path object r such that r = p if the subdirectory 'trace' exists inside p, else r = p / 'fm_agent', where p = Path(proj_dir).resolve(). No other modifications to program state occur. Formally: let p = resolve(Path(proj_dir)) in (if is_dir(p / 'trace') then r = p else r = p / 'fm_agent').",
+    "code_evidence": "Line 11: return p / \"fm_agent\"",
+    "trigger_condition": "When 'trace/' is absent, the code appends 'fm_agent' to the resolved base path and returns it without calling .resolve(). If the resulting path is a symlink (e.g., 'fm_agent' is a symlink to another directory), the returned Path object is not a resolved path (it points to the symlink, not the target). This violates the specification's top-level requirement that the function must return an 'absolute, resolved Path object'."
+  }
+}

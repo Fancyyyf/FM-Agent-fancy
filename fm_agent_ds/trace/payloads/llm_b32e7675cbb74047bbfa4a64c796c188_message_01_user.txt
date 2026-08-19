@@ -1,0 +1,116 @@
+Programming language: Python
+
+Pre-condition:
+After executing the code block, the following holds:
+
+**Early return paths:**
+- If `plugin_stage` is not `None` and `plugin_stage.type == 'pass'`, a message is printed and the function returns without modifying the file system.
+- If `plugin_stage` is not `None` and `plugin_stage.type == 'replace'`, a message is printed, `run_plugin_command(plugin_stage.replace_cmd, plugin_root, proj_dir, label='generate_domain_context')` is invoked. If the command succeeds, the function returns; if it fails, a `CalledProcessError` is raised.
+
+**Normal flow-through (neither 'pass' nor 'replace'):**
+- `_resume_skip` is set to `resume and _domain_context_complete(work_dir)`.
+- If `_resume_skip` is true, a resume message is printed.
+- If `plugin_stage` is not `None` and `plugin_stage.type == 'modify'` and `plugin_stage.input_md` is truthy:
+    - The file at `plugin_root / plugin_stage.input_md` is copied to `work_dir / 'workflow_generate_domain_context.md'`.
+    - If there are staged domain knowledge files (returned by `list_staged_domain_knowledge_relpaths(work_dir)`), the workflow file is appended with a Markdown section listing those files.
+- Otherwise (`plugin_stage` is `None`, type not 'modify', or `input_md` missing):
+    - `_prepare_workflow_file(proj_dir, work_dir, script_dir, 'workflow_generate_domain_context.md')` is called, which creates or updates the workflow file in `work_dir` from the templates in `script_dir`.
+- The variable `fm_reminder` is assigned a constant string (no side effects).
+- The function then enters a `for` loop (attempts from 1 to `OPENCODE_MAX_RETRIES`) with the body beginning at `if _resume_skip:`; subsequent execution is outside the given code block.
+
+In summary, when the code block finishes without early return, the following state is guaranteed:
+- A file `workflow_generate_domain_context.md` exists inside `work_dir` and is ready for the LLM-driven domain context generation.
+- The flag `_resume_skip` reflects whether domain context generation should be skipped because output files already exist and `resume` is true.
+- No domain context output files have been created yet by this block.
+
+Formally, for paths not taking early return:
+  ∃ workflow_md ∈ work_dir, name = 'workflow_generate_domain_context.md' ∧
+  _resume_skip = (resume ∧ DomainContextComplete(work_dir)) ∧
+  (plugin_stage ≠ None ∧ plugin_stage.type = 'modify' ∧ plugin_stage.input_md ≠ None →
+    workflow_md = copy(plugin_root / plugin_stage.input_md, work_dir / 'workflow_generate_domain_context.md') ∧
+    (UserKnowledgeExists(work_dir) → workflow_md appended_with_knowledge_bullets)
+  ) ∧
+  (¬(plugin_stage ≠ None ∧ plugin_stage.type = 'modify' ∧ plugin_stage.input_md ≠ None) →
+    _prepare_workflow_file(proj_dir, work_dir, script_dir, 'workflow_generate_domain_context.md') executed
+  ) ∧
+  execution continues into retry loop.
+
+Code block:
+```python
+Line 41:             break
+Line 42:         if attempt == 1 and not resume:
+Line 43:             prompt = (
+Line 44:                 "Read fm_agent/phases.json first. "
+Line 45:                 "Then follow the instructions in the attached file. "
+Line 46:                 + fm_reminder
+Line 47:             )
+Line 48:         else:
+Line 49:             prompt = ("A previous domain-context generation attempt was interrupted and may have already "
+Line 50:                       "produced some of the required output files. Read fm_agent/phases.json first. "
+Line 51:                       "Then follow the instructions in the attached file, but FIRST "
+Line 52:                       "check the current progress in fm_agent/spec_prompts/domain_context/. "
+Line 53:                       "Keep any existing valid output as-is and only generate the files that are missing or "
+Line 54:                       f"incomplete — do NOT regenerate or overwrite work that is already done. {fm_reminder}")
+Line 55:         prompt_file = os.path.join(proj_dir, "fm_agent", "workflow_generate_domain_context.md")
+Line 56:         command = build_llm_cli_command(
+Line 57:             model=OPENCODE_SETUP_MODEL,
+Line 58:             prompt=prompt,
+Line 59:             cwd=proj_dir,
+Line 60:             files=[prompt_file],
+Line 61:         )
+Line 62:         try:
+Line 63:             run_opencode_traced(
+Line 64:                 proj_dir=proj_dir,
+Line 65:                 work_dir=work_dir,
+Line 66:                 command=command,
+Line 67:                 stage="generate_domain_context",
+Line 68:                 input_files=[
+Line 69:                     "fm_agent/workflow_generate_domain_context.md",
+Line 70:                     "fm_agent/phases.json",
+Line 71:                     *list_staged_domain_knowledge_relpaths(work_dir),
+Line 72:                 ],
+Line 73:                 output_files=[
+Line 74:                     "fm_agent/spec_prompts/domain_context/engine_overview.txt",
+Line 75:                 ],
+Line 76:                 summary=f"OpenCode generate domain context attempt {attempt}",
+Line 77:                 metadata={"attempt": attempt},
+Line 78:             )
+Line 79:         except subprocess.CalledProcessError as e:
+Line 80:             logging.warning(f"Stage 2 attempt {attempt}: opencode exited with code {e.returncode}")
+Line 81:         if _domain_context_complete(work_dir):
+Line 82:             break
+Line 83:         if attempt < OPENCODE_MAX_RETRIES:
+Line 84:             delay = 10
+Line 85:             print(
+Line 86:                 f"[Pipeline] Stage 2 failed to produce domain context "
+Line 87:                 f"(attempt {attempt}/{OPENCODE_MAX_RETRIES}). "
+Line 88:                 f"Retrying in {delay}s..."
+Line 89:             )
+Line 90:             logging.warning(f"Stage 2 attempt {attempt} failed: domain context outputs missing. Retrying in {delay}s.")
+Line 91:             time.sleep(delay)
+Line 92:         else:
+Line 93:             print(
+Line 94:                 f"[Pipeline] ERROR: Stage 2 failed after {OPENCODE_MAX_RETRIES} attempts. "
+Line 95:                 f"Domain context outputs missing. "
+Line 96:                 f"Check {os.path.basename(proj_dir)}/fm_agent/trace/ for details."
+Line 97:             )
+Line 98:             sys.exit(1)
+Line 99:     if plugin_stage is not None and plugin_stage.type == "modify" and plugin_stage.output_process:
+Line 100:         print("[Pipeline] Stage 2/6: Running plugin post-process for generate_domain_context...")
+Line 101:         from .plugin import run_plugin_command
+Line 102:         run_plugin_command(plugin_stage.output_process, plugin_root, proj_dir, label="generate_domain_context post-process")
+```
+
+Additional context:
+build_llm_cli_command(model, prompt, cwd, files) -> str
+Pre-condition: model is a string identifying the LLM model to use; prompt is a string containing the natural-language instruction; cwd is a valid directory path; files is a list of absolute file paths that exist and are readable
+Post-condition: Returns a CLI command string that, when executed in the environment, invokes the configured LLM backend with the given model, prompt, and file attachments
+
+run_opencode_traced(proj_dir, work_dir, command, stage, input_files, output_files, summary, metadata)
+Pre-condition: proj_dir is an existing project directory; work_dir is a writable directory; command is a valid CLI command string; stage is a string identifying the pipeline stage; input_files is a list of file paths relative to proj_dir that exist and are readable; output_files is a list of file paths relative to proj_dir that the invoked process is expected to produce
+Post-condition: Returns normally when the command executes. Upon return, output_files are expected to exist at their specified paths under proj_dir if the LLM-based process completed successfully; structured trace events are written to the trace directory
+
+run_plugin_command(cmd, plugin_root, proj_dir, label)
+Pre-condition: cmd is a non-empty string specifying a shell command; plugin_root is a valid directory path; proj_dir is an existing directory; label is a string identifying the operation for log messages
+Post-condition: Executes the command with the working directory set to plugin_root and FM_AGENT_PLUGIN_ROOT set to plugin_root in the subprocess environment. If the command exits with a non-zero code, raises CalledProcessError
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

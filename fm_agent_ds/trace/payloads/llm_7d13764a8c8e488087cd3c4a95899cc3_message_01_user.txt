@@ -1,0 +1,16 @@
+Programming language: Python
+
+Pre-condition:
+url is a non-empty string with leading and trailing whitespace removed.
+
+Code block:
+```python
+Line 1: def validate_base_url(url: str) -> None:
+Line 2:     parsed = urlparse(url)
+Line 3:     if parsed.scheme not in ("http", "https") or not parsed.netloc:
+Line 4:         raise ConfigWizardError(
+Line 5:             f"Base URL must be an absolute http(s) URL, got: {url!r}"
+Line 6:         )
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

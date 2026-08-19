@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_iter_project_files",
+      "signature": "_iter_project_files(dir_path: str, exts: set[str]) -> Iterator[str]",
+      "pre_condition": "dir_path is a string referring to an existing directory. exts is a non-empty set of file extension strings, each including the leading dot.",
+      "post_condition": "Returns an iterator that yields, one at a time, the absolute paths of files under dir_path (recursively) whose file extension is a member of exts. Only yields files belonging to the original project source tree — files under pipeline workspace artifact directories are excluded. If no matching files exist under dir_path, the iterator is immediately exhausted (the first call to next() raises StopIteration)."
+    }
+  ]
+}

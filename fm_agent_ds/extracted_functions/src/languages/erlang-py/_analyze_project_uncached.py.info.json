@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "_erlang_files",
+      "signature": "_erlang_files(proj_dir: str) -> list[str]",
+      "pre_condition": "proj_dir resolves to an existing directory.",
+      "post_condition": "Returns a list of absolute paths to every .erl source file discovered under proj_dir. Returns an empty list when no .erl files exist."
+    },
+    {
+      "name": "_caller_module",
+      "signature": "_caller_module(file_path: str) -> str",
+      "pre_condition": "file_path is an absolute path to a file within the analyzed Erlang project tree.",
+      "post_condition": "Returns a module identifier string derived from the path components relative to the project root."
+    },
+    {
+      "name": "_function_id",
+      "signature": "_function_id(uri: str, name: str) -> str",
+      "pre_condition": "uri is a file URI string; name is a non-empty string from an ELP symbol.",
+      "post_condition": "Returns a canonical function identifier string derived from uri and name. Raises ValueError when the inputs do not form a valid function identifier."
+    }
+  ]
+}

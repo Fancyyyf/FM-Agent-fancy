@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def clear_test_file_exemptions():
+Line 2:     """Drop all registered test-file exemptions."""
+Line 3:     _TEST_FILE_EXEMPTIONS.clear()
+```
+
+Condition A (what the code actually does):
+After execution, the global mutable collection `_TEST_FILE_EXEMPTIONS` is empty (no elements), and the function returns `None`. Formally: `len(_TEST_FILE_EXEMPTIONS) == 0` and `ret == None`.
+
+Condition B (what the specification requires):
+After return, no paths are exempt from test-file detection. Every subsequent call to _is_test_file evaluates its argument solely against test-directory and test-filename naming heuristics, without excluding any path as exempt.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

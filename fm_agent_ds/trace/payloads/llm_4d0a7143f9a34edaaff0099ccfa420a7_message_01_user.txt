@@ -1,0 +1,29 @@
+Programming language: Python
+
+Pre-condition:
+self has an active connection to the ELP server. path is a string representing a filesystem path to an Erlang source file.
+
+Code block:
+```python
+Line 1:     def open_document(self, path: str, source: str | None = None):
+Line 2:         document = Path(path).resolve()
+Line 3:         if source is None:
+Line 4:             source = document.read_text(encoding="utf-8", errors="replace")
+Line 5:         self.notify(
+Line 6:             "textDocument/didOpen",
+Line 7:             {
+Line 8:                 "textDocument": {
+Line 9:                     "uri": document.as_uri(),
+Line 10:                     "languageId": "erlang",
+Line 11:                     "version": 1,
+Line 12:                     "text": source,
+Line 13:                 }
+Line 14:             },
+Line 15:         )
+```
+
+Additional context:
+ElpClient.notify(self, method: str, params: dict) -> None
+Pre-condition: self has an active connection to the ELP server. method is an LSP notification method name. params is a dict of JSON-serializable parameters.
+Post-condition: The ELP server has received the notification with the given method and parameters. Raises an exception when the server is unreachable, the server rejects the notification, or the connection is lost.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

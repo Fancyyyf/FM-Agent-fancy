@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_llm_status_style",
+      "signature": "_llm_status_style(code, status) -> (color, label)",
+      "pre_condition": "code and status are values obtained from an item in state.llm_statuses. Either or both may be None if the corresponding keys are absent from the item dictionary.",
+      "post_condition": "Returns a tuple (color, label) where color is a Rich-compatible style name and label is a string. The mapping from (code, status) input pairs to (color, label) output pairs is deterministic: identical inputs always produce identical outputs."
+    }
+  ]
+}

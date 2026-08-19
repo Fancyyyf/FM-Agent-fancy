@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Call build_agent_command with model=\"gpt-4\", prompt=\"Hello\", cwd=\"/home/user\", files=[\"/home/user/doc.txt\"], backend=None, effort=None.",
+  "offending_statements": "Line 12-27, Line 28-44",
+  "reason": "When files is non-empty, the specification requires each file path to appear exactly once as a file argument in the command list. However, the code never adds any file arguments to argv; neither the 'codex-cli' branch (lines 12-27) nor the 'claude-cli' branch (lines 28-44) include the given file paths. Therefore any input with a non-empty files list violates the specification."
+}

@@ -1,0 +1,47 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def collect_file_names(input_dir, output_path="file_list.json"):
+Line 2:     """Collect all file names under input_dir and write them to a JSON file.
+Line 3:     Each entry contains the relative path starting from input_dir.
+Line 4:     """
+Line 5:     file_names = []
+Line 6:     for root, _, files in os.walk(input_dir):
+Line 7:         for fname in files:
+Line 8:             if _is_metadata_sidecar(fname):
+Line 9:                 continue
+Line 10:             full_path = os.path.join(root, fname)
+Line 11:             rel_path = os.path.relpath(full_path, input_dir)
+Line 12:             file_names.append(rel_path)
+Line 13:     return _write_file_names(file_names, output_path)
+```
+
+Condition A (what the code actually does):
+Upon normal termination, the function returns a sorted (ascending string order) list of unique relative file paths, and atomically writes the same list as a JSON array to `output_path`. The list contains exactly one entry for each file (regular file or symbolic link to a file) reachable by `os.walk(input_dir)` (with default arguments, `followlinks=False`) whose base name does **not** satisfy `_is_metadata_sidecar`. Duplicates cannot occur by construction because `os.walk` yields unique directory entries; nevertheless the returned list is deduplicated. No other side effects occur. If an exception is raised during traversal or writing, the exception propagates, `output_path` remains unchanged from its prior state, and no value is returned.
+
+Formally, let
+  `entries = { (root, name) | (root, dirs, files) ∈ os.walk(input_dir), name ∈ files }`
+  `is_sidecar(name) ≡ _is_metadata_sidecar(name) == True`
+  `rel_path(e) = os.path.relpath(os.path.join(e.root, e.name), input_dir)`
+  `S = { rel_path(e) | e ∈ entries ∧ ¬is_sidecar(e.name) }`
+Then if the block completes successfully:
+  (1) `result = sorted(S)` (ascending string order, duplicates already excluded)
+  (2) `output_path` contains `json.dumps(result)` as an atomic write
+  (3) the function returns `result`.
+If an exception occurs:
+  (4) the exception is raised
+  (5) `output_path` is unchanged (no partial write because `_write_file_names` writes atomically).
+
+Condition B (what the specification requires):
+Returns a sorted list of unique relative file paths for every file discovered under input_dir (recursive) whose filename does not match the metadata-sidecar naming pattern. A JSON array containing the same elements in the same sorted order is atomically written to output_path. The returned list and the JSON file contents are identical and sorted in ascending string order.
+
+Additional context:
+_is_metadata_sidecar(fname) -> bool
+Pre-condition: fname is a filename string with no directory component.
+Post-condition: Returns True when fname matches the naming pattern of a specification or information sidecar file (e.g., .spec.json, .info.json); returns False for all other filenames.
+
+_write_file_names(file_names, output_path) -> list[str]
+Pre-condition: file_names is a list of file path strings. output_path is a writable file path.
+Post-condition: Returns a sorted list of unique strings derived from file_names, with duplicates removed. Atomically writes the same sorted, deduplicated list as a JSON array to output_path. The sort order is ascending string order.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

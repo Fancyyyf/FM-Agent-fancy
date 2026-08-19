@@ -1,0 +1,23 @@
+Programming language: Python
+
+Pre-condition:
+None required.
+
+Code block:
+```python
+Line 1: def warn_live_llm_environment_overrides() -> None:
+Line 2:     overrides = live_llm_environment_overrides()
+Line 3:     if not overrides:
+Line 4:         return
+Line 5:     print("Warning: these shell environment variables override the saved LLM settings:")
+Line 6:     print(f"  {', '.join(overrides)}")
+Line 7:     print("The wizard cannot change the shell that launched it. Before starting FM-Agent")
+Line 8:     print("in this shell, unset them to use the saved configuration:")
+Line 9:     print(f"  unset {' '.join(overrides)}")
+```
+
+Additional context:
+live_llm_environment_overrides() -> list[str]
+Pre-condition: None required.
+Post-condition: Returns a list of environment variable names (strings) that are currently set in the process environment, restricted to those entries in _ENV_MAP whose target TOML section is 'llm'. Returns an empty list when no such variables are set.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

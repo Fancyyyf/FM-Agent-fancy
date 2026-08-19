@@ -1,0 +1,5 @@
+{
+  "signature": "_iter_project_source_files(proj_dir, submodules=None) -> Iterator[(str, str)]",
+  "pre_condition": "proj_dir is a string path to an existing directory. submodules is either None or a non-empty list of subdirectory name strings.",
+  "post_condition": "Yields (abs_path, rel_path) tuples for every source file under proj_dir that is not a test file, where abs_path is the absolute path and rel_path is the path relative to proj_dir using forward-slash separators. When submodules is not None, yields only files whose relative path begins with one of the submodule directory names. Files whose extension is not among the recognized source extensions are excluded. Files under hidden directories or non-source directories are excluded. Terminates after yielding all matching files; yields zero tuples when no files match."
+}

@@ -1,0 +1,1 @@
+Your previous response was invalid: LLM response is not valid JSON: Expecting ',' delimiter: line 2 column 599 (char 600). Return only valid JSON matching this schema: {"post_condition": "non-empty string"}. Do not include Markdown, tags, or prose.

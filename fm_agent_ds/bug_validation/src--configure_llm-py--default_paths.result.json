@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--default_paths",
+  "source_file": "src/configure_llm.py",
+  "function_name": "default_paths",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--default_paths.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--default_paths.md",
+  "probe_stdout": "CONFIRMED — opencode_config_path (/proc/nonexistent_dir_0123456/test.json) is not an existing or creatable regular-file path. The code returns the raw OPENCODE_CONFIG env-var value without validating that the resulting path can be used.\n",
+  "trigger_summary": "Setting OPENCODE_CONFIG to a non-creatable filesystem path (e.g., inside /proc/) causes default_paths() to return an invalid opencode_config_path without any validation."
+}

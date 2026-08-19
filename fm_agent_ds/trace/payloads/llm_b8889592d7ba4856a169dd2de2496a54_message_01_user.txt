@@ -1,0 +1,66 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def validate_plugin(plugin_dir: Path) -> Optional[PluginConfig]:
+Line 2:     """Validate a single plugin directory.
+Line 3:     Returns a ``PluginConfig`` if the plugin is valid, otherwise ``None``
+Line 4:     (after printing validation errors to stdout).
+Line 5:     """
+Line 6:     name = plugin_dir.name
+Line 7:     plugin_json = plugin_dir / "plugin.json"
+Line 8:     plugin_config_json = plugin_dir / "plugin.config.json"
+Line 9:     if not plugin_json.is_file():
+Line 10:         if plugin_config_json.is_file():
+Line 11:             print(
+Line 12:                 f"Invalid plugin '{name}': found plugin.config.json "
+Line 13:                 "but expected plugin.json"
+Line 14:             )
+Line 15:         else:
+Line 16:             print(f"Invalid plugin '{name}': plugin.json not found")
+Line 17:         return None
+Line 18:     try:
+Line 19:         with open(plugin_json, "r") as f:
+Line 20:             data = json.load(f)
+Line 21:     except (OSError, json.JSONDecodeError) as exc:
+Line 22:         print(
+Line 23:             f"Invalid plugin '{name}': failed to parse plugin.json — {exc}"
+Line 24:         )
+Line 25:         return None
+Line 26:     if not isinstance(data, dict):
+Line 27:         print(
+Line 28:             f"Invalid plugin '{name}': plugin.json must be a JSON object"
+Line 29:         )
+Line 30:         return None
+Line 31:     return _validate_plugin_json_content(plugin_dir, name, data)
+```
+
+Condition A (what the code actually does):
+The function completes without raising any unhandled exception. The return value `r` is either `None` or an instance of `PluginConfig`. If `r` is a `PluginConfig`, its `name` attribute is a non-empty string and all validation rules checked by `_validate_plugin_json_content` hold. If `r` is `None`, an appropriate error message has been printed to stdout. The exact outcome is determined by the following logical relation between the pre-state and post-state:
+
+Let `pj = plugin_dir / "plugin.json"`, `pc = plugin_dir / "plugin.config.json"`, `name = plugin_dir.name`.
+
+Post-condition ≡
+  ( ¬ pj.is_file()  →  Printed("Invalid plugin '" + name + "': ...")  ∧  r = None )
+  ∧
+  ( pj.is_file()  →
+    ( (∃ exc ∈ {OSError, json.JSONDecodeError}  on opening/parsing pj)
+        →  Printed("Invalid plugin '" + name + "': failed to parse plugin.json — " + str(exc))  ∧  r = None )
+    ∧
+    ( data = parse_success(pj)  →
+        ( ¬ isinstance(data, dict)  →  Printed("Invalid plugin '" + name + "': plugin.json must be a JSON object")  ∧  r = None )
+        ∧
+        ( isinstance(data, dict)  →  r = _validate_plugin_json_content(plugin_dir, name, data) )
+    )
+  )
+
+where `parse_success(pj)` denotes the dictionary obtained when `pj` is successfully opened and parsed without raising `OSError`/`JSONDecodeError`. The `Printed(...)` predicates indicate a one-to-one correspondence between a specific condition and an error message containing the quoted substring. If `r` is a `PluginConfig`, then `r.name` is non‑empty and satisfies the `PluginConfig` schema (valid version, stages, etc.).
+
+Condition B (what the specification requires):
+Returns None if plugin_dir does not contain a file named plugin.json, or if that file cannot be read as a JSON object whose parsed dict passes PluginConfig validation (non-empty name attribute, valid version string, and for every stage declared in the stages dict the stage configuration is valid: type field is one of 'pass', 'replace', or 'modify'; if type is 'replace' then replace_cmd is a non-empty string; if type is 'modify' then input_md is a non-empty string). When validation fails for any reason, a message describing the failure is printed to stdout and None is returned. Otherwise returns a PluginConfig object whose name attribute is the directory name of plugin_dir (non-empty) and whose root is plugin_dir.
+
+Additional context:
+_validate_plugin_json_content(plugin_dir: Path, name: str, data: dict) -> Optional[PluginConfig]
+Pre-condition: plugin_dir is a pathlib.Path pointing to a directory containing plugin.json, name is the directory name of plugin_dir (non-empty string), and data is a dict parsed from plugin.json.
+Post-condition: Returns None if data fails PluginConfig validation rules (name in data is non-empty, version is a valid string, and for every stage in stages the stage type is valid and its required fields are non-empty). Returns a PluginConfig whose name attribute is non-empty when data satisfies all validation rules.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

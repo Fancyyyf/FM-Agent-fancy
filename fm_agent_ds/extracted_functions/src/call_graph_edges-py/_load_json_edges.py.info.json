@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_edge_from_mapping",
+      "signature": "_edge_from_mapping(item: dict, source: str) -> CallEdge",
+      "pre_condition": "item is a dict containing the required fields for constructing a CallEdge with caller and callee selectors. source is a provenance string for error messages.",
+      "post_condition": "Returns a CallEdge whose caller and callee fields are populated from item's corresponding sub-objects. The CallEdge's source field reflects the given source provenance."
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _setup_outputs_complete(work_dir):
+Line 2:     """Return True when both phase plan and domain context are complete."""
+Line 3:     return _phase_plan_complete(work_dir) and _domain_context_complete(work_dir)
+```
+
+Condition A (what the code actually does):
+The function returns True if and only if both the phase plan and domain context are complete: the file 'phases.json' exists under 'work_dir' and contains a valid phases plan, the file 'engine_overview.txt' exists under 'work_dir', and for every phase number P defined in that 'phases.json', the file 'phase_P_types.txt' exists under 'work_dir'. Returns False otherwise.
+
+Condition B (what the specification requires):
+Returns True if and only if all of the following exist at their expected paths under work_dir: (1) phases.json, (2) spec_prompts/domain_context/engine_overview.txt, and (3) for every phase number P declared in the phases.json file, a file spec_prompts/domain_context/phase_P_types.txt
+
+Additional context:
+_phase_plan_complete(work_dir) -> bool
+Pre-condition: work_dir is a directory path
+Post-condition: Returns True if and only if phases.json exists at its expected path under work_dir and contains a valid phases plan
+
+_domain_context_complete(work_dir) -> bool
+Pre-condition: work_dir is a directory path
+Post-condition: Returns True if and only if engine_overview.txt exists at its expected path under work_dir and, for every phase number P defined in the current phases.json, a corresponding phase_P_types.txt exists at its expected path under work_dir
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

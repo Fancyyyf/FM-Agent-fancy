@@ -1,0 +1,73 @@
+Programming language: Python
+
+Code block:
+```python
+Line 41:     # Generate a per-file prompt with target file and bug ID header
+Line 42:     prompt_content = (
+Line 43:         "# Bug Validator\n\n"
+Line 44:         f"**Target result file:** `{result_json_rel}`\n"
+Line 45:         f"**Bug ID:** `{bug_id}`\n\n---\n\n"
+Line 46:         + user_knowledge_section
+Line 47:         + base_content
+Line 48:     )
+Line 49:     os.makedirs(os.path.join(work_dir, "bug_validation"), exist_ok=True)
+Line 50:     prompt_filename = os.path.join(
+Line 51:         "fm_agent", "bug_validation", f"bug_validator_{bug_id}.md"
+Line 52:     )
+Line 53:     prompt_path = os.path.join(proj_dir, prompt_filename)
+Line 54:     tmp_path = prompt_path + ".tmp"
+Line 55:     with open(tmp_path, "w") as f:
+Line 56:         f.write(prompt_content)
+Line 57:     os.replace(tmp_path, prompt_path)
+Line 58:     prompt = "Follow the instructions in the attached file"
+Line 59:     command = build_llm_cli_command(
+Line 60:         model=OPENCODE_BUG_VALIDATION_MODEL,
+Line 61:         prompt=prompt,
+Line 62:         cwd=proj_dir,
+Line 63:         files=[prompt_path],
+Line 64:     )
+Line 65:     result_relpath = os.path.join("fm_agent", "bug_validation", f"{bug_id}.result.json")
+Line 66:     result_path = os.path.join(proj_dir, result_relpath)
+Line 67:     # Resume idempotency: if resuming and this bug was already validated, don't pay for it again.
+Line 68:     if resume and os.path.exists(result_path):
+Line 69:         try:
+Line 70:             with open(result_path) as _f:
+Line 71:                 json.load(_f)
+Line 72:             logging.info(f"Bug validation already done, skipping: {bug_id}")
+Line 73:             return
+Line 74:         except (json.JSONDecodeError, OSError):
+Line 75:             pass  # corrupted result — re-validate
+Line 76:     try:
+Line 77:         max_attempts = config.BUG_VALIDATION_MAX_RETRIES
+Line 78:         for attempt in range(1, max_attempts + 1):
+Line 79:             run_failed = False
+Line 80:             try:
+```
+
+Condition A (what the code actually does):
+After the code block, one of three scenarios holds: (1) An unhandled exception was raised (e.g., from os.makedirs, file writing, os.replace, or build_llm_cli_command). In this case the program may have aborted with only partial side effects; no further guarantees are made about variables after the exception point. (2) No exception occurred and the function returned early at line 73 because resume was truthy, result_path existed, and the file could be successfully read and parsed as JSON. Then the following are true: the directory os.path.join(work_dir, 'bug_validation') exists; the file at prompt_path exists and its entire content equals prompt_content; the temporary file tmp_path no longer exists; the following variables are defined with values as given in the code: prompt_content = '# Bug Validator\n\n**Target result file:** `{result_json_rel}`\n**Bug ID:** `{bug_id}`\n\n---\n\n' + user_knowledge_section + base_content, prompt_filename = 'fm_agent/bug_validation/bug_validator_{bug_id}.md', prompt_path = os.path.join(proj_dir, prompt_filename), tmp_path = prompt_path + '.tmp', prompt = 'Follow the instructions in the attached file', command = build_llm_cli_command(OPENCODE_BUG_VALIDATION_MODEL, prompt, cwd=proj_dir, files=[prompt_path]), result_relpath = 'fm_agent/bug_validation/{bug_id}.result.json', result_path = os.path.join(proj_dir, result_relpath); the function returns normally. (3) No exception occurred and no early return (either resume is falsy, result_path does not exist, or JSON parsing raised an exception). Then the same directory and file side effects hold as in scenario (2), the same variable assignments hold as in scenario (2), and additionally: max_attempts = config.BUG_VALIDATION_MAX_RETRIES; the for loop for attempt in range(1, max_attempts + 1) has been entered and the first iteration began with attempt = 1 and run_failed = False; the try block at line 80 has been entered but no inner statements have executed yet. Formally: (exception_raised_at_line(l) ∧ l ∈ {49,55,56,57,59,60,61,62,63,64,65,66,68,69,70,71}) ∨ (¬exception ∧ early_return ∧ prompt_path_exists ∧ file_content(prompt_path) = prompt_content ∧ (∀v ∈ {prompt_content, prompt_filename, prompt_path, tmp_path, prompt, command, result_relpath, result_path} : assigned(v) = value_from_code) ∧ return_executed) ∨ (¬exception ∧ ¬early_return ∧ same_effects_as_above ∧ max_attempts = config.BUG_VALIDATION_MAX_RETRIES ∧ attempt = 1 ∧ run_failed = False). Here early_return is defined as resume ∧ file_exists(result_path) ∧ json_load_succeeded(result_path).
+
+Condition B (what the specification requires):
+When a result marker for the discrepancy corresponding to result_json_rel does not already exist at <work_dir>/bug_validation/<bug_id>.result.json, or when resume is False, a bug-validation agent is dispatched to evaluate whether the spec-code discrepancy recorded in result_json_rel constitutes a real, exploitable bug. A validated bug report is produced at <work_dir>/bug_validation/<bug_id>.md if and only if the discrepancy is confirmed to be an exploitable bug. The bug report contains: the behavioral assertion claimed by the specification that the code violates, the actual behavior observed from the code, concrete code evidence with line references, the condition under which the violation is triggered, step-by-step reproduction instructions, a probe script exercising the violation, and the raw output from executing the probe script. A result marker file is written to <work_dir>/bug_validation/<bug_id>.result.json upon completion of validation. When resume is True and the result marker already exists with valid, parseable JSON content, no re-validation occurs and no side effects are produced. The bug_id is uniquely derived from result_json_rel by stripping the standard verification-results path prefix and canonicalizing directory separators.
+
+Additional context:
+function_id_from_result_path(result_json_rel) -> str
+Pre-condition: result_json_rel is a non-empty string representing a path to a reasoning verdict JSON file.
+Post-condition: Returns a function identifier string derived from the result path, suitable for correlating verification results with their source function.
+
+list_staged_domain_knowledge_relpaths(work_dir) -> list[str]
+Pre-condition: work_dir is the FM-Agent work directory that may contain staged domain knowledge files.
+Post-condition: Returns a list of relative paths (from work_dir) to all user-provided domain knowledge markdown files currently staged in the work directory. Returns an empty list when no domain knowledge files are staged.
+
+format_domain_knowledge_bullets(paths) -> str
+Pre-condition: paths is a list of relative file path strings.
+Post-condition: Returns a markdown-formatted string containing a header section and a bullet list of the provided paths, suitable for embedding into a prompt as context references. When paths is empty, returns an empty string.
+
+build_llm_cli_command(model, prompt, cwd, files) -> list[str]
+Pre-condition: model is a non-empty string identifying the LLM model. prompt is a non-empty string. cwd is an existing directory. files is a list of file paths to attach.
+Post-condition: Returns a list of CLI argument strings that, when executed as a subprocess, invokes the configured LLM backend with the given model, prompt, working directory, and attached files.
+
+run_opencode_traced(proj_dir, work_dir, command, stage, function_ids, input_files, output_files, summary, metadata) -> None
+Pre-condition: proj_dir is an existing directory. command is a non-empty list of CLI argument strings. stage is a non-empty string identifying the pipeline stage. output_files is a non-empty list of relative paths (from proj_dir) that must exist after successful execution.
+Post-condition: Executes command as a subprocess with proj_dir as the working directory. Produces a structured trace event recording the execution metadata, timing, input/output file references, and exit code. Raises a CalledProcessError when the subprocess exits with a non-zero code. The output files listed in output_files must be produced on disk after a successful run.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

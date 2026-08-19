@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--main",
+  "source_file": "dashboard-py/main.py",
+  "function_name": "main",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--main.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--main.md",
+  "probe_stdout": "NOT CONFIRMED — all state methods (tail_events, tail_opencode, scan_bugs) handled missing trace_dir gracefully without raising exceptions\n",
+  "trigger_summary": "When trace_dir does not exist, state.tail_events() checks events_path.exists() first and returns early without raising FileNotFoundError, so the infinite loop continues as expected."
+}

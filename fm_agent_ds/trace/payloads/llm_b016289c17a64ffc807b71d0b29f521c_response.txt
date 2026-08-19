@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a string equal to os.path.join(work_dir, 'trace'); the return value is a non-empty string representing a filesystem path (the entry 'trace' inside work_dir). No exceptions are raised, and the program state is otherwise unchanged."
+}

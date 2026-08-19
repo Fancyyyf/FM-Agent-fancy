@@ -1,0 +1,5 @@
+{
+  "signature": "_clean_previous_run(work_dir)",
+  "pre_condition": "work_dir is a string that denotes a path on the filesystem.",
+  "post_condition": "The filesystem path denoted by work_dir no longer refers to an existing directory. If the path referred to a directory before the call, that directory and all files and subdirectories within it have been recursively removed from the filesystem."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_parse_json_response(response) -> dict | list",
+  "pre_condition": "response is a string that may contain zero, one, or more JSON objects or arrays, possibly embedded within markdown code fences or interleaved with explanatory prose.",
+  "post_condition": "When response contains exactly one JSON object or array — determined by structural parsing that recognizes balanced JSON bracket pairs at any nesting depth — returns that value as a dict or list respectively. Raises ValueError when: (a) response is not a string; (b) no JSON object or array exists anywhere in the text; (c) more than one JSON object or array exists in the text; (d) a direct full-string parse succeeds but produces a non-structured JSON scalar (string, number, boolean, or null) instead of an object or array. The extraction scans the full text left-to-right; structural parsing means that non-JSON text containing '{' or '[' characters without balanced JSON structure does not produce a match."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "function_spans(proj_dir: str, filepath: str)",
+  "pre_condition": "proj_dir is a string path to a project directory; filepath is a string path to a C source file",
+  "post_condition": "Returns None when CodeGraph index is unavailable for the project or the given file, signaling the caller to fall back to regex-based extraction. Otherwise returns a list of (name, start_idx, end_idx) triples — one per C function definition in filepath — where name is the function's identifier string, start_idx is the 0-indexed inclusive line number of the function body's first line, and end_idx is the 0-indexed inclusive line number of the function body's last line"
+}

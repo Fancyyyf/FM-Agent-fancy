@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_clean_domain_context_files",
+      "signature": "_clean_domain_context_files(work_dir, removed_phase_nums, renumbered)",
+      "pre_condition": "work_dir is a string path to a directory containing the spec_prompts/domain_context/ subdirectory with phase_NN_types.txt files; removed_phase_nums is a list of phase numbers; renumbered is a dict mapping old phase numbers to new phase numbers",
+      "post_condition": "For each phase number in removed_phase_nums, the file work_dir/spec_prompts/domain_context/phase_{num}_types.txt is deleted. For each (old, new) pair in renumbered where old != new, the file work_dir/spec_prompts/domain_context/phase_{old}_types.txt is renamed to phase_{new}_types.txt. Files for unchanged phases (where old == new) remain unmodified."
+    }
+  ]
+}

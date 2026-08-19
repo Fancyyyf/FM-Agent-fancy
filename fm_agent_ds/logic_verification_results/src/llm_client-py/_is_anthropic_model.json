@@ -1,0 +1,5 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_is_anthropic_model.py",
+  "verdict": "MATCH",
+  "gaps": null
+}

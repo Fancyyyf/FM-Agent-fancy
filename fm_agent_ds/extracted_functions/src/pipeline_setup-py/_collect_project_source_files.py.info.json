@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_iter_project_source_files",
+      "signature": "_iter_project_source_files(proj_dir, submodules=None)",
+      "pre_condition": "proj_dir is an existing directory path; submodules, if not None, is a non-empty sequence of subdirectory paths relative to proj_dir",
+      "post_condition": "Yields normalized forward-slash relative file paths for all project source files discoverable under proj_dir. When submodules is not None, yields only files whose paths fall under at least one of the specified submodule directories."
+    },
+    {
+      "name": "_is_test_file",
+      "signature": "_is_test_file(rel)",
+      "pre_condition": "rel is a normalized forward-slash relative file path string",
+      "post_condition": "Returns True if and only if rel identifies a test file; returns False for all other project source files."
+    }
+  ]
+}

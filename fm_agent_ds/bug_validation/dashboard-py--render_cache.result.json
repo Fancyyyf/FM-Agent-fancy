@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--render_cache",
+  "source_file": "dashboard.py",
+  "function_name": "render_cache",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--render_cache.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--render_cache.md",
+  "probe_stdout": "CONFIRMED — cache_window empty (0 entries) but totals non-zero (150 cache_read / 1800 input): bar lines show '(no data)' instead of percentage/count/bars per spec\n",
+  "trigger_summary": "Empty cache_window with non-zero token totals causes bar_line to return '(no data)' for 'latest 10' and 'latest 100' instead of percentage bars per spec."
+}

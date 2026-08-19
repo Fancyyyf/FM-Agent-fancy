@@ -1,0 +1,72 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _generate_validation_summary(proj_dir):
+Line 2:     """Scan bug_validation/*.result.json files and write summary.json."""
+Line 3:     validation_dir = os.path.join(proj_dir, "bug_validation")
+Line 4:     if not os.path.isdir(validation_dir):
+Line 5:         logging.info("No bug_validation directory found, skipping summary.")
+Line 6:         return
+Line 7:     bugs = []
+Line 8:     for fname in sorted(os.listdir(validation_dir)):
+Line 9:         if not fname.endswith(".result.json"):
+Line 10:             continue
+Line 11:         fpath = os.path.join(validation_dir, fname)
+Line 12:         try:
+Line 13:             with open(fpath, "r") as f:
+Line 14:                 record = json.load(f)
+Line 15:             bugs.append(record)
+Line 16:         except (OSError, json.JSONDecodeError) as exc:
+Line 17:             logging.warning(f"Could not read {fpath}: {exc}")
+Line 18:     confirmed = sum(1 for b in bugs if b.get("confirmation_status") == "confirmed")
+Line 19:     not_confirmed = sum(1 for b in bugs if b.get("confirmation_status") == "not_confirmed")
+Line 20:     errors = sum(1 for b in bugs if b.get("confirmation_status") == "error")
+Line 21:     # Sort: confirmed first, then not_confirmed, then error; alphabetical by id within each group
+Line 22:     status_order = {"confirmed": 0, "not_confirmed": 1, "error": 2}
+Line 23:     bugs.sort(key=lambda b: (status_order.get(b.get("confirmation_status"), 3), b.get("id", "")))
+Line 24:     summary = {
+Line 25:         "total_reported": len(bugs),
+Line 26:         "total_confirmed": confirmed,
+Line 27:         "total_not_confirmed": not_confirmed,
+Line 28:         "total_error": errors,
+Line 29:         "bugs": bugs,
+Line 30:     }
+Line 31:     summary_path = os.path.join(validation_dir, "summary.json")
+Line 32:     tmp_path = summary_path + ".tmp"
+Line 33:     with open(tmp_path, "w") as f:
+Line 34:         json.dump(summary, f, indent=2, ensure_ascii=False)
+Line 35:     os.replace(tmp_path, summary_path)
+Line 36:     logging.info(f"Validation summary written to {summary_path}")
+Line 37:     logging.info(f"  confirmed: {confirmed}, not_confirmed: {not_confirmed}, error: {errors}")
+```
+
+Condition A (what the code actually does):
+After the function call, the following mutually exclusive outcomes are possible:
+
+1. **Directory absent:** `proj_dir/bug_validation` did not exist as a directory on entry. No files are created or modified. (Only a log message is emitted.)
+
+2. **Exception propagated:** The directory existed, but an unhandled exception (e.g., `OSError` during I/O, such as disk full or directory removed) occurred and was raised out of the function. In this case, the file `proj_dir/bug_validation/summary.json` is either unchanged (if it existed previously) or remains absent; a temporary file `proj_dir/bug_validation/summary.json.tmp` may exist with partial or full content. No other guarantees.
+
+3. **Normal completion (directory existed):** No exception propagated. A file `<validation_dir>/summary.json` (where `validation_dir = proj_dir/bug_validation`) now exists and is a valid JSON file. It was written atomically (via write-to-tmp then `os.replace`), so other processes observe either the old content or the complete new content. The JSON content is an object with keys `total_reported`, `total_confirmed`, `total_not_confirmed`, `total_error`, and `bugs`.
+
+Formally, let
+  V = proj_dir + '/bug_validation'
+  F = { f in V | f.name ends with '.result.json' and parsing f as JSON succeeds (OSError and JSONDecodeError skipped) }
+  R = multiset of JSON objects parsed from files in F
+  sort_key(r) = (status_order.get(r.get('confirmation_status', missing), 3), r.get('id', ''))
+    where status_order = {'confirmed':0, 'not_confirmed':1, 'error':2}
+Then in outcome 3:
+  content(summary.json) = {
+    "total_reported": |R|,
+    "total_confirmed": |{ r in R | r.get('confirmation_status') == 'confirmed' }|,
+    "total_not_confirmed": |{ r in R | r.get('confirmation_status') == 'not_confirmed' }|,
+    "total_error": |{ r in R | r.get('confirmation_status') == 'error' }|,
+    "bugs": sorted(R, key = sort_key)
+  }
+Every record in `bugs` retains all original fields from the source file; the ordering of records with identical sort keys is undefined. If `R` is empty, `bugs` is [] and all totals are 0.
+
+Condition B (what the specification requires):
+If no bug_validation/ subdirectory exists under proj_dir, returns immediately with no side effects. Otherwise, writes bug_validation/summary.json as a JSON object containing: total_reported (count of all .result.json files successfully parsed from the subdirectory), total_confirmed (count of records whose confirmation_status equals 'confirmed'), total_not_confirmed (count of records whose confirmation_status equals 'not_confirmed'), total_error (count of records whose confirmation_status equals 'error'), and bugs (a list of all successfully parsed records, each a complete JSON object preserved from the source .result.json file). The bugs list is sorted: within each distinct confirmation_status group, records are ordered alphabetically by their id field; groups are ordered with 'confirmed' first, 'not_confirmed' second, 'error' third, and any unrecognized confirmation_status last. Files that cannot be parsed as valid JSON are excluded from all counts and from the bugs list. The summary file is written atomically via temporary-file-and-replace to prevent partial writes. Returns nothing.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

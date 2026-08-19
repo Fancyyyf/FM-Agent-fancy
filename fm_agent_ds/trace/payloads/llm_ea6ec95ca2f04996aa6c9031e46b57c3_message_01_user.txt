@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a string referring to a filesystem directory that may contain Erlang source files with statically analyzable call relationships
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return module-qualified Erlang call edges in registry format."""
+Line 3:     return _analysis_or_empty(_callgraph_project_root(proj_dir)).edges
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

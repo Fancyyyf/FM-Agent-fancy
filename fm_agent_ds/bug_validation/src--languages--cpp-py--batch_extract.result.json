@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--cpp-py--batch_extract",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/cpp-py/batch_extract.py",
+  "function_name": "batch_extract",
+  "confirmation_status": "not_confirmed",
+  "attempts": 10,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--cpp-py--batch_extract.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--cpp-py--batch_extract.md",
+  "probe_stdout": "NOT CONFIRMED — all 1 files have non-empty function lists: {'klass.cpp': 2}",
+  "trigger_summary": "The specification requires each dictionary value to be a non-empty list; the code passes through get_functions_by_file output which in practice never produces empty lists."
+}

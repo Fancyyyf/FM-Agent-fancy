@@ -1,0 +1,48 @@
+Programming language: Python
+
+Pre-condition:
+paths is a non-empty iterable of string path entries whose elements may themselves be nested iterables of strings; base_dir is a string path to an existing directory; fallback_base_dir, if provided, is a string path to an existing directory
+
+Code block:
+```python
+Line 1: def resolve_domain_knowledge_paths(paths, base_dir, fallback_base_dir=None):
+Line 2:     """Validate and return absolute paths to markdown knowledge files."""
+Line 3:     resolved = []
+Line 4:     seen = set()
+Line 5:     base_dir = os.path.abspath(base_dir)
+Line 6:     fallback_base_dir = (
+Line 7:         os.path.abspath(fallback_base_dir) if fallback_base_dir else None
+Line 8:     )
+Line 9:     for raw_path in _flatten_paths(paths):
+Line 10:         expanded = os.path.expanduser(raw_path)
+Line 11:         candidates = []
+Line 12:         if os.path.isabs(expanded):
+Line 13:             candidates.append(expanded)
+Line 14:         else:
+Line 15:             candidates.append(os.path.join(base_dir, expanded))
+Line 16:             if fallback_base_dir:
+Line 17:                 candidates.append(os.path.join(fallback_base_dir, expanded))
+Line 18:         path = next(
+Line 19:             (candidate for candidate in candidates if os.path.exists(candidate)),
+Line 20:             candidates[0],
+Line 21:         )
+Line 22:         path = os.path.abspath(path)
+Line 23:         if not os.path.exists(path):
+Line 24:             raise ValueError(f"domain knowledge file does not exist: {raw_path}")
+Line 25:         if not os.path.isfile(path):
+Line 26:             raise ValueError(f"domain knowledge path is not a file: {raw_path}")
+Line 27:         ext = os.path.splitext(path)[1].lower()
+Line 28:         if ext not in VALID_DOMAIN_KNOWLEDGE_EXTENSIONS:
+Line 29:             allowed = ", ".join(sorted(VALID_DOMAIN_KNOWLEDGE_EXTENSIONS))
+Line 30:             raise ValueError(
+Line 31:                 f"domain knowledge file must be Markdown ({allowed}): {raw_path}"
+Line 32:             )
+Line 33:         real_path = os.path.realpath(path)
+Line 34:         if real_path in seen:
+Line 35:             continue
+Line 36:         seen.add(real_path)
+Line 37:         resolved.append(path)
+Line 38:     return resolved
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

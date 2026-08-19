@@ -1,0 +1,5 @@
+{
+  "signature": "atomic_write(path: Path, text: str) -> None",
+  "pre_condition": "path is a Path identifying a filesystem location. text is a string.",
+  "post_condition": "After return, the file at path contains exactly text as its complete content. Any prior content at path has been replaced. The write is atomic with respect to path: no observer ever sees path in a partially written state — any read of path observes either the entire prior content or the entire new content. If any parent directory of path does not exist, it is created before the write."
+}

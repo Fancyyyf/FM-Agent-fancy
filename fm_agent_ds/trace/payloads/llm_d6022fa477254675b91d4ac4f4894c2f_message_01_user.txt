@@ -1,0 +1,31 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _load_spec_check_json(response):
+Line 2:     """Load a single JSON object from a specification-check response.
+Line 3:     The shared parser handles direct, fenced, and prose-wrapped structured
+Line 4:     responses.  This adapter retains the spec-checker's object-only contract
+Line 5:     and its ``JSONDecodeError`` failure type.
+Line 6:     """
+Line 7:     text = response.strip() if isinstance(response, str) else ""
+Line 8:     try:
+Line 9:         data = _parse_json_response(response)
+Line 10:     except ValueError as exc:
+Line 11:         raise json.JSONDecodeError(str(exc), text, 0) from exc
+Line 12:     if not isinstance(data, dict):
+Line 13:         raise json.JSONDecodeError("spec-check response must contain a JSON object", text, 0)
+Line 14:     return data
+```
+
+Condition A (what the code actually does):
+If the function returns normally, it returns a dictionary that was extracted and parsed by `_parse_json_response(response)`. Specifically, if `_parse_json_response(response)` returns a `dict` `d`, the function returns `d`. If `_parse_json_response(response)` returns a `list`, the function raises a `json.JSONDecodeError` with message `"spec-check response must contain a JSON object"`, document `response.strip()`, and position `0`. If `_parse_json_response(response)` raises a `ValueError` `v`, the function raises a `json.JSONDecodeError` with message `str(v)`, document `response.strip()`, and position `0`. No other exceptions are raised.
+
+Condition B (what the specification requires):
+Returns a dict containing the parsed JSON object extracted from response. Raises json.JSONDecodeError when no valid JSON object can be extracted and parsed from response, or when the extracted JSON value is not a dict (i.e., is a list, string, number, boolean, or null). The error's .doc attribute is set to the stripped response text.
+
+Additional context:
+_parse_json_response(response) -> dict | list
+Pre-condition: response is a string that may contain a JSON object or array, encoded as bare JSON, within ```json fenced code blocks, or embedded in prose text.
+Post-condition: Returns a dict or list containing the parsed JSON value extracted from the response text. Raises ValueError when no valid JSON object or array can be extracted and parsed from the response.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

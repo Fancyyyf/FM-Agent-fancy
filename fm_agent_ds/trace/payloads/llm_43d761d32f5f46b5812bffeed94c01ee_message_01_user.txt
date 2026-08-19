@@ -1,0 +1,120 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _plan_spec_update(fqn, idx):
+Line 2:         """
+Line 3:         Decide fqn's new metadata sidecars and return an apply-plan, or None to skip.
+Line 4:         Makes the opencode LLM call (the slow part) but performs NO file writes, so a batch of
+Line 5:         mutually independent functions can run this concurrently. The returned plan carries the
+Line 6:         exact file content to write plus what the serial apply phase needs for downward
+Line 7:         propagation; None means the function does not exist, is an unsupported language, or its
+Line 8:         spec did not change.
+Line 9:         """
+Line 10:         fpath = file_map.get(fqn)
+Line 11:         if not fpath or not os.path.isfile(fpath):
+Line 12:             return None
+Line 13:         ext = fpath.rsplit(".", 1)[-1] if "." in os.path.basename(fpath) else ""
+Line 14:         lang_key = EXT_TO_LANG.get(ext)
+Line 15:         if not lang_key:
+Line 16:             return None
+Line 17:         with open(fpath, "r", errors="replace") as f:
+Line 18:             source = f.read()
+Line 19:         callee_names = sorted({c.split("::")[-1] for c in callees_map.get(fqn, ())})
+Line 20:         try:
+Line 21:             with open(f"{fpath}.spec.json", "r", encoding="utf-8") as f:
+Line 22:                 old_spec = json.load(f)
+Line 23:             with open(f"{fpath}.info.json", "r", encoding="utf-8") as f:
+Line 24:                 old_info = json.load(f)
+Line 25:         except (OSError, json.JSONDecodeError):
+Line 26:             old_spec, old_info = None, None
+Line 27:         if old_spec is None or old_info is None:
+Line 28:             # No existing specification (e.g. a freshly added, unspecced function) — generate
+Line 29:             # one from scratch the way the full run does, rather than skipping the function.
+Line 30:             caller_context = _collect_caller_context(
+Line 31:                 fqn, callers_map, file_map, edge_aliases_map
+Line 32:             )
+Line 33:             result = _opencode_generate_spec(
+Line 34:                 proj_dir, work_dir, idx, fqn, lang_key, "",
+Line 35:                 developer_intent, callee_names, source, caller_context,
+Line 36:             )
+Line 37:         else:
+Line 38:             result = _llm_check_spec_update(
+Line 39:                 proj_dir, work_dir, idx, fqn, lang_key, "",
+Line 40:                 developer_intent, old_spec, old_info, callee_names, source,
+Line 41:             )
+Line 42:         if not result or not result.get("spec_updated"):
+Line 43:             return None
+Line 44:         new_spec = result.get("new_spec")
+Line 45:         if not isinstance(new_spec, dict):
+Line 46:             return None
+Line 47:         if old_info is None:
+Line 48:             # Freshly generated: take the .info.json object opencode produced. Treat it as
+Line 49:             # "updated" so its recorded callee expectations propagate downward below.
+Line 50:             new_info = result.get("new_info")
+Line 51:             if not isinstance(new_info, dict):
+Line 52:                 new_info = {"callees": []}
+Line 53:             info_updated = True
+Line 54:         else:
+Line 55:             # Keep the existing .info.json unless opencode rewrote it. A modified function may
+Line 56:             # now call a different set of callees, so a fresh .info.json can legitimately be
+Line 57:             # created even when the function previously had none (old_info is None) — gate on
+Line 58:             # whether opencode produced a block, not on a prior block existing.
+Line 59:             info_updated = bool(result.get("info_updated"))
+Line 60:             new_info = result.get("new_info") if info_updated else old_info
+Line 61:             if not isinstance(new_info, dict):
+Line 62:                 new_info = old_info
+Line 63:         return {
+Line 64:             "fqn": fqn,
+Line 65:             "fpath": fpath,
+Line 66:             "spec_dict": _normalize_spec_dict(new_spec),
+Line 67:             "info_dict": _normalize_info_dict(new_info),
+Line 68:             "info_updated": info_updated,
+Line 69:             "updated_callees": result.get("updated_callees") or [],
+Line 70:         }
+```
+
+Condition A (what the code actually does):
+After `_plan_spec_update` completes, one of the following holds:
+1. The function returns `None` because:
+   - `file_map.get(fqn)` is `None` or the corresponding path does not exist or is not a regular file, or
+   - the file extension cannot be mapped to a language key via `EXT_TO_LANG`, or
+   - after reading the source and possibly existing `.spec.json`/`.info.json` files, calling `_opencode_generate_spec` (when no prior spec exists) or `_llm_check_spec_update` (when prior spec and info exist) yields a falsy result or a result where `result.get('spec_updated')` is not `True`, or
+   - `result.get('new_spec')` is not a dictionary.
+2. The function returns a dictionary `plan` with keys:
+   - `'fqn'`: the input `fqn`,
+   - `'fpath'`: the resolved source file path,
+   - `'spec_dict'`: result of `_normalize_spec_dict(new_spec)` where `new_spec` is the updated specification dict,
+   - `'info_dict'`: result of `_normalize_info_dict(new_info)` where `new_info` is the (possibly newly generated) callee information dict, determined as:
+      * if `old_info` was `None`, `new_info = result.get('new_info')` if it is a dict, else `{'callees': []}`, and `info_updated = True`;
+      * otherwise `info_updated = bool(result.get('info_updated'))`; if `info_updated` is true, `new_info = result.get('new_info')` if that is a dict, else `new_info = old_info`; if `info_updated` is false, `new_info = old_info`.
+   - `'info_updated'`: boolean as determined above,
+   - `'updated_callees'`: `result.get('updated_callees')` or `[]`.
+3. An exception (e.g., `OSError` when reading the source file, or any exception thrown by `_collect_caller_context`, the LLM functions, or the normalization helpers) is raised and not caught, propagating to the caller. In this case no return value is produced.
+
+The function performs only read I/O; it does not write to the file system or modify the global mappings `file_map`, `callers_map`, `callees_map`, `edge_aliases_map`, `EXT_TO_LANG`, `proj_dir`, `work_dir`, or `developer_intent`.
+
+Condition B (what the specification requires):
+Returns None when any of the following holds: (a) fqn has no entry in file_map or the mapped file does not exist on disk, (b) the file extension corresponds to no recognized language in EXT_TO_LANG, or (c) the function already has a valid specification and that specification remains correct under the developer_intent. Otherwise returns a plan dict containing: 'fqn' (the FQN unchanged), 'fpath' (the absolute file path), 'spec_dict' (a dict with 'signature', 'pre_condition', 'post_condition' keys describing the function's intended behavioral contract), 'info_dict' (a dict with a 'callees' key listing expected callee contracts), 'info_updated' (a boolean that is true when the callee-info dict was generated or changed from its prior version), and 'updated_callees' (a list of callee FQN strings whose expected contracts differ from the previous run). The returned dict is a pure data record — no files are written or modified by this function.
+
+Additional context:
+_collect_caller_context(fqn, callers_map, file_map, edge_aliases_map)
+Pre-condition: fqn is a FQN present in file_map pointing to an existing file; callers_map maps FQNs to lists of their callers; file_map maps FQNs to file paths; edge_aliases_map maps callee names to alias entries.
+Post-condition: Returns a data structure describing what the callers of fqn expect from the function — the caller-side context used to guide behavioral specification generation.
+
+_opencode_generate_spec(proj_dir, work_dir, idx, fqn, lang_key, phase_label, developer_intent, callee_names, source, caller_context)
+Pre-condition: proj_dir and work_dir are valid directory paths; fqn identifies an existing function; lang_key is a recognized language identifier; source is the function's complete source code text; callee_names is a list of callee function name strings; caller_context describes caller expectations.
+Post-condition: Returns a dict. When 'spec_updated' is true: 'new_spec' contains a specification dict with 'signature', 'pre_condition', 'post_condition' keys, and 'new_info' contains a callee-spec dict with a 'callees' key. When generation is not possible, returns a falsy or incomplete result.
+
+_llm_check_spec_update(proj_dir, work_dir, idx, fqn, lang_key, phase_label, developer_intent, old_spec, old_info, callee_names, source)
+Pre-condition: old_spec is a dict with 'signature', 'pre_condition', 'post_condition' keys from a previous specification run; old_info is a callee-spec dict from a previous run with a 'callees' key; developer_intent is a non-empty string describing the code change; all other arguments are as in _opencode_generate_spec.
+Post-condition: Returns a dict. When 'spec_updated' is true: 'new_spec' contains the updated specification and 'info_updated' (boolean) and 'new_info' (dict) indicate whether callee expectations changed. When 'spec_updated' is false, the existing specification remains correct under the developer_intent and no update is needed. The key 'updated_callees' lists the FQNs of callees whose expected contracts changed.
+
+_normalize_spec_dict(spec_dict) -> dict
+Pre-condition: spec_dict is a dict containing at minimum the keys 'signature', 'pre_condition', and 'post_condition'.
+Post-condition: Returns a dict with all required specification keys present and values conforming to the canonical .spec.json schema expected by downstream consumers.
+
+_normalize_info_dict(info_dict) -> dict
+Pre-condition: info_dict is a dict containing a 'callees' key whose value is a list of callee-specification objects.
+Post-condition: Returns a dict conforming to the canonical .info.json schema with all callee entries normalized to the expected structure.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

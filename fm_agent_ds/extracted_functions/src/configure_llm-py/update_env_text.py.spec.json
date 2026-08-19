@@ -1,0 +1,5 @@
+{
+  "signature": "update_env_text(text: str, api_key: str) -> str",
+  "pre_condition": "text is a string whose content follows .env file conventions — each line is blank, a comment beginning with '#', or a KEY=VALUE assignment optionally preceded by 'export '; api_key is a non-empty string.",
+  "post_condition": "Returns a string where (1) exactly one line assigns ENV_SECRET_KEY to api_key, positioned where an existing ENV_SECRET_KEY line appeared or appended at the end if absent; (2) lines whose key, after stripping an optional 'export ' prefix, belongs to a predetermined set of legacy LLM configuration keys are excluded from the output; (3) every other line — blank, comment, or assignment — appears verbatim in its original relative order. When an existing ENV_SECRET_KEY line carries an 'export ' prefix, the rewritten line preserves that prefix. When the key is appended and the input contains no non-blank, non-comment lines, header comment lines precede the appended key line."
+}

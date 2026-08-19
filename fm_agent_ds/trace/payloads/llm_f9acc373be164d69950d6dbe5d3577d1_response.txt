@@ -1,0 +1,1 @@
+{"post_condition": "The function returns a string equal to the filesystem path formed by joining the trace directory path of `work_dir` (obtained from `_trace_dir(work_dir)`), the literal `'opencode'` folder name, and the filename `{event_id}.jsonl`. Formally: let `r` be the return value; then `r = os.path.join(_trace_dir(work_dir), 'opencode', event_id + '.jsonl')`."}

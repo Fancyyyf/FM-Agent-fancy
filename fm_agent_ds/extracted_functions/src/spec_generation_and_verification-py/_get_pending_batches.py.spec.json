@@ -1,0 +1,5 @@
+{
+  "signature": "_get_pending_batches(batches, proj_dir) -> list",
+  "pre_condition": "batches is a list of dicts, each containing a 'functions' key mapped to a list of relative file path strings. proj_dir is a string identifying an existing directory.",
+  "post_condition": "Returns a list containing every batch dict from batches for which at least one relative path in the batch's 'functions' value, when joined with proj_dir, resolves to a function file whose .spec.json and .info.json sidecar pair is not yet complete. A batch appears at most once in the result, preserving its original relative order. Batches where every listed function has a complete sidecar pair are excluded from the result."
+}

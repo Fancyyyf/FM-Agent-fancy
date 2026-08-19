@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_extract_backtick_idents",
+      "signature": "_extract_backtick_idents(issue_text: str) -> set[str]",
+      "pre_condition": "issue_text is a non-empty string.",
+      "post_condition": "Returns a set of identifier strings extracted from backtick-quoted spans and fenced code blocks within issue_text, with programming-language keywords filtered out. Each returned string is a valid identifier token from the text."
+    }
+  ]
+}

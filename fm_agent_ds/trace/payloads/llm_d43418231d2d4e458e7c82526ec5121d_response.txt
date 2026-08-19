@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a string. If relpaths is an empty list, the returned string is empty (''). Otherwise, the returned string is the concatenation of the strings resulting from applying the format '- `{path}`' to each element of relpaths, in the same order as relpaths, with each formatted string separated by a newline character '\\n'. Formally: result = '' if len(relpaths) == 0 else '\\n'.join('- `{' + p + '}`' for each p in relpaths in original order). No side effects occur; relpaths is not modified."
+}

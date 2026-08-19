@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all Go files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("go", proj_dir) if cg else {}
+```
+
+Condition A (what the code actually does):
+If the call to CodeGraphExtractor.from_proj_dir(proj_dir) raises an exception, the function batch_extract terminates abnormally with that exception. If no exception occurs, let cg = CodeGraphExtractor.from_proj_dir(proj_dir). Then the function returns: if cg is None, the value {} (empty dictionary); otherwise, the value cg.get_functions_by_file("go", proj_dir), which is a dictionary mapping absolute file paths (str) to lists of (func_name, body) tuples for all Go source files under the project root. Formally: (¬ Exception) ⟹ ((cg = None) ⟹ result = {}) ∧ ((cg ≠ None) ⟹ result = cg.get_functions_by_file("go", proj_dir) ∧ ∀k,v ∈ result: isinstance(k, str) ∧ isabs(k) ∧ isinstance(v, list) ∧ ∀t ∈ v: isinstance(t, tuple) ∧ len(t)=2).
+
+Condition B (what the specification requires):
+Returns a dict mapping absolute file paths to lists of (func_name, body_text) tuples for all Go source files in proj_dir when a CodeGraph index for the project is available. Returns an empty dict when CodeGraph initialization fails or is not available for the project. Each key is an absolute filepath string; each value is a list of 2-tuples whose first element is a function name and second element is the function body text.
+
+Additional context:
+from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a non-empty string identifying a project root directory.
+Post-condition: Returns a CodeGraphExtractor instance initialized with the project's code index if the index exists and is loadable. Returns None when no CodeGraph index is available for the project or initialization fails.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

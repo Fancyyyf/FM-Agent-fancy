@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--c-py--call_edges",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/c-py/call_edges.py",
+  "function_name": "call_edges",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--c-py--call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--c-py--call_edges.md",
+  "probe_stdout": "CONFIRMED — actual: {} | expected: None",
+  "trigger_summary": "CodeGraph backend exists but C language is unsupported; get_call_edges returns {} instead of None"
+}

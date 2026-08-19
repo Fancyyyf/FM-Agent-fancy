@@ -1,0 +1,58 @@
+Programming language: Python
+
+Pre-condition:
+argv is a list of zero or more strings, or None
+
+Code block:
+```python
+Line 1: def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+Line 2:     parser = argparse.ArgumentParser(
+Line 3:         description="Configure FM-Agent's LLM provider or update individual LLM settings."
+Line 4:     )
+Line 5:     subcommands = parser.add_subparsers(dest="command")
+Line 6:     set_parser = subcommands.add_parser(
+Line 7:         "set",
+Line 8:         help="update only the specified non-secret [llm] settings in fm-agent.toml",
+Line 9:     )
+Line 10:     set_parser.add_argument("--name", help="LLM model ID (LLM_MODEL)")
+Line 11:     set_parser.add_argument("--provider", help="OpenCode provider ID (OPENCODE_MODEL_PROVIDER)")
+Line 12:     set_parser.add_argument("--base-url", dest="base_url", help="API base URL (LLM_API_BASE_URL)")
+Line 13:     set_parser.add_argument(
+Line 14:         "--backend",
+Line 15:         choices=_BACKENDS,
+Line 16:         help="model backend: opencode, auto, codex-cli, or claude-cli",
+Line 17:     )
+Line 18:     set_parser.add_argument(
+Line 19:         "--effort",
+Line 20:         choices=_EFFORTS,
+Line 21:         help="reasoning effort: empty, low, medium, or high",
+Line 22:     )
+Line 23:     set_parser.add_argument(
+Line 24:         "--api-style",
+Line 25:         dest="api_style",
+Line 26:         choices=("openai", "anthropic"),
+Line 27:         help="OpenCode adapter API style",
+Line 28:     )
+Line 29:     set_parser.add_argument(
+Line 30:         "--yes",
+Line 31:         action="store_true",
+Line 32:         help="write without asking for confirmation",
+Line 33:     )
+Line 34:     args = parser.parse_args(argv)
+Line 35:     if args.command == "set":
+Line 36:         updates = {
+Line 37:             key: getattr(args, key)
+Line 38:             for key in _LLM_TOML_KEYS
+Line 39:             if getattr(args, key) is not None
+Line 40:         }
+Line 41:         if not updates:
+Line 42:             set_parser.error("provide at least one setting to update")
+Line 43:         args.updates = updates
+Line 44:     return args
+```
+
+Additional context:
+parse_args(argv: list[str] | None) -> argparse.Namespace
+Pre-condition: The ArgumentParser has been configured with a subparser for the 'set' command carrying defined argument flags before this call
+Post-condition: Returns a Namespace whose attribute names correspond to the defined argument destinations. When argv is None, sys.argv[1:] is used as the argument sequence. Positional subcommand selection sets the 'command' attribute to the chosen subparser name or to the argparse default when no subcommand is selected. Optional flag arguments set their corresponding attributes to the provided value or to a store-true/store-false default when the flag is absent. On unrecognized flags, missing required arguments, or invalid argument choice values, prints a usage message and error description to stderr and terminates the process with exit code 2.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

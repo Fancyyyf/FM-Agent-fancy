@@ -1,0 +1,28 @@
+{
+  "callees": [
+    {
+      "name": "list_staged_domain_knowledge_relpaths",
+      "signature": "list_staged_domain_knowledge_relpaths(work_dir)",
+      "pre_condition": "work_dir is a valid directory path.",
+      "post_condition": "Returns a list of relative file path strings to domain knowledge markdown files that have been staged under work_dir for the current run. Returns an empty list when no domain knowledge files are staged."
+    },
+    {
+      "name": "format_domain_knowledge_bullets",
+      "signature": "format_domain_knowledge_bullets(paths)",
+      "pre_condition": "paths is a list of file path strings.",
+      "post_condition": "Returns a string where each path is formatted as a markdown bullet item line, suitable for embedding as a numbered reading step in a prompt."
+    },
+    {
+      "name": "_opencode_select_json",
+      "signature": "_opencode_select_json(proj_dir, work_dir, prompt_relpath, prompt_content, result_relpath, stage, input_files)",
+      "pre_condition": "proj_dir and work_dir are valid directory paths; prompt_relpath and result_relpath are relative file paths under work_dir; prompt_content is a non-empty string; stage is a recognized pipeline stage identifier; input_files is a list of relative file paths to contextual files that opencode may read.",
+      "post_condition": "Writes prompt_content to prompt_relpath on disk, then invokes opencode with that prompt and the listed input_files as readable context. When opencode succeeds, reads and returns the parsed JSON content from result_relpath. Returns None when opencode exits with a non-zero code, result_relpath does not exist or is empty after execution, or the file content is not valid JSON."
+    },
+    {
+      "name": "_validate_spec_update",
+      "signature": "_validate_spec_update(result)",
+      "pre_condition": "result is a dict potentially produced by an opencode spec generation or spec-update run.",
+      "post_condition": "When result contains the expected keys with the expected types (spec_updated is bool; new_spec, when spec_updated is true, is a dict with 'signature', 'pre_condition', 'post_condition' string values; info_updated is bool; new_info is a dict with a 'callees' key; updated_callees is a list of strings), returns result unchanged. Returns None when any key is missing, has an unexpected type, or the value of a boolean key is not a boolean."
+    }
+  ]
+}

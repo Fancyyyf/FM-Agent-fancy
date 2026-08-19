@@ -1,0 +1,29 @@
+Programming language: Python
+
+Pre-condition:
+filepath is a Path object.
+
+Code block:
+```python
+Line 1: def extract_spec_block(filepath: Path) -> Optional[str]:
+Line 2:     """Read .spec.json and rebuild reasoner-facing spec text."""
+Line 3:     spec_path = _spec_json_path(filepath)
+Line 4:     try:
+Line 5:         with spec_path.open("r", encoding="utf-8") as file:
+Line 6:             spec = json.load(file)
+Line 7:     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+Line 8:         return None
+Line 9:     if not isinstance(spec, dict):
+Line 10:         return None
+Line 11:     return (
+Line 12:         f"{spec.get('signature', '')}\n\n"
+Line 13:         f"Pre-condition:\n{spec.get('pre_condition', '')}\n\n"
+Line 14:         f"Post-condition:\n{spec.get('post_condition', '')}"
+Line 15:     )
+```
+
+Additional context:
+_spec_json_path(filepath: Path) -> Path
+Pre-condition: filepath is a Path object.
+Post-condition: Returns a Path whose string representation equals the string representation of filepath with the literal suffix '.spec.json' appended.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

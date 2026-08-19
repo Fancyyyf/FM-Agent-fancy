@@ -1,0 +1,5 @@
+{
+  "signature": "call_edges(proj_dir: str)",
+  "pre_condition": "proj_dir is a path to a directory containing source files.",
+  "post_condition": "When the CodeGraph backend is available for the C language, returns a dict whose keys are canonicalized caller FQN strings and whose values are iterables of canonicalized callee FQN strings, representing static call relationships in the project. FQNs use the canonicalized format where unsafe characters are translated and components are joined by '::'. When the CodeGraph backend is unavailable for C, returns None. An empty dict is returned when the backend is available but discovers no call edges for the language."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--scope-py--_parse_file",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/scope-py/_parse_file.py",
+  "function_name": "_parse_file",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--scope-py--_parse_file.py",
+  "detail_file": "fm_agent/bug_validation/src--scope-py--_parse_file.md",
+  "probe_stdout": "NOT CONFIRMED — Class info correctly preserved. funcs=[] (type=list), classes=['MyExampleClass', 'AnotherClass']\n  source_lines count: 8\n",
+  "trigger_summary": "For a .py file with classes but no top-level functions, _parse_python_file returns funcs=[] (not None), so the fallback is not triggered and class info is preserved — the claimed bug does not exist."
+}

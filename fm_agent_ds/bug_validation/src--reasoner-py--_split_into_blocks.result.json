@@ -1,0 +1,11 @@
+{
+  "id": "src--reasoner-py--_split_into_blocks",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/reasoner-py/_split_into_blocks.py",
+  "function_name": "_split_into_blocks",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--reasoner-py--_split_into_blocks.py",
+  "detail_file": "fm_agent/bug_validation/src--reasoner-py--_split_into_blocks.md",
+  "probe_stdout": "CONFIRMED — actual: 'line1\\nline2' | expected: '\\n\\nline1\\nline2\\n\\n'",
+  "trigger_summary": "When func contains leading/trailing newlines, func.strip() on line 7 removes them, so concatenated blocks no longer reconstruct the original input."
+}

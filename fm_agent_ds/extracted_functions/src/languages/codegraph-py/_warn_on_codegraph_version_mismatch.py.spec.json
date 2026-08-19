@@ -1,0 +1,5 @@
+{
+  "signature": "_warn_on_codegraph_version_mismatch(cmd: str) -> None",
+  "pre_condition": "cmd is a non-empty string representing a codegraph executable path; the configuration key codegraph.version is set.",
+  "post_condition": "If the configured codegraph.version (after stripping whitespace and removing any leading 'v') is empty, returns immediately with no side effects. If the executable at cmd cannot be reached or fails to report its version, returns silently with no side effects. If the version reported by the executable differs from the configured version, a warning is logged containing both version strings. The function never raises an exception and never blocks or terminates the calling process."
+}

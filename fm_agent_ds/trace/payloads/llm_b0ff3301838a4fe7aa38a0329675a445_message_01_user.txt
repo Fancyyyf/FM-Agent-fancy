@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def __init__(self):
+Line 2:         super().__init__()
+Line 3:         self.signatures = {}
+```
+
+Condition A (what the code actually does):
+The FunctionSpecMap instance is initialized as an empty dictionary (no key-value pairs) and its `signatures` attribute is an empty dictionary. Formally: isinstance(self, FunctionSpecMap) ∧ len(self) == 0 ∧ hasattr(self, 'signatures') ∧ self.signatures == {}.
+
+Condition B (what the specification requires):
+self is initialized as an empty mapping with no entries and length zero. self.signatures exists as an empty dict, mapping function name strings to their signature strings. All inherited dict operations behave as on an empty dict, and self.signatures is accessible as a writable attribute.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

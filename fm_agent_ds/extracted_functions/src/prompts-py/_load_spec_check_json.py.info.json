@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_parse_json_response",
+      "signature": "_parse_json_response(response) -> dict | list",
+      "pre_condition": "response is a string that may contain a JSON object or array, encoded as bare JSON, within ```json fenced code blocks, or embedded in prose text.",
+      "post_condition": "Returns a dict or list containing the parsed JSON value extracted from the response text. Raises ValueError when no valid JSON object or array can be extracted and parsed from the response."
+    }
+  ]
+}

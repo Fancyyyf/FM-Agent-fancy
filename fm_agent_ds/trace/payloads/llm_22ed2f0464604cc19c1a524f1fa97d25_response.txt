@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "symbol = {'location': 'not a dict'}, fallback = 'fallback'",
+  "offending_statements": "Line 2: return symbol.get(\"uri\") or (symbol.get(\"location\") or {}).get(\"uri\") or fallback",
+  "reason": "The specification requires that when symbol['location'] does not exist as a dict, fallback should be returned. The code does not check that symbol['location'] is a dict before calling .get('uri') on it. If symbol['location'] is a truthy non-dict (e.g., the string 'not a dict'), the code raises AttributeError, violating the specification's guarantee to return a non-empty string."
+}

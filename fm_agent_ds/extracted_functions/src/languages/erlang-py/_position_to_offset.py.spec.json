@@ -1,0 +1,5 @@
+{
+  "signature": "_position_to_offset(source, position) -> int",
+  "pre_condition": "source is a non-empty string containing source code text. position is a dict whose 'line' entry (default 0) is a non-negative integer line index and whose 'character' entry (default 0) is a non-negative integer column offset in UTF-16 code units.",
+  "post_condition": "Returns the zero-indexed byte offset within source that corresponds to the given position. When the line index is at or beyond the number of lines in source, returns len(source). When the character value is at or beyond the end of the target line in UTF-16 code units, returns the byte offset of the last byte of that line. Characters with Unicode code points above U+FFFF advance the UTF-16 column by 2 units per character. The result is in the range [0, len(source)]."
+}

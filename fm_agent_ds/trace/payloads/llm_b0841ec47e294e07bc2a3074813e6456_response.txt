@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Any state object, for example: state.workdir = '/home', state.model_seen = 'gpt', state.elapsed() returns 60.0 (seconds).",
+  "offending_statements": "Line 8: return Panel(Text.from_markup(\"  •  \".join(parts)), border_style=\"cyan\")",
+  "reason": "The specification requires the four parts to be separated by the string ' • ' (space, bullet, space). Condition A shows that the code uses the separator '  •  ' (two spaces before and after the bullet). This difference holds for any valid input, causing the rendered markup to differ from the specification."
+}

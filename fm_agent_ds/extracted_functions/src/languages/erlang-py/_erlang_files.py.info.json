@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_iter_project_files",
+      "signature": "_iter_project_files(root: str, extensions: set[str]) -> Iterable[str]",
+      "pre_condition": "root resolves to an existing directory. extensions is a non-empty set of file extension strings, each beginning with a dot.",
+      "post_condition": "Yields the absolute path of every regular file under the directory tree rooted at root whose suffix matches an extension in extensions. The iteration order depends on the filesystem enumeration order."
+    }
+  ]
+}

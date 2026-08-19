@@ -1,0 +1,29 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def write(self, data):
+Line 2:         self._console.write(data)
+Line 3:         # The log stream is owned by the logging FileHandler; at interpreter shutdown (or if
+Line 4:         # the handler is closed) it may already be closed, so tolerate that rather than raise
+Line 5:         # — the console copy still gets through.
+Line 6:         if not self._log_stream.closed:
+Line 7:             self._log_stream.write(data)
+Line 8:         return len(data)
+```
+
+Condition A (what the code actually does):
+If the method returns normally, then data has been successfully written to self._console, and if self._log_stream was not closed before the write attempt, data has also been written to self._log_stream; the return value equals len(data). Formally: ∀ s ∈ State such that pre(s) and method terminates normally with value r, r = len(data) ∧ written(s.self._console, data) ∧ (¬s.self._log_stream.closed ⇒ written(s.self._log_stream, data)). If the method raises an exception (from either write call), the console and log stream may contain partial or no data, and no return value is produced.
+
+Condition B (what the specification requires):
+The string data is written to the console stream. The string data is written to the log stream unless the log stream is closed, in which case the log write is skipped and no exception is raised. Returns len(data), the number of characters in data.
+
+Additional context:
+write(data: str) -> int
+Pre-condition: The console stream is open. data is a str.
+Post-condition: The string data is written to the console stream. Returns the number of characters written.
+
+write(data: str) -> int
+Pre-condition: The log stream is open (not closed). data is a str.
+Post-condition: The string data is written to the log stream. Returns the number of characters written.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

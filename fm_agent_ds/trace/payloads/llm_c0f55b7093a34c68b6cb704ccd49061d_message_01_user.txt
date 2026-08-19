@@ -1,0 +1,76 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _reconcile_extracted_dir(proj_dir, abs_src):
+Line 2:     """Delete extracted-function files under abs_src's function directory that
+Line 3:     codegraph no longer produces for it, then prune emptied directories.
+Line 4:     ``valid`` is computed with the same backend (codegraph when it indexes the
+Line 5:     file, else regex) that run_extraction used to write the files, so their
+Line 6:     identifiers — and therefore the on-disk layout — agree; only genuinely orphaned
+Line 7:     files are removed. A source file that no longer exists yields an empty ``valid``
+Line 8:     set, so all of its extracted files are removed.
+Line 9:     """
+Line 10:     func_dir, ext = _src_rel_to_func_dir(proj_dir, abs_src)
+Line 11:     if not os.path.isdir(func_dir):
+Line 12:         return
+Line 13:     valid = set()
+Line 14:     lang_key = EXT_TO_LANG.get(ext)
+Line 15:     if lang_key and os.path.isfile(abs_src):
+Line 16:         spans, _raw = _function_spans(abs_src, lang_key, proj_dir)
+Line 17:         for ident, _s, _e in spans:
+Line 18:             # ident is the class-qualified, deduped identifier written by
+Line 19:             # run_extraction as a flat file that keeps the "::" in its name.
+Line 20:             path = os.path.join(func_dir, ident) + (f".{ext}" if ext else "")
+Line 21:             function_path = os.path.abspath(path)
+Line 22:             valid.add(function_path)
+Line 23:             valid.add(f"{function_path}.spec.json")
+Line 24:             valid.add(f"{function_path}.info.json")
+Line 25:     for root, _dirs, fnames in os.walk(func_dir):
+Line 26:         for fn in fnames:
+Line 27:             abs_path = os.path.abspath(os.path.join(root, fn))
+Line 28:             if abs_path not in valid:
+Line 29:                 os.remove(abs_path)
+Line 30:     # Prune empty directories left behind (deepest first).
+Line 31:     for root, _dirs, _files in os.walk(func_dir, topdown=False):
+Line 32:         if root != func_dir and os.path.isdir(root) and not os.listdir(root):
+Line 33:             os.rmdir(root)
+```
+
+Condition A (what the code actually does):
+After the function executes, if it returns normally (no exception), the state of the directory tree rooted at func_dir (derived from proj_dir and abs_src) is updated as follows.
+
+Let D, ext = _src_rel_to_func_dir(proj_dir, abs_src).
+If D is not a directory, the function returns immediately and the file system is unchanged.
+
+Otherwise, let VALID be computed as:
+   lang_key = EXT_TO_LANG.get(ext)
+   if lang_key is not None and os.path.isfile(abs_src) in the initial state:
+        spans = _function_spans(abs_src, lang_key, proj_dir)[0]
+        For each (ident, _, _) in spans:
+            function_path = os.path.abspath(os.path.join(D, ident) + ('.' + ext if ext else ''))
+            VALID = {function_path, function_path+'.spec.json', function_path+'.info.json'} for all spans, unioned.
+   else:
+        VALID = empty set.
+
+Then the function walks D recursively and deletes every regular file whose absolute path is not in VALID. After that, it walks D bottom-up and removes any subdirectory of D (excluding D itself) that is empty (i.e., os.listdir returns empty).
+
+Upon normal termination, the final file system state F satisfies:
+  For all absolute paths p under D:
+    * If p was a regular file in the initial state: p exists in F iff p ∈ VALID.
+    * If p was a directory in the initial state: p exists in F iff p = D or p contains at least one regular file or subdirectory that exists in F.
+
+If an exception (e.g., OSError, PermissionError) is raised during deletion or pruning, the function terminates prematurely; in that case the file system may be partially modified (some files/directories deleted, others not) and the exception propagates.
+
+Condition B (what the specification requires):
+Identifies the extracted-function directory under extracted_functions/ corresponding to abs_src. When this directory does not exist on disk, returns immediately with no side effects. Otherwise, determines the set of function identifiers currently produced by the extraction backend for abs_src. For every file under the corresponding extracted-function directory whose base filename (with .spec.json or .info.json suffix stripped) does not match any such identifier, removes that file from disk — including orphaned .spec.json and .info.json sidecars. When abs_src does not exist on disk, removes the entire corresponding extracted-function directory and all files within it. When abs_src exists but yields no function identifiers, removes all extracted function files and their sidecars from the corresponding directory. After removal, prunes every empty subdirectory under the extracted-function directory (deepest-first traversal). The extracted-function directory itself is preserved even when emptied. Does not modify or create any source file at abs_src. The set of function identifiers is computed using the same backend (codegraph or regex) that produced the original extracted-function files, ensuring identifier naming is consistent.
+
+Additional context:
+_src_rel_to_func_dir(proj_dir, abs_src)
+Pre-condition: proj_dir is a valid directory path. abs_src is an absolute path (may not exist on disk).
+Post-condition: Returns a (func_dir, ext) tuple where func_dir is the absolute directory path under extracted_functions/ corresponding to abs_src's position in the project tree (derived from the relative path of abs_src with respect to proj_dir), and ext is the file extension of abs_src (including the dot, e.g. '.py') or an empty string when abs_src has no extension.
+
+_function_spans(abs_src, lang_key, proj_dir)
+Pre-condition: abs_src is an absolute path to an existing regular file on disk. lang_key is a non-empty string recognized by the extraction backend registry (e.g., 'python', 'rust'). proj_dir is a valid directory path.
+Post-condition: Returns (spans, raw) where raw is backend-specific parse data. spans is an iterable of (identifier, start_line, end_line) tuples, where each identifier is the class-qualified canonical function name produced by the extraction backend (using '::' as separator for nested scopes), start_line is the 1-based line number where the function definition begins, and end_line is the 1-based inclusive line number where the function definition ends. The identifiers returned are consistent with the naming convention used by run_extraction to write extracted-function files.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

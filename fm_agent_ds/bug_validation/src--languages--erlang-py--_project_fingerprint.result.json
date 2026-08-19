@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--_project_fingerprint",
+  "source_file": "src/languages/erlang-py/_project_fingerprint.py",
+  "function_name": "_project_fingerprint",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_project_fingerprint.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_project_fingerprint.md",
+  "probe_stdout": "CONFIRMED — fingerprints equal despite content change: fp1==fp2, size=49==49, mtime_ns=1785172396729580385==1785172396729580385, but content differs\n",
+  "trigger_summary": "Fingerprint uses only (size, mtime_ns) and ignores file content; same-length content change with preserved mtime goes undetected."
+}

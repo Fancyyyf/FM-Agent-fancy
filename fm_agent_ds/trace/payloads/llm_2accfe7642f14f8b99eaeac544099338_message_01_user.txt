@@ -1,0 +1,30 @@
+Programming language: Python
+
+Pre-condition:
+proc is a running subprocess.Popen instance whose process has not yet been waited on. command is a non-empty sequence of strings. stage is a non-empty string. timeout_seconds is a positive integer.
+
+Code block:
+```python
+Line 1: def _wait_opencode_process(proc, command, stage, timeout_seconds=OPENCODE_TIMEOUT_SECONDS):
+Line 2:     try:
+Line 3:         return proc.wait(timeout=timeout_seconds), None
+Line 4:     except subprocess.TimeoutExpired:
+Line 5:         # A model connection that dies silently (e.g. through a forward proxy)
+Line 6:         # leaves opencode waiting forever. Kill it so callers' retry paths can
+Line 7:         # take over instead of the whole pipeline hanging.
+Line 8:         logging.warning(
+Line 9:             "opencode %s timed out after %ss, killing: %s",
+Line 10:             stage, timeout_seconds, command_display(command),
+Line 11:         )
+Line 12:         proc.terminate()
+Line 13:         try:
+Line 14:             exit_code = proc.wait(timeout=10)
+Line 15:         except subprocess.TimeoutExpired:
+Line 16:             proc.kill()
+Line 17:             exit_code = proc.wait()
+Line 18:         if not exit_code:
+Line 19:             exit_code = -15  # killed-on-timeout must never record as success
+Line 20:         return exit_code, f"timeout after {timeout_seconds}s"
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

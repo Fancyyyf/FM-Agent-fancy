@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract(proj_dir: str) -> dict:
+Line 2:     """Return {abs_filepath: [(func_name, body)]} for all C++ files."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_functions_by_file("cpp", proj_dir) if cg else {}
+```
+
+Condition A (what the code actually does):
+If no exception occurs, the function returns a dictionary. Let cg = CodeGraphExtractor.from_proj_dir(proj_dir). If cg is not None, the returned dictionary is cg.get_functions_by_file('cpp', proj_dir), which maps each absolute file path (str) of a C++ source file within proj_dir or its subdirectories to a list of (function_name: str, body_text: str) tuples. If cg is None, the function returns an empty dictionary {}. No side effects are produced, and the pre‑condition that proj_dir is an existing directory is preserved.
+
+Condition B (what the specification requires):
+Returns a dictionary mapping absolute filesystem paths (str) to lists of (function_name: str, body_text: str) tuples for all C++ source files identified in proj_dir and its subdirectories. If the CodeGraph extraction backend is unavailable or fails to initialize for the project, returns an empty dictionary. Each key in the returned dictionary is an absolute path to a C++ source file that contains at least one function definition; each associated value is a non-empty list of (func_name, body) tuples extracted from that file.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string representing an existing filesystem directory.
+Post-condition: Returns a CodeGraphExtractor instance initialized with the project's codegraph index, or None if the index is unavailable or cannot be opened.
+
+CodeGraphExtractor.get_functions_by_file(language: str, proj_dir: str) -> dict
+Pre-condition: Called on a valid CodeGraphExtractor instance. language is a registered language key. proj_dir is the project root directory.
+Post-condition: Returns a dictionary mapping absolute filesystem paths (str) to lists of (function_name: str, body_text: str) tuples for all source files of the given language found in proj_dir and its subdirectories.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

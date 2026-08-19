@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "path=PosixPath('/mnt/vfat/.env'), now=None, private=False; the .env file exists and is readable on a vfat filesystem where chmod is not supported (e.g., Linux mount of vfat). The exclusive creation and copy succeed, then the forced chmod at line 43 raises OSError, and because the chmod is not protected by the cleanup logic (which only guards the copy), the empty backup file is left behind, violating the specification's requirement that any filesystem operation failure after destination reservation results in removal of the reserved file.",
+  "offending_statements": "Line 42:     if private or path.name == \".env\":\nLine 43:         backup.chmod(0o600)",
+  "reason": "The specification requires that when a filesystem operation after destination reservation fails, the reserved empty destination file is removed before the exception propagates. The code only wraps shutil.copy2 in a try/except that performs cleanup; the subsequent chmod for sensitive files (private or .env) is outside that protection. If that chmod fails, the exception propagates without unlinking the backup file, leaving an empty file on disk."
+}

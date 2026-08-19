@@ -1,0 +1,5 @@
+{
+  "signature": "State.__init__(self, proj_dir)",
+  "pre_condition": "proj_dir is a string naming an existing project directory.",
+  "post_condition": "self.workdir is the resolved, absolute Path to the fm_agent/ workspace directory located relative to proj_dir. Every directory-path attribute on self (trace_dir, events_path, opencode_dir, bug_dir) is an absolute Path identifying a location inside self.workdir under the names trace/, trace/events.jsonl, trace/opencode/, and bug_validation/ respectively. All numeric aggregate counters on self are zero. All cost accumulators are 0.0. All time-tracked attributes are None. All bounded deques are empty with their configured maximum length. All request-tracking dictionaries are empty. self.model_seen is None."
+}

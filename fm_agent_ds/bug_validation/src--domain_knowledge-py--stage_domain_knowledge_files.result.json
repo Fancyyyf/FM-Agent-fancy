@@ -1,0 +1,11 @@
+{
+  "id": "src--domain_knowledge-py--stage_domain_knowledge_files",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/domain_knowledge-py/stage_domain_knowledge_files.py",
+  "function_name": "stage_domain_knowledge_files",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--stage_domain_knowledge_files.py",
+  "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--stage_domain_knowledge_files.md",
+  "probe_stdout": "CONFIRMED — actual: 'directory was missing between rmtree and replace (atomicity violated)' | expected: 'atomically cleared and repopulated (no window where directory missing)'\n",
+  "trigger_summary": "Any non-empty markdown_paths triggers shutil.rmtree before os.replace, creating an observable window where target_dir does not exist, violating the atomicity requirement."
+}

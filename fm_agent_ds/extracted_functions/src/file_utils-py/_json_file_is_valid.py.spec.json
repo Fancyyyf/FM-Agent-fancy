@@ -1,0 +1,5 @@
+{
+  "signature": "_json_file_is_valid(file_path) -> bool",
+  "pre_condition": "file_path is a string path to a file whose existence and readability are not yet established.",
+  "post_condition": "Returns True exactly when the file at file_path exists in the filesystem, can be opened for reading, and its entire contents constitute syntactically valid JSON. Returns False when the file does not exist, cannot be opened for reading, or its contents are not syntactically valid JSON. Never raises an exception; every error condition — including missing file, permission-denied read, and malformed JSON — is caught and results in a False return value."
+}

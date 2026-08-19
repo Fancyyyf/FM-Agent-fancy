@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--run_local_backend_configuration",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/src/configure_llm.py",
+  "function_name": "run_local_backend_configuration",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--run_local_backend_configuration.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--run_local_backend_configuration.md",
+  "probe_stdout": "FM-Agent local CLI backend configuration\n\nBackend: codex-cli\n\nThe following files will be updated:\n  - /tmp/bug_probe_ubnz7ezp/fm-agent.toml\n  - /tmp/bug_probe_ubnz7ezp/.env\n\nThe following legacy dotenv overrides will be removed so they do not\nshadow the selected backend: LLM_MODEL, LLM_EFFORT, LLM_API_BASE_URL\n\nThe local CLI model settings retained from .env will be written to TOML:\n  - name: 'old-model'\n  - effort: 'high'\n\nNo API key or OpenCode provider configuration will be changed.\n\nWarning: these shell environment variables override the saved LLM settings:\n  LLM_API_KEY, LLM_API_BASE_URL, LLM_MODEL, FM_AGENT_MODEL_BACKEND, LLM_EFFORT, OPENCODE_MODEL_PROVIDER\nThe wizard cannot change the shell that launched it. Before starting FM-Agent\nin this shell, unset them to use the saved configuration:\n  unset LLM_API_KEY LLM_API_BASE_URL LLM_MODEL FM_AGENT_MODEL_BACKEND LLM_EFFORT OPENCODE_MODEL_PROVIDER\n\nUpdated /tmp/bug_probe_ubnz7ezp/fm-agent.toml\nRemoved legacy LLM overrides from /tmp/bug_probe_ubnz7ezp/.env\nBacked up /tmp/bug_probe_ubnz7ezp/fm-agent.toml -> /tmp/bug_probe_ubnz7ezp/fm-agent.toml.bak.20260727-235535\nBacked up /tmp/bug_probe_ubnz7ezp/.env -> /tmp/fm-agent-config-backups-uid-1000/tmp_bug_probe_ubnz7ezp__.env.bak.20260727-235535\nCONFIRMED — .env was modified (legacy LLM overrides removed) result=0 after='# keep this comment\\n'\n",
+  "trigger_summary": "When run_local_backend_configuration is called with a local CLI backend and the project .env contains legacy LLM overrides, the function modifies .env by removing those overrides, contradicting the specification that no .env modification is performed."
+}

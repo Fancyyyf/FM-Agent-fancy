@@ -1,0 +1,1 @@
+{"callees": [{"name": "_clean_label", "signature": "_clean_label(item: str) -> str", "pre_condition": "item is a string element from the list being validated.", "post_condition": "Returns a cleaned string. When the returned string is empty, the element is excluded from the output tuple."}]}

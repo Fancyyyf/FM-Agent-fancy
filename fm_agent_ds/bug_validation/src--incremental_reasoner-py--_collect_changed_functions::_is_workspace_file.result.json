@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_collect_changed_functions::_is_workspace_file",
+  "source_file": "src/incremental_reasoner.py",
+  "function_name": "_is_workspace_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_collect_changed_functions::_is_workspace_file.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_collect_changed_functions::_is_workspace_file.md",
+  "probe_stdout": "[PASS] rel_path='fm_agent'  expected=True  actual=True  (exact match)\n[PASS] rel_path='fm_agent/some_file.py'  expected=True  actual=True  (descendant inside workspace)\n[PASS] rel_path='fm_agent/nested/deep/file.c'  expected=True  actual=True  (deeply nested descendant)\n[PASS] rel_path='fm_agent\\\\subdir\\\\file.rs'  expected=True  actual=True  (Windows backslash normalization)\n[PASS] rel_path='src/main.py'  expected=False  actual=False  (outside workspace entirely)\n[PASS] rel_path=''  expected=False  actual=False  (empty path)\n[PASS] rel_path='fm'  expected=False  actual=False  (partial prefix match, not fm_agent)\n[FAIL] rel_path='fm_agent/..'  expected=False  actual=True  (.. escapes the workspace directory)\n[FAIL] rel_path='fm_agent/../escape.py'  expected=False  actual=True  (.. escape with trailing file)\n[FAIL] rel_path='fm_agent/../../outside'  expected=False  actual=True  (double .. escape)\n[FAIL] rel_path='fm_agent/subdir/../../../root.txt'  expected=False  actual=True  (nested then .. escape)\n[FAIL] rel_path='fm_agent\\\\..\\\\escape.rs'  expected=False  actual=True  (Windows backslash .. escape)\n\nCONFIRMED — 5 test case(s) expose the bug:\n  rel_path='fm_agent/..': expected False, got True (.. escapes the workspace directory)\n  rel_path='fm_agent/../escape.py': expected False, got True (.. escape with trailing file)\n  rel_path='fm_agent/../../outside': expected False, got True (double .. escape)\n  rel_path='fm_agent/subdir/../../../root.txt': expected False, got True (nested then .. escape)\n  rel_path='fm_agent\\\\..\\\\escape.rs': expected False, got True (Windows backslash .. escape)",
+  "trigger_summary": "Paths starting with fm_agent/ that contain '..' components (e.g. fm_agent/..) pass the naive startswith check but escape the workspace directory."
+}

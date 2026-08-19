@@ -1,0 +1,5 @@
+{
+  "signature": "_path_exists_in_commit(rel_path) -> bool",
+  "pre_condition": "rel_path is a non-empty string representing a relative file path. proj_dir and old_commit_id are captured from the enclosing scope: proj_dir is a directory path within a git repository, and old_commit_id is a valid commit identifier reachable in that repository.",
+  "post_condition": "Returns True when rel_path identifies an object present at old_commit_id in the repository at proj_dir. Returns False when no such object exists at that revision or when the git command fails for any other reason. Never raises an exception."
+}

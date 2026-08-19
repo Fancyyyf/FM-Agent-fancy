@@ -1,0 +1,17 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def __init__(self, stream: BinaryIO, messages: queue.Queue):
+Line 2:         super().__init__(name="fm-agent-elp-reader", daemon=True)
+Line 3:         self._stream = stream
+Line 4:         self._messages = messages
+```
+
+Condition A (what the code actually does):
+After execution, the instance is fully initialized: the superclass Thread.__init__ has set the thread name to 'fm-agent-elp-reader' and the daemon flag to True. The instance attribute `_stream` references the passed `stream` object, and `_messages` references the passed `messages` collection. No exceptions are raised; both assignments succeed and the thread state is ready. In formal terms: self._stream == stream ∧ self._messages == messages ∧ self.name == 'fm-agent-elp-reader' ∧ self.daemon == True.
+
+Condition B (what the specification requires):
+Returns a _JsonRpcReader instance configured as a daemon thread named "fm-agent-elp-reader" that, when started, will read newline-delimited JSON lines from stream and append each parsed message object to messages. The instance stores stream as self._stream and messages as self._messages.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

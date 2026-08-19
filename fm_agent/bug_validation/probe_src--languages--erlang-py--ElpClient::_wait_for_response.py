@@ -1,53 +1,99 @@
-"""Probe script for bug: ElpClient._wait_for_response - empty error dict bypasses error handling.
+"""Probe for bug src--languages--erlang-py--ElpClient::_wait_for_response.
 
-Bug ID: src--languages--erlang-py--ElpClient::_wait_for_response
-Source: src/languages/erlang.py, line 186: `if error:` treats empty dict {} as falsy.
-Spec: Any error object other than ContentModifiedError must raise RuntimeError.
-Bug: Empty error dict {} is falsy, so error handling is skipped and message.get("result") is returned.
+Trigger (from gap report): the guard `if error:` in ElpClient._wait_for_response
+tests the truthiness of message.get("error") instead of the presence of the
+"error" key. When the ELP server replies with a JSON-RPC error response whose
+error value is falsy — e.g. {"jsonrpc": "2.0", "id": 1, "error": {}} — the empty
+dict is falsy, so both error branches (content-modified and generic RuntimeError)
+are skipped and the method returns message.get("result") == None, silently
+treating a server-error response as a successful result-less reply.
+
+Spec oracle: every server error must be raised as an exception ("every other
+server error is raised under a different exception class") and "Failure is never
+signaled through a sentinel return value."
+
+This probe drives the public ElpClient.request() API (the smallest public method
+that reaches _wait_for_response) with the transport mocked — no ELP subprocess,
+no FM-Agent workflow is started. The fixture response is injected into the
+client's message queue; all fixtures live in a fresh temporary directory.
 """
+
 import sys
-import time
+import tempfile
+from pathlib import Path
 
-try:
-    from src.languages.erlang import ElpClient
+# Repo root = two levels above fm_agent/bug_validation/ (this probe lives there).
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
-    # Create an ElpClient instance without starting a subprocess.
-    # We avoid __enter__ to not require ELP to be installed.
-    client = ElpClient("/tmp/fake_proj_dir")
+from src.languages.erlang import ElpClient
 
-    # Craft a JSON-RPC response message that matches request_id=1,
-    # has no "method" key, and contains an empty error dict {}.
-    # An empty dict is falsy in Python, which triggers the bug.
-    crafted_response = {"jsonrpc": "2.0", "id": 1, "error": {}, "result": None}
+# Fresh probe-owned workspace (never the active repo / fm_agent directory).
+WORKDIR = tempfile.mkdtemp(prefix="elp_wait_probe_")
 
-    # Monkey-patch _next_message to return the crafted response
-    # so we can exercise _wait_for_response without a real ELP server.
-    original_next_message = client._next_message
-    client._next_message = lambda deadline: crafted_response
 
+class _FakeStdin:
+    """Captures frames the client would send to the ELP server."""
+
+    def __init__(self):
+        self.data = bytearray()
+
+    def write(self, chunk):
+        self.data.extend(chunk)
+        return len(chunk)
+
+    def flush(self):
+        pass
+
+
+class _FakeProc:
+    def __init__(self):
+        self.stdin = _FakeStdin()
+
+
+def request_with_server_response(server_message):
+    """Run ElpClient.request() end-to-end without spawning a real ELP process."""
+    client = ElpClient(WORKDIR)
+    client.timeout = 5
+    client._proc = _FakeProc()  # mocked transport sink
+    client._messages.put(server_message)  # pre-queue the server's reply
+    return client.request("elp/version", {"probe": True})
+
+
+def main():
+    # JSON-RPC response with the "error" key present but holding a falsy
+    # empty dict — per JSON-RPC the presence of "error" makes it an error
+    # response, so the client must raise.
     try:
-        actual = client._wait_for_response(1, time.monotonic() + 10)
-        # If we reach here, no exception was raised — the bug is confirmed.
-        # The spec demands RuntimeError for any error that isn't _ContentModifiedError.
-        passed = True  # Bug reproduced: empty error dict bypassed error handling
-    except RuntimeError as e:
-        # The code correctly raised a RuntimeError (bug NOT confirmed / already fixed)
-        actual = f"RuntimeError: {e}"
-        passed = False
-    except Exception as e:
-        print(f"ERROR: unexpected exception: {type(e).__name__}: {e}")
+        actual = request_with_server_response(
+            {"jsonrpc": "2.0", "id": 1, "error": {}}
+        )
+    except TimeoutError as exc:
+        print(f"ERROR: unexpected timeout (probe fixture problem): {exc}")
         sys.exit(1)
-    finally:
-        # Restore original method
-        client._next_message = original_next_message
+    except Exception as exc:
+        # Spec-correct outcome: the server error is raised as an exception.
+        print(
+            "NOT CONFIRMED — server error response {'error': {}} raised "
+            f"{type(exc).__name__}: {exc}"
+        )
+        return
 
-    expected = "RuntimeError for any non-content-modified error object"
-
-    if passed:
-        print(f"CONFIRMED — actual: {actual!r} | expected: {expected}")
+    # Buggy outcome: no exception, sentinel None returned for an error response.
+    if actual is None:
+        print(
+            "CONFIRMED — actual: None (silent sentinel for a server-error "
+            "response) | expected: an exception raised for "
+            "{'jsonrpc': '2.0', 'id': 1, 'error': {}}"
+        )
     else:
-        print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
+        print(f"NOT CONFIRMED — actual: {actual!r}")
 
-except Exception as e:
-    print(f"ERROR: {e}")
-    sys.exit(1)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        print(f"ERROR: {type(exc).__name__}: {exc}")
+        sys.exit(1)

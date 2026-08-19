@@ -1,0 +1,5 @@
+{
+  "signature": "CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None",
+  "pre_condition": "proj_dir is a string path to an existing directory.",
+  "post_condition": "Returns a CodeGraphExtractor instance backed by a .codegraph/codegraph.db SQLite database when the file proj_dir/.codegraph/codegraph.db or <parent-of-proj_dir>/.codegraph/codegraph.db exists on the filesystem. Returns None when neither database file exists. A non-None return guarantees that the returned instance supports function-extraction, function-span, and call-edge queries for every language indexed in the database."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--State::__init__",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/State::__init__.py",
+  "function_name": "State::__init__",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--State::__init__.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--State::__init__.md",
+  "probe_stdout": "NOT CONFIRMED — _locate_workdir always resolves to absolute: _locate_workdir('.')=PosixPath('/home/fancy/Projects_Vault/FM-Agent/fm_agent') is_absolute=True, _locate_workdir(Path('.'))=PosixPath('/home/fancy/Projects_Vault/FM-Agent/fm_agent') is_absolute=True, State.workdir=PosixPath('/tmp/tmpzbqchkph/myproject/fm_agent') is_absolute=True\n",
+  "trigger_summary": "_locate_workdir always resolves to absolute via Path(proj_dir).resolve(); the bug cannot be reproduced"
+}

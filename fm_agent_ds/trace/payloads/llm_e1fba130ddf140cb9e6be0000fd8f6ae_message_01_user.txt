@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _push_recent(self, ts, stage, status, summary):
+Line 2:         when = ts.strftime("%H:%M:%S") if ts else ""
+Line 3:         self.recent_events.appendleft((when, stage, status, summary))
+```
+
+Condition A (what the code actually does):
+If ts is not None, let when = ts.strftime("%H:%M:%S"); otherwise when = "". The attribute self.recent_events (a collections.deque) has the tuple (when, stage, status, summary) added to its left end. All previous elements shift to the right. Formally: self.recent_events = [ (when, stage, status, summary) ] + self.recent_events@pre, where self.recent_events@pre denotes the deque before the call and + denotes concatenation with the new element prepended. The length of self.recent_events increases by 1.
+
+Condition B (what the specification requires):
+A new entry is added to self's in-memory recent-event timeline. The entry records the timestamp formatted as HH:MM:SS when ts is truthy, or an empty string when ts is None or falsy; and the stage, status, and summary arguments verbatim. The count of entries in the timeline increases by exactly one. All entries present before the call retain their values, and the relative ordering among those pre-existing entries is preserved. No value is returned.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

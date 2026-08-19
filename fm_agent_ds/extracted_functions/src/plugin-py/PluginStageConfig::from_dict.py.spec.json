@@ -1,0 +1,5 @@
+{
+  "signature": "from_dict(data: dict) -> PluginStageConfig",
+  "pre_condition": "data is a dict whose keys are a subset of {\"type\", \"replace_cmd\", \"input_md\", \"output_process\"}. When the key \"type\" is present, its value is a string. When the keys \"replace_cmd\", \"input_md\", or \"output_process\" are present, each associated value is a string or None.",
+  "post_condition": "Returns a PluginStageConfig instance such that: the 'type' attribute equals the value of the key \"type\" in data, defaulting to the empty string \"\" if the key is absent; the 'replace_cmd' attribute equals the value of the key \"replace_cmd\" in data, defaulting to None if the key is absent; the 'input_md' attribute equals the value of the key \"input_md\" in data, defaulting to None if the key is absent; the 'output_process' attribute equals the value of the key \"output_process\" in data, defaulting to None if the key is absent. No validation of field values (e.g., type must be \"pass\", \"replace\", or \"modify\") is performed by this function — the returned instance may contain arbitrary values for all fields."
+}

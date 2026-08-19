@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_parse_iso",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/_parse_iso.py",
+  "function_name": "_parse_iso",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_parse_iso.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_parse_iso.md",
+  "probe_stdout": "12:52:21 - LiteLLM:WARNING: get_model_cost_map.py:271 - LiteLLM: Failed to fetch remote model cost map from https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1000). Falling back to local backup.\nCONFIRMED — ordinal date '2021-001T00:00:00Z' returned None (expected a datetime object per spec)",
+  "trigger_summary": "Valid ISO 8601 ordinal date '2021-001T00:00:00Z' is rejected by datetime.fromisoformat, returning None instead of a datetime object."
+}

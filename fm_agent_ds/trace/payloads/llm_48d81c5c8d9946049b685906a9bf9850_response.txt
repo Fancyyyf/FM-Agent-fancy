@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns None if the file at the path derived from filepath by appending '.info.json' cannot be opened, read, decoded from UTF-8, or parsed as JSON due to OSError, UnicodeDecodeError, or json.JSONDecodeError, or if the root of the parsed JSON is not a dictionary. The function returns a dictionary (the parsed JSON object) if and only if the file is successfully opened, read, decoded, parsed, and the root element is a dictionary. In all execution paths, any opened file is closed before the function returns."
+}

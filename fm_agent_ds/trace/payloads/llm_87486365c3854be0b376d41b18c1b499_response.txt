@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns None if CodeGraphExtractor.from_proj_dir(proj_dir) fails (indicated by returning None), otherwise it returns a dictionary mapping each caller's canonicalized fully qualified name (FQN) string to an iterable of canonicalized callee FQN strings for the C language. Formally: let cg = CodeGraphExtractor.from_proj_dir(proj_dir). Then (cg is None ⟹ call_edges returns None) ∧ (cg is not None ⟹ call_edges returns cg.get_call_edges(\"c\")), where cg.get_call_edges(\"c\") is a dict with string keys and iterable-of-string values representing C call edges. No other side effects occur."
+}

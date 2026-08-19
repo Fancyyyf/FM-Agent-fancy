@@ -1,0 +1,70 @@
+Programming language: Python
+
+Pre-condition:
+work_dir is a directory path. event_id, stage, status, started, ended, and command are non-empty strings. started and ended are ISO 8601 UTC timestamp strings where ended is not chronologically earlier than started. status is either 'success' or 'error'. exit_code is an integer or None. All remaining parameters hold values of their declared types or None.
+
+Code block:
+```python
+Line 1: def record_opencode_call(
+Line 2:     work_dir,
+Line 3:     event_id,
+Line 4:     stage,
+Line 5:     status,
+Line 6:     started,
+Line 7:     ended,
+Line 8:     command,
+Line 9:     function_ids=None,
+Line 10:     input_files=None,
+Line 11:     output_files=None,
+Line 12:     exit_code=None,
+Line 13:     summary=None,
+Line 14:     error=None,
+Line 15:     metadata=None,
+Line 16:     opencode_log_path=None,
+Line 17:     opencode_trace_path=None,
+Line 18: ):
+Line 19:     trace_dir = _trace_dir(work_dir)
+Line 20:     children = []
+Line 21:     if opencode_log_path and os.path.exists(opencode_log_path):
+Line 22:         opencode_log_ref = _payload_ref(trace_dir, opencode_log_path)
+Line 23:         children.append(
+Line 24:             {
+Line 25:                 "type": "tool_output",
+Line 26:                 "label": "opencode-stdout",
+Line 27:                 "path": opencode_log_ref,
+Line 28:                 "content_ref": opencode_log_ref,
+Line 29:             }
+Line 30:         )
+Line 31:     if opencode_trace_path and os.path.exists(opencode_trace_path):
+Line 32:         opencode_trace_ref = _payload_ref(trace_dir, opencode_trace_path)
+Line 33:         children.append(
+Line 34:             {
+Line 35:                 "type": "tool_output",
+Line 36:                 "label": "opencode-llm-jsonl",
+Line 37:                 "path": opencode_trace_ref,
+Line 38:                 "content_ref": opencode_trace_ref,
+Line 39:             }
+Line 40:         )
+Line 41:     record_trace_event(trace_dir, {
+Line 42:         "event_id": event_id,
+Line 43:         "type": "opencode_call",
+Line 44:         "stage": stage,
+Line 45:         "status": status,
+Line 46:         "start_time": started,
+Line 47:         "end_time": ended,
+Line 48:         "summary": summary or f"OpenCode {stage}",
+Line 49:         "function_ids": function_ids or [],
+Line 50:         "children": children,
+Line 51:         "metadata": {
+Line 52:             "command": command_argv(command),
+Line 53:             "exit_code": exit_code,
+Line 54:             "input_files": input_files or [],
+Line 55:             "output_files": output_files or [],
+Line 56:             "error": error,
+Line 57:             **(metadata or {}),
+Line 58:             "command_display": command_display(command),
+Line 59:         },
+Line 60:     })
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

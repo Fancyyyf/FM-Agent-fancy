@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Consider a Pydantic BaseSettings subclass with config extra='allow' and a declared field 'name'. Create an instance: Settings(name='test', extra_field='value'). The internal _data becomes {'name': 'test', 'extra_field': 'value'}. Returning this dict includes the key 'extra_field', which is not a valid field name of the Settings class.",
+  "offending_statements": "Line 2: return self._data",
+  "reason": "The specification requires that every key in the returned dict is a valid field name of the settings class. The code returns self._data directly without filtering out extra keys, allowing non‑field keys to appear when the model accepts extra fields (e.g., via extra='allow'), thereby violating the specification."
+}

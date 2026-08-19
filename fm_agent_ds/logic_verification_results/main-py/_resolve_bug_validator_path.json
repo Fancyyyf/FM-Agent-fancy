@@ -1,0 +1,5 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/main-py/_resolve_bug_validator_path.py",
+  "verdict": "MATCH",
+  "gaps": null
+}

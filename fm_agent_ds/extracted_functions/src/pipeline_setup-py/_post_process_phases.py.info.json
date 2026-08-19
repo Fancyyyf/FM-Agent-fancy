@@ -1,0 +1,46 @@
+{
+  "callees": [
+    {
+      "name": "_ensure_source_files_in_phases",
+      "signature": "_ensure_source_files_in_phases(phases_json, required_source_files)",
+      "pre_condition": "phases_json is a path to a valid phases.json file; required_source_files is a sequence of file paths or None",
+      "post_condition": "Returns a dict with key 'forced' whose value is a (possibly empty) list of file paths that were added to phases.json because they appeared in required_source_files but not in any phase's source_files"
+    },
+    {
+      "name": "_filter_phases_to_submodules",
+      "signature": "_filter_phases_to_submodules(phases_json, submodules)",
+      "pre_condition": "phases_json is a path to a valid phases.json file; submodules is a sequence of subdirectory paths or None",
+      "post_condition": "Returns a dict with key 'removed' whose value is the count of source file paths removed from phases.json because they were not located under any of the specified submodule directories; if submodules is None or empty, returns a dict with 'removed' equal to 0 and does not modify phases.json"
+    },
+    {
+      "name": "_deduplicate_phases",
+      "signature": "_deduplicate_phases(work_dir)",
+      "pre_condition": "work_dir contains a valid phases.json file",
+      "post_condition": "Returns a dict with key 'modified_modules' indicating whether any module's source file list was altered by deduplication; rewrites phases.json under work_dir so that every source file path appears in exactly one phase"
+    },
+    {
+      "name": "_collect_changed_modules",
+      "signature": "_collect_changed_modules(ensure_changes, filter_changes, dedup_changes)",
+      "pre_condition": "ensure_changes, filter_changes, dedup_changes are dicts with the structure returned by _ensure_source_files_in_phases, _filter_phases_to_submodules, and _deduplicate_phases respectively",
+      "post_condition": "Returns a collection of module identifiers that were affected by any of the three change sets"
+    },
+    {
+      "name": "_update_module_description",
+      "signature": "_update_module_description(proj_dir, work_dir, changed_modules)",
+      "pre_condition": "proj_dir is an existing directory; work_dir contains a valid phases.json file; changed_modules is a collection of module identifiers",
+      "post_condition": "Updates the description field of each module in changed_modules within phases.json; writes the updated phases.json to its expected path under work_dir"
+    },
+    {
+      "name": "_clean_empty_phase_module",
+      "signature": "_clean_empty_phase_module(work_dir)",
+      "pre_condition": "work_dir contains a valid phases.json file",
+      "post_condition": "Returns a dict with keys 'removed_phases' (list of phase numbers that were removed) and 'renumbered' (dict mapping old phase numbers to new phase numbers); rewrites phases.json under work_dir with empty phases removed and remaining phases renumbered to maintain contiguous, 1-indexed phase numbering"
+    },
+    {
+      "name": "_collapse_phases_to_one",
+      "signature": "_collapse_phases_to_one(work_dir)",
+      "pre_condition": "work_dir contains a valid phases.json file",
+      "post_condition": "Rewrites phases.json under work_dir to contain exactly one phase whose source files are the union of all source files from all previous phases and whose description is the merged description of all previous phases"
+    }
+  ]
+}

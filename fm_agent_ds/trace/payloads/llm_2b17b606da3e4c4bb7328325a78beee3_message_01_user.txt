@@ -1,0 +1,83 @@
+Programming language: Python
+
+Pre-condition:
+phase_source_files is a dict mapping phase numbers (integers) to lists of source file path strings for phases needing domain-context regeneration; phase_cleanup is either None or a dict with optional keys 'removed_phases' (list of phase numbers) and 'renumbered' (dict mapping old to new phase numbers)
+
+Code block:
+```python
+Line 1: def _build_domain_context_regen_prompt(phase_source_files, phase_cleanup=None):
+Line 2:     """Compose the instruction telling the agent to regenerate the per-phase
+Line 3:     domain-context types files for phases whose source-file list changed.
+Line 4:     ``phase_source_files`` maps a changed phase's number to its CURRENT source
+Line 5:     files in phases.json (the caller guarantees the list is non-empty). For each
+Line 6:     phase the agent rewrites phase_NN_types.txt from scratch from those files'
+Line 7:     real types/structs/invariants, so previously force-added or deduplicated files
+Line 8:     are reflected without any mechanical text surgery.
+Line 9:     """
+Line 10:     lines = []
+Line 11:     for phase_num in sorted(phase_source_files):
+Line 12:         file_str = ", ".join(phase_source_files[phase_num])
+Line 13:         lines.append(
+Line 14:             f"  - phase {phase_num}: REGENERATE phase_{phase_num:02d}_types.txt from "
+Line 15:             f"scratch. Its source_files are now: {file_str}. READ them in the project "
+Line 16:             f"and write the real types/structs/invariants they define. Do not leave "
+Line 17:             f"the file empty or invent content."
+Line 18:         )
+Line 19:     changes_text = "\n".join(lines)
+Line 20:     if not changes_text:
+Line 21:         changes_text = (
+Line 22:             "  - No phase_NN_types.txt files need regeneration; only update "
+Line 23:             "engine_overview.txt if cleanup made its phase references stale."
+Line 24:         )
+Line 25:     phase_cleanup = phase_cleanup or {}
+Line 26:     removed_phases = [
+Line 27:         p for p in phase_cleanup.get("removed_phases", [])
+Line 28:         if p is not None
+Line 29:     ]
+Line 30:     renumbered = phase_cleanup.get("renumbered", {})
+Line 31:     renumbered_changes = {
+Line 32:         old: new for old, new in renumbered.items()
+Line 33:         if old is not None and new is not None and old != new
+Line 34:     }
+Line 35:     overview_rule = (
+Line 36:         "- engine_overview.txt does not need updating; touch it only if it "
+Line 37:         "explicitly names a phase number that changed."
+Line 38:     )
+Line 39:     if removed_phases or renumbered_changes:
+Line 40:         cleanup_lines = []
+Line 41:         if removed_phases:
+Line 42:             cleanup_lines.append(
+Line 43:                 "removed old phase number(s): "
+Line 44:                 + ", ".join(str(p) for p in sorted(removed_phases))
+Line 45:             )
+Line 46:         if renumbered_changes:
+Line 47:             cleanup_lines.append(
+Line 48:                 "renumbered surviving phase(s): "
+Line 49:                 + ", ".join(
+Line 50:                     f"{old} -> {new}"
+Line 51:                     for old, new in sorted(renumbered_changes.items())
+Line 52:                 )
+Line 53:             )
+Line 54:         overview_rule = (
+Line 55:             "- Review engine_overview.txt and update any phase-numbered references "
+Line 56:             "so they match the final phases.json after cleanup ("
+Line 57:             + "; ".join(cleanup_lines)
+Line 58:             + ")."
+Line 59:         )
+Line 60:     return (
+Line 61:         "Regenerate per-phase domain-context "
+Line 62:         "files under fm_agent/spec_prompts/domain_context/ (named phase_NN_types.txt) so each reflects its phase's CURRENT "
+Line 63:         "source_files:\n\n"
+Line 64:         f"{changes_text}\n\n"
+Line 65:         "Rules:\n"
+Line 66:         "- Base each file on the types in that phase's source files; do not "
+Line 67:         "invent new types.\n"
+Line 68:         "- Do NOT modify any other files. Only edit engine_overview.txt and "
+Line 69:         "phase_NN_types.txt files directly under "
+Line 70:         "fm_agent/spec_prompts/domain_context/. Do NOT edit files under "
+Line 71:         "fm_agent/spec_prompts/domain_context/user_knowledge/.\n"
+Line 72:         f"{overview_rule}"
+Line 73:     )
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

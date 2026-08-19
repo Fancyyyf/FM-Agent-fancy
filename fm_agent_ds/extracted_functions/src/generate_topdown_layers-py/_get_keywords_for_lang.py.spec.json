@@ -1,0 +1,5 @@
+{
+  "signature": "_get_keywords_for_lang(lang_key) -> set",
+  "pre_condition": "lang_key is a string identifying a programming language, obtained from _detect_lang_from_ext or a source that produces valid language registry keys.",
+  "post_condition": "Returns a non-empty set of string identifiers to exclude from call-site detection for the language identified by lang_key. The returned set is the union of: every identifier from the system's cross-language exclusion list (common library functions and builtins that would create spurious call edges across languages), and every keyword configured specifically for lang_key in the language registry. When lang_key has no entry in the language registry or its entry has no configured keywords, only the cross-language identifiers are returned. The returned value is a set object, never None."
+}

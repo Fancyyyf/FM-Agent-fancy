@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns either None, if the CodeGraph backend is unavailable or cannot be initialized for the project directory, or a dict mapping tuples of the form (caller_stem, caller_module) to sets of callee stems representing call edges for TypeScript sources in the project. The argument proj_dir and any external state remain unchanged."
+}

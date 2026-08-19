@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/_read_text_if_exists.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns the full contents of the file at path decoded as UTF-8 text when the file exists and the process has permission to read it. Returns an empty string when the file at path does not exist.",
+    "actual_behavior": "Natural language: If the file does not exist, the function returns an empty string. If it exists and can be read, the function returns the file's contents decoded with UTF-8. If an OSError (e.g., PermissionError, FileNotFoundError from a race) occurs during reading, that exception is raised. The path argument is not modified. Formal logic: ( (path.exists() -> (return_value = path.read_text(encoding='utf-8') if no OSError) )  (path.exists() -> return_value = \"\") )  (exception is OSError). More precisely: post: (return_value = \"\"  path.exists())  ( s: str, s = path.read_text(encoding='utf-8')  return_value = s  path.exists())  ( e: OSError, raised e).",
+    "code_evidence": "Line 4: return path.read_text(encoding=\"utf-8\")",
+    "trigger_condition": "The specification requires that when the file exists and the process has permission to read it, the function returns the file's contents decoded as UTF8 text. For a file containing invalid UTF8 bytes, read_text raises a UnicodeDecodeError instead of returning a string, violating the specification's return guarantee."
+  }
+}

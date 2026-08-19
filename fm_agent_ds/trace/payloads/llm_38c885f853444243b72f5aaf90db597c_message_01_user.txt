@@ -1,0 +1,31 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def format_info_for_reasoner(info):
+Line 2:     """Rebuild the existing FunctionSpecMap from one .info.json object."""
+Line 3:     knowledge_map = FunctionSpecMap()
+Line 4:     for callee in info.get("callees", []):
+Line 5:         callee_spec = (
+Line 6:             f"Pre-condition: {callee.get('pre_condition', '')}\n"
+Line 7:             f"Post-condition: {callee.get('post_condition', '')}"
+Line 8:         )
+Line 9:         knowledge_map.add_entry(
+Line 10:             callee.get("name", ""),
+Line 11:             callee.get("signature", ""),
+Line 12:             callee_spec,
+Line 13:         )
+Line 14:     return knowledge_map
+```
+
+Condition A (what the code actually does):
+The function returns a newly created FunctionSpecMap object. Let callees = info['callees'] (a list of dicts, each with keys 'name', 'signature', 'pre_condition', 'post_condition'). For each d in callees, define name = d['name'], sig = d['signature'], spec_str = 'Pre-condition: ' + d['pre_condition'] + '\nPost-condition: ' + d['post_condition']. The resulting FunctionSpecMap stores: for each distinct name, the mappings name ↦ spec_str and name ↦ sig are taken from the last occurrence of that name in the iteration order of callees. If callees is empty, the map contains no entries. No exceptions are raised, and no external state is modified.
+
+Condition B (what the specification requires):
+Returns a FunctionSpecMap containing one entry per callee in the input list. Each entry maps the callee's "name" value to a two-line string of the form "Pre-condition: <pre_condition>\nPost-condition: <post_condition>". The signatures attribute of the returned FunctionSpecMap is a dict mapping each callee's "name" value to its "signature" value. Returns an empty FunctionSpecMap (containing no entries and an empty signatures dict) when the input list is empty.
+
+Additional context:
+add_entry(function_name, signature, spec) -> None
+Pre-condition: function_name and signature are strings; spec is a string containing formatted pre-condition and post-condition text
+Post-condition: Stores function_name as a key in the FunctionSpecMap with spec as its value, and maps function_name to signature in the signatures dict
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,23 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _analysis_or_empty(proj_dir: str) -> ErlangAnalysis:
+Line 2:     try:
+Line 3:         return _analyze_project(proj_dir)
+Line 4:     except Exception as exc:
+Line 5:         logging.warning("ELP Erlang analysis unavailable for %s: %s", proj_dir, exc)
+Line 6:         return ErlangAnalysis(functions={}, edges={})
+```
+
+Condition A (what the code actually does):
+The function always returns an ErlangAnalysis object. If _analyze_project(proj_dir) completes without raising an exception, the returned object equals its result with .functions, .edges, and .spans populated with the ELP analysis data for proj_dir. If any exception is caught, the returned object has .functions set to an empty dictionary and .edges set to an empty dictionary. The function never propagates an exception.
+
+Condition B (what the specification requires):
+When the ELP backend successfully analyzes proj_dir, returns an ErlangAnalysis object whose .functions, .edges, and .spans attributes are dicts populated with the analysis results for all Erlang source files under proj_dir. When the ELP backend is unavailable or analysis raises any exception, returns an ErlangAnalysis object whose .functions dict and .edges dict are both empty. The function never raises — all exceptions from the analysis backend are caught internally and produce the empty-fallback result.
+
+Additional context:
+_analyze_project(proj_dir: str) -> ErlangAnalysis
+Pre-condition: proj_dir is a non-empty string referring to a directory containing a valid Erlang project structure.
+Post-condition: Returns an ErlangAnalysis object whose .functions, .edges, and .spans attributes are dicts populated with ELP analysis data for the Erlang source files under proj_dir. Raises an exception when the ELP backend is unavailable, proj_dir is not analyzable by ELP, or the analysis process encounters an unrecoverable error.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

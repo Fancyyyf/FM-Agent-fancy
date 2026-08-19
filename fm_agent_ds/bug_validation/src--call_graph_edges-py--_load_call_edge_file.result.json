@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_load_call_edge_file",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/_load_call_edge_file.py",
+  "function_name": "_load_call_edge_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_load_call_edge_file.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_load_call_edge_file.md",
+  "probe_stdout": "CONFIRMED \u2014 _load_call_edge_file raises ValueError instead of JSONDecodeError: /tmp/tmp_pj275qt/invalid.json: invalid JSON: Expecting value: line 1 column 1 (char 0)\n",
+  "trigger_summary": "Provide a file with non-empty, non-whitespace, invalid JSON content; the function raises ValueError (wrapping JSONDecodeError) instead of JSONDecodeError directly."
+}

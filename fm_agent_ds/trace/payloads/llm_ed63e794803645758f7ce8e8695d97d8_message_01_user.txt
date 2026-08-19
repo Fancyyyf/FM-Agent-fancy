@@ -1,0 +1,27 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is a path to an existing directory.
+
+Code block:
+```python
+Line 1: def batch_extract_all(proj_dir: str) -> tuple:
+Line 2:     """Call batch_extract for every registered language and merge results.
+Line 3:     Returns (funcs, langs) where funcs is {abs_filepath: [(func_name, body)]}
+Line 4:     and langs is the set of language keys that returned data.
+Line 5:     """
+Line 6:     funcs = {}
+Line 7:     langs = set()
+Line 8:     for lang, handler in REGISTRY.items():
+Line 9:         result = handler.batch_extract(proj_dir)
+Line 10:         if result:
+Line 11:             funcs.update(result)
+Line 12:             langs.add(lang)
+Line 13:     return funcs, langs
+```
+
+Additional context:
+batch_extract(proj_dir: str) -> dict
+Pre-condition: proj_dir is a path to an existing directory containing source files.
+Post-condition: Returns a dict mapping each absolute file path to a list of (func_name, body_text) tuples for all functions that the language backend can extract from the file. Returns an empty dict when the backend is unavailable or no functions are found.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

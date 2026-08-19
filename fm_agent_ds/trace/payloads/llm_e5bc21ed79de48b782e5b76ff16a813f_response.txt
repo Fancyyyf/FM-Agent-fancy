@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Calling _opencode_generate_spec('/tmp/proj', '/tmp/work', 'mod.func', 'python', 'def func(): pass', 'do something', [], [], 0)",
+  "offending_statements": "Line 41-107: The code block is part of a function definition that is invalid due to a SyntaxError at line 33, so the function is never defined and the block is never executed.",
+  "reason": "The specification requires that calling _opencode_generate_spec with valid arguments returns a dict or None. However, the Python module fails to compile because of a SyntaxError at line 33, preventing the function definition. Any valid input results in a NameError or AttributeError, violating the specification."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--llm_client-py--_matches_inject_target",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_matches_inject_target.py",
+  "function_name": "_matches_inject_target",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_matches_inject_target.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--_matches_inject_target.md",
+  "probe_stdout": "CONFIRMED — url='http://example.com/some/path', target='EXAMPLE.COM', actual=False, expected=True\n",
+  "trigger_summary": "Case-sensitive host == target comparison at line 8 fails when target contains uppercase ASCII letters (e.g., 'EXAMPLE.COM' vs hostname 'example.com' from urlparse), violating DNS case-insensitivity."
+}

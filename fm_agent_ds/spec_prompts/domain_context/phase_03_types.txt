@@ -1,0 +1,161 @@
+# Phase 03 — Pipeline Planning & Domain Knowledge
+
+## Core Types
+
+### `phases.json` Schema
+Top-level structure consumed by Phase 6 topdown layering:
+```python
+{
+    "project": str,           # project name
+    "languages": [str],       # detected languages
+    "file_extensions": [str], # source file extensions
+    "phases": [
+        {
+            "phase": int,          # 1-indexed phase number
+            "name": str,           # human-readable phase name
+            "description": str,    # phase summary
+            "modules": [
+                {
+                    "name": str,              # module identifier
+                    "description": str,       # module description
+                    "source_files": [str]     # paths relative to project root
+                }
+            ],
+            "depends_on_phases": [int]  # phase numbers this phase depends on
+        }
+    ]
+}
+```
+
+### Phase Plan Generation (pipeline_setup.py)
+
+**`_run_setup_extract(proj_dir, work_dir, required_source_files, submodules, extra_call_edges_path)`**
+Runs Stage 1 setup/extraction: codegraph init + regex extraction.
+Returns True on success.
+
+**`_run_generate_phases(proj_dir, work_dir, only_spec=False)`**
+Runs Stage 2 generate-phases agent. Produces `phases.json` under work_dir.
+Retries up to OPENCODE_MAX_RETRIES.
+
+**`_post_process_phases(phases_path, work_dir, only_spec)`**
+Post-processes `phases.json`:
+- Deduplicates source files: each file assigned to exactly ONE phase
+- Merges descriptions when modules are consolidated
+- Writes the final de-duplicated `phases.json`
+
+**`_run_generate_domain_context(proj_dir, work_dir)`**
+Runs domain-context generation agent. Produces `spec_prompts/domain_context/` files.
+- `engine_overview.txt`: overall system architecture and invariants
+- `phase_NN_types.txt`: per-phase types, structs, invariants
+
+**`_build_domain_context_regen_prompt(phase_source_files, phase_cleanup)`**
+Composes the agent instruction for regenerating only the changed phase files.
+
+### `_merge_descriptions(target_desc, source_desc) → str`
+Appends a removed module's description to the owning module's description.
+Avoids re-merging duplicate content.
+
+## Plugin System
+
+### `PluginStageConfig` (dataclass)
+```python
+@dataclass
+class PluginStageConfig:
+    type: str = ""              # "pass" | "replace" | "modify"
+    replace_cmd: Optional[str] = None   # bash command (replace type only)
+    input_md: Optional[str] = None      # relative to plugin root (modify type)
+    output_process: Optional[str] = None  # (modify type)
+```
+- Validated via `validated() → list[str]` returning error strings
+- "pass": skip the stage entirely
+- "replace": run `replace_cmd` instead
+- "modify": inject `input_md` into agent prompt, post-process with `output_process`
+
+### `PluginConfig` (dataclass)
+```python
+@dataclass
+class PluginConfig:
+    name: str
+    version: str
+    root: Path
+    stages: Dict[str, PluginStageConfig] = field(default_factory=dict)
+```
+- `get_stage(stage_name) → PluginStageConfig | None`
+- Stages: `"generate_phase_plan"`, `"generate_domain_context"`
+
+### `run_plugin_command(cmd, plugin_root, proj_dir, label="") → None`
+Executes a plugin command with `check=True` (failure stops pipeline).
+Sets `FM_AGENT_PLUGIN_ROOT` in subprocess env.
+
+### `load_plugins() → List[PluginConfig]`
+Scans `plugins/` directory for subdirectories containing `plugin.json`.
+
+## Domain Knowledge
+
+### Types
+
+**Resolution:**
+```python
+def collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None) → list[str]:
+    # Collects markdown paths from CLI arguments + FM_AGENT_DOMAIN_KNOWLEDGE env var
+    # Returns list of validated absolute paths
+```
+
+**Staging:**
+```python
+def stage_domain_knowledge_files(paths, work_dir, manifest_rel=None) → dict:
+    # Copies markdown files into work_dir/spec_prompts/domain_context/user_knowledge/
+    # Writes manifest.json tracking the staged files
+    # Returns {original_path: staged_relpath} mapping
+```
+
+**Formatting:**
+```python
+def format_domain_knowledge_bullets(work_dir, prefix="fm_agent") → str:
+    # Returns bullet-list string for injecting into agent prompts
+    # Format: "- fm_agent/spec_prompts/domain_context/user_knowledge/<name>.md"
+
+def list_staged_domain_knowledge_relpaths(work_dir, prefix="fm_agent") → list[str]:
+    # Returns sorted list of relative paths to staged knowledge files
+
+def load_staged_domain_knowledge_text(work_dir) → str:
+    # Returns concatenated text of all staged knowledge files for prompt injection
+```
+
+### Valid Extensions
+`.md`, `.markdown` only.
+
+### File Layout
+```
+fm_agent/spec_prompts/domain_context/user_knowledge/
+├── manifest.json    # { "files": { "original_path": "staged_name.md" } }
+├── knowledge_01.md
+└── ...
+```
+
+### Naming
+Staged filenames derived from source basename with special chars replaced by `_`.
+Collisions resolved with numeric suffixes (e.g., `README.md` → `README_2.md`).
+
+## Entry Point Function Signatures
+
+```python
+def _run_generate_phases(proj_dir, work_dir, only_spec=False) -> bool:
+    """Run the generate-phases agent. Returns True on success."""
+
+def _post_process_phases(phases_path, work_dir, only_spec) -> None:
+    """Post-process phases.json and write deduplicated version."""
+
+def _run_generate_domain_context(proj_dir, work_dir) -> bool:
+    """Run the generate-domain-context agent. Returns True on success."""
+
+def collect_domain_knowledge_paths(cli_paths, base_dir, fallback_base_dir=None) -> list[str]:
+
+def stage_domain_knowledge_files(paths, work_dir, manifest_rel=None) -> dict:
+
+def format_domain_knowledge_bullets(work_dir, prefix="fm_agent") -> str:
+
+def load_plugins() -> list[PluginConfig]:
+
+def run_plugin_command(cmd, plugin_root, proj_dir, label="") -> None:
+```

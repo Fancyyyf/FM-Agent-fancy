@@ -1,0 +1,5 @@
+{
+  "signature": "list_staged_domain_knowledge_relpaths(work_dir, prefix=\"fm_agent\") -> list[str]",
+  "pre_condition": "work_dir is a string path; prefix is a string",
+  "post_condition": "Returns a list of strings sorted in lexicographic ascending order. Each entry is a path formed by concatenating prefix (with any trailing `/` removed), a `/` separator, and the path of a staged markdown file relative to work_dir with all path separators normalized to `/`. Only files whose lowercase extension matches a valid domain-knowledge extension are included; the manifest metadata file tracked in the same staging subdirectory is excluded regardless of its extension. If the staging subdirectory under work_dir does not exist, or contains no files matching the inclusion criteria, returns an empty list. File discovery is depth-first within the staging subdirectory and its descendants."
+}

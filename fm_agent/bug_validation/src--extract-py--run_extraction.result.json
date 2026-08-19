@@ -1,11 +1,11 @@
 {
   "id": "src--extract-py--run_extraction",
-  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/extract-py/run_extraction.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent_qwen_7d490/fm_agent/extracted_functions/src/extract-py/run_extraction.py",
   "function_name": "run_extraction",
   "confirmation_status": "not_confirmed",
-  "attempts": 1,
+  "attempts": 3,
   "probe_script": "fm_agent/bug_validation/probe_src--extract-py--run_extraction.py",
   "detail_file": "fm_agent/bug_validation/src--extract-py--run_extraction.md",
-  "probe_stdout": "Extraction complete: 2 written, 0 skipped.\nNOT CONFIRMED - output files follow path convention\nConvention paths found: ['mypkg/utils-py/add.py', 'mypkg/utils-py/sub.py']",
-  "trigger_summary": "Source files should follow path convention <source_rel_dir>/<basename-ext>/<func_name>.<ext> but the verification claimed flat output; actual code produces nested paths matching the spec."
+  "probe_stdout": "Extraction complete: 0 written, 0 skipped.\nNOT CONFIRMED — actual matched expected: (0, 0)",
+  "trigger_summary": "The report claimed test/missing/unmapped-extension source_files entries are counted into skipped_count (yielding (0,1) for a single test file), but run_extraction's only skipped increment counts per-function pre-existing ready outputs, so the code returns the spec-correct (0,0) and the miscount is unreachable."
 }

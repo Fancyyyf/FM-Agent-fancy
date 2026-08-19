@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "rel_path = \"any_file\", environment where `git` is not installed or not found in PATH",
+  "offending_statements": "Line 3: return subprocess.run(\nLine 4:     [\"git\", \"-C\", proj_dir, \"cat-file\", \"-e\", f\"{old_commit_id}:{rel_path}\"],\nLine 5:     check=False,\nLine 6:     capture_output=True,\nLine 7:     text=True,\nLine 8: ).returncode == 0",
+  "reason": "The code runs a git command via subprocess.run without handling non-zero exit or OSError. If git is missing, subprocess.run raises FileNotFoundError, so the function raises an exception instead of returning False as required by the specification's 'Returns False when ... the git command fails for any other reason. Never raises an exception.'"
+}

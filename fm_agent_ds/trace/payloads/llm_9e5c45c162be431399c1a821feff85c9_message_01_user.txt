@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _phase_plan_complete(work_dir):
+Line 2:     """Return True only if phases.json exists and matches the required schema."""
+Line 3:     phases_path = os.path.join(work_dir, "phases.json")
+Line 4:     return not _phase_plan_schema_errors(phases_path)
+```
+
+Condition A (what the code actually does):
+Upon normal completion, the function returns a boolean value. This value is True if and only if the file located at the path formed by joining work_dir with 'phases.json' exists, is readable, contains syntactically valid JSON, and the JSON content conforms to the required phases plan schema. Otherwise, the function returns False. If an exception is raised during the call to _phase_plan_schema_errors, it propagates unchanged. Formally, let p = os.path.join(work_dir, 'phases.json'). Then result = (exists(p) ∧ readable(p) ∧ valid_json(p) ∧ schema_valid(p)).
+
+Condition B (what the specification requires):
+Returns True if and only if a file named phases.json exists at the expected path under work_dir and its content conforms to the required phases plan schema (with no schema validation errors). Returns False if the phases.json file does not exist, cannot be read, or its content violates the required schema.
+
+Additional context:
+_phase_plan_schema_errors(phases_path)
+Pre-condition: phases_path is a string path that may refer to any existing, missing, or unreadable file
+Post-condition: Returns a value that is falsy when and only when the file at phases_path exists, is readable, contains syntactically valid JSON, and the content conforms to the required phases plan schema. Returns a truthy value otherwise, indicating the file is missing, unreadable, contains malformed JSON, or does not conform to the required schema structure.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

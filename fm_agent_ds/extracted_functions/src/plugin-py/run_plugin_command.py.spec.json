@@ -1,0 +1,5 @@
+{
+  "signature": "run_plugin_command(cmd: str, plugin_root: Path, proj_dir: str, label: str = '') -> None",
+  "pre_condition": "cmd is a non-empty string specifying a shell command; plugin_root is a valid directory path; proj_dir is an existing directory; label is a string identifying the operation for log messages.",
+  "post_condition": "Executes cmd as a shell subprocess. Relative file paths in cmd are interpreted relative to plugin_root. The subprocess runs with working directory set to plugin_root and the environment variable FM_AGENT_PLUGIN_ROOT set to the string representation of plugin_root. If the command exits with a non-zero code, a diagnostic message identifying the label, the command string, and the exit code is printed to stdout, then subprocess.CalledProcessError is raised. If the command exits with code zero, the function returns without error."
+}

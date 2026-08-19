@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _locate_workdir(proj_dir):
+Line 2:     """Resolve which fm_agent workdir to monitor.
+Line 3:     Accepts either:
+Line 4:       - A project root: dashboard looks for <root>/fm_agent/ (the live workspace).
+Line 5:       - A workspace directly (any name like fm_agent.opus_partial_*): detected
+Line 6:         by the presence of a `trace/` subdir, used as-is.
+Line 7:     """
+Line 8:     p = Path(proj_dir).resolve()
+Line 9:     if (p / "trace").is_dir():
+Line 10:         return p
+Line 11:     return p / "fm_agent"
+```
+
+Condition A (what the code actually does):
+The function returns a path object r such that r = p if the subdirectory 'trace' exists inside p, else r = p / 'fm_agent', where p = Path(proj_dir).resolve(). No other modifications to program state occur. Formally: let p = resolve(Path(proj_dir)) in (if is_dir(p / 'trace') then r = p else r = p / 'fm_agent').
+
+Condition B (what the specification requires):
+Returns an absolute, resolved Path object. If the resolved path of proj_dir itself contains a subdirectory named trace/, returns that resolved path directly. Otherwise, returns the resolved path of proj_dir with fm_agent/ appended.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

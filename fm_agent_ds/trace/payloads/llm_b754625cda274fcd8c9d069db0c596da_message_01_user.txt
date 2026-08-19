@@ -1,0 +1,64 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def request(self, method: str, params: dict | list | None = None):
+Line 2:         actual_params = {} if params is None else params
+Line 3:         deadline = time.monotonic() + self.timeout
+Line 4:         for attempt in range(_MAX_CONTENT_MODIFIED_RETRIES):
+Line 5:             request_id = self._next_id
+Line 6:             self._next_id += 1
+Line 7:             self._send(
+Line 8:                 {
+Line 9:                     "jsonrpc": "2.0",
+Line 10:                     "id": request_id,
+Line 11:                     "method": method,
+Line 12:                     "params": actual_params,
+Line 13:                 }
+Line 14:             )
+Line 15:             try:
+Line 16:                 return self._wait_for_response(request_id, deadline)
+Line 17:             except _ContentModifiedError as exc:
+Line 18:                 if attempt + 1 == _MAX_CONTENT_MODIFIED_RETRIES:
+Line 19:                     raise RuntimeError(
+Line 20:                         f"ELP request {method} repeatedly failed: {exc.error}"
+Line 21:                     ) from exc
+Line 22:                 remaining = deadline - time.monotonic()
+Line 23:                 if remaining <= 0:
+Line 24:                     raise TimeoutError(f"timed out retrying ELP request {method}") from exc
+Line 25:                 time.sleep(min(0.5 * (2**attempt), 5.0, remaining))
+Line 26:         raise AssertionError("unreachable")
+```
+
+Condition A (what the code actually does):
+After the method 'request' executes, the following post-conditions hold based on the outcome:
+
+- If the method returns a value v:
+  A JSON-RPC 2.0 request with a unique integer id (equal to self._next_id at the start of the attempt) was sent, and before the deadline the server responded with a non-ContentModifiedError success response matching that id, with 'result' v. The method may have retried after receiving ContentModifiedError responses, each time sending a new request with incremented id. The returned v is the result from the first attempt where no ContentModifiedError occurred. The connection remains active.
+  Formal: ∃ i ∈ [0, _MAX_CONTENT_MODIFIED_RETRIES) such that (∀ j < i, attempt j received ContentModifiedError) ∧ (attempt i received success with result v) ∧ (time_monotonic() ≤ deadline at response) ∧ (connection active).
+
+- If the method raises RuntimeError:
+  All _MAX_CONTENT_MODIFIED_RETRIES attempts received ContentModifiedError, and the deadline was not exceeded before the final attempt's error catch. No successful response was returned.
+  Formal: (∀ i ∈ [0, _MAX_CONTENT_MODIFIED_RETRIES), attempt i received ContentModifiedError) ∧ (deadline - time_monotonic() after final ContentModifiedError > 0 but retries exhausted).
+
+- If the method raises TimeoutError:
+  Either (a) a _wait_for_response call raised TimeoutError because the deadline was reached without a response for the sent id, or (b) after a ContentModifiedError, the remaining time (deadline - time_monotonic()) was ≤ 0, causing an explicit TimeoutError. In both cases, no successful response was obtained.
+  Formal: ∃ i ∈ [0, _MAX_CONTENT_MODIFIED_RETRIES) such that ( (∀ j < i, attempt j received ContentModifiedError) ∧ ( (attempt i raised TimeoutError during _wait_for_response) ∨ (attempt i received ContentModifiedError ∧ deadline - time_monotonic() ≤ 0) ) ).
+
+- If any other exception propagates:
+  An exception from _send (e.g., connection failure) or from _wait_for_response (e.g., JSON-RPC error response, connection lost) is raised, and no result is returned. The connection state may be unclean.
+
+- State change: self._next_id is incremented by the number of attempts started (≥ 1, ≤ _MAX_CONTENT_MODIFIED_RETRIES).
+
+Condition B (what the specification requires):
+Sends a JSON-RPC 2.0 request with the given method and params to the ELP server. When params is None, an empty dict is used in its place. Returns the 'result' field of the server's JSON-RPC response, parsed to the appropriate Python type. Transparently retries on transient server-side content-modification errors with exponential backoff bounded by the instance's configured message-processing timeout. Raises RuntimeError when all retries are exhausted on a content-modification error. Raises TimeoutError when the overall message-processing deadline expires before a response is received. Raises an exception when the server is unreachable, the server returns a non-retriable JSON-RPC error response, or the connection is lost.
+
+Additional context:
+ElpClient._send(self, message: dict) -> None
+Pre-condition: self has an active connection to the ELP server. message is a dict forming a well-formed JSON-RPC 2.0 request with 'jsonrpc', 'id', 'method', and 'params' fields.
+Post-condition: The message has been serialized to JSON and written to the ELP server process's stdin. Raises an exception when the server is unreachable or the write fails.
+
+ElpClient._wait_for_response(self, request_id: int, deadline: float) -> Any
+Pre-condition: A JSON-RPC request with the given request_id has been sent to the ELP server. deadline is a monotonic timestamp by which a response must arrive.
+Post-condition: Returns the 'result' field of the server's JSON-RPC response matching the given request_id. Raises an exception when the response indicates a content-modified error, when the server returns a JSON-RPC error response, when the deadline is exceeded without a matching response, or when the connection is lost.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

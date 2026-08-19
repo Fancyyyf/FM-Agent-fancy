@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "text = 'x = \"\"\"# not a comment\"\"\"' (for a language with '#' line comments, e.g., Python)",
+  "offending_statements": "Line 49:                 if result[i] == quote:\nLine 50:                     if result[i] != \"\\n\":\nLine 51:                         result[i] = \" \"\nLine 52:                     i += 1\nLine 53:                     break",
+  "reason": "The code treats any single quote as the end of a string literal, so a triple-quoted string is prematurely closed. As a result, a '#' character inside a triple-quoted string (e.g., \"\"\"# not a comment\"\"\") is no longer inside a string literal after the first two quotes are consumed, leading to it being recognized as a line comment and replaced with a space. The specification requires that characters within string literals are never interpreted as comment-starting sequences, and triple-quoted strings must be respected."
+}

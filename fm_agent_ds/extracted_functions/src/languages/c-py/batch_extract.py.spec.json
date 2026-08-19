@@ -1,0 +1,5 @@
+{
+  "signature": "batch_extract(proj_dir: str) -> dict",
+  "pre_condition": "proj_dir is a valid directory path",
+  "post_condition": "Returns a dictionary mapping each absolute file path to a list of (func_name, body_text) tuples for all C source files extracted from proj_dir via the CodeGraph backend. If the CodeGraph backend cannot be initialized or returns a falsy value, returns an empty dictionary."
+}

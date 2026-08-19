@@ -1,0 +1,5 @@
+{
+  "signature": "utc_now_iso() -> str",
+  "pre_condition": "None.",
+  "post_condition": "Returns the current wall-clock time in UTC as an ISO 8601 formatted string ending in 'Z', with at least second precision."
+}

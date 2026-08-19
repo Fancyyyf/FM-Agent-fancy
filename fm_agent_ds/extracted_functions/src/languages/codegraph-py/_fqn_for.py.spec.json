@@ -1,0 +1,5 @@
+{
+  "signature": "_fqn_for(file_path: str, name: str) -> str",
+  "pre_condition": "file_path is a non-empty relative source file path string with '/' separating directory and basename components. name is a non-empty canonicalized function identifier string.",
+  "post_condition": "Returns a string composed of: (1) the non-empty segments of the file_path directory when split by '/', (2) the basename of file_path with its last occurrence of '.' replaced by '-' (unmodified when the basename contains no '.'), and (3) name. All components are joined by '::'. The returned string contains at least two '::' separators and no component in the returned string is empty."
+}

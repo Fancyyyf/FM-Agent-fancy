@@ -1,0 +1,17 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def __getattr__(self, name):
+Line 2:         # Delegate everything else (isatty, fileno, encoding, ...) to the real console
+Line 3:         # stream. _console is a real attribute, so this never recurses.
+Line 4:         return getattr(self._console, name)
+```
+
+Condition A (what the code actually does):
+If self._console has an attribute named name, the method returns the value of that attribute; otherwise, AttributeError is raised. The state of self is unchanged. Formally: (hasattr(self._console, name) → result = getattr(self._console, name)) ∧ (¬ hasattr(self._console, name) → raises AttributeError).
+
+Condition B (what the specification requires):
+Returns the value of the attribute name on the object referenced by self._console. If self._console does not have an attribute with the given name, raises AttributeError.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_spec_task_done(handle) -> bool",
+  "pre_condition": "handle is either a concurrent.futures.Future object, a subprocess.Popen object, or None.",
+  "post_condition": "Returns True if and only if handle is not None and the asynchronous task represented by handle has completed: for a Future object, done() returns True (the future is completed or cancelled); for a Popen object, poll() returns a non-None value (the process has terminated). Returns False if handle is None."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_find_call_sites",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_topdown_layers-py/_find_call_sites.py",
+  "function_name": "_find_call_sites",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_find_call_sites.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_find_call_sites.md",
+  "probe_stdout": "CONFIRMED — actual: {'my_function'} | expected: set()",
+  "trigger_summary": "Template literal (backtick) strings in JavaScript/TypeScript are not masked by _strip_comments_from_source, causing identifiers inside them to be incorrectly matched as call sites."
+}

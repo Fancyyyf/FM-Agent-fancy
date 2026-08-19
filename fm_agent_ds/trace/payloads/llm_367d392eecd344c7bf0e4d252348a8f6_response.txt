@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function `types_path` is defined in the current scope. For any integer argument `n`, the call `types_path(n)` returns the string `os.path.join(domain_dir, f\"phase_{n:02d}_types.txt\")`, using the value of `domain_dir` from the enclosing scope at the time of the call. No side effects occur during the definition, and no exceptions are raised."
+}

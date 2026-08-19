@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+path is a Path identifying a filesystem location. text is a string.
+
+Code block:
+```python
+Line 1: def atomic_write(path: Path, text: str) -> None:
+Line 2:     path.parent.mkdir(parents=True, exist_ok=True)
+Line 3:     with tempfile.NamedTemporaryFile(
+Line 4:         "w",
+Line 5:         encoding="utf-8",
+Line 6:         dir=path.parent,
+Line 7:         prefix=f".{path.name}.",
+Line 8:         delete=False,
+Line 9:     ) as tmp:
+Line 10:         tmp.write(text)
+Line 11:         tmp.flush()
+Line 12:         os.fsync(tmp.fileno())
+Line 13:         tmp_path = Path(tmp.name)
+Line 14:     os.replace(tmp_path, path)
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

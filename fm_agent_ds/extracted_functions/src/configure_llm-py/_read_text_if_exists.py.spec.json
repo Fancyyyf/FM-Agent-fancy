@@ -1,0 +1,5 @@
+{
+  "signature": "_read_text_if_exists(path: Path) -> str",
+  "pre_condition": "path is a Path object.",
+  "post_condition": "Returns the full contents of the file at path decoded as UTF-8 text when the file exists and the process has permission to read it. Returns an empty string when the file at path does not exist."
+}

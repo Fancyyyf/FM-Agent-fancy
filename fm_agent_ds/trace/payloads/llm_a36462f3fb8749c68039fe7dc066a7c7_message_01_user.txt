@@ -1,0 +1,22 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _collect_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+Line 2:     calls: set[str] = set()
+Line 3:     for n in ast.walk(node):
+Line 4:         if isinstance(n, ast.Call):
+Line 5:             if isinstance(n.func, ast.Name):
+Line 6:                 calls.add(n.func.id)
+Line 7:             elif isinstance(n.func, ast.Attribute):
+Line 8:                 calls.add(n.func.attr)
+Line 9:     return calls
+```
+
+Condition A (what the code actually does):
+The returned set `calls` contains exactly the strings gathered from the `func` attribute of every `ast.Call` node encountered during a walk of the AST rooted at `node` (including `node` itself and all sub-nodes). For each such call `c`, if `c.func` is an `ast.Name` node, its `id` string is added; if `c.func` is an `ast.Attribute` node, its `attr` string is added. No other call forms (e.g., `ast.Subscript`, `ast.Lambda`, `ast.Call`, etc.) contribute to the set. The set has no side effects, does not modify `node`, and contains no duplicates. Formally: `\result = { n.func.id | n \in ast.walk(node) \land isinstance(n, ast.Call) \land isinstance(n.func, ast.Name) } \cup { n.func.attr | n \in ast.walk(node) \land isinstance(n, ast.Call) \land isinstance(n.func, ast.Attribute) }`.
+
+Condition B (what the specification requires):
+Returns a set of zero or more strings, each representing the syntactic name used at a call site within the function body. For a call to f(), the name 'f' is collected. For a call to x.f(), the attribute name 'f' is collected. Each unique call-site name appears at most once in the returned set.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_http_status_from_exc(exc) -> int | None",
+  "pre_condition": "exc is any Python exception object or value.",
+  "post_condition": "Returns the integer HTTP status code stored in exc.code if exc is an instance of urllib.error.HTTPError; returns None for any other input value, including non-HTTP exceptions, non-exception objects, and None."
+}

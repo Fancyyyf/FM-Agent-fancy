@@ -1,0 +1,1 @@
+{"signature": "is_interactive() -> bool", "pre_condition": "None required.", "post_condition": "Returns True when the process's standard input is connected to a terminal (TTY); returns False otherwise. No side effects."}

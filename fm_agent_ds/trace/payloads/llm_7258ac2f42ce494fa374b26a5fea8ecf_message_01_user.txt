@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _normalize_backend(value):
+Line 2:     backend = (value or "").strip().lower()
+Line 3:     if not backend or backend in {"0", "false", "no", "off"}:
+Line 4:         return "opencode"
+Line 5:     if backend == "auto":
+Line 6:         return "auto"
+Line 7:     return _BACKEND_ALIASES.get(backend, backend)
+```
+
+Condition A (what the code actually does):
+The function returns a string. Let `nv = (value if value is not None else '').strip().lower()`. If `nv` is empty or `nv in {'0','false','no','off'}`, the return value is `'opencode'`. If `nv == 'auto'`, the return value is `'auto'`. Otherwise, the return value is `_BACKEND_ALIASES.get(nv, nv)`. No side effects occur.
+
+Condition B (what the specification requires):
+Returns a non-empty string. The input is sanitized first: None becomes an empty string; any non-None value is stripped of leading and trailing whitespace and lowercased. Behavior by sanitized-input class:
+(1) Default — When the sanitized input is empty or case-insensitively matches any string in a fixed, closed set of falsy sentinel values, returns the canonical default backend name.
+(2) Auto-detect — When the sanitized input case-insensitively equals "auto", returns the literal string "auto".
+(3) Known alias — When the sanitized input matches a key in a fixed alias-to-canonical-name lookup table, returns the mapped canonical name. The mapping is idempotent: every canonical name is a key that maps to itself. All distinct aliases that identify the same backend map to the identical canonical name string.
+(4) Unrecognized — When the sanitized input falls into none of the above classes, the sanitized input itself is returned unchanged.
+In cases (1) and (3), the return value is always a member of a closed set of canonical backend identifier strings.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

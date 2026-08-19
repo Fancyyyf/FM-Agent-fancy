@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_codegraph_legacy_coverage",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_codegraph_legacy_coverage.py",
+  "function_name": "_codegraph_legacy_coverage",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_codegraph_legacy_coverage.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_codegraph_legacy_coverage.md",
+  "probe_stdout": "CONFIRMED — actual: True | expected: False (legacy 'my_func_1' should NOT match CodeGraph 'my_func')\n",
+  "trigger_summary": "_bare_function_name strips trailing dedup suffixes (e.g., '_1') causing legacy name 'my_func_1' to incorrectly match CodeGraph name 'my_func' when the spec requires these to be treated as distinct."
+}

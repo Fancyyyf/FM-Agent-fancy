@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_write_command_stdin.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "all characters of text are written to stream and the write is flushed before stream is closed; stream is closed under all execution paths, including when an exception is raised during writing or flushing",
+    "actual_behavior": "The stream object is closed (stream.closed == True), except in the rare case where the close() method itself raises an exception and fails to complete. If the function returns normally (no exception propagates), the full string 'text' has been written to the stream and the stream's buffer has been flushed (i.e., write(text) and flush() succeeded). If an exception propagates from write() or flush(), the stream is still closed (because the finally block executes close()), but the write/flush operations may have been partial or not executed. Formally: Let E be the set of exceptions that may propagate. Post-condition is: (stream.closed  (close_exception  E))  ( (E = )  (written = text  flushed) ).",
+    "code_evidence": "Line 6:         stream.close()",
+    "trigger_condition": "The specification requires the stream to be closed under all execution paths, including when an exception is raised during writing or flushing. However, if stream.close() itself raises an exception, the code does not guarantee that the stream is closed. The finally block attempts close but does not handle a failing close, potentially leaving the stream open, which violates the specification."
+  }
+}

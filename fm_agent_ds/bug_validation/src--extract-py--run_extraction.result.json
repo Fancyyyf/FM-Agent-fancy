@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--run_extraction",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/extract-py/run_extraction.py",
+  "function_name": "run_extraction",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--run_extraction.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--run_extraction.md",
+  "probe_stdout": "Extraction complete: 2 written, 0 skipped.\nNOT CONFIRMED - output files follow path convention\nConvention paths found: ['mypkg/utils-py/add.py', 'mypkg/utils-py/sub.py']",
+  "trigger_summary": "Source files should follow path convention <source_rel_dir>/<basename-ext>/<func_name>.<ext> but the verification claimed flat output; actual code produces nested paths matching the spec."
+}

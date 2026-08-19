@@ -1,0 +1,32 @@
+Programming language: Python
+
+Pre-condition:
+file_path is a string representing a path to an extracted function file in the fm_agent/extracted_functions/ tree.
+
+Code block:
+```python
+Line 1: def is_file_ready(file_path):
+Line 2:     """Return whether both metadata sidecars contain valid new-format JSON."""
+Line 3:     spec_path = f"{file_path}.spec.json"
+Line 4:     info_path = f"{file_path}.info.json"
+Line 5:     if not os.path.isfile(spec_path) or not os.path.isfile(info_path):
+Line 6:         return False
+Line 7:     try:
+Line 8:         with open(spec_path, "r", encoding="utf-8") as file:
+Line 9:             spec = json.load(file)
+Line 10:         with open(info_path, "r", encoding="utf-8") as file:
+Line 11:             info = json.load(file)
+Line 12:     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+Line 13:         return False
+Line 14:     return _is_valid_spec_json(spec) and _is_valid_info_json(info)
+```
+
+Additional context:
+_is_valid_spec_json(spec) -> bool
+Pre-condition: spec is a dict parsed from a JSON file.
+Post-condition: Returns True when spec contains exactly the keys "signature", "pre_condition", "post_condition" and every value is of type str; returns False otherwise.
+
+_is_valid_info_json(info) -> bool
+Pre-condition: info is a dict parsed from a JSON file.
+Post-condition: Returns True when info contains exactly the key "callees" whose value is an array, and every element of that array is a dict containing exactly the keys "name", "signature", "pre_condition", "post_condition" with all values of type str; returns False otherwise.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

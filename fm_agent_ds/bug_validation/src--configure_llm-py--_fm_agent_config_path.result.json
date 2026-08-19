@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--_fm_agent_config_path",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/_fm_agent_config_path.py",
+  "function_name": "_fm_agent_config_path",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--_fm_agent_config_path.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--_fm_agent_config_path.md",
+  "probe_stdout": "CONFIRMED — actual: PosixPath('/tmp/tmpp7xzcd6p/fm-agent.toml') | expected: PosixPath('.')",
+  "trigger_summary": "FM_AGENT_CONFIG set to empty string triggers fallback to fm-agent.toml because ternary treats empty as falsy"
+}

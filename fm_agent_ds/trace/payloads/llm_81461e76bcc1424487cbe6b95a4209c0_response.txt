@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "On a Windows system, set environment variable OPENCODE_CONFIG to 'CON' (a reserved device name). Call default_paths(Path('C:\\\\existing_dir')) where the directory exists. The returned WizardPaths has opencode_config_path = Path('CON'), which is not an existing or creatable filesystem path.",
+  "offending_statements": "Line 6: opencode_config_path=detect_opencode_config_path()",
+  "reason": "Specification B requires that every returned path attribute refers to a path that is existing or creatable. The code does not validate environment variables; when OPENCODE_CONFIG is set to a reserved name like 'CON', the returned path is a reserved device name that cannot be created as a regular file, violating the specification."
+}

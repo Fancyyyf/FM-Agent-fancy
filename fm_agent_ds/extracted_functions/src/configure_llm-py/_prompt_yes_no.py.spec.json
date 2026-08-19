@@ -1,0 +1,5 @@
+{
+  "signature": "_prompt_yes_no(prompt: str, default: bool = True) -> bool",
+  "pre_condition": "prompt is a non-empty string describing the yes/no question to present to the user. default is True or False.",
+  "post_condition": "Displays prompt followed by a [Y/n] or [y/N] suffix to stdout, reflecting the value of default, and reads one line from stdin. Returns True when the user's response, after case normalization and surrounding whitespace removal, matches a yes-affirming pattern ('y' or 'yes'), or when the response is empty and default is True. Returns False when the user's response matches a no-affirming pattern ('n' or 'no'), or when the response is empty and default is False. Raises ConfigWizardError when the user's response is non-empty and matches neither a yes-affirming nor a no-affirming pattern."
+}

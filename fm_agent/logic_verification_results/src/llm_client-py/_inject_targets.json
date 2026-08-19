@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_inject_targets.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "Returns a list of non-empty strings, each representing a host pattern for which user-identity metadata injection is enabled. Each returned string has no leading or trailing whitespace characters. When no host patterns are configured, returns an empty list.",
-    "actual_behavior": "After execution, the function `_inject_targets` is defined in the current scope. When called, it accesses the loaded FM-Agent runtime configuration (`settings.inject.hosts`) and returns a list of nonempty, whitespacestripped strings derived from splitting the value by commas. If the configuration value is falsy (`None` or empty), an empty list is returned. No exceptions are raised under normal configuration. Formal logic: `_inject_targets` is a function, and for any call, `_inject_targets()  l` where `l = [x.strip() for x in (settings.inject.hosts or '').split(',') if x.strip()]`.",
-    "code_evidence": "Line 2: return [s.strip() for s in (settings.inject.hosts or \"\").split(\",\") if s.strip()]",
-    "trigger_condition": "The code assumes settings.inject.hosts is a string or falsy. If it is a truthy non-string like a list, calling .split() on it raises an AttributeError, causing the function to crash instead of returning the list of non-empty strings as required by the specification."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/llm_client-py/_inject_targets.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

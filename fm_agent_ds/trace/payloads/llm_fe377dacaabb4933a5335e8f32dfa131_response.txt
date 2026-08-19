@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "::",
+  "offending_statements": "Line 3",
+  "reason": "The function returns an empty string for '::' because re.split yields [ '', '' ] and the last element is empty. This violates the specification, which states the returned string must be non-empty; empty is only permissible when the input contains no characters beyond the stripped suffix, but '::' includes non-stripped characters."
+}

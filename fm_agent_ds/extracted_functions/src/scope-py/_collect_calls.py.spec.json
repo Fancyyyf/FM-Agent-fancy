@@ -1,0 +1,5 @@
+{
+  "signature": "_collect_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]",
+  "pre_condition": "node is a Python AST FunctionDef or AsyncFunctionDef node with a non-empty body subtree that can be traversed by ast.walk.",
+  "post_condition": "Returns a set of zero or more strings, each representing the syntactic name used at a call site within the function body. For a call to f(), the name 'f' is collected. For a call to x.f(), the attribute name 'f' is collected. Each unique call-site name appears at most once in the returned set."
+}

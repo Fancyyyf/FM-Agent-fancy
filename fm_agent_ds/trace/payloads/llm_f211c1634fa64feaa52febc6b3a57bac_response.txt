@@ -1,0 +1,1 @@
+{"post_condition": "The function returns a string representing the file path obtained by joining `work_dir` and `'.env_check_memory'` using `os.path.join`. Formally: `\\result = os.path.join(work_dir, '.env_check_memory')`. No exceptions are raised, and the returned path is syntactically valid for the current operating system."}

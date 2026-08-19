@@ -1,11 +1,11 @@
 {
   "id": "src--languages--erlang-py--_analyze_project_uncached",
-  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/_analyze_project_uncached.py",
+  "source_file": "src/languages/erlang-py/_analyze_project_uncached.py",
   "function_name": "_analyze_project_uncached",
-  "confirmation_status": "not_confirmed",
+  "confirmation_status": "confirmed",
   "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--_analyze_project_uncached.py",
   "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--_analyze_project_uncached.md",
-  "probe_stdout": "NOT CONFIRMED — all attributes present via dataclass defaults: functions={}, spans_get=None, edges={}",
-  "trigger_summary": "Early return with ErlangAnalysis(functions={}, edges={}) when no .erl files found; dataclass defaults supply spans={} and server_info=None so all four required attributes are present."
+  "probe_stdout": "CONFIRMED — actual: edges keys are non-string tuples [\"('greeter__hello__0', 'greeter-erl')\"] | expected: every edges key is the single canonicalized FQN string, e.g. 'greeter__hello__0'",
+  "trigger_summary": "Analyzing any project containing at least one Erlang file with a detected function makes _analyze_project_uncached return an ErlangAnalysis whose .edges keys are (function_id, caller_module) tuples instead of the spec-required single canonicalized FQN string, so consumers indexing edges by function-id string miss every caller."
 }

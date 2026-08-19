@@ -1,0 +1,67 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _rank_functions(funcs_info: list[dict],
+Line 2:                     classes: list[dict],
+Line 3:                     signals: dict[str, set[str]]) -> list[dict]:
+Line 4:     """
+Line 5:     Score every function, apply all enrichments, return sorted list.
+Line 6:     Enrichments (applied additively after base score):
+Line 7:         1. Intra-file call-graph propagation
+Line 8:         2. Class-scope narrowing: boost methods of top-matching classes
+Line 9:     """
+Line 10:     # ── base scores ──
+Line 11:     for f in funcs_info:
+Line 12:         f['score'] = _base_score(
+Line 13:             f['name'], f['idents'], f['body_words'], f['exc_types'],
+Line 14:             f['end'] - f['start'] + 1, signals,
+Line 15:         )
+Line 16:     # ── 1. call-graph propagation ──
+Line 17:     name_to_linenos: dict[str, list[int]] = defaultdict(list)
+Line 18:     for f in funcs_info:
+Line 19:         name_to_linenos[f['name']].append(f['start'])
+Line 20:     bonus: dict[int, float] = defaultdict(float)
+Line 21:     for f in funcs_info:
+Line 22:         bscore = f['score']
+Line 23:         if bscore <= 0:
+Line 24:             continue
+Line 25:         for called_name in f['calls']:
+Line 26:             for tl in name_to_linenos.get(called_name, []):
+Line 27:                 bonus[tl] += bscore * CALLEE_INHERIT
+Line 28:         for other in funcs_info:
+Line 29:             if f['name'] in other['calls']:
+Line 30:                 bonus[other['start']] += bscore * CALLER_INHERIT
+Line 31:     for f in funcs_info:
+Line 32:         f['score'] += bonus[f['start']]
+Line 33:     # ── 2. class-scope narrowing ──
+Line 34:     if classes:
+Line 35:         class_bonus: dict[int, float] = defaultdict(float)
+Line 36:         for cls in classes:
+Line 37:             cls_score = _score_class(cls, signals)
+Line 38:             if cls_score <= 0:
+Line 39:                 continue
+Line 40:             raw_bonus = cls_score * CLASS_METHOD_INHERIT
+Line 41:             capped_bonus = min(raw_bonus, CLASS_BOOST_CAP)
+Line 42:             for method_lineno in cls['method_linenos']:
+Line 43:                 class_bonus[method_lineno] += capped_bonus
+Line 44:         for f in funcs_info:
+Line 45:             f['score'] += class_bonus[f['start']]
+Line 46:     return sorted(funcs_info, key=lambda x: -x['score'])
+```
+
+Condition A (what the code actually does):
+Natural language: After execution, the input list `funcs_info` is unchanged in length and order; each dictionary in it has been augmented with a new key `'score'` whose value is a non-negative float. The `classes` list and `signals` dictionary are not modified. The return value is a new list containing exactly the same dictionary objects, sorted in descending order by their `'score'` values (i.e., from highest to lowest score). The final `'score'` for each function is the sum of a base score (derived from signal‑matching heuristics) and non‑negative bonuses from intra‑file call‑graph propagation and class‑scope narrowing, applied additively. No exceptions are raised. Formal logic: let `F = funcs_info` (the original list) and `n = len(F)`. Then (1) for all `i∈{0,…,n-1}`, `F[i]` is the same dictionary object and `F[i]['score']` is a real number ≥ 0; (2) `classes = old(classes)` and `signals = old(signals)`, i.e., they are unchanged; (3) the return value `R` is a list of length `n` such that `∀j∈{0,…,n-1}`, `R[j]` is one of the dictionaries from `F`, the multiset of dictionary identities in `R` equals that in `F`, and `∀j∈{0,…,n-2}`, `R[j]['score'] ≥ R[j+1]['score']`; (4) no unhandled exception occurs.
+
+Condition B (what the specification requires):
+Returns a list containing every dict from funcs_info, each augmented with a 'score' key holding a non-negative float. The list is sorted in descending order by score. The final score for each entry is the sum of three additive components: (1) a weighted multi-tier heuristic match between the entry's metadata and the signal token sets — with traceback-function-name signals weighted highest, followed by dotted-reference signals, then backtick-identifier matches in name and body, plain-identifier overlap in name, exception-type signals found in the entry's exception types, and body-word overlap with intent tokens scaled inversely by the square root of the function's body line count; (2) a one-hop call-graph enrichment where, for every function with a positive unenriched score, each function whose name appears in that function's 'calls' list receives a fixed fraction of the caller's unenriched score, and each function that lists that function's name in its own 'calls' list receives a smaller fixed fraction of the callee's unenriched score; and (3) when classes is non-empty, a class-scope enrichment where member functions of classes whose name and docstring tokens overlap with signal tokens receive a per-method additive bonus that is proportional to a class-level match score and capped at a fixed maximum value per method. Two entries with the same name and the same 'start' line number (signifying duplicate entries) are scored independently.
+
+Additional context:
+_base_score(name: str, idents: set[str], body_words: set[str], exc_types: set[str], body_lines: int, signals: dict[str, set[str]]) -> float
+Pre-condition: name is a non-empty string. idents is a set of lowercase identifier strings extracted from the function. body_words is a set of lowercase word strings from the function body. exc_types is a set of lowercase exception-type name strings. body_lines is a positive integer representing the number of source lines in the function body. signals is a dict of pre-parsed signal token sets keyed by signal category (including 'traceback_funcs', 'backtick_idents', 'dotted_refs', 'plain_idents', 'exception_types', 'all_words').
+Post-condition: Returns a non-negative float representing the weighted sum of signal match scores. The score incorporates: exact overlap of name with traceback-function signals, identifier overlap with backtick signals in the name and body, overlap with dotted-reference signals, name overlap with plain-identifier signals, exception-type signal tokens appearing in exc_types, word overlap between body_words and all-words signals scaled inversely by the square root of body_lines, and fuzzy substring matching between name and plain-identifier signals above a minimum character-length threshold. Each signal category carries a distinct weight.
+
+_score_class(cls: dict, signals: dict[str, set[str]]) -> float
+Pre-condition: cls is a dict containing the class metadata, including its name string and a docstring text. signals is a dict of pre-parsed signal token sets keyed by signal category.
+Post-condition: Returns a non-negative float representing the match score between the class and the intent signals. The score is the weighted sum of: per-token overlap between the class name tokens and the signal token sets, plus per-token overlap between the class docstring tokens and the signal token sets.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

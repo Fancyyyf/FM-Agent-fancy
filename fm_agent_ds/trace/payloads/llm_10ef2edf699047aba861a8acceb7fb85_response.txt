@@ -1,0 +1,1 @@
+{"post_condition": "The function returns a string. Let `nv = (value if value is not None else '').strip().lower()`. If `nv` is empty or `nv in {'0','false','no','off'}`, the return value is `'opencode'`. If `nv == 'auto'`, the return value is `'auto'`. Otherwise, the return value is `_BACKEND_ALIASES.get(nv, nv)`. No side effects occur."}

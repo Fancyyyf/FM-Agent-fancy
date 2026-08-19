@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "work_dir exists, changed_phases={1}, phases.json maps phase 1 to [\"src/foo.py\"], and the directory work_dir/spec_prompts/domain_context/ does not exist.",
+  "offending_statements": "Line 31: if not os.path.isdir(domain_dir):\nLine 32: logging.info(\"No domain_context/ directory to sync after phase edits; skipping.\")\nLine 33: return",
+  "reason": "The specification requires that for every phase number in changed_phases that still owns at least one source file, the corresponding phase_NN_types.txt file is regenerated. It does not provide an exception when the domain_context directory is missing. The code, however, returns early without regenerating any file when the directory does not exist (Lines 31-33). This missing-case rejection violates the specification."
+}

@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _record(rel_path, score):
+Line 2:         if rel_path not in scored or score > scored[rel_path]:
+Line 3:             scored[rel_path] = score
+```
+
+Condition A (what the code actually does):
+After the function _record executes, the dictionary scored will have rel_path mapped to a value that is at least as large as score. If rel_path was not present in scored beforehand, it is set to score; if it was present and the previous value was less than score, it is updated to score; otherwise its value remains unchanged. No other keys in scored are modified.
+
+Formally:
+Let old_scored be the dictionary scored before the call. Then after the call:
+  scored[rel_path] = score if (rel_path ∉ dom(old_scored) ∨ score > old_scored[rel_path]) else old_scored[rel_path]
+  ∀ k ≠ rel_path: scored[k] = old_scored[k]
+
+Condition B (what the specification requires):
+If rel_path was not previously in scored, scored[rel_path] equals score. If rel_path was previously in scored with a value less than score, scored[rel_path] is updated to score. If rel_path was previously in scored with a value greater than or equal to score, scored[rel_path] is unchanged. No key other than rel_path is added to or removed from scored.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "extract_callee_spec_from_info(info_dict, callee_fqn, aliases=None) -> dict | None",
+  "pre_condition": "info_dict is a dict. callee_fqn is a string identifying the callee to look up. aliases, when provided and not None, is a sequence of alternative name strings (may be empty).",
+  "post_condition": "Returns the first callee entry dict from info_dict[\"callees\"] whose string-typed \"name\" field is recognized as matching callee_fqn or any string in aliases. Returns None when info_dict lacks a list-typed \"callees\" key, when no dict-typed entry in the list has a string-typed \"name\" field that matches any of the candidate names derived from callee_fqn and aliases, or when the callees list is empty."
+}

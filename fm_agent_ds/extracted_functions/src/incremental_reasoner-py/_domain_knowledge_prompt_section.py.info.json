@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "load_staged_domain_knowledge_text",
+      "signature": "load_staged_domain_knowledge_text(work_dir) -> str",
+      "pre_condition": "work_dir is a directory path.",
+      "post_condition": "Returns the concatenated contents of all domain-knowledge markdown files found under work_dir. Returns the empty string when no such files are present."
+    }
+  ]
+}

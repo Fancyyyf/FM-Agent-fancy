@@ -1,0 +1,3 @@
+{
+  "post_condition": "The FunctionSpecMap instance is initialized as an empty dictionary (no key-value pairs) and its `signatures` attribute is an empty dictionary. Formally: isinstance(self, FunctionSpecMap) ∧ len(self) == 0 ∧ hasattr(self, 'signatures') ∧ self.signatures == {}."
+}

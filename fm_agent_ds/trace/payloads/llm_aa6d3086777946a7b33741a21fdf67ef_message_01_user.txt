@@ -1,0 +1,12 @@
+Programming language: Python
+
+Pre-condition:
+prefix is a string.
+
+Code block:
+```python
+Line 1: def new_event_id(prefix="evt"):
+Line 2:     return f"{prefix}_{uuid.uuid4().hex}"
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

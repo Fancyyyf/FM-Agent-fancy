@@ -1,0 +1,5 @@
+{
+  "signature": "_get_nested(d, *keys)",
+  "pre_condition": "d is a dict. keys is a sequence of zero or more hashable values (typically strings) forming a nested key-access path.",
+  "post_condition": "Returns the result of successively indexing the nested dict structure with each key in order, starting from d. At each step, if the current value is not a dict or does not contain the next key, returns None. When keys is empty, returns d."
+}

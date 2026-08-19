@@ -1,0 +1,11 @@
+{
+  "id": "src--domain_knowledge-py--_flatten_paths",
+  "source_file": "fm_agent/extracted_functions/src/domain_knowledge-py/_flatten_paths.py",
+  "function_name": "_flatten_paths",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--domain_knowledge-py--_flatten_paths.py",
+  "detail_file": "fm_agent/bug_validation/src--domain_knowledge-py--_flatten_paths.md",
+  "probe_stdout": "CONFIRMED — Test 1 passed: _flatten_paths([1, 2, 3]) returned [1, 2, 3] but spec expects only strings ([])\nCONFIRMED — Test 2 passed: _flatten_paths(['a', 1, 'b']) returned ['a', 1, 'b'] but spec expects only strings (['a', 'b'])\nCONFIRMED — Test 3 passed: _flatten_paths([[1, 2], 'a']) returned [1, 2, 'a'] but spec expects only strings (['a'])",
+  "trigger_summary": "Passing non-string truthy values (integers) to _flatten_paths causes them to be included in the output, violating the spec requirement of a flat list of string elements."
+}

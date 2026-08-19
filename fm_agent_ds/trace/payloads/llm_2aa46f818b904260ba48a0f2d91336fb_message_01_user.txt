@@ -1,0 +1,36 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1:     def _wait_for_response(self, request_id: int, deadline: float):
+Line 2:         while True:
+Line 3:             message = self._next_message(deadline)
+Line 4:             if message.get("id") == request_id and "method" not in message:
+Line 5:                 error = message.get("error")
+Line 6:                 if error:
+Line 7:                     if isinstance(error, dict) and error.get("code") == _CONTENT_MODIFIED_ERROR:
+Line 8:                         raise _ContentModifiedError(error)
+Line 9:                     raise RuntimeError(f"ELP request failed: {error}")
+Line 10:                 return message.get("result")
+Line 11:             self._handle_server_message(message)
+```
+
+Condition A (what the code actually does):
+After execution of `_wait_for_response`, if no exception is raised, the returned value is the 'result' field of a JSON‑RPC response message that has `id` equal to the given `request_id`, has no `'method'` key, and contains no `'error'` field. All server messages received before that response (i.e., messages with a different `id` or containing a `'method'` key) have been processed by `_handle_server_message`. If a `_ContentModifiedError` is raised, then the response for `request_id` contained an `'error'` field that is a dictionary with `'code'` equal to `_CONTENT_MODIFIED_ERROR`. If a `RuntimeError` is raised, then the response contained an `'error'` that does not match that specific code. If an exception is raised from `self._next_message(deadline)`, then either the deadline was reached without receiving a message or the server connection was lost. Formal logic: Let `M` be the last message retrieved by `self._next_message` before the method exits.
+- (return `r`) ⇒ `M.get('id') == request_id ∧ 'method' ∉ M.keys() ∧ M.get('error') is None ∧ r == M.get('result') ∧ ∀M' received earlier: (M'.get('id') != request_id ∨ 'method' ∈ M'.keys()) ⇒ processed_by_handle(M')`.
+- (_ContentModifiedError) ⇒ `M.get('id') == request_id ∧ 'method' ∉ M.keys() ∧ isinstance(M.get('error'), dict) ∧ M.get('error').get('code') == _CONTENT_MODIFIED_ERROR`.
+- (RuntimeError) ⇒ `M.get('id') == request_id ∧ 'method' ∉ M.keys() ∧ M.get('error') is not None ∧ ¬(isinstance(M.get('error'), dict) ∧ M.get('error').get('code') == _CONTENT_MODIFIED_ERROR)`.
+- (exception from `_next_message`) ⇒ no message satisfying the response condition was received before `deadline` or the connection was lost.
+
+Condition B (what the specification requires):
+Returns the 'result' field of the server's JSON-RPC response whose 'id' equals request_id and which lacks a 'method' key. If the matching response contains an 'error' object whose 'code' field equals the content-modified error code, raises _ContentModifiedError. If the matching response contains any other 'error' object, raises RuntimeError with a message describing the error. Messages from the server that do not match request_id — including server notifications identified by the presence of a 'method' key — are delegated to message handling without returning control to the caller.
+
+Additional context:
+ElpClient._next_message(self, deadline: float) -> dict
+Pre-condition: deadline is a monotonic timestamp in the future. self has an active connection to the ELP server.
+Post-condition: Returns the next complete JSON-RPC message from the server as a dict. Blocks until a message arrives or the deadline is reached. Raises an exception when the deadline expires before a message is received or when the connection to the server is lost.
+
+ElpClient._handle_server_message(self, message: dict)
+Pre-condition: message is a dict representing a JSON-RPC message from the server that is not the response to the current request (either a server notification or a response for a different request_id).
+Post-condition: Processes the server message according to its type and content. Does not return a value relevant to the caller.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

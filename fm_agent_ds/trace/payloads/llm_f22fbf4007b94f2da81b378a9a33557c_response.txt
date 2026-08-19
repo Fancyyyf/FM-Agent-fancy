@@ -1,0 +1,3 @@
+{
+  "post_condition": "If the function returns normally, the returned value is a dictionary where each key is an absolute file path string referring to an Erlang source file within the directory specified by proj_dir, and each value is a list of tuples (function_id, body) extracted by the analysis. If an exception occurs (for example, from _analysis_or_empty due to invalid proj_dir, I/O errors, or because the result of _analysis_or_empty lacks a `functions` attribute), the exception propagates and the function does not return a value."
+}

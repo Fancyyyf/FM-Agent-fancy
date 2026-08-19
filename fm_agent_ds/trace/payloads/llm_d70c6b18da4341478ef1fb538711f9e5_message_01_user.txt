@@ -1,0 +1,35 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _resolve_callee_fqns(caller_fqn, callee_names, callees_map, edge_aliases_map=None):
+Line 2:     """
+Line 3:     Map callee names reported by opencode (the .info.json entries whose expected spec changed)
+Line 4:     back to the FQNs of caller_fqn's callees.
+Line 5:     A callee is identified in .info.json by its name; this matches that name against
+Line 6:     the final component (stem) of each of caller_fqn's callee FQNs, case-insensitively, and
+Line 7:     returns every matching callee FQN (a name shared by callees in several files resolves to
+Line 8:     all of them).
+Line 9:     """
+Line 10:     wanted = {n.strip() for n in callee_names if n and n.strip()}
+Line 11:     wanted_lower = {n.lower() for n in wanted}
+Line 12:     resolved = set()
+Line 13:     for callee_fqn in callees_map.get(caller_fqn, ()):
+Line 14:         stem = callee_fqn.split("::")[-1]
+Line 15:         aliases = set()
+Line 16:         if edge_aliases_map:
+Line 17:             aliases.update(edge_aliases_map.get(callee_fqn, {}).get(caller_fqn, ()))
+Line 18:         alias_lower = {alias.lower() for alias in aliases}
+Line 19:         if stem in wanted or stem.lower() in wanted_lower or aliases & wanted or alias_lower & wanted_lower:
+Line 20:             resolved.add(callee_fqn)
+Line 21:     return resolved
+```
+
+Condition A (what the code actually does):
+The function returns a set, resolved, of callee fully-qualified names (FQNs) for the given caller_fqn. If caller_fqn is not a key in callees_map, resolved is empty. Otherwise, let wanted = { n.strip() | n ∈ callee_names ∧ n.strip() ≠ '' }, and let want_lower = { w.lower() | w ∈ wanted }. For each callee_fqn ∈ callees_map[caller_fqn], define stem = callee_fqn.rpartition('::')[2] (i.e., the part after the last '::'). If edge_aliases_map is not None, let aliases = set(edge_aliases_map.get(callee_fqn, {}).get(caller_fqn, ())); otherwise aliases = ∅. Let alias_lower = { a.lower() | a ∈ aliases }. callee_fqn ∈ resolved iff (stem ∈ wanted) ∨ (stem.lower() ∈ want_lower) ∨ (aliases ∩ wanted ≠ ∅) ∨ (alias_lower ∩ want_lower ≠ ∅). Formally:
+resolved = { callee_fqn ∈ callees_map.get(caller_fqn, ()) | let stem = callee_fqn.split('::')[-1]; let aliases = (set(edge_aliases_map.get(callee_fqn, {}).get(caller_fqn, ())) if edge_aliases_map is not None else set()); let want = { n.strip() for n in callee_names if n.strip() != '' }; stem ∈ want ∨ stem.lower() ∈ { w.lower() for w in want } ∨ (aliases & want) ≠ ∅ ∨ ({ a.lower() for a in aliases } & { w.lower() for w in want }) ≠ ∅ }
+
+Condition B (what the specification requires):
+Returns a set containing every callee FQN from callees_map[caller_fqn] for which at least one of the following holds: (a) the final ::-delimited component (stem) of that FQN is equal, case-insensitively, to a non-empty, non-whitespace-only member of callee_names after stripping; (b) at least one alias recorded for that callee under caller_fqn in edge_aliases_map is equal, case-insensitively, to such a member of callee_names. Empty and whitespace-only callee_names are ignored. Returns the empty set when no callee FQN satisfies either matching condition. Matching is case-insensitive. Multiple callee FQNs sharing the same stem are all resolved and returned.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

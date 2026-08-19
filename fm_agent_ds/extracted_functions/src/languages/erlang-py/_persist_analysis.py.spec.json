@@ -1,0 +1,5 @@
+{
+  "signature": "_persist_analysis(proj_dir: str, fingerprint: tuple, analysis: ErlangAnalysis)",
+  "pre_condition": "proj_dir resolves via os.path.abspath to an existing directory. fingerprint is a tuple that identifies the project state. analysis is an ErlangAnalysis object whose .functions, .edges, .spans, and .server_info attributes are populated.",
+  "post_condition": "Writes a JSON document at <proj_dir>/.codegraph/erlang_callgraph.json containing a structured record of the ELP analysis: the functions list where each entry has an id and a relative file path; the edges list where each entry has caller, caller_module, caller_file, and callee; server_info; elp_command; and a stable digest of fingerprint. The write is atomic — either the complete document replaces any prior content at that path, or the prior content remains unchanged. Raises OSError when the output directory cannot be created or the document cannot be written to disk."
+}

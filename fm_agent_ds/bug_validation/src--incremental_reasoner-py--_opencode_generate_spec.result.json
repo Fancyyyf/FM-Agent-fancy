@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_opencode_generate_spec",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_opencode_generate_spec.py",
+  "function_name": "_opencode_generate_spec",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_opencode_generate_spec.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_opencode_generate_spec.md",
+  "probe_stdout": "Check 1: Compiling src/incremental_reasoner.py... OK\nCheck 2: Importing src.incremental_reasoner... OK\nCheck 3: _opencode_generate_spec defined and callable?... OK — callable function\nNOT CONFIRMED — Module compiles and imports successfully; _opencode_generate_spec is defined and callable. No SyntaxError at line 33 or anywhere else.",
+  "trigger_summary": "Claimed SyntaxError at line 33 of src/incremental_reasoner.py prevents compilation; probe confirms the module compiles, imports, and the function is callable with no SyntaxError present."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--spec_generation_and_verification-py--run_spec_generation_and_verification",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/spec_generation_and_verification-py/run_spec_generation_and_verification.py",
+  "function_name": "run_spec_generation_and_verification",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--spec_generation_and_verification-py--run_spec_generation_and_verification.py",
+  "detail_file": "fm_agent/bug_validation/src--spec_generation_and_verification-py--run_spec_generation_and_verification.md",
+  "probe_stdout": "=== Test 1: streaming_reasoner skip behavior ===\nFunctions pending verification: 0 of 1\nPASS: streaming_reasoner correctly skips files in already_processed\n\n=== Test 2: streaming_reasoner processes non-skipped files ===\nFunctions pending verification: 1\n[1/1] extracted_functions/test_func.py: ✔\nPASS: streaming_reasoner processes files NOT in already_processed (file in result: True)\n\n=== Test 3: Code analysis of retry path ===\n\n=== CODE ANALYSIS ===\nCONFIRMED: all_processed.add (lines near 183, indent=8)\n          is OUTSIDE the for-attempt loop (indent=12)\n          -> Cannot execute during a retry\n\nThe retry path (specs_generated==0) is INSIDE the attempt loop.\nLines 294-296 are OUTSIDE the layer loop entirely.\nTherefore, all_processed CANNOT be populated during retry.\nIf all layer retries fail, sys.exit(1) prevents reaching line 294-296.\nIf a retry succeeds, streaming_reasoner has already been called for that layer.\n\n============================================================\nNOT CONFIRMED — actual: all_processed update runs after layer loop,\n                      not during retry. streaming_reasoner is called\n                      within each layer BEFORE all_processed is updated.\n                      The skip mechanism exists but cannot be triggered\n                      by the described code path.",
+  "trigger_summary": "The skip mechanism in streaming_reasoner exists (files in already_processed are skipped), but the all_processed.add at line 296 is outside the for-attempt loop (indent 8 vs 12) and cannot execute during retry, so the described bug scenario cannot be triggered."
+}

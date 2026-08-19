@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--codegraph-py--CodeGraphExtractor::get_call_edges",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::get_call_edges.py",
+  "function_name": "CodeGraphExtractor::get_call_edges",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--CodeGraphExtractor::get_call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--CodeGraphExtractor::get_call_edges.md",
+  "probe_stdout": "CONFIRMED \u2014 Bug reproduced in attempt 1: cross-language call edge from Python to C was dropped. actual={} | expected={'src::py_code-py::py_func': {'src::c_code-c::c_func'}}",
+  "trigger_summary": "Calls from the requested language to functions in other languages are dropped because _node_fqn_map only maps nodes of the requested language, so fqn_of.get returns None for cross-language callees."
+}

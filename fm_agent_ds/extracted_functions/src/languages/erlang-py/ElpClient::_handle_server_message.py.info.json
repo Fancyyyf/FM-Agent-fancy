@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "self._send",
+      "signature": "self._send(message: dict) -> None",
+      "pre_condition": "message is a JSON-RPC 2.0 response dict containing 'jsonrpc', 'id', and 'result' keys with values conforming to the JSON-RPC 2.0 specification.",
+      "post_condition": "The JSON-RPC response represented by message is transmitted to the ELP server via the active connection."
+    }
+  ]
+}

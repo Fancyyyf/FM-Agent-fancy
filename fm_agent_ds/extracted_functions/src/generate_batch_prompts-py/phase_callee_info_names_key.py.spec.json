@@ -1,0 +1,5 @@
+{
+  "signature": "phase_callee_info_names_key(func: dict, phase: int) -> str | None",
+  "pre_condition": "func is a dict. phase is a positive integer.",
+  "post_condition": "Returns the string key in func whose name is the concatenation of \"phase\", the decimal string representation of phase, and \"_callee_info_names_by_caller\" when such a key exists. Returns None when func does not contain a key formed by this concatenation."
+}

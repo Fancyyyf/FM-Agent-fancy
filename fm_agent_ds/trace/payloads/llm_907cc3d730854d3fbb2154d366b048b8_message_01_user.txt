@@ -1,0 +1,84 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edges=None):
+Line 2:     """Select the functions reachable from entry_func, grouped by source file.
+Line 3:     Extracts a throwaway copy of proj_dir with the very machinery the main
+Line 4:     pipeline uses — ``run_extraction`` plus ``_build_call_graph`` from
+Line 5:     generate_topdown_layers, both codegraph-backed whenever a codegraph index
+Line 6:     can be built — then builds the call graph rooted at ``entry_func``
+Line 7:     (optionally restricted to chains reaching ``end_funcs``) and returns two
+Line 8:     source-file-keyed groupings:
+Line 9:         (all_by_source, keep_by_source)
+Line 10:     ``all_by_source`` covers every extractable function; ``keep_by_source``
+Line 11:     covers only the selected ones. proj_dir is read but never modified:
+Line 12:     extraction, the codegraph index and all scratch state live under a sibling
+Line 13:     selection copy that is discarded before returning.
+Line 14:     """
+Line 15:     # A full source copy lets codegraph index the project (writing .codegraph/)
+Line 16:     # and lets run_extraction/_build_call_graph run exactly as they do in
+Line 17:     # run_pipeline — without ever touching proj_dir. _build_call_graph resolves
+Line 18:     # the codegraph index via the copy's parent (see CodeGraphExtractor
+Line 19:     # .from_proj_dir), matching how run_pipeline drives it against work_dir.
+Line 20:     sel_dir = proj_dir + ".fm-entry-select"
+Line 21:     work_dir = os.path.join(sel_dir, "fm_agent")
+Line 22:     _make_run_copy(proj_dir, sel_dir)
+Line 23:     try:
+Line 24:         source_files = _enumerate_source_files(sel_dir)
+Line 25:         if not source_files:
+Line 26:             raise ValueError(f"no extractable source files found under {proj_dir!r}")
+Line 27:         # One all-encompassing phase, so _build_call_graph's within-phase edges
+Line 28:         # span the entire project (every reachable callee is retained).
+Line 29:         phase = {"phase": 0, "name": "all",
+Line 30:                  "modules": [{"name": "all", "source_files": source_files}]}
+Line 31:         # _make_run_copy brings along any existing fm_agent/; start the selection
+Line 32:         # extraction from a clean slate so no stale extracted_functions leak in.
+Line 33:         shutil.rmtree(work_dir, ignore_errors=True)
+Line 34:         os.makedirs(work_dir, exist_ok=True)
+Line 35:         with open(os.path.join(work_dir, "phases.json"), "w") as f:
+Line 36:             json.dump({"phases": [phase]}, f)
+Line 37:         try_codegraph_init(sel_dir)
+Line 38:         run_extraction(sel_dir, work_dir=work_dir, force=True)
+Line 39:         phase_files = _collect_phase_files(work_dir, phase)
+Line 40:         if not phase_files:
+```
+
+Condition A (what the code actually does):
+After execution of `_select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edges)` completes (normal return or exception), the following holds:
+
+- **Normal return**: The function returns a tuple `(all_by_source, keep_by_source)` where each is a `dict` whose keys are the source file paths (strings) discovered in `proj_dir`. For each source file `f`:
+  - `all_by_source[f]` is a list of FQN strings of **every extractable function** defined in `f`.
+  - `keep_by_source[f]` is a sublist of `all_by_source[f]` containing only those functions that are **reachable** from `entry_func` in the call graph built over the whole project, with optional early stopping at functions in `end_funcs` (if `end_funcs` is non-empty) and with added edges from `extra_call_edges` (if provided).
+- **Filesystem**: `proj_dir` and all its contents are **completely unmodified**. A temporary sibling directory `sel_dir = proj_dir + ".fm-entry-select"` is created during execution and used for extraction and call-graph construction. That directory is **guaranteed to be removed** (i.e., does not exist) when the function returns, regardless of whether the return is normal or exceptional (provided `sel_dir` was created after a successful `_make_run_copy`).
+- **Exceptional scenarios**:
+  - If no extractable source files are found in the project copy, a `ValueError` is raised.
+  - If the underlying extraction, codegraph initialisation, or filesystem operations fail, other exceptions (e.g., `OSError`, `subprocess.CalledProcessError`) may propagate.
+  - In every exception case, `proj_dir` remains unchanged and any created `sel_dir` is cleaned up.
+
+Formally, let `pre` denote the program state before the call and `post` after the call completes. Let `sel_dir = proj_dir + ".fm-entry-select"`.
+
+**Normal postcondition** (function returns without raising an exception):
+```
+∃ result : result = (all_by_source, keep_by_source)
+  ∧ ∀ f ∈ source_files_of(proj_dir) :
+       ( f ∈ keys(all_by_source) ∧ all_by_source[f] = all_extractable_functions_in(pre, f) )
+  ∧ keep_by_source ⊆ₘ all_by_source  (pointwise sublists)
+  ∧ ∀ f ∈ keys(all_by_source) :
+       keep_by_source[f] = [ func ∈ all_by_source[f] | reachable(pre, entry_func, func, end_funcs, extra_call_edges) ]
+  ∧ content_unchanged(pre, proj_dir)
+  ∧ ¬ exists_directory(sel_dir)
+```
+
+**Exceptional postcondition** (function raises an exception `E`):
+```
+( E = ValueError ∧ no_source_files_found_in(project_copy) )
+  ∨ ( E ≠ ValueError ∧ extraction_or_setup_error )
+  ⇒ content_unchanged(pre, proj_dir) ∧ ¬ exists_directory(sel_dir)
+```
+where `reachable` denotes reachability in the call graph constructed by the pipeline described in the function documentation, respecting `end_funcs` as frontier nodes and adding edges from `extra_call_edges`.
+
+Condition B (what the specification requires):
+Returns a pair (all_by_source, keep_by_source). all_by_source maps each source file path relative to proj_dir to the set of all function identifiers extracted from that file. keep_by_source maps each source file path to the set of function identifiers from that file that lie on directed call-graph paths originating from entry_func. When end_funcs is None or empty, keep_by_source contains all functions reachable from entry_func in the call graph. When end_funcs is non-empty, keep_by_source contains only functions on directed call-graph paths from entry_func to at least one FQN in end_funcs. Every function identifier in keep_by_source also appears in all_by_source under the same source file key. proj_dir is never modified. All temporary state is removed before returning. Raises ValueError when entry_func is not found among extracted functions, when no extractable source files or functions exist in proj_dir, or when end_funcs is non-empty and none of its FQNs are reachable from entry_func.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

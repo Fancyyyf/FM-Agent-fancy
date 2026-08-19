@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_verify_incremental_functions",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_verify_incremental_functions.py",
+  "function_name": "_verify_incremental_functions",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_verify_incremental_functions.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_verify_incremental_functions.md",
+  "probe_stdout": "Relative path 1: 'somedir/mymodule/myfunction.py'\nRelative path 2: 'somedir/mymodule/myfunction.c'\nSame basename?  True\n\nBuggy path derivation (splitext → .json):\n  File 1 → '/tmp/bug_probe_l0gflaes/logic_verification_results/somedir/mymodule/myfunction.json'\n  File 2 → '/tmp/bug_probe_l0gflaes/logic_verification_results/somedir/mymodule/myfunction.json'\n  Collision?  True\n\nsplitext on metadata sidecars:\n  splitext('somedir/mymodule/helper.py')[0] = 'somedir/mymodule/helper'\n  splitext('somedir/mymodule/helper.py.spec.json')[0] = 'somedir/mymodule/helper.py.spec'\n  Note: metadata sidecars use .spec.json suffix, but\n  file_list excludes them via _is_metadata_sidecar filter.\n\nCONFIRMED — os.path.splitext(rel)[0] produces identical verdict file paths for two distinct extracted-function files with the same stem but different extensions in the same directory.\n\nBug ID derivation (line 2180):\n  rel 'somedir/mymodule/myfunction.py' → bug_id 'somedir--mymodule--myfunction'\n  rel 'somedir/mymodule/myfunction.c' → bug_id 'somedir--mymodule--myfunction'\n  Collision? True\n\nFINAL VERDICT: CONFIRMED — os.path.splitext produces ambiguous paths/bug_ids when two extracted-function files in the same directory share a stem but different extensions.",
+  "trigger_summary": "Two extracted-function files with the same stem but different extensions in the same directory produce colliding verdict file paths via os.path.splitext(rel)[0] + '.json'."
+}

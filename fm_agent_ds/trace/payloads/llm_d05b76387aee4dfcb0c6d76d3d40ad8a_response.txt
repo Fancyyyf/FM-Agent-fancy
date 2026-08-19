@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns either a list of non-empty strings (function names) parsed from a valid JSON array in the LLM response, or None if all three attempts fail. Input arguments remain unchanged. All exceptions are caught internally and do not propagate. Side effects (logging, sleep, local messages list modifications) do not affect the caller. Formal post-condition: (return value = None) ∨ (return value is a list of strings ∧ ∀ s ∈ return value, isinstance(s, str) ∧ s.strip() != ''). The list may be empty. If returned, the list originates from the first successful LLM call within three attempts where the response contained a parseable JSON array of strings, each non-empty. Otherwise, after three failed attempts, None is returned."
+}

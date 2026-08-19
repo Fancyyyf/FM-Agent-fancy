@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+source is a string.
+
+Code block:
+```python
+Line 1: def _normalized_function_source(source):
+Line 2:     """Normalize line endings before comparing extractor output."""
+Line 3:     return source.replace("\r\n", "\n").replace("\r", "\n")
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

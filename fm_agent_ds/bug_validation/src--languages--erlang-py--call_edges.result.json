@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--erlang-py--call_edges",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/call_edges.py",
+  "function_name": "call_edges",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--erlang-py--call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--erlang-py--call_edges.md",
+  "probe_stdout": "WARNING:root:ELP Erlang analysis unavailable for /tmp/probe_erlang_2yqvxw7y: [Errno 2] No such file or directory: 'elp'\nWARNING:root:ELP Erlang analysis unavailable for /tmp/probe_erlang_2yqvxw7y: Simulated mid-analysis ELP internal error\nCONFIRMED — call_edges() silently returned {} when an internal error (RuntimeError) was raised during analysis.  The spec allows {} only for backend-unavailable or no-call-edges cases, but _analysis_or_empty swallows ALL exceptions.  result_normal={}  result_bug={}",
+  "trigger_summary": "_analysis_or_empty() catches all exceptions via bare 'except Exception', causing call_edges() to return {} for any internal error — not just backend-unavailable or no-call-edges cases as the spec requires."
+}

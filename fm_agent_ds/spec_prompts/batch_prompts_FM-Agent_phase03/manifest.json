@@ -1,0 +1,19 @@
+{
+  "phase": 3,
+  "layers": "4",
+  "total_functions": 1,
+  "total_batches": 1,
+  "batches": [
+    {
+      "index": 0,
+      "file": "batch_000_layer4_extracted_b0.txt",
+      "layer": 4,
+      "is_cycle": false,
+      "num_functions": 1,
+      "num_pending": 0,
+      "functions": [
+        "fm_agent/extracted_functions/src/pipeline_setup-py/_clean_domain_context_files::types_path.py"
+      ]
+    }
+  ]
+}

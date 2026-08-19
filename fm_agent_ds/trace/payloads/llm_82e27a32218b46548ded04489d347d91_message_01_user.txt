@@ -1,0 +1,78 @@
+Programming language: Python
+
+Pre-condition:
+After execution, `lines` is a list of strings equal to the concatenation of: ['You are generating behavioral specifications for Phase ' + str(phase) + ', Layer ' + str(layer_idx) + '.', '', 'Language: ' + sample_lang + '. Write specifications to adjacent .spec.json and .info.json files.', '', 'Read ' + fm_agent_prefix + 'spec_prompts/system_prompt.md FIRST for the mandatory spec format rules.', 'Read: ' + fm_agent_prefix + 'spec_prompts/domain_context/engine_overview.txt', 'Read: ' + fm_agent_prefix + 'spec_prompts/domain_context/phase_' + format(phase, '02d') + '_types.txt'] + ([] if user_knowledge_paths is empty else ['Read these user-provided domain knowledge Markdown files:'] + ['- ' + p for p in user_knowledge_paths]) + ['', '## KEY RULES', '- Describe WHAT the function guarantees, NOT HOW it implements it', '- Do NOT name internal helper calls, loop structure, or data layout decisions', '- Do NOT enumerate members of sets - describe the GOVERNING RULE', '- Specs describe INTENDED CORRECT behavior per the domain (see domain files)', '- ALL files below exist in ' + fm_agent_prefix + 'extracted_functions/ - read and process each one']. Variable `sample_lang` equals the first element of `detect_lang_and_comment(functions[0]['file'], ext_to_lang)` if `functions` is non-empty, else 'unknown'; this is the language name from `ext_to_lang` for the lowercase extension of `functions[0]['file']`, or 'unknown' if the extension is absent. `user_knowledge_paths` equals the non-nil return of `list_staged_domain_knowledge_relpaths(work_dir, fm_agent_prefix.rstrip('/'))`, a sorted list of relative path strings to user-provided domain knowledge markdown files found under `spec_prompts/domain_context/user_knowledge/` within `work_dir` (empty when none exist).
+
+Code block:
+```python
+Line 41:     caller_specs: List[Tuple[str, str]] = []
+Line 42:     caller_expectations: Dict[str, List[Tuple[str, str]]] = {}
+Line 43:     for fn in functions:
+Line 44:         fn_name = fn["name"]
+Line 45:         caller_key = phase_callers_key(fn, phase)
+Line 46:         info_names_key = phase_callee_info_names_key(fn, phase)
+Line 47:         info_names_by_caller = fn.get(info_names_key, {}) if info_names_key else {}
+Line 48:         callers = fn.get(caller_key, [])
+Line 49:         for caller_name in callers:
+Line 50:             caller_layer = func_to_layer.get(caller_name)
+Line 51:             if caller_layer is None or caller_layer >= layer_idx:
+Line 52:                 continue
+Line 53:             caller_meta = all_funcs.get(caller_name)
+Line 54:             if not caller_meta:
+Line 55:                 continue
+Line 56:             caller_file = work_dir / caller_meta["file"]
+Line 57:             spec_block = extract_spec_block(caller_file)
+Line 58:             if spec_block and (caller_name, spec_block) not in caller_specs:
+Line 59:                 caller_specs.append((caller_name, spec_block))
+Line 60:             info_dict = extract_info_block(caller_file)
+Line 61:             if not info_dict:
+Line 62:                 continue
+Line 63:             entry = extract_callee_spec_from_info(
+Line 64:                 info_dict, fn_name, info_names_by_caller.get(caller_name, [])
+Line 65:             )
+Line 66:             if entry:
+Line 67:                 entry_text = (
+Line 68:                     f"{entry.get('signature', '')}\n"
+Line 69:                     f"  Pre-condition: {entry.get('pre_condition', '')}\n"
+Line 70:                     f"  Post-condition: {entry.get('post_condition', '')}"
+Line 71:                 )
+Line 72:                 caller_expectations.setdefault(fn_name, []).append(
+Line 73:                     (caller_name, entry_text)
+Line 74:                 )
+Line 75:     if caller_specs:
+Line 76:         lines.append("")
+Line 77:         lines.append("## EARLIER-LAYER CALLER SPECS")
+Line 78:         for caller_name, block in caller_specs:
+Line 79:             lines.append(f"#### {caller_name}")
+Line 80:             lines.append("")
+```
+
+Additional context:
+detect_lang_and_comment(file, ext_to_lang) -> (str, str)
+Pre-condition: file is a file path string with an extension. ext_to_lang is a dict mapping lowercase file extension strings to language name strings.
+Post-condition: Returns a tuple (language_name, comment_prefix) where language_name is the language name from ext_to_lang corresponding to the file's lowercase extension, or "unknown" when the extension is not a key in ext_to_lang, and comment_prefix is the single-line comment delimiter string for that language.
+
+extract_spec_block(caller_file) -> str | None
+Pre-condition: caller_file is a Path to an extracted function file.
+Post-condition: Returns a string containing the formatted spec (signature, pre-condition, post-condition reconstructed from the adjacent .spec.json sidecar) when the sidecar exists and contains valid string-valued entries for all three fields; returns None if the sidecar is missing, unreadable, or does not contain the required fields with string values.
+
+extract_info_block(caller_file) -> dict | None
+Pre-condition: caller_file is a Path to an extracted function file.
+Post-condition: Returns the Python dict parsed from the adjacent .info.json sidecar when the file exists and is valid JSON; returns None if the sidecar is missing, unreadable, or contains syntactically invalid JSON.
+
+extract_callee_spec_from_info(info_dict, fn_name, info_names) -> dict | None
+Pre-condition: info_dict is a dict containing a "callees" key whose value is a list of callee entry dicts, each with a "name" key. fn_name is a function identifier string. info_names is a list of alternative name strings (may be empty).
+Post-condition: Returns the callee entry dict from info_dict["callees"] whose "name" field equals fn_name or any string in info_names; returns None when the "callees" key is absent, the list is empty, or no entry's "name" field matches fn_name or any string in info_names.
+
+phase_callers_key(fn, phase) -> str | None
+Pre-condition: fn is a function metadata dict. phase is a positive integer.
+Post-condition: Returns the string key under which fn stores the list of caller FQN strings for the given phase; returns None when fn does not contain callers for this phase.
+
+phase_callee_info_names_key(fn, phase) -> str | None
+Pre-condition: fn is a function metadata dict. phase is a positive integer.
+Post-condition: Returns the string key under which fn stores the mapping from caller names to callee info-name alias lists for the given phase; returns None when fn does not contain callee info-names for this phase.
+
+list_staged_domain_knowledge_relpaths(work_dir, prefix) -> list[str]
+Pre-condition: work_dir is a Path to the fm_agent/ root directory. prefix is a relative path string used as a prefix in returned paths.
+Post-condition: Returns a list of relative path strings, each identifying a user-provided domain-knowledge markdown file found under the spec_prompts/domain_context/user_knowledge/ directory within work_dir. The returned list is sorted; returns an empty list when no such files exist.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--llm_client-py--_parse_json_response",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/llm_client-py/_parse_json_response.py",
+  "function_name": "_parse_json_response",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--llm_client-py--_parse_json_response.py",
+  "detail_file": "fm_agent/bug_validation/src--llm_client-py--_parse_json_response.md",
+  "probe_stdout": "CONFIRMED — bug reproduced: actual={'a': 1} | expected='ValueError (no standalone JSON object/array)'\n",
+  "trigger_summary": "The scanning logic finds '{' or '[' without checking if inside a JSON string, so a JSON object embedded in a quoted string is incorrectly extracted as a standalone value."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "phases.json with string phase numbers that are numerically out of order: {\"phases\": [{\"phase\": \"10\", \"modules\": [{\"name\": \"modA\", \"source_files\": [\"dup.py\"]}]}, {\"phase\": \"2\", \"modules\": [{\"name\": \"modB\", \"source_files\": [\"dup.py\"]}]}]}. The file 'dup.py' should be kept in phase 2 (smallest integer), but code processes phase \"10\" first (string order \"10\" < \"2\"), retaining 'dup.py' there and removing it from phase 2. Returned dict also has phase as a string, violating the required int type.",
+  "offending_statements": "Line 18: for phase in sorted(data[\"phases\"], key=lambda p: p[\"phase\"]):\nLine 44: \"phase\": phase[\"phase\"],",
+  "reason": "The code does not cast phase numbers to int before sorting, so string phases can produce an order that is not the numeric 'smallest phase number' required by the specification. Additionally, the returned 'phase' value preserves the original type, which may not be int."
+}

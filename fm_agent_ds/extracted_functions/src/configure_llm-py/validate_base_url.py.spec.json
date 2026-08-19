@@ -1,0 +1,5 @@
+{
+  "signature": "validate_base_url(url: str) -> None",
+  "pre_condition": "url is a non-empty string with leading and trailing whitespace removed.",
+  "post_condition": "Raises ConfigWizardError when url is not a syntactically valid absolute URL whose scheme is either 'http' or 'https'. Returns with no effect when url is a syntactically valid absolute URL with scheme 'http' or 'https'."
+}

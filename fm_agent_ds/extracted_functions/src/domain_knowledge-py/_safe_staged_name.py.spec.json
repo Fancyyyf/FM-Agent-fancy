@@ -1,0 +1,5 @@
+{
+  "signature": "_safe_staged_name(source_path, used_names) -> str",
+  "pre_condition": "source_path is an absolute path to an existing file. used_names is a set of strings representing already-reserved filenames.",
+  "post_condition": "Returns a string not present in used_names before the call. The string is derived from the basename of source_path:\n- Characters in the stem not matching [A-Za-z0-9._-] are replaced with '_'.\n- Leading and trailing characters matching [._-] are stripped from the stem.\n- When the stem is empty after sanitization, 'knowledge' is used as the stem.\n- The extension is lowercased.\n- The returned name is <stem><extension> when that string is not in used_names; otherwise it is <stem>_<n><extension> where <n> is the smallest integer >= 2 such that the resulting string avoids collision with every name in used_names.\n- The returned name is added to used_names as a side effect."
+}

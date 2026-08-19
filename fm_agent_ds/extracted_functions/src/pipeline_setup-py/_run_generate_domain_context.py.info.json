@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "build_llm_cli_command",
+      "signature": "build_llm_cli_command(model, prompt, cwd, files) -> str",
+      "pre_condition": "model is a string identifying the LLM model to use; prompt is a string containing the natural-language instruction; cwd is a valid directory path; files is a list of absolute file paths that exist and are readable",
+      "post_condition": "Returns a CLI command string that, when executed in the environment, invokes the configured LLM backend with the given model, prompt, and file attachments"
+    },
+    {
+      "name": "run_opencode_traced",
+      "signature": "run_opencode_traced(proj_dir, work_dir, command, stage, input_files, output_files, summary, metadata)",
+      "pre_condition": "proj_dir is an existing project directory; work_dir is a writable directory; command is a valid CLI command string; stage is a string identifying the pipeline stage; input_files is a list of file paths relative to proj_dir that exist and are readable; output_files is a list of file paths relative to proj_dir that the invoked process is expected to produce",
+      "post_condition": "Returns normally when the command executes. Upon return, output_files are expected to exist at their specified paths under proj_dir if the LLM-based process completed successfully; structured trace events are written to the trace directory"
+    },
+    {
+      "name": "run_plugin_command",
+      "signature": "run_plugin_command(cmd, plugin_root, proj_dir, label)",
+      "pre_condition": "cmd is a non-empty string specifying a shell command; plugin_root is a valid directory path; proj_dir is an existing directory; label is a string identifying the operation for log messages",
+      "post_condition": "Executes the command with the working directory set to plugin_root and FM_AGENT_PLUGIN_ROOT set to plugin_root in the subprocess environment. If the command exits with a non-zero code, raises CalledProcessError"
+    }
+  ]
+}

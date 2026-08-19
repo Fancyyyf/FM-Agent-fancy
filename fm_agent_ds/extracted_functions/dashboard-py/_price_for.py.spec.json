@@ -1,0 +1,5 @@
+{
+  "signature": "_price_for(model: str) -> dict | None",
+  "pre_condition": "model is a string model identifier or None.",
+  "post_condition": "Returns a dict whose keys are pricing field names and values are non-negative float per-token costs in US dollars when model is a recognized model identifier. Returns None when model is None or unrecognized. A model identifier is recognized when either the complete identifier or the portion after a leading '<provider>/' segment maps to a known pricing entry."
+}

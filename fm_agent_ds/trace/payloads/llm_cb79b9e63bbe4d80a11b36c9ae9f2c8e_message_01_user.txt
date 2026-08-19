@@ -1,0 +1,25 @@
+Programming language: Python
+
+Pre-condition:
+project_root is a Path identifying an existing directory.
+
+Code block:
+```python
+Line 1: def default_paths(project_root: Path) -> WizardPaths:
+Line 2:     return WizardPaths(
+Line 3:         project_root=project_root,
+Line 4:         env_path=project_root / ".env",
+Line 5:         toml_path=_fm_agent_config_path(project_root),
+Line 6:         opencode_config_path=detect_opencode_config_path(),
+Line 7:     )
+```
+
+Additional context:
+_fm_agent_config_path(project_root: Path) -> Path
+Pre-condition: project_root is a Path identifying an existing directory.
+Post-condition: Returns a Path: the value of the FM_AGENT_CONFIG environment variable when set, otherwise <project_root>/fm-agent.toml.
+
+detect_opencode_config_path() -> Path
+Pre-condition: No caller guarantees required.
+Post-condition: Returns a Path to the OpenCode configuration file: the value of the OPENCODE_CONFIG environment variable when set; otherwise, opencode.jsonc when it exists in the platform-specific OpenCode configuration directory, or opencode.json otherwise.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

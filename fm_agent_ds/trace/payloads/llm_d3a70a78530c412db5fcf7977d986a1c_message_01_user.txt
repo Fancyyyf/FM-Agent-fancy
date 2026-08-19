@@ -1,0 +1,23 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def write_payload(trace_dir, event_id, name, content, binary=False):
+Line 2:     payload_dir = _ensure_trace_dirs(trace_dir)
+Line 3:     path = os.path.join(payload_dir, f"{event_id}_{name}")
+Line 4:     tmp_path = path + ".tmp"
+Line 5:     mode = "wb" if binary else "w"
+Line 6:     kwargs = {} if binary else {"encoding": "utf-8"}
+Line 7:     with open(tmp_path, mode, **kwargs) as f:
+Line 8:         f.write(content)
+Line 9:     os.replace(tmp_path, path)
+Line 10:     return os.path.relpath(path, os.path.dirname(trace_dir))
+```
+
+Condition A (what the code actually does):
+On normal completion: The file at the path formed by os.path.join(payload_dir, f"{event_id}_{name}") exists and contains exactly the data from `content` (UTF-8 encoded if `binary` is False; raw bytes if `binary` is True). The temporary file at the path with ".tmp" suffix no longer exists. The return value is the relative path from the parent directory of `trace_dir` to that file, computed by os.path.relpath. If any exception occurs before os.replace completes successfully, the function does not return normally: the target file (if it previously existed) remains unchanged, and the temporary file may exist with partial or full content, but no guarantee is made about its state.
+
+Condition B (what the specification requires):
+The entire content is stored in a file within the trace payload subdirectory of trace_dir. The filename consists of event_id and name joined by a single underscore character. The write is atomic: any observer of the filesystem sees either the file absent (or in its prior state) or the file containing the complete new content; no intermediate or partial content is ever visible. Returns the relative path from the parent directory of trace_dir to the stored file, expressed with the platform's native path separator.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

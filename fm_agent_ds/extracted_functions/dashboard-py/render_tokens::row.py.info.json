@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_fmt_tokens",
+      "signature": "_fmt_tokens(n: int) -> str",
+      "pre_condition": "n is a non-negative integer.",
+      "post_condition": "Returns a human-readable string representation of n using appropriate magnitude suffixes (e.g., K, M, B) and at most one decimal place of precision. The returned string contains no Rich markup and is suitable for inline display."
+    }
+  ]
+}

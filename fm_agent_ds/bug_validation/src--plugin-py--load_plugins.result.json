@@ -1,0 +1,11 @@
+{
+  "id": "src--plugin-py--load_plugins",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/plugin-py/load_plugins.py",
+  "function_name": "load_plugins",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--plugin-py--load_plugins.py",
+  "detail_file": "fm_agent/bug_validation/src--plugin-py--load_plugins.md",
+  "probe_stdout": "NOT CONFIRMED \u2014 error reason 'plugin.json not found' was printed for invalid plugin; spec satisfied. result=['valid_plugin']",
+  "trigger_summary": "load_plugins delegates printing to validate_plugin which always prints before returning None; the observable behavior satisfies the spec claim."
+}

@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function `_order_key` is now defined in the current scope. For any string argument `s`, calling `_order_key(s)` returns the tuple `(order_index.get(s, len(order_index)), s)`. The mapping `order_index` remains unchanged; it still maps FQN strings to non-negative integer positions. The variable `fqn` (the one existing before the definition) is unchanged and still a string. Formally: ∀ s ∈ String, _order_key(s) = (order_index(s) if s ∈ dom(order_index) else |order_index|, s); order_index' = order_index; fqn' = fqn."
+}

@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_opencode_trace_path.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a filesystem path string that uniquely identifies a trace file for the given event_id within the trace directory hierarchy derived from work_dir. The returned path is suitable for writing raw LLM request/response trace data.",
+    "actual_behavior": "The function returns a string equal to the filesystem path formed by joining the trace directory path of `work_dir` (obtained from `_trace_dir(work_dir)`), the literal `'opencode'` folder name, and the filename `{event_id}.jsonl`. Formally: let `r` be the return value; then `r = os.path.join(_trace_dir(work_dir), 'opencode', event_id + '.jsonl')`.",
+    "code_evidence": "Line 2: return os.path.join(_trace_dir(work_dir), \"opencode\", f\"{event_id}.jsonl\")",
+    "trigger_condition": "The code does not sanitize event_id, allowing path traversal characters. For example, if event_id is '../other', the returned path resolves outside the 'opencode' subdirectory, and different event_ids can map to the same file (e.g., '../other' and 'opencode/../other' both yield trace_dir/other.jsonl). This violates the specification's requirement that the returned path uniquely identifies a trace file for the given event_id within the intended hierarchy."
+  }
+}

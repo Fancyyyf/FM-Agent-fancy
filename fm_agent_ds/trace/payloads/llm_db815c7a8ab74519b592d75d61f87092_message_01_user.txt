@@ -1,0 +1,46 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _check_codegraph_version(config):
+Line 2:     """Surface a missing or stale codegraph pinned build so the user knows to
+Line 3:     re-run ./install.sh — otherwise C/C++ extraction silently degrades to the
+Line 4:     regex fallback (or uses a wrong version). Non-blocking, like every check here.
+Line 5:     """
+Line 6:     import subprocess
+Line 7:     from src.languages.codegraph import _codegraph_cmd
+Line 8:     want = config.settings.codegraph.version.strip().removeprefix("v")
+Line 9:     if not want:
+Line 10:         return True, None  
+Line 11:     cmd = _codegraph_cmd()
+Line 12:     try:
+Line 13:         got = subprocess.run(
+Line 14:             [cmd, "--version"], capture_output=True, text=True, timeout=10
+Line 15:         ).stdout.strip()
+Line 16:     except (OSError, subprocess.SubprocessError):
+Line 17:         got = ""
+Line 18:     bin_dir = os.path.expanduser(config.settings.codegraph.bin_dir)
+Line 19:     if not got:
+Line 20:         return False, (
+Line 21:             f"codegraph (pinned v{want}) is not installed at {bin_dir} — run "
+Line 22:             "./install.sh (C/C++ extraction falls back to the regex extractor otherwise)."
+Line 23:         )
+Line 24:     if got != want:
+Line 25:         return False, (
+Line 26:             f"codegraph {got} is installed but v{want} is pinned in fm-agent.toml — "
+Line 27:             "re-run ./install.sh to install the pinned build."
+Line 28:         )
+Line 29:     return True, None
+```
+
+Condition A (what the code actually does):
+The function returns a tuple (ok, msg) where ok is a boolean and msg is either a string or None. Let want = config.settings.codegraph.version.strip(); if want starts with 'v' then want = want[1:]. If want is empty, the function returns (True, None) without further action. Otherwise, let cmd = _codegraph_cmd() and bin = os.path.expanduser(config.settings.codegraph.bin_dir). The function attempts to run subprocess.run([cmd, '--version'], capture_output=True, text=True, timeout=10). If the call raises OSError or subprocess.SubprocessError, let got = ''; otherwise let got = the stdout of the process stripped. If got is empty, the function returns (False, f'codegraph (pinned v{want}) is not installed at {bin} — run ./install.sh (C/C++ extraction falls back to the regex extractor otherwise).'). Else if got != want, the function returns (False, f'codegraph {got} is installed but v{want} is pinned in fm-agent.toml — re-run ./install.sh to install the pinned build.'). Else (got == want), it returns (True, None). No other side effects occur. If config.settings.codegraph.version is not a string or missing, an unhandled exception may propagate.
+
+Condition B (what the specification requires):
+Returns (True, None) when the configured version, after stripping a leading 'v' prefix and surrounding whitespace, is empty. Returns (True, None) when the configured version is non-empty and the codegraph binary located within the configured bin_dir reports a version string that, after stripping surrounding whitespace, exactly equals the configured version (comparing after stripping any leading 'v' from the configured version). Returns (False, error_message) when the configured version is non-empty and any of the following hold: the codegraph binary cannot be invoked (not found, not executable, or a subprocess-level error occurs), the binary produces empty or whitespace-only output, or the binary's reported version differs from the configured version. The error_message is a non-empty, human-readable string. The function does not modify config, the filesystem, or any external state.
+
+Additional context:
+_codegraph_cmd() -> cmd
+Pre-condition: None (no arguments required).
+Post-condition: Returns a command (string or sequence of strings) that, when invoked with the --version flag, locates and executes the codegraph binary and prints its version to stdout.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

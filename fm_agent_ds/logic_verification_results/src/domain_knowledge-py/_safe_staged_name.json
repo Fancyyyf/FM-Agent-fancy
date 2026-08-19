@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/domain_knowledge-py/_safe_staged_name.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string not present in used_names before the call. The string is derived from the basename of source_path:\n- Characters in the stem not matching [A-Za-z0-9._-] are replaced with '_'.\n- Leading and trailing characters matching [._-] are stripped from the stem.\n- When the stem is empty after sanitization, 'knowledge' is used as the stem.\n- The extension is lowercased.\n- The returned name is <stem><extension> when that string is not in used_names; otherwise it is <stem>_<n><extension> where <n> is the smallest integer >= 2 such that the resulting string avoids collision with every name in used_names.\n- The returned name is added to used_names as a side effect.",
+    "actual_behavior": "Let used_pre be the set of strings passed as `used_names` before execution, and used_post after execution. The function returns a string `ret` such that:\n- ret  used_pre\n- used_post = used_pre  {ret}\nDefine:\n  base = os.path.basename(source_path)\n  raw_stem, raw_ext = os.path.splitext(base)\n  cleaned = (re.sub(r\"[^A-Za-z0-9._-]+\", \"_\", raw_stem).strip(\"._-\") or \"knowledge\")\n  ext = raw_ext.lower()\nThen ret = cleaned + ext if cleaned + ext  used_pre; otherwise there exists an integer n  2 such that:\n  ret = cleaned + \"_\" + str(n) + ext\n   m   with 2  m < n, cleaned + \"_\" + str(m) + ext  used_pre\n  cleaned + \"_\" + str(n) + ext  used_pre",
+    "code_evidence": "Line 4: stem = re.sub(r\"[^A-Za-z0-9._-]+\", \"_\", stem).strip(\"._-\") or \"knowledge\"",
+    "trigger_condition": "The code collapses sequences of invalid characters into a single underscore, but the specification requires each invalid character to be replaced individually, causing a different sanitized stem. For input 'a  b.txt', the code produces 'a_b.txt' while the specification expects 'a__b.txt'."
+  }
+}

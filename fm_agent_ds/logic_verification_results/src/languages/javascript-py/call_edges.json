@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/javascript-py/call_edges.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "When a CodeGraph extractor could be initialized for proj_dir, returns a dict whose keys are canonicalized caller FQNs and whose values are collections of canonicalized callee FQNs, representing all direct call relationships discovered in JavaScript source files. When CodeGraph initialization fails for proj_dir, returns None.",
+    "actual_behavior": "After normal termination, the return value is None if the CodeGraph index for proj_dir was absent or could not be loaded (i.e., CodeGraphExtractor.from_proj_dir(proj_dir) returned None); otherwise, the return value is the dictionary obtained from calling get_call_edges(\"javascript\") on the returned CodeGraphExtractor instance, which maps canonicalized caller fully-qualified names to collections of canonicalized callee fully-qualified names for all JavaScript call edges present in the indexed source files. The dictionary may be empty. If an exception occurs during the loading of the index or the extraction of call edges, the exception propagates and no value is returned. Formally: Let obj = CodeGraphExtractor.from_proj_dir(proj_dir). If evaluation of the function body terminates normally, then result = (None if obj is None else obj.get_call_edges(\"javascript\")). Otherwise, an exception E is raised and no result is assigned.",
+    "code_evidence": "Line 4: return cg.get_call_edges(\"javascript\") if cg else None",
+    "trigger_condition": "The code does not wrap the call to from_proj_dir in a try-except, so any exception raised during initialization (e.g., IndexError, JSONDecodeError) propagates. The specification requires that all initialization failures result in None being returned, not an exception."
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "callees": [
+    {
+      "name": "detect_lang_and_comment",
+      "signature": "detect_lang_and_comment(file, ext_to_lang) -> (str, str)",
+      "pre_condition": "file is a file path string with an extension. ext_to_lang is a dict mapping lowercase file extension strings to language name strings.",
+      "post_condition": "Returns a tuple (language_name, comment_prefix) where language_name is the language name from ext_to_lang corresponding to the file's lowercase extension, or \"unknown\" when the extension is not a key in ext_to_lang, and comment_prefix is the single-line comment delimiter string for that language."
+    },
+    {
+      "name": "extract_spec_block",
+      "signature": "extract_spec_block(caller_file) -> str | None",
+      "pre_condition": "caller_file is a Path to an extracted function file.",
+      "post_condition": "Returns a string containing the formatted spec (signature, pre-condition, post-condition reconstructed from the adjacent .spec.json sidecar) when the sidecar exists and contains valid string-valued entries for all three fields; returns None if the sidecar is missing, unreadable, or does not contain the required fields with string values."
+    },
+    {
+      "name": "extract_info_block",
+      "signature": "extract_info_block(caller_file) -> dict | None",
+      "pre_condition": "caller_file is a Path to an extracted function file.",
+      "post_condition": "Returns the Python dict parsed from the adjacent .info.json sidecar when the file exists and is valid JSON; returns None if the sidecar is missing, unreadable, or contains syntactically invalid JSON."
+    },
+    {
+      "name": "extract_callee_spec_from_info",
+      "signature": "extract_callee_spec_from_info(info_dict, fn_name, info_names) -> dict | None",
+      "pre_condition": "info_dict is a dict containing a \"callees\" key whose value is a list of callee entry dicts, each with a \"name\" key. fn_name is a function identifier string. info_names is a list of alternative name strings (may be empty).",
+      "post_condition": "Returns the callee entry dict from info_dict[\"callees\"] whose \"name\" field equals fn_name or any string in info_names; returns None when the \"callees\" key is absent, the list is empty, or no entry's \"name\" field matches fn_name or any string in info_names."
+    },
+    {
+      "name": "phase_callers_key",
+      "signature": "phase_callers_key(fn, phase) -> str | None",
+      "pre_condition": "fn is a function metadata dict. phase is a positive integer.",
+      "post_condition": "Returns the string key under which fn stores the list of caller FQN strings for the given phase; returns None when fn does not contain callers for this phase."
+    },
+    {
+      "name": "phase_callee_info_names_key",
+      "signature": "phase_callee_info_names_key(fn, phase) -> str | None",
+      "pre_condition": "fn is a function metadata dict. phase is a positive integer.",
+      "post_condition": "Returns the string key under which fn stores the mapping from caller names to callee info-name alias lists for the given phase; returns None when fn does not contain callee info-names for this phase."
+    },
+    {
+      "name": "list_staged_domain_knowledge_relpaths",
+      "signature": "list_staged_domain_knowledge_relpaths(work_dir, prefix) -> list[str]",
+      "pre_condition": "work_dir is a Path to the fm_agent/ root directory. prefix is a relative path string used as a prefix in returned paths.",
+      "post_condition": "Returns a list of relative path strings, each identifying a user-provided domain-knowledge markdown file found under the spec_prompts/domain_context/user_knowledge/ directory within work_dir. The returned list is sorted; returns an empty list when no such files exist."
+    }
+  ]
+}

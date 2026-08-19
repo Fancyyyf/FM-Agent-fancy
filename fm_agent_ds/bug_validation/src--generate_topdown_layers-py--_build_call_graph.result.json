@@ -1,0 +1,11 @@
+{
+  "id": "src--generate_topdown_layers-py--_build_call_graph",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/generate_topdown_layers-py/_build_call_graph.py",
+  "function_name": "_build_call_graph",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--generate_topdown_layers-py--_build_call_graph.py",
+  "detail_file": "fm_agent/bug_validation/src--generate_topdown_layers-py--_build_call_graph.md",
+  "probe_stdout": "CONFIRMED — bug reproduced: all_callees_map[src::test-py::func] = ['src::test-py::other_func']\n  callees_map[src::test-py::func] = []\n  File is unreadable (mode 000) but registry edges were still used.\n",
+  "trigger_summary": "A registry-language file is unreadable (chmod 000 → OSError) but registry_edges still supply callee edges for its FQN — the OSError handler only clears extra-edge text while leaving registry-derived callee_fqns intact."
+}

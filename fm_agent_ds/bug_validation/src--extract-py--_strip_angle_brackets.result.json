@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--_strip_angle_brackets",
+  "source_file": "fm_agent/extracted_functions/src/extract-py/_strip_angle_brackets.py",
+  "function_name": "_strip_angle_brackets",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--_strip_angle_brackets.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--_strip_angle_brackets.md",
+  "probe_stdout": "CONFIRMED — actual: '' | expected: '<'\n",
+  "trigger_summary": "Input '<' (unmatched angle bracket) returns empty string instead of '<' — the '<' character is unconditionally dropped rather than preserved when unbalanced."
+}

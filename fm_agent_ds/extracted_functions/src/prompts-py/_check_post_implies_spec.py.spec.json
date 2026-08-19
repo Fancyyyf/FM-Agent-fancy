@@ -1,0 +1,5 @@
+{
+  "signature": "_check_post_implies_spec(block, post_condition, spec_post_condition, knowledge, language, trace_dir=None, trace_meta=None) -> tuple",
+  "pre_condition": "block is a non-empty string. post_condition and spec_post_condition are non-empty strings. language is a non-empty string identifying the programming language of block. knowledge is a string (may be empty). trace_dir is a valid writable directory path or a falsy value.",
+  "post_condition": "Returns a 4-tuple. When the actual post-condition of block satisfies the specification post-condition for all valid inputs, returns (True, None, None, None). When a concrete input exists where the actual post-condition violates the specification, returns (False, offending_statements, post_condition, reason) where offending_statements and reason are both non-empty strings. Raises ValueError if every LLM attempt produces an unparseable response. Raises the original exception (re-raised without retry) when an LLM API call itself fails, after recording a failure trace event. Produces structured trace event records when trace_dir is truthy; produces no side effects when trace_dir is falsy."
+}

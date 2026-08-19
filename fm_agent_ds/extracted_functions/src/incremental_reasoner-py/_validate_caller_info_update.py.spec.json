@@ -1,0 +1,5 @@
+{
+  "signature": "_validate_caller_info_update(data) -> dict",
+  "pre_condition": "data is a value received from an LLM response that describes whether one caller's .info.json sidecar needs updating.",
+  "post_condition": "Returns a dict with exactly two keys: 'info_updated' (bool) and 'new_info' (dict | None). When info_updated is true, new_info is a normalized dict conforming to the .info.json schema — containing a 'callees' key whose value is a list of dicts each with string fields 'name', 'signature', 'pre_condition', 'post_condition'. When info_updated is false, new_info is None. Raises ValueError with a message identifying the specific schema violation when: data is not a dict; either key 'info_updated' or 'new_info' is absent; info_updated is not a boolean; or info_updated is true but new_info is not a dict conforming to the .info.json schema."
+}

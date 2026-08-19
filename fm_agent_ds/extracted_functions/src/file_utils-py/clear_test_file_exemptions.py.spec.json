@@ -1,0 +1,1 @@
+{"signature": "clear_test_file_exemptions()", "pre_condition": "None.", "post_condition": "After return, no paths are exempt from test-file detection. Every subsequent call to _is_test_file evaluates its argument solely against test-directory and test-filename naming heuristics, without excluding any path as exempt."}

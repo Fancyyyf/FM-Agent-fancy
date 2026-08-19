@@ -1,0 +1,19 @@
+{
+  "phase": 4,
+  "layers": "6",
+  "total_functions": 1,
+  "total_batches": 1,
+  "batches": [
+    {
+      "index": 0,
+      "file": "batch_000_layer6_extracted_b0.txt",
+      "layer": 6,
+      "is_cycle": false,
+      "num_functions": 1,
+      "num_pending": 0,
+      "functions": [
+        "fm_agent/extracted_functions/src/cli_backend-py/_normalize_backend.py"
+      ]
+    }
+  ]
+}

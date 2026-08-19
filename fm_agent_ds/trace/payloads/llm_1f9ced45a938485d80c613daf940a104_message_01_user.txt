@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for JavaScript."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("javascript") if cg else None
+```
+
+Condition A (what the code actually does):
+After normal termination, the return value is None if the CodeGraph index for proj_dir was absent or could not be loaded (i.e., CodeGraphExtractor.from_proj_dir(proj_dir) returned None); otherwise, the return value is the dictionary obtained from calling get_call_edges("javascript") on the returned CodeGraphExtractor instance, which maps canonicalized caller fully-qualified names to collections of canonicalized callee fully-qualified names for all JavaScript call edges present in the indexed source files. The dictionary may be empty. If an exception occurs during the loading of the index or the extraction of call edges, the exception propagates and no value is returned. Formally: Let obj = CodeGraphExtractor.from_proj_dir(proj_dir). If evaluation of the function body terminates normally, then result = (None if obj is None else obj.get_call_edges("javascript")). Otherwise, an exception E is raised and no result is assigned.
+
+Condition B (what the specification requires):
+When a CodeGraph extractor could be initialized for proj_dir, returns a dict whose keys are canonicalized caller FQNs and whose values are collections of canonicalized callee FQNs, representing all direct call relationships discovered in JavaScript source files. When CodeGraph initialization fails for proj_dir, returns None.
+
+Additional context:
+from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string path to an existing project directory.
+Post-condition: Returns a CodeGraphExtractor instance backed by the project's CodeGraph index when the index exists and is readable; returns None when the index is absent or could not be loaded.
+
+get_call_edges(language: str) -> dict
+Pre-condition: language is a string identifying a registered language key (e.g. "javascript"); the receiver is a valid CodeGraphExtractor instance.
+Post-condition: Returns a dict whose keys are canonicalized caller FQNs and whose values are collections of canonicalized callee FQNs for all call relationships in source files of the given language indexed by CodeGraph.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

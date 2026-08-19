@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_ensure_source_files_in_phases",
+  "source_file": "src/pipeline_setup-py/_ensure_source_files_in_phases.py",
+  "function_name": "_ensure_source_files_in_phases",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_ensure_source_files_in_phases.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_ensure_source_files_in_phases.md",
+  "probe_stdout": "CONFIRMED — actual: forced=[], foo.py appears in 2 modules after call | expected (spec): exactly 1 module",
+  "trigger_summary": "When a required source file already exists in multiple modules, the code returns early without deduplicating, leaving the file in a state that violates the 'exactly one module' post-condition."
+}

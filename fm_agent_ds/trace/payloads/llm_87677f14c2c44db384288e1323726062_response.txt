@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "Input: phase_num=1, layer_idx=0, attempt=0 (< OPENCODE_MAX_RETRIES), layer_files=['func1.py'], phase_files=['func1.py'], input_dir='/extracted', proj_dir='/proj', all_processed0 = ∅. is_file_ready returns false for func1.py after first attempt (no specs generated). After retry sleep, lines 164-165 add '/extracted/func1.py' to all_processed. Second attempt: is_file_ready returns true (specs generated), but streaming_reasoner skips func1.py because it is in all_processed. No verification verdict JSON is produced, violating condition B's requirement that a verdict file exists for every specced function when only_spec is False.",
+  "offending_statements": "Line 164: for rel in phase_files:\nLine 165:     all_processed.add(os.path.join(input_dir, rel))",
+  "reason": "In the retry path (specs_generated=0, attempt < max), all phase files are added to all_processed even though they have no specs and no verification has been performed. When a later attempt successfully generates specs for these files, streaming_reasoner will skip them because they appear in already_processed (all_processed), so no verification verdict is created. This violates the specification that every specced function must have a verification verdict JSON file."
+}

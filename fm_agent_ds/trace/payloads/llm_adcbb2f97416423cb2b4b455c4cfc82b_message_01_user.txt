@@ -1,0 +1,28 @@
+Programming language: Python
+
+Pre-condition:
+info is a dict containing a "callees" key whose value is a list of dicts, where each dict has exactly the string-typed keys "name", "signature", "pre_condition", and "post_condition"
+
+Code block:
+```python
+Line 1: def format_info_for_reasoner(info):
+Line 2:     """Rebuild the existing FunctionSpecMap from one .info.json object."""
+Line 3:     knowledge_map = FunctionSpecMap()
+Line 4:     for callee in info.get("callees", []):
+Line 5:         callee_spec = (
+Line 6:             f"Pre-condition: {callee.get('pre_condition', '')}\n"
+Line 7:             f"Post-condition: {callee.get('post_condition', '')}"
+Line 8:         )
+Line 9:         knowledge_map.add_entry(
+Line 10:             callee.get("name", ""),
+Line 11:             callee.get("signature", ""),
+Line 12:             callee_spec,
+Line 13:         )
+Line 14:     return knowledge_map
+```
+
+Additional context:
+add_entry(function_name, signature, spec) -> None
+Pre-condition: function_name and signature are strings; spec is a string containing formatted pre-condition and post-condition text
+Post-condition: Stores function_name as a key in the FunctionSpecMap with spec as its value, and maps function_name to signature in the signatures dict
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

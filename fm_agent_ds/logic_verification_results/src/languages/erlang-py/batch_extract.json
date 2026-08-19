@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/erlang-py/batch_extract.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a dictionary whose keys are absolute file paths (strings) of Erlang source files and whose values are lists of (function_id: str, body: str) pairs. Each function_id is a canonicalized, module-qualified name usable as an FQN. Each body is the verbatim source text of that function as extracted from the source file. Returns an empty dict when the Erlang Language Platform backend is unavailable or when proj_dir contains no extractable Erlang functions.",
+    "actual_behavior": "If the function returns normally, the returned value is a dictionary where each key is an absolute file path string referring to an Erlang source file within the directory specified by proj_dir, and each value is a list of tuples (function_id, body) extracted by the analysis. If an exception occurs (for example, from _analysis_or_empty due to invalid proj_dir, I/O errors, or because the result of _analysis_or_empty lacks a `functions` attribute), the exception propagates and the function does not return a value.",
+    "code_evidence": "Line 3: return _analysis_or_empty(proj_dir).functions",
+    "trigger_condition": "The specification requires that the function returns an empty dict when the Erlang Language Platform backend is unavailable. However, the code directly returns the .functions attribute of _analysis_or_empty without any exception handling. If the backend is unavailable, _analysis_or_empty may raise an exception (as indicated by the example in Condition A), which would propagate and prevent the function from returning an empty dict. This violates the specification's requirement for that scenario."
+  }
+}

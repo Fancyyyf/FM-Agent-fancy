@@ -1,0 +1,5 @@
+{
+  "signature": "_parse_spec_conditions(spec: dict) -> tuple[str, str]",
+  "pre_condition": "spec is a dict whose 'pre_condition' and 'post_condition' keys, when present, map to strings.",
+  "post_condition": "Returns a pair (pre, post) where pre is the string value associated with the 'pre_condition' key in spec (or an empty string when the key is absent) and post is the string value associated with the 'post_condition' key in spec (or an empty string when the key is absent)."
+}

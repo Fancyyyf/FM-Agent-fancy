@@ -1,0 +1,5 @@
+{
+  "signature": "render_bugs(state: State) -> RichRenderable",
+  "pre_condition": "state is a State instance whose bugs_confirmed, bugs_not_confirmed, and bugs_pending attributes are non-negative integers.",
+  "post_condition": "Returns a Rich renderable that visually displays the values of state.bugs_confirmed, state.bugs_not_confirmed, state.bugs_pending, and their arithmetic sum. The renderable is self-contained and suitable for embedding as a sub-component of a larger Rich Layout. The state argument is not mutated by this call."
+}

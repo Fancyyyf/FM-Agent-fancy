@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_llm_json_call",
+      "signature": "_llm_json_call(client, model, messages, parser, expected_schema_desc, trace_dir=None, trace_meta=None) -> dict",
+      "pre_condition": "client is an LLM API client callable. model is a non-empty string naming the LLM model. messages is a list of message dicts with 'role' and 'content' keys. parser is a callable that accepts a string and returns a dict. expected_schema_desc is a non-empty string describing the expected JSON schema.",
+      "post_condition": "Returns a dict containing the parsed JSON response from the LLM, validated against the schema described by expected_schema_desc. Raises an exception if the LLM call fails or the response cannot be parsed to valid JSON matching the expected schema."
+    }
+  ]
+}

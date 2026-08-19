@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "self._console.flush",
+      "signature": "flush()",
+      "pre_condition": "The console stream is open and may contain buffered data written by prior write calls.",
+      "post_condition": "All buffered data in the console stream is committed to the underlying device."
+    },
+    {
+      "name": "self._log_stream.flush",
+      "signature": "flush()",
+      "pre_condition": "The log stream is open (not closed) and may contain buffered data written by prior write calls.",
+      "post_condition": "All buffered data in the log stream is committed to the underlying file."
+    }
+  ]
+}

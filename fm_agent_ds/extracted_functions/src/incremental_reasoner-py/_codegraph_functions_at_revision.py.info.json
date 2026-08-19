@@ -1,0 +1,22 @@
+{
+  "callees": [
+    {
+      "name": "try_codegraph_init",
+      "signature": "try_codegraph_init(worktree_dir)",
+      "pre_condition": "worktree_dir is a path to a directory containing source files to be indexed by CodeGraph.",
+      "post_condition": "Initializes a CodeGraph index for the source tree at worktree_dir. Returns nothing on success; on failure, subsequent CodeGraph queries return None."
+    },
+    {
+      "name": "_codegraph_functions_by_file",
+      "signature": "_codegraph_functions_by_file(worktree_dir, lang_keys) -> dict | None",
+      "pre_condition": "worktree_dir is a directory path whose source tree has been successfully indexed by CodeGraph. lang_keys is a collection of language key strings drawn from the values of file_languages.",
+      "post_condition": "Returns a dict mapping each source file path to a dict of function data keyed by function name. Returns None when the CodeGraph index is unavailable or cannot be queried."
+    },
+    {
+      "name": "_codegraph_legacy_coverage",
+      "signature": "_codegraph_legacy_coverage(worktree_dir, functions, file_languages) -> dict",
+      "pre_condition": "worktree_dir is a directory path. functions is the dict returned by _codegraph_functions_by_file. file_languages is a dict mapping relative file paths to language keys.",
+      "post_condition": "Returns a coverage dict indicating, for each file in file_languages, which function names are present in the CodeGraph functions dict and which are absent, allowing the caller to identify functions that require legacy (non-CodeGraph) extraction."
+    }
+  ]
+}

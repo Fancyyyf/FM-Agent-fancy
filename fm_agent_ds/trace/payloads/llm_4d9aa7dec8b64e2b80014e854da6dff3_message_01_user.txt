@@ -1,0 +1,63 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir and work_dir are valid filesystem directory paths; command is a non-empty list of strings; stage is a non-empty string; if provided, function_ids is a list of strings, input_files is a list of relative file paths, output_files is a list of relative file paths, summary is a string, metadata is a dict.
+
+Code block:
+```python
+Line 1: def start_opencode_traced(
+Line 2:     proj_dir,
+Line 3:     work_dir,
+Line 4:     command,
+Line 5:     stage,
+Line 6:     function_ids=None,
+Line 7:     input_files=None,
+Line 8:     output_files=None,
+Line 9:     summary=None,
+Line 10:     metadata=None,
+Line 11: ):
+Line 12:     event_id = new_event_id("opencode")
+Line 13:     started = utc_now_iso()
+Line 14:     opencode_log_path = _opencode_log_path(work_dir, event_id)
+Line 15:     opencode_trace_path = _opencode_trace_path(work_dir, event_id)
+Line 16:     proc, log_thread, stdin_thread = _start_opencode_process(proj_dir, work_dir, event_id, command, opencode_log_path)
+Line 17:     return TracedOpenCodeProcess(
+Line 18:         proc=proc,
+Line 19:         work_dir=work_dir,
+Line 20:         event_id=event_id,
+Line 21:         stage=stage,
+Line 22:         started=started,
+Line 23:         command=command,
+Line 24:         function_ids=function_ids,
+Line 25:         input_files=input_files,
+Line 26:         output_files=output_files,
+Line 27:         summary=summary,
+Line 28:         metadata=metadata,
+Line 29:         opencode_log_path=opencode_log_path,
+Line 30:         opencode_trace_path=opencode_trace_path,
+Line 31:         log_thread=log_thread,
+Line 32:         stdin_thread=stdin_thread,
+Line 33:     )
+```
+
+Additional context:
+new_event_id(prefix) -> str
+Pre-condition: prefix is a non-empty string.
+Post-condition: Returns a unique string in the format '{prefix}_{hex}' where hex is a random 32-character hexadecimal string.
+
+utc_now_iso() -> str
+Pre-condition: None.
+Post-condition: Returns the current UTC time as an ISO 8601 datetime string ending in 'Z', with at least second precision.
+
+_opencode_log_path(work_dir, event_id) -> str
+Pre-condition: work_dir is a valid directory path; event_id is a non-empty string.
+Post-condition: Returns a filesystem path string within work_dir's trace directory that uniquely identifies a log file for the given event_id.
+
+_opencode_trace_path(work_dir, event_id) -> str
+Pre-condition: work_dir is a valid directory path; event_id is a non-empty string.
+Post-condition: Returns a filesystem path string within work_dir's trace directory that uniquely identifies a trace file for the given event_id.
+
+_start_opencode_process(proj_dir, work_dir, event_id, command, trace_log_path) -> (subprocess.Popen, threading.Thread, threading.Thread | None)
+Pre-condition: proj_dir is a valid directory path; work_dir is a valid directory path; event_id is a non-empty string; command is a non-empty list of strings; trace_log_path is a writable filesystem path.
+Post-condition: Returns a 3-tuple (proc, log_thread, stdin_thread). proc is a running subprocess.Popen instance executing a CLI agent command in proj_dir with its environment configured for the given event_id. log_thread is a daemon thread that copies the subprocess's combined stdout/stderr to trace_log_path. stdin_thread is either a daemon thread feeding the subprocess's stdin with the prompt text, or None when no stdin is needed.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

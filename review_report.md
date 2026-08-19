@@ -1,5 +1,53 @@
 # Bug Review
 
+## Review 基线
+
+本轮 Review 开始时（合并最新 `main` 之前），`self_modify` 的有效 merge-base 信息如下：
+
+- **有效 merge-base：** `abc1f89`
+- **提交时间：** 2026-07-29 09:33（北京时间）
+- **提交内容：** 合并 PR #158，修复增量 Erlang 变更检测
+
+> 注：`self_modify` 后续已通过合并提交 `6795524` 合入最新 `main`（`848b39b`），因此当前 Git 实际计算出的 merge-base 已更新为 `848b39b`。以上 `abc1f89` 用于记录本轮 Review 所依据的历史代码基线。
+
+## 最新版本复核（2026-08-08）
+
+本节以 `self_modify@570edee` 为复核基线；该提交已经合入 `upstream/main@b0b41fe`。复核方式包括当前源码与调用链检查，以及在 `/tmp` 中执行不修改项目源码的最小反例。这里的“部分缓解”表示最新代码降低了某一条触发路径的破坏性，但没有满足原问题的完整修复条件。
+
+复核结果：**完整修复 0 项，部分缓解 2 项，仍未修复 16 项，待真实场景确认 1 项，非实现 Bug 2 项。**
+
+| ID | 最新状态 | 最新版本证据 | Issue 归组 |
+|---|---|---|---|
+| 014 | **未修复** | `apply_llm_settings_update()` 仍使用 `if not toml_text`；空文件反例仍抛 `ConfigWizardError`。 | Issue 1 |
+| 031 | **未修复** | `validate_base_url()` 仍只检查 scheme/netloc；`http://example.com:abc` 仍被接受。 | Issue 1 |
+| 061 | **待确认，机制仍存在** | `get_call_edges()` 仍以当前语言构建 `fqn_of`，跨语言 target 仍无法解析；尚未补真实 CodeGraph FFI 项目证据。 | 候选 Issue A |
+| 157 | **未修复** | hostname 分支仍直接执行大小写敏感比较；`example.com` 对 `EXAMPLE.COM` 返回 `False`。 | Issue 8 |
+| 188 | **非实现 Bug / 不适用** | 原结论仍是 Reasoner 产物漏读完整函数，而非 `generate_batch_prompts.main()` 实现缺陷；当前没有可归因到该函数的代码修复。 | 不单独报实现 Issue |
+| 238 | **部分缓解，未完整修复** | 本地 readiness 修改会在 sidecar 写后校验并回滚；但 `_plan_spec_update()` 仍用同一个 `None` 表示正常跳过和 LLM/格式失败，异常也只记录日志后继续。 | Issue 2 |
+| 239 | **未修复** | `_reconcile_caller()` 仍把模型返回的完整 `new_info` 直接覆盖写入，没有合并或保护非目标 callee。 | Issue 2 |
+| 030 | **未修复** | `_KV_RE` 仍只识别裸键；quoted key 反例生成重复语义键并触发 `TOMLDecodeError`。 | Issue 1 |
+| 038 | **未修复** | `_check_oh_my_openagent()` 仍不检查 `returncode`；mock 非零退出仍返回 `(True, None)`。 | Issue 4 |
+| 071 | **未修复，条件性** | `_extract_func_name_brace()` 仍先在未清理模板文本中匹配 `operator`；原反例仍提取为 `operator()`。 | Issue 5 |
+| 073 | **未修复，条件性** | Python fallback 仍靠缩进和 `)` 特判；参数续行与 `def` 同缩进的合法多行签名仍只提取首行。 | Issue 5 |
+| 076 | **非真实 Bug / 无需修复** | `_strip_angle_brackets()` 行为未变，但原 SPEC 超出了该简化辅助函数的契约；不应针对单个未配对 `<` 打补丁。 | 不报 Issue |
+| 097 | **未修复** | `_elp_argv()` 仍无条件追加 `server`；配置 `elp server` 仍得到 `elp server server`。 | Issue 7 |
+| 107 | **部分缓解，未完整修复** | Erlang 抽取和函数范围已能用 `None`/`BackendUnavailableError` 表达失败；但 `call_edges()` 仍经 `_analysis_or_empty()` 把异常转换为 `{}`。 | Issue 7 |
+| 139 | **未修复** | 增量 phase ready 条件仍是 `mtime_changed or coverage_complete`，重写但漏文件的计划仍会被接受。 | Issue 3 |
+| 177 | **未修复** | `run_opencode_traced()` 仍以 `exit_code=0` 初始化且只捕获 `CalledProcessError`；启动抛 `FileNotFoundError` 时记录仍为 `success/0/null`。 | Issue 4 |
+| 198 | **未修复** | `_json_file_is_valid()` 仍未指定 UTF-8 且不捕获 `UnicodeDecodeError`；非法字节反例仍向外抛异常。 | Issue 9 |
+| 225 | **未修复，与 239 同根因** | caller-info 校验仍只校验 schema，没有比较旧的非目标 callee 集合；覆盖写入路径与 239 相同。 | Issue 2 |
+| 252 | **未修复** | `scan_bugs()` 在目录存在性检查前仍只重置 confirmed/not-confirmed；目录消失后 pending 仍保留旧值。 | Issue 4 |
+| 272 | **未修复** | `_compute_brace_depth_per_line()` 没有跨行保存 block-comment 状态；反例深度最终降到 `-1`。 | Issue 6 |
+| 301 | **未修复，条件性** | fallback 调用正则仍使用单层 `<[^>]*>`/`[^]]*`；`foo<std::vector<int>>(...)` 仍无法识别。 | Issue 5 |
+
+### 复核边界
+
+- 238 的写后 readiness 回滚只保护“已产生但无效”的 sidecar；LLM 没有产生 plan、返回 `spec_updated=false`、解析失败或线程异常时，失败状态仍不会进入最终摘要，因此不能标为已修复。
+- 107 已修复一部分 Erlang 增量删除风险，但调用图接口仍把后端失败伪装成权威空图；Issue 应聚焦剩余的 `call_edges` 语义，避免重复已经合入的抽取保护。
+- 061 只确认了当前过滤机制，没有在固定的 CodeGraph `v1.5.0-fmagent.1` 上构造出真实跨语言 `calls` 边。在获得真实 FFI 数据库证据前，不应把它写成已确认产品 Bug。
+- 188 和 076 不应计入“待修复实现缺陷”。188 可转化为 Reasoner 输入完整性/证据可观测性的测试需求，但不能声称 `generate_batch_prompts.main()` 有报告中描述的实现错误。
+- 可直接提交的 Issue 草稿及合并关系见 `self_issue.md`。
+
 ## 1. 数量变化
 
 | 阶段                      | 保留数量 | 本阶段排除 | 说明                                                                               |

@@ -1,0 +1,67 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _llm_rerank(funcs_info: list[dict],
+Line 2:                 source_lines: list[str],
+Line 3:                 filepath: str,
+Line 4:                 issue: str,
+Line 5:                 top_k: int,
+Line 6:                 llm_client: Any,
+Line 7:                 model: str) -> list[str] | None:
+Line 8:     func_list = _build_func_list_text(funcs_info, source_lines)
+Line 9:     user_msg = _LLM_USER_TMPL.format(
+Line 10:         issue=issue[:3000],
+Line 11:         filepath=filepath,
+Line 12:         func_list=func_list,
+Line 13:         top_k=top_k,
+Line 14:     )
+Line 15:     messages = [
+Line 16:         {"role": "system", "content": _LLM_SYSTEM},
+Line 17:         {"role": "user", "content": user_msg},
+Line 18:     ]
+Line 19:     for attempt in range(3):
+Line 20:         text = ""
+Line 21:         try:
+Line 22:             response = llm_client.chat.completions.create(
+Line 23:                 model=model,
+Line 24:                 messages=messages,
+Line 25:                 max_tokens=256,
+Line 26:                 temperature=0.0,
+Line 27:             )
+Line 28:             text = response.choices[0].message.content.strip()
+Line 29:             names = _parse_json_response(text)
+Line 30:             if not isinstance(names, list) or not all(
+Line 31:                 isinstance(name, str) and name.strip() for name in names
+Line 32:             ):
+Line 33:                 raise ValueError("LLM rerank response must be a JSON array of non-empty function names")
+Line 34:             return [name.strip() for name in names]
+Line 35:         except Exception as exc:
+Line 36:             logger.warning("LLM rerank attempt %d failed: %s", attempt + 1, exc)
+Line 37:             if attempt < 2:
+Line 38:                 messages = messages + [
+Line 39:                     {"role": "assistant", "content": text},
+Line 40:                     {"role": "user", "content": (
+Line 41:                         "Return only valid JSON: an array of non-empty function-name strings. "
+Line 42:                         "Do not include Markdown, tags, or prose."
+Line 43:                     )},
+Line 44:                 ]
+Line 45:                 time.sleep(5 * (attempt + 1))
+Line 46:     return None
+```
+
+Condition A (what the code actually does):
+The function returns either a list of non-empty strings (function names) parsed from a valid JSON array in the LLM response, or None if all three attempts fail. Input arguments remain unchanged. All exceptions are caught internally and do not propagate. Side effects (logging, sleep, local messages list modifications) do not affect the caller. Formal post-condition: (return value = None) ∨ (return value is a list of strings ∧ ∀ s ∈ return value, isinstance(s, str) ∧ s.strip() != ''). The list may be empty. If returned, the list originates from the first successful LLM call within three attempts where the response contained a parseable JSON array of strings, each non-empty. Otherwise, after three failed attempts, None is returned.
+
+Condition B (what the specification requires):
+On success: returns a list of function name strings ordered by LLM-assessed relevance to issue, with length at most top_k and no duplicate names. Every returned name appears in funcs_info. On failure (the LLM response after 3 attempts is not a valid JSON array of non-empty function name strings): returns None. The initial LLM call includes the formatted function list, filepath, issue, and top_k; when the response is not a valid JSON array of non-empty strings, up to two additional retries are made with corrective instructions appended to the conversation, each spaced with increasing backoff delay. The function does not raise exceptions; all errors within attempts are caught and result in either a retry or None.
+
+Additional context:
+_build_func_list_text(funcs_info: list[dict], source_lines: list[str]) -> str
+Pre-condition: funcs_info is a list of function-metadata dicts each containing at least 'name' and score keys. source_lines is a list of strings representing the source file content, one per line.
+Post-condition: Returns a string representation of all functions in funcs_info suitable for embedding in an LLM prompt, including for each function: its name, the line range (start to end), and the body text excerpted from source_lines within that line range.
+
+_parse_json_response(text: str) -> list[str]
+Pre-condition: text is a non-empty string potentially containing a JSON array of strings, possibly surrounded by markdown formatting or extra whitespace.
+Post-condition: Returns a list of non-empty strings parsed from the first JSON array found in text. Raises an exception when text does not contain a parseable JSON array of non-empty strings.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

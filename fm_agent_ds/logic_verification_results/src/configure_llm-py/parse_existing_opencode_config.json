@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/parse_existing_opencode_config.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "When text is non-empty and contains valid JSON after stripping JSONC comment syntax, returns a dict whose keys and values are the parsed top-level JSON object. When text is empty or whitespace-only, returns an empty dict. When text is non-empty but does not contain valid JSON (after stripping JSONC comment syntax), raises ConfigWizardError with a message indicating the config is invalid JSON.",
+    "actual_behavior": "After execution, either a dictionary is returned or ConfigWizardError is raised. If text.strip() is empty, the function returns {}. Otherwise, let s = _strip_jsonc(text). If json.loads(s) raises json.JSONDecodeError, ConfigWizardError('Existing OpenCode config is invalid JSON/JSONC; refusing to overwrite it.') is raised. If json.loads(s) succeeds but the result is not an instance of dict, ConfigWizardError('Existing OpenCode config must be a JSON object at the top level.') is raised. If the result is a dict, that dict is returned. Formally: (text.strip() = \"\"  returns {})  (text.strip()  \"\"  s = _strip_jsonc(text)  ( (d  Dict: json.loads(s) = d)  returns d )  (json.loads(s) undefined  raises ConfigWizardError_{invalid})  (json.loads(s) = x  isinstance(x,dict)  raises ConfigWizardError_{top_level_object}) )",
+    "code_evidence": "Line 10:     if not isinstance(loaded, dict):\nLine 11:         raise ConfigWizardError(\nLine 12:             \"Existing OpenCode config must be a JSON object at the top level.\"\nLine 13:         )",
+    "trigger_condition": "Specification requires returning a dict for any non-empty text containing valid JSON after stripping, but for text='[]' the code raises ConfigWizardError because the parsed value is a list, not a dict."
+  }
+}

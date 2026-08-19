@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_next_message",
+      "signature": "ElpClient._next_message(self, deadline: float) -> dict",
+      "pre_condition": "deadline is a monotonic timestamp in the future. self has an active connection to the ELP server.",
+      "post_condition": "Returns the next complete JSON-RPC message from the server as a dict. Blocks until a message arrives or the deadline is reached. Raises an exception when the deadline expires before a message is received or when the connection to the server is lost."
+    },
+    {
+      "name": "_handle_server_message",
+      "signature": "ElpClient._handle_server_message(self, message: dict)",
+      "pre_condition": "message is a dict representing a JSON-RPC message from the server that is not the response to the current request (either a server notification or a response for a different request_id).",
+      "post_condition": "Processes the server message according to its type and content. Does not return a value relevant to the caller."
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--_is_path_function_label",
+  "source_file": "src/call_graph_edges.py",
+  "function_name": "_is_path_function_label",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--_is_path_function_label.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--_is_path_function_label.md",
+  "probe_stdout": "CONFIRMED — actual: 'a::b-c::func' | expected: 'a/b.c/::func'",
+  "trigger_summary": "For label 'a/b.c/::func', PurePosixPath strips the trailing slash making name='b.c' (contains '.') when spec says final component after last '/' is '' (no '.')"
+}

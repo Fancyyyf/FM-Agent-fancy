@@ -1,0 +1,20 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _is_valid_spec_json(data):
+Line 2:     """Check that .spec.json contains exactly the supported fields."""
+Line 3:     if not isinstance(data, dict):
+Line 4:         return False
+Line 5:     if set(data) != _SPEC_FIELDS:
+Line 6:         return False
+Line 7:     return all(isinstance(data[field], str) for field in _SPEC_FIELDS)
+```
+
+Condition A (what the code actually does):
+The function returns True if and only if `data` is a dictionary, has exactly the keys in `_SPEC_FIELDS`, and all values corresponding to those keys are strings. If the function returns False, then either `data` is not a dictionary, or its keys do not exactly match `_SPEC_FIELDS`, or some value for a field in `_SPEC_FIELDS` is not a string. Formally: \(\texttt{result} \iff \big(\texttt{isinstance(data, dict)} \land \texttt{set(data) = \_SPEC\_FIELDS} \land \forall k \in \texttt{\_SPEC\_FIELDS},\ \texttt{isinstance(data[k], str)}\big)\).
+
+Condition B (what the specification requires):
+Returns True when data contains exactly the keys "signature", "pre_condition", and "post_condition" and every value is of type str. Returns False in all other cases: data is not a dict, data has keys other than or missing any of the three required keys, or any value is not of type str.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--file_utils-py--_iter_project_source_files",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/file_utils-py/_iter_project_source_files.py",
+  "function_name": "_iter_project_source_files",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--_iter_project_source_files.py",
+  "detail_file": "fm_agent/bug_validation/src--file_utils-py--_iter_project_source_files.md",
+  "probe_stdout": "CONFIRMED\n  Bug 1 (yields string, not tuple): yielded str (value: 'test_main.py') \u2014 expected tuple\n  Bug 2 (test files not excluded): 1 test-pattern files found among 2 results: ['test_main.py']",
+  "trigger_summary": "_iter_project_source_files yields bare relative-path strings instead of (abs_path, rel_path) tuples and does not filter out test files."
+}

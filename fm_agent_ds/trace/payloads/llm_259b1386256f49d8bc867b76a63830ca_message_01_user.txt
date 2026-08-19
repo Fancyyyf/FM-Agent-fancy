@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _llm_code_for_event(status):
+Line 2:     if status in ("success", "mismatch"):
+Line 3:         return "200"
+Line 4:     if status == "format_error":
+Line 5:         return "FMT"
+Line 6:     if status == "error":
+Line 7:         return "ERR"
+Line 8:     return status or "?"
+```
+
+Condition A (what the code actually does):
+Natural language: The function returns a string code based on the input status. If status is 'success' or 'mismatch', the return value is '200'. If status is 'format_error', the return value is 'FMT'. If status is 'error', the return value is 'ERR'. Otherwise, if status is truthy (non-empty string), the return value is status itself; if status is falsy (e.g., None or empty string), the return value is '?'. Formal logic: result = (if status in {'success', 'mismatch'} then '200' else if status == 'format_error' then 'FMT' else if status == 'error' then 'ERR' else (status or '?')).
+
+Condition B (what the specification requires):
+Returns a short display code string. Status values indicating successful matching or operation completion yield the code '200'. Status values indicating a malformed or unparseable result yield the code 'FMT'. Status values indicating a general error yield the code 'ERR'. For any other truthy status value, returns the status value unchanged. When status is falsy, returns '?'.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "record_opencode_call",
+      "signature": "record_opencode_call(work_dir, event_id, stage, status, started, ended, command, function_ids, input_files, output_files, exit_code, summary, error, metadata, opencode_log_path, opencode_trace_path)",
+      "pre_condition": "work_dir is an existing directory containing a trace/ subdirectory. event_id, stage, status, started, ended, and command are non-empty strings. exit_code is an integer. All remaining parameters hold their declared types or None.",
+      "post_condition": "A structured event record containing all provided fields is atomically appended to the events.jsonl file under <work_dir>/trace/. The written record is self-contained and includes event_id, timestamp, stage, command, exit_code, status, and all optional metadata fields."
+    },
+    {
+      "name": "utc_now_iso",
+      "signature": "utc_now_iso()",
+      "pre_condition": "None.",
+      "post_condition": "Returns the current wall-clock time as an ISO 8601 formatted UTC string."
+    }
+  ]
+}

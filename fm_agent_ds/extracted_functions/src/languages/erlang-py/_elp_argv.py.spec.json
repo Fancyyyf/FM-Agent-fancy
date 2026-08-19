@@ -1,0 +1,5 @@
+{
+  "signature": "_elp_argv() -> list[str]",
+  "pre_condition": "The ELP backend binary exists at the configured location or is discoverable via the system path.",
+  "post_condition": "Returns a non-empty list of strings whose final element is \"server\", suitable for invoking ELP as a subprocess that reads JSON-RPC requests from standard input and writes JSON-RPC responses to standard output. The preceding elements form a platform-appropriate invocation of the configured ELP binary. The return value is stable: two calls return equal lists if the ELP backend configuration has not changed, and return unequal lists if the ELP backend has changed in a way that could produce different analysis output for the same input project."
+}

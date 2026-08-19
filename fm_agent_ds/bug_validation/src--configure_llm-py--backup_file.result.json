@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--backup_file",
+  "source_file": "src/configure_llm.py",
+  "function_name": "backup_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--backup_file.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--backup_file.md",
+  "probe_stdout": "CONFIRMED — orphaned backup left on disk: ['.env.bak.20260728-001205']\n",
+  "trigger_summary": "backup.chmod(0o600) outside try/except: if chmod fails after copy2 succeeds, the backup file is left orphaned on disk without cleanup."
+}

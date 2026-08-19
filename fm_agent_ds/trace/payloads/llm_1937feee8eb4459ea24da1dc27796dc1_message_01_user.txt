@@ -1,0 +1,56 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def apply_llm_settings_update(
+Line 2:     updates: dict[str, str],
+Line 3:     toml_path: Path,
+Line 4: ) -> Path | None:
+Line 5:     toml_text = _read_text_if_exists(toml_path)
+Line 6:     if not toml_text:
+Line 7:         raise ConfigWizardError(
+Line 8:             f"fm-agent.toml not found at {toml_path}; refusing to guess a new project config."
+Line 9:         )
+Line 10:     updated_toml = update_llm_settings_toml_text(toml_text, updates)
+Line 11:     try:
+Line 12:         tomllib.loads(updated_toml)
+Line 13:     except tomllib.TOMLDecodeError as exc:  
+Line 14:         raise ConfigWizardError("Generated fm-agent.toml is invalid TOML.") from exc
+Line 15:     backup = backup_file(toml_path)
+Line 16:     atomic_write(toml_path, updated_toml)
+Line 17:     return backup
+```
+
+Condition A (what the code actually does):
+After the function execution, one of the following holds: (1) The function raised a `ConfigWizardError` (with message `"fm-agent.toml not found at {toml_path}; refusing to guess a new project config."` or `"Generated fm-agent.toml is invalid TOML."`). In this case, the file at `toml_path` remains unchanged and no backup file is created. (2) The function returned a value `r` normally. Then the file at `toml_path` has been atomically replaced with the TOML text obtained by applying the given `updates` to the original file's `[llm]` section, preserving all other parts of the document. If `r` is a `Path` object, a backup copy of the original file content exists at the path `r` (adjacent to `toml_path` with a timestamp-suffixed name); the content at `r` equals the original file content before the call. If `r` is `None`, no backup copy was created.
+
+Formally, let `orig` be the content of `toml_path` at function entry, and `updated = update_llm_settings_toml_text(orig, updates)`. Let `F_before` and `F_after` be the filesystem state mapping paths to contents immediately before and after the call.
+
+- If the function raises a `ConfigWizardError`:
+  `F_after = F_before` (no files changed or created).
+
+- If the function returns `r` normally:
+  `F_after(toml_path) = updated` ∧
+  `(r = None ⇒ ∀p adjacent to toml_path, F_after(p) = F_before(p) ∧ no new timestamp-suffixed backup file exists)` ∧
+  `(isinstance(r, Path) ⇒ r is a path adjacent to toml_path ∧ r did not exist in F_before ∧ F_after(r) = orig ∧ all other files unchanged)`.
+
+Condition B (what the specification requires):
+The file at toml_path is overwritten such that every key in updates has its value written to the corresponding field path in the [llm] section, while all other sections, fields, and the overall TOML structure outside the updated fields are preserved unchanged. Before the write, the original file content is copied to a timestamp-suffixed backup file adjacent to toml_path. Returns the backup file Path when a backup was created; returns None when no backup was created. Raises ConfigWizardError when toml_path does not refer to an existing file or when the updated TOML content is not parseable as valid TOML by the standard library parser.
+
+Additional context:
+_read_text_if_exists(path: Path) -> str
+Pre-condition: path is a Path object identifying a filesystem location.
+Post-condition: Returns the UTF-8 decoded text content of the file at path. Returns an empty string when no file exists at path.
+
+update_llm_settings_toml_text(toml_text: str, updates: dict[str, str]) -> str
+Pre-condition: toml_text is a non-empty string containing valid TOML with a parseable [llm] section. updates is a non-empty dict whose keys are dot-separated field paths within the [llm] section and whose values are strings.
+Post-condition: Returns TOML text where each field path key in updates has its value replaced with the corresponding update value in the [llm] section. All other sections, fields, and TOML structure outside the updated fields are preserved unchanged in the returned text.
+
+backup_file(path: Path) -> Path | None
+Pre-condition: path identifies an existing, readable file.
+Post-condition: Copies the file at path to a new file with a timestamp-suffixed name adjacent to path. Returns the Path of the new backup file when the copy succeeded, or None when a backup could not be created.
+
+atomic_write(path: Path, content: str) -> None
+Pre-condition: path is a writable filesystem location. content is a string.
+Post-condition: The file at path is overwritten with content such that the file never exists in a partially written state. After the call, the file content at path equals content.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,5 @@
+{
+  "signature": "_analysis_or_empty(proj_dir: str) -> ErlangAnalysis",
+  "pre_condition": "proj_dir is a non-empty string referring to a directory for which ELP analysis can be attempted.",
+  "post_condition": "When the ELP backend successfully analyzes proj_dir, returns an ErlangAnalysis object whose .functions, .edges, and .spans attributes are dicts populated with the analysis results for all Erlang source files under proj_dir. When the ELP backend is unavailable or analysis raises any exception, returns an ErlangAnalysis object whose .functions dict and .edges dict are both empty. The function never raises — all exceptions from the analysis backend are caught internally and produce the empty-fallback result."
+}

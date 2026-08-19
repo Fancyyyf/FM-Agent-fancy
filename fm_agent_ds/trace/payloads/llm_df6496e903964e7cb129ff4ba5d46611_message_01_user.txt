@@ -1,0 +1,16 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _fingerprint_digest(fingerprint: tuple) -> str:
+Line 2:     payload = json.dumps(fingerprint, ensure_ascii=False, separators=(",", ":"))
+Line 3:     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+```
+
+Condition A (what the code actually does):
+Natural Language: The function returns a lowercase hexadecimal string representing the SHA-256 hash of the UTF-8 encoded JSON serialization of the input tuple, where the JSON string is generated with `ensure_ascii=False` and separators `(',', ':')`. Formal Logic: fingerprint ∈ Tuple ∧ JSONSerializable(fingerprint) ⇒ (let payload = json.dumps(fingerprint, ensure_ascii=False, separators=(',', ':')) in let digest = hashlib.sha256(payload.encode('utf-8')).hexdigest() in result = digest)
+
+Condition B (what the specification requires):
+Returns a deterministic 64-character lowercase hexadecimal string (each character in [0-9a-f]) that is a cryptographic digest of fingerprint. The mapping from fingerprint to the returned string is a pure function: identical fingerprint tuples always produce identical digest strings. Distinct fingerprints produce distinct digests (no collisions for the input domain of finite-length tuples of JSON-serializable data).
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

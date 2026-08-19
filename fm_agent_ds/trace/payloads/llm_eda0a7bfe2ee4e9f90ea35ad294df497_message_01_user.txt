@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+prompt is a non-empty string describing the yes/no question to present to the user. default is True or False.
+
+Code block:
+```python
+Line 1: def _prompt_yes_no(prompt: str, default: bool = True) -> bool:
+Line 2:     hint = "Y/n" if default else "y/N"
+Line 3:     choice = _prompt(f"{prompt} [{hint}]").lower()
+Line 4:     if not choice:
+Line 5:         return default
+Line 6:     if choice in ("y", "yes"):
+Line 7:         return True
+Line 8:     if choice in ("n", "no"):
+Line 9:         return False
+Line 10:     raise ConfigWizardError("Please answer yes or no.")
+```
+
+Additional context:
+_prompt(message: str) -> str
+Pre-condition: message is a non-empty string.
+Post-condition: Displays message to stdout without a trailing newline, reads one line from stdin, and returns the line after stripping leading and trailing whitespace.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

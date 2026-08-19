@@ -1,0 +1,23 @@
+Programming language: Python
+
+Pre-condition:
+None.
+
+Code block:
+```python
+Line 1: def _private_opencode_secret_dir() -> Path:
+Line 2:     if os.name == "nt":
+Line 3:         appdata = os.environ.get("APPDATA")
+Line 4:         base_dir = Path(appdata) if appdata else Path.home() / "AppData" / "Roaming"
+Line 5:     else:
+Line 6:         xdg_state = os.environ.get("XDG_STATE_HOME")
+Line 7:         xdg_state_path = Path(xdg_state).expanduser() if xdg_state else None
+Line 8:         base_dir = (
+Line 9:             xdg_state_path
+Line 10:             if xdg_state_path and xdg_state_path.is_absolute()
+Line 11:             else Path.home() / ".local" / "state"
+Line 12:         )
+Line 13:     return base_dir / "fm-agent" / "opencode"
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

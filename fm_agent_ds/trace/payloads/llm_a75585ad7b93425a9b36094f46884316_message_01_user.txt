@@ -1,0 +1,25 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def call_edges(proj_dir: str) -> dict:
+Line 2:     """Return {(caller_stem, caller_module): {callee_stems}} for C++."""
+Line 3:     cg = CodeGraphExtractor.from_proj_dir(proj_dir)
+Line 4:     return cg.get_call_edges("cpp") if cg else None
+```
+
+Condition A (what the code actually does):
+The result is None if CodeGraphExtractor.from_proj_dir(proj_dir) is None or if the returned extractor's get_call_edges('cpp') method returns None. Otherwise, the result is a dictionary mapping each caller identifier (represented as a tuple of (caller_stem, caller_module)) to a set of callee stems (strings). Formally, let cg = CodeGraphExtractor.from_proj_dir(proj_dir). Then (cg is None ∨ (cg is not None ∧ cg.get_call_edges('cpp') is None)) ⇒ result is None. Otherwise, result = cg.get_call_edges('cpp') and is a dict where each key is a tuple[str, str] and each value is a set[str].
+
+Condition B (what the specification requires):
+When a CodeGraph index can be initialized for the project, returns a dict mapping each caller's fully-qualified name to a set of callee fully-qualified names for C++ source files within the project. When CodeGraph initialization is not possible, returns None.
+
+Additional context:
+CodeGraphExtractor.from_proj_dir(proj_dir: str) -> CodeGraphExtractor | None
+Pre-condition: proj_dir is a string path to a project directory
+Post-condition: Returns a CodeGraphExtractor instance initialized with the project's source index when the project can be indexed, or None when indexing is unavailable
+
+CodeGraphExtractor.get_call_edges(language: str) -> dict | None
+Pre-condition: The CodeGraphExtractor instance is initialized and non-None; language is a valid language key string
+Post-condition: Returns a dict mapping each caller's fully-qualified name to a set of callee fully-qualified names for the specified language, or None when the language is not indexed
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

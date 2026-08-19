@@ -1,0 +1,5 @@
+{
+  "signature": "_extracted_files_by_method(func_dir) -> dict[str, list[str]]",
+  "pre_condition": "func_dir is a string representing a filesystem path.",
+  "post_condition": "Returns a dict whose keys are function identifier strings and whose values are non-empty lists of absolute file path strings. When func_dir exists as a directory: for every extracted function file found in a recursive traversal of func_dir (excluding metadata sidecar files), the file's absolute path is registered under its full file-stem identifier — the filename without its extension, which may contain '::' class-qualifier separators; additionally, when a stem contains '::', the substring after the last '::' (the bare method tail) is registered as an additional key mapping to the same path list. A single bare method tail maps to all paths from different classes that share that tail. When func_dir does not exist or is not a directory: returns an empty dict."
+}

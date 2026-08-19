@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_llm_json_call",
+      "signature": "_llm_json_call(client, model, messages, validator, schema_description, trace_dir, trace_meta) -> Any | None",
+      "pre_condition": "client is a configured LLM provider client. model is a valid model identifier. messages is a non-empty list of message dicts each with 'role' and 'content' string keys. validator is a callable that accepts a parsed value and returns (bool, str | None). schema_description is a non-empty string. trace_dir is a writable directory path. trace_meta is a dict whose keys are strings and values are JSON-serializable.",
+      "post_condition": "Sends messages to the LLM via client. Returns the parsed and validated result when the LLM produces output parseable as JSON that conforms to schema_description and passes validator. Returns None when the LLM produces no valid output or validation fails. Handles retries on protocol-level failures. The raw exchange is traced to trace_dir with trace_meta as identifying metadata."
+    }
+  ]
+}

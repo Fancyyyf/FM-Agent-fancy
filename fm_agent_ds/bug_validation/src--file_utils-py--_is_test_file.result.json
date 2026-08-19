@@ -1,0 +1,11 @@
+{
+  "id": "src--file_utils-py--_is_test_file",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/file_utils-py/_is_test_file.py",
+  "function_name": "_is_test_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--file_utils-py--_is_test_file.py",
+  "detail_file": "fm_agent/bug_validation/src--file_utils-py--_is_test_file.md",
+  "probe_stdout": "CONFIRMED — actual: True | expected: False\n",
+  "trigger_summary": "The code lowercases directory components before checking _TEST_DIR_NAMES, making the match case-insensitive against the specification's case-sensitive requirement."
+}

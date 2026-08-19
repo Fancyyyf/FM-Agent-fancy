@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_trace_dir",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_trace_dir.py",
+  "function_name": "_trace_dir",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_trace_dir.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_trace_dir.md",
+  "probe_stdout": "CONFIRMED — actual: 'trace' (no directory separator in result, not a subdirectory path under work_dir=\"\")\n",
+  "trigger_summary": "When work_dir is an empty string, os.path.join('', 'trace') returns 'trace' with no directory separator, violating the spec requirement that the result be a subdirectory path under work_dir."
+}

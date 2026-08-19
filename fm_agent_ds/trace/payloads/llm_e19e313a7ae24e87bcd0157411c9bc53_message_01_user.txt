@@ -1,0 +1,59 @@
+Programming language: Python
+
+Pre-condition:
+The function returns a list `layers` of dictionaries, each representing a layer. The layers are numbered consecutively starting from 0. Every function FQN from the input `phase_fqns` appears exactly once across the "functions" lists of all layers, and no function appears in multiple layers. The "functions" lists are sorted lexicographically. For any two functions `f` and `g` in `phase_fqns`, if `g` is a caller of `f` (i.e., `g ∈ callers_map[f]`), then the layer index of `g` is less than or equal to the layer index of `f`. If the indices are equal, then the layer's "cycle_resolution" is `True`, indicating that `f` and `g` belong to a cycle in the callers graph restricted to `phase_fqns`. For layers with `cycle_resolution == False`, all callers of each function in the layer are already assigned to strictly earlier layers. All functions belonging to a layer with `cycle_resolution == True` form a strongly connected component in the callers graph (i.e., there is a path between any two via caller edges within the phase), and there is at least one caller-callee edge within the component. Formally: Let V = set(phase_fqns). Let L be the returned list. Then: 1. For i = 0..|L|-1: L[i]["layer"] == i, L[i]["cycle_resolution"] ∈ {True, False}, and L[i]["functions"] is a sorted list of FQN strings. 2. ∪_{i=0}^{|L|-1} set(L[i]["functions"]) == V. 3. For any i ≠ j, set(L[i]["functions"]) ∩ set(L[j]["functions"]) == ∅. 4. ∀ f,g ∈ V: g ∈ callers_map[f] ⇒ (layer(f) ≥ layer(g)). And if layer(f) == layer(g), then the layer's "cycle_resolution" is True. 5. ∀ layer: if not layer["cycle_resolution"], then ∀ f ∈ layer["functions"], ∀ g ∈ callers_map[f] ∩ V, layer(g) < layer(f). 6. ∀ layer with layer["cycle_resolution"] == True: the set S = layer["functions"] is a strongly connected component in the graph (V, E) where E = {(u,v) | v ∈ callers_map[u] ∩ V}. That is, the subgraph induced by S is strongly connected, and there exists at least one edge within S. Moreover, there are no edges from S to a later layer (ensured by condition 4).
+
+Code block:
+```python
+Line 41:                 for fqn in scc:
+Line 42:                     fqn_to_scc[fqn] = i
+Line 43:             # Build DAG between SCCs based on caller edges
+Line 44:             scc_callers = defaultdict(set)  # scc_idx -> set of scc_idx that call into it
+Line 45:             for fqn in remaining:
+Line 46:                 scc_i = fqn_to_scc[fqn]
+Line 47:                 for caller_fqn in callers_map.get(fqn, set()) & remaining:
+Line 48:                     scc_j = fqn_to_scc[caller_fqn]
+Line 49:                     if scc_i != scc_j:
+Line 50:                         scc_callers[scc_i].add(scc_j)
+Line 51:             # Topological sort of SCCs
+Line 52:             scc_assigned = {}
+Line 53:             scc_remaining = set(range(len(sccs)))
+Line 54:             while scc_remaining:
+Line 55:                 scc_ready = set()
+Line 56:                 for scc_idx in scc_remaining:
+Line 57:                     unassigned_scc_callers = scc_callers.get(scc_idx, set()) - set(scc_assigned.keys())
+Line 58:                     if not unassigned_scc_callers:
+Line 59:                         scc_ready.add(scc_idx)
+Line 60:                 if not scc_ready:
+Line 61:                     # Should not happen if Tarjan is correct, but handle gracefully
+Line 62:                     # Assign all remaining to the same layer
+Line 63:                     layer_idx = len(layers)
+Line 64:                     all_fqns = set()
+Line 65:                     for scc_idx in scc_remaining:
+Line 66:                         all_fqns.update(sccs[scc_idx])
+Line 67:                     for fqn in all_fqns:
+Line 68:                         assigned[fqn] = layer_idx
+Line 69:                     layers.append({"layer": layer_idx, "functions": sorted(all_fqns), "cycle_resolution": True})
+Line 70:                     remaining -= all_fqns
+Line 71:                     break
+Line 72:                 layer_idx = len(layers)
+Line 73:                 layer_fqns = set()
+Line 74:                 is_cycle = False
+Line 75:                 for scc_idx in scc_ready:
+Line 76:                     scc_assigned[scc_idx] = layer_idx
+Line 77:                     layer_fqns.update(sccs[scc_idx])
+Line 78:                     if len(sccs[scc_idx]) > 1:
+Line 79:                         is_cycle = True
+Line 80:                 for fqn in layer_fqns:
+Line 81:                     assigned[fqn] = layer_idx
+Line 82:                 layers.append({"layer": layer_idx, "functions": sorted(layer_fqns), "cycle_resolution": is_cycle})
+Line 83:                 remaining -= layer_fqns
+Line 84:                 scc_remaining -= scc_ready
+Line 85:     return layers
+```
+
+Additional context:
+_tarjan_scc(nodes, edges) -> list
+Pre-condition: nodes is a non-empty set of FQN strings. edges is a dict mapping each FQN in nodes to a collection of FQN strings representing its in-neighbors, where every target FQN is also a member of nodes.
+Post-condition: Returns a list of lists, where each inner list is a strongly connected component (SCC) containing one or more FQN strings from nodes. Every FQN in nodes appears in exactly one SCC. For every edge u->v in edges, the SCC containing u does not appear after the SCC containing v in the returned list.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--finish_opencode_trace",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/finish_opencode_trace.py",
+  "function_name": "finish_opencode_trace",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--finish_opencode_trace.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--finish_opencode_trace.md",
+  "probe_stdout": "CONFIRMED — stderr_thread was NOT joined before trace event was committed\n",
+  "trigger_summary": "finish_opencode_trace only joins stdin_thread and log_thread; any additional output-capturing thread such as stderr_thread is not awaited before the trace event is committed, violating the spec guarantee that every background thread responsible for capturing process output has terminated and flushed."
+}

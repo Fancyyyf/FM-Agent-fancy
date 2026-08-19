@@ -1,0 +1,5 @@
+{
+  "signature": "PluginConfig::get_stage(self, stage_name: str) -> Optional[PluginStageConfig]",
+  "pre_condition": "self is a PluginConfig instance whose stages attribute is a mapping from stage name strings to PluginStageConfig values",
+  "post_condition": "Returns the PluginStageConfig value stored in self.stages under the key stage_name if that key exists; returns None if stage_name is not present as a key in self.stages. The returned value is the same object reference stored in self.stages, not a copy"
+}

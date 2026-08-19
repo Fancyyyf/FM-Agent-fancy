@@ -1,0 +1,131 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def frozen_worktree(proj_dir, exclude=("fm_agent",), copy_excluded=True):
+Line 2:     """Freeze proj_dir's current working tree into an isolated git worktree.
+Line 3:     Captures committed state PLUS uncommitted edits and untracked files, so the
+Line 4:     yielded copy is a faithful snapshot of proj_dir at entry time. Concurrent
+Line 5:     edits to proj_dir afterwards do not affect the snapshot, letting the pipeline
+Line 6:     run against a stable copy.
+Line 7:     The snapshot is built through a private index (GIT_INDEX_FILE), so proj_dir's
+Line 8:     real index and working tree are never touched. Falls back to a plain directory
+Line 9:     copy when proj_dir is not a git repository with a commit. The snapshot folder
+Line 10:     is left in place after the run (including its fm_agent/ outputs); its path is
+Line 11:     logged so it can be inspected or cleaned up manually.
+Line 12:     The `exclude` dirs (the FM-Agent's own workspace) are always kept out of the
+Line 13:     git snapshot commit so it stays clean. When `copy_excluded` is set, they are
+Line 14:     then copied into the worktree as-is. Incremental mode needs the previous run's
+Line 15:     fm_agent/ results to detect a prior full run, and those results are typically
+Line 16:     gitignored, hence absent from the snapshot commit. A full run discards any
+Line 17:     prior fm_agent/, so it passes copy_excluded=False to skip the copy.
+Line 18:     """
+Line 19:     proj_dir = os.path.abspath(proj_dir)
+Line 20:     # Include the repo name in the temp dir so concurrent runs across different
+Line 21:     # repos are distinguishable (e.g. /tmp/fm_agent_wt_myrepo_a3k9d2/snapshot).
+Line 22:     repo_name = os.path.basename(proj_dir.rstrip(os.sep)) or "repo"
+Line 23:     base = tempfile.mkdtemp(prefix=f"fm_agent_wt_{repo_name}_")
+Line 24:     wt = os.path.join(base, "snapshot")
+Line 25:     def _git(*args, **kwargs):
+Line 26:         return subprocess.run(
+Line 27:             ["git", "-C", proj_dir, *args],
+Line 28:             check=True, capture_output=True, text=True, **kwargs,
+Line 29:         ).stdout.strip()
+Line 30:     is_git = False
+Line 31:     try:
+Line 32:         _git("rev-parse", "--verify", "HEAD")
+Line 33:         is_git = True
+Line 34:     except subprocess.CalledProcessError:
+Line 35:         pass
+Line 36:     if is_git:
+Line 37:         env = dict(os.environ, GIT_INDEX_FILE=os.path.join(base, "index"))
+Line 38:         _git("read-tree", "HEAD", env=env)
+Line 39:         # Stage the full working tree (tracked edits + untracked files). Using a
+Line 40:         # bare `git add -A` lets git silently skip gitignored paths; passing the
+Line 41:         # workspace dirs as :(exclude) pathspecs instead errors out when a repo
+Line 42:         # already gitignores them ("paths are ignored ... use -f"). Drop the
+Line 43:         # workspace dirs from the private index afterwards to cover repos that do
+Line 44:         # NOT gitignore them.
+Line 45:         _git("add", "-A", env=env)
+Line 46:         if exclude:
+Line 47:             _git("rm", "-r", "--cached", "--quiet", "--ignore-unmatch", "--",
+Line 48:                  *exclude, env=env)
+Line 49:         tree = _git("write-tree", env=env)
+Line 50:         snap = _git("commit-tree", tree, "-p", "HEAD", "-m", "fm_agent snapshot")
+Line 51:         _git("worktree", "add", "--detach", wt, snap)
+Line 52:     else:
+Line 53:         logging.info("frozen_worktree: %s is not a git repo; copying instead.", proj_dir)
+Line 54:         shutil.copytree(
+Line 55:             proj_dir, wt,
+Line 56:             ignore=shutil.ignore_patterns(*exclude),
+Line 57:             symlinks=True,
+Line 58:         )
+Line 59:     # Copy the excluded workspace dirs (e.g. fm_agent/ with a prior full run's
+Line 60:     # phases.json and extracted_functions) into the snapshot. They were kept out
+Line 61:     # of the git commit, but incremental mode reads them from disk to compare
+Line 62:     # against, so the snapshot must physically contain them.
+Line 63:     if copy_excluded:
+Line 64:         for name in exclude:
+Line 65:             src = os.path.join(proj_dir, name)
+Line 66:             dst = os.path.join(wt, name)
+Line 67:             if os.path.isdir(src) and not os.path.exists(dst):
+Line 68:                 shutil.copytree(src, dst, symlinks=True)
+Line 69:     print(f"[Pipeline] Snapshot created at: {wt}")
+Line 70:     print(f"[Pipeline] Snapshot is kept after the run. "
+Line 71:           f"Remove with: git -C {proj_dir} worktree remove --force {wt}"
+Line 72:           if is_git else
+Line 73:           f"[Pipeline] Snapshot is kept after the run. Remove with: rm -rf {wt}")
+Line 74:     yield wt
+```
+
+Condition A (what the code actually does):
+On normal execution, the generator yields `wt`, a directory at `<temp_dir>/snapshot` where `<temp_dir> = tempfile.mkdtemp(prefix="fm_agent_wt_<repo_name>_")` and `<repo_name>` is derived from `proj_dir`. If `proj_dir` was a git repo with a HEAD commit (`is_git` true), then `wt` is a detached worktree for a new commit that captures the working tree (tracked edits + untracked files) at the time `git add -A` ran, with directories in `exclude` removed from the commit via `git rm --cached`. The original git state (`HEAD`, index, working tree) is unchanged. If `copy_excluded` is true, each excluded directory that existed in `proj_dir` and is absent from `wt` is recursively copied into `wt` as an untracked directory. If `proj_dir` was not a valid git repo with HEAD (`is_git` false), `wt` is a plain copy of `proj_dir` (directories in `exclude` skipped via `shutil.ignore_patterns`), and if `copy_excluded`, those directories are subsequently copied into `wt`. `<temp_dir>` persists after the yield (no automatic deletion). `proj_dir` is unmodified. Messages containing `wt` and cleanup instructions are printed to stdout. On exceptional execution (exception before the yield), `proj_dir` is unchanged, `<temp_dir>` exists but may contain partial artifacts, and `wt` may not exist or be incomplete.
+
+Formally:
+Let P = os.path.abspath(proj_dir), R = os.path.basename(P.rstrip(os.sep)) or "repo", B = tempfile.mkdtemp(prefix="fm_agent_wt_" + R + "_"), W = os.path.join(B, "snapshot"), G = (subprocess.run(["git", "-C", P, "rev-parse", "--verify", "HEAD"], check=True, capture_output=True, text=True) did not raise CalledProcessError). Then the outcome satisfies:
+  (Normal yield W) ∨ (Exception raised ∧ no yield).
+  If normal yield:
+    G  ⇒
+      ( ∃ I = os.path.join(B, "index") that is a valid git index ∧
+        ∃ tree = output of _git("write-tree", env=env) ∧
+        ∃ snap = output of _git("commit-tree", tree, "-p", "HEAD", "-m", "fm_agent snapshot", env=env) ∧
+        _git("worktree", "add", "--detach", W, snap) succeeded ∧
+        the git state of P (HEAD, index, working tree) is identical to entry state ∧
+        ∀ name ∈ exclude, let S = os.path.join(P, name), D = os.path.join(W, name):
+          (copy_excluded ∧ os.path.isdir(S) ∧ ¬os.path.exists(D) → D is result of shutil.copytree(S, D, symlinks=True) after worktree creation) )
+    ¬G ⇒
+      ( W is the result of shutil.copytree(P, W, ignore=shutil.ignore_patterns(*exclude), symlinks=True) ∧
+        ∀ name ∈ exclude: (copy_excluded ∧ os.path.isdir(os.path.join(P, name)) ∧ ¬os.path.exists(os.path.join(W, name)) →
+          shutil.copytree(os.path.join(P, name), os.path.join(W, name), symlinks=True) executed after the initial copytree) )
+    ∧ B exists after yield, and stdout contains W.
+  If exception raised:
+    P and all its contents are identical to entry state ∧ B exists ∧ (W may not exist or be incomplete).
+
+Condition B (what the specification requires):
+Yields the absolute path wt to a directory whose contents at yield time are a faithful snapshot of the proj_dir filesystem tree at the moment frozen_worktree was entered. Subsequent modifications to proj_dir are not reflected in the snapshot at wt. The snapshot construction never modifies the original proj_dir tree, index, or git state. If proj_dir is a git repository with at least one commit, the snapshot is a detached git worktree comprising HEAD, all uncommitted tracked edits, and all untracked files present in proj_dir at entry time, with entries matching names in exclude omitted from the git commit. If proj_dir is not a git repository with a valid HEAD, the snapshot is a recursive directory copy of proj_dir, with entries matching names in exclude omitted. When copy_excluded is true, each directory named in exclude that exists in proj_dir is recursively copied into the snapshot at wt after the git worktree or directory copy is constructed. The snapshot at wt persists after the context manager exits and is not automatically removed.
+
+Additional context:
+os.path.abspath(path: str) -> str
+Pre-condition: path is a string.
+Post-condition: Returns a normalized absolute path equivalent to path without accessing the filesystem.
+
+tempfile.mkdtemp(prefix: str | None) -> str
+Pre-condition: The parent temporary directory exists and is writable.
+Post-condition: Creates a unique directory whose name begins with prefix when prefix is non-None. Returns the absolute path to the created directory.
+
+subprocess.run(args: list[str], *, check: bool, capture_output: bool, text: bool, env: dict | None) -> CompletedProcess
+Pre-condition: args is a non-empty list of strings naming an executable and its arguments. When env is specified, it maps environment variable names to values.
+Post-condition: Executes the command specified by args in a child process. When capture_output is true, captures stdout and stderr into the result's stdout and stderr attributes. When text is true, captured output is decoded as strings. When check is true, raises CalledProcessError if the child exits with a non-zero status. Returns a CompletedProcess whose stdout attribute is the stripped captured standard output.
+
+shutil.copytree(src: str, dst: str, *, ignore: callable | None, symlinks: bool) -> str
+Pre-condition: src is an existing directory. dst does not exist.
+Post-condition: Recursively copies the directory tree rooted at src to dst. When symlinks is true, symbolic links are preserved as links. When ignore is provided, entries matched by the ignore callable are excluded from the copy. Returns dst.
+
+os.path.isdir(path: str) -> bool
+Pre-condition: path is a string.
+Post-condition: Returns True if path exists and refers to a directory; False otherwise.
+
+os.path.exists(path: str) -> bool
+Pre-condition: path is a string.
+Post-condition: Returns True if path exists in the filesystem; False otherwise, including for broken symbolic links.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,79 @@
+Programming language: Python
+
+Code block:
+```python
+Line 41:     # directly and skips any without valid metadata sidecars.
+Line 42:     file_list = sorted({
+Line 43:         os.path.relpath(path, extracted_dir)
+Line 44:         for path in verify_targets
+Line 45:         if os.path.exists(path)
+Line 46:     })
+Line 47:     if submodules:
+Line 48:         file_list = [
+Line 49:             rel for rel in file_list
+Line 50:             if _is_under_submodules(rel.replace(os.sep, "/"), submodules)
+Line 51:         ]
+Line 52:     if not file_list:
+Line 53:         logging.info("    [verify] no functions require re-verification.")
+Line 54:         return []
+Line 55:     logging.info("    [verify] running reasoner on %d function(s)...", len(file_list))
+Line 56:     # Drop stale verification results so the reasoner re-runs rather than reusing the cached
+Line 57:     # verdict from the previous full run.
+Line 58:     for rel in file_list:
+Line 59:         stale = os.path.join(output_dir, os.path.splitext(rel)[0] + ".json")
+Line 60:         if os.path.exists(stale):
+Line 61:             os.remove(stale)
+Line 62:     # Verify every target by invoking the reasoner (via _verify_single_file). The reasoner
+Line 63:     # makes LLM calls, so run the targets concurrently like the full run does, bounded by
+Line 64:     # MAX_WORKERS. _verify_single_file writes each verdict to output_dir and returns it.
+Line 65:     mismatches = []
+Line 66:     def _verify(rel):
+Line 67:         fpath = os.path.join(extracted_dir, rel)
+Line 68:         language = _VERIFY_EXT_TO_LANG.get(os.path.splitext(fpath)[1], "C")
+Line 69:         _, verdict = _verify_single_file(fpath, extracted_dir, output_dir, language, work_dir=work_dir)
+Line 70:         return rel, verdict
+Line 71:     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+Line 72:         futures = {executor.submit(_verify, rel): rel for rel in file_list}
+Line 73:         for future in concurrent.futures.as_completed(futures):
+Line 74:             rel = futures[future]
+Line 75:             try:
+Line 76:                 _, verdict = future.result()
+Line 77:             except Exception:
+Line 78:                 logging.exception("Verification failed for %s", rel)
+Line 79:                 continue
+Line 80:             if verdict == "MISMATCH":
+```
+
+Condition A (what the code actually does):
+After normal execution, the function returns a sorted list of relative paths (relative to the extracted_functions/ directory) corresponding to targets that produced a confirmed bug. For the set T of extracted-function file paths defined as: for every source file s in changed_functions['added'] ∪ changed_functions['modified'], if submodules is None or s's project-relative path is under a prefix in submodules, and the corresponding extracted-function file f (determined by a mapping consistent with _modified_function_targets) exists on disk, then f ∈ T; additionally, for every relative path p in updated_spec_files, if the absolute path extracted_dir/p exists as a regular file, then that absolute path ∈ T. Then for every f ∈ T, any existing stale verification verdict file at output_dir/<rel_without_ext>.json was removed, and _verify_single_file(f, extracted_dir, output_dir, language, work_dir=work_dir) was called, producing a relative path rel and verdict v. If v == 'MISMATCH', _validate_single_bug was called with the relative path to the reasoner output JSON, proj_dir, work_dir, and bug_validator_path. After all f ∈ T have been processed, _generate_validation_summary(work_dir) was called exactly once. The return value is the sorted list of all rel such that there exists f ∈ T with _verify_single_file returning (rel, 'MISMATCH') and the subsequent bug validation outcome had confirmation_status == 'confirmed'. The file system now contains: in logic_verification_results/, an up-to-date verdict JSON for every f ∈ T; in bug_validation/, a result JSON and optional markdown report for each MISMATCH verdict, and a summary.json aggregating all validation results. No other side effects occur. Formally, let ReturnVal be the returned list, let T be as defined above, let Processed(f) be the tuple (rel, v) from _verify_single_file(f, ...), let Validated(rel) be the confirmation_status from the bug validation result after calling _validate_single_bug when v == 'MISMATCH', then:
+
+ReturnVal = sort([rel | ∃ f ∈ T : Processed(f) = (rel, 'MISMATCH') ∧ Validated(rel) = 'confirmed']),
+
+and the file system state satisfies:
+
+∀ f ∈ T :
+    (exists verdict.json at output_dir/rel_without_ext.json with content matching Processed(f).v) ∧
+    (if Processed(f).v = 'MISMATCH' ⇒ 
+        exists bug_validation/<id>.result.json with confirmation_status ∈ {'confirmed','unconfirmed'} ∧
+        exists bug_validation/<id>.md)
+    ∧
+    stale verdict for rel was removed prior to verification,
+
+and exists bug_validation/summary.json written exactly once by _generate_validation_summary, and no other files are modified or created.
+
+Condition B (what the specification requires):
+Returns a sorted list of relative paths (from extracted_functions/) to extracted function files whose reasoner verdict was MISMATCH and that bug validation independently confirmed as real bugs (confirmation_status == 'confirmed' in the written bug_validation/<bug_id>.result.json). A function is a verification target iff it satisfies at least one of: (a) its source file appears in changed_functions as added or modified, OR (b) its relative path appears in updated_spec_files. For each verification target that exists on disk (and, when submodules is provided, whose relative path begins with at least one submodule path followed by a separator), the function: (1) removes any prior verdict from logic_verification_results/ for that function to force a clean re-run; (2) invokes the reasoner to produce a fresh MATCH or MISMATCH verdict; (3) for each MISMATCH, dispatches bug validation to independently confirm or reject the violation via a probe script. A function whose bug validation result file is missing, unparseable as JSON, or lacks confirmation_status == 'confirmed' is excluded from the returned list. If no functions qualify as verification targets after existence and submodule filtering, returns an empty list without invoking the reasoner or bug validation. Side effects: writes reasoner verdicts to logic_verification_results/<rel_without_ext>.json; writes bug validation results to bug_validation/<bug_id>.result.json and bug_validation/<bug_id>.md; writes an aggregate summary to bug_validation/summary.json.
+
+Additional context:
+_verify_single_file(fpath: str, extracted_dir: str, output_dir: str, language: str, work_dir: str) -> tuple[str, str] | None
+Pre-condition: fpath is an absolute path to an extracted function file whose sibling .spec.json and .info.json sidecars both exist and contain valid JSON. extracted_dir is the extracted_functions/ directory. output_dir is a writable directory for verdict output. language is a valid language identifier string. work_dir is the fm_agent/ work directory.
+Post-condition: Returns a tuple (relative_path, verdict) where relative_path is the path of fpath relative to extracted_dir and verdict is 'MATCH' if block-level Hoare reasoning confirms the implementation satisfies the post-condition, or 'MISMATCH' if a violation is found. Writes the verdict JSON (containing verdict, counterexample, offending_statements, and reason fields) to output_dir/<relative_path_without_ext>.json. Returns None if the reasoner encounters a non-recoverable error before producing a verdict.
+
+_validate_single_bug(result_json_rel: str, proj_dir: str, work_dir: str, bug_validator_path: str | None) -> None
+Pre-condition: result_json_rel is a relative path to a reasoner verdict JSON file in logic_verification_results/ containing a MISMATCH verdict with non-empty counterexample, offending_statements, and reason fields. proj_dir is the project root. work_dir is the fm_agent/ work directory. If provided, bug_validator_path is an existing markdown file overriding the default bug-validation prompt.
+Post-condition: Dispatches a bug validation agent that builds a probe script from the MISMATCH verdict, executes it, and writes the validation outcome to bug_validation/<bug_id>.result.json with confirmation_status equal to 'confirmed' (the probe script reproduces the violation described by the verdict) or 'unconfirmed' (the probe script does not reproduce it). Also writes a detailed bug report to bug_validation/<bug_id>.md containing the specification claim, actual behavior, code evidence, trigger condition, reproduction steps, the probe script, and its raw output. Has no return value.
+
+_generate_validation_summary(work_dir: str) -> None
+Pre-condition: work_dir is the fm_agent/ work directory. The bug_validation/ subdirectory exists and may contain zero or more .result.json bug validation result files.
+Post-condition: Writes an aggregate summary to bug_validation/summary.json containing counts of total reported bugs, confirmed bugs (confirmation_status == 'confirmed'), and not-confirmed bugs (confirmation_status != 'confirmed') across all .result.json files present. Has no return value.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

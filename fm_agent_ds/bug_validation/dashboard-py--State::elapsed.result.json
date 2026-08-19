@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--State::elapsed",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/dashboard-py/State::elapsed.py",
+  "function_name": "elapsed",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--State::elapsed.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--State::elapsed.md",
+  "probe_stdout": "CONFIRMED — actual: -172800.0 (negative) | expected: 172800.0 (non-negative) | bug: elapsed() returns negative when last_event_time < first_event_time",
+  "trigger_summary": "When last_event_time is earlier than first_event_time, the elapsed() method returns a negative float instead of clamping to a non-negative value."
+}

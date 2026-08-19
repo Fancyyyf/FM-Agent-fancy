@@ -1,0 +1,13 @@
+Programming language: Python
+
+Pre-condition:
+rel_path is a non-empty string identifying a function (a relative path to an extracted function file). score is a numeric value. The enclosing scope provides a dict scored that maps rel_path strings to numeric values; scored may or may not already contain rel_path.
+
+Code block:
+```python
+Line 1:     def _record(rel_path, score):
+Line 2:         if rel_path not in scored or score > scored[rel_path]:
+Line 3:             scored[rel_path] = score
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

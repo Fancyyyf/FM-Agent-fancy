@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "is_file_ready",
+      "signature": "is_file_ready(file_path)",
+      "pre_condition": "file_path is the path to an extracted function file.",
+      "post_condition": "Returns True iff both a .spec.json and a .info.json sidecar file exist for the function at file_path and are valid; returns False otherwise."
+    }
+  ]
+}

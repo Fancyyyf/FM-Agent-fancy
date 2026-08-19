@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "export LLM_MODEL\n",
+  "offending_statements": "Line 12: key, sep, _value = working.partition(\"=\") ; Line 13: env_key = key.strip() if sep else \"\"",
+  "reason": "The code only considers lines as having a variable name if they contain an equals sign. A line like 'export LLM_MODEL' (without '=') has the variable name 'LLM_MODEL' after removing the export prefix, but the code sets env_key to empty string, keeping the line and not recording the removed key, which violates the specification."
+}

@@ -1,0 +1,49 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _normalize_submodules(proj_dir, submodules):
+Line 2:     """Return validated project-relative submodule directories."""
+Line 3:     if not submodules:
+Line 4:         return []
+Line 5:     proj_dir = os.path.abspath(proj_dir)
+Line 6:     normalized = []
+Line 7:     seen = set()
+Line 8:     for raw in submodules:
+Line 9:         value = (raw or "").strip()
+Line 10:         if not value:
+Line 11:             continue
+Line 12:         candidate = value if os.path.isabs(value) else os.path.join(proj_dir, value)
+Line 13:         candidate = os.path.abspath(candidate)
+Line 14:         try:
+Line 15:             inside_project = os.path.commonpath([proj_dir, candidate]) == proj_dir
+Line 16:         except ValueError:
+Line 17:             inside_project = False
+Line 18:         if not inside_project or candidate == proj_dir:
+Line 19:             raise ValueError(
+Line 20:                 f"--submodule must name subdirectories inside proj_dir, got: {raw}"
+Line 21:             )
+Line 22:         if not os.path.isdir(candidate):
+Line 23:             raise ValueError(f"--submodule path is not a directory: {raw}")
+Line 24:         rel = os.path.relpath(candidate, proj_dir).replace(os.sep, "/")
+Line 25:         if rel not in seen:
+Line 26:             normalized.append(rel)
+Line 27:             seen.add(rel)
+Line 28:     collapsed = []
+Line 29:     for rel in sorted(normalized, key=lambda path: (path.count("/"), path)):
+Line 30:         if not collapsed or not _is_under_submodules(rel, collapsed):
+Line 31:             collapsed.append(rel)
+Line 32:     return collapsed
+```
+
+Condition A (what the code actually does):
+If `submodules` is falsy (None or empty), the function returns an empty list. Otherwise, let `proj_dir` be the absolute path of the given directory. For each non-empty stripped element `raw` in `submodules`, construct `candidate` as `os.path.abspath(raw)` if `raw` is absolute else `os.path.abspath(os.path.join(proj_dir, raw))`. The function raises `ValueError` if `candidate` is not a directory, not strictly inside `proj_dir` (i.e., `os.path.commonpath([proj_dir, candidate]) != proj_dir` or `candidate == proj_dir`). If no error is raised, for each valid `candidate` a relative path `rel = os.path.relpath(candidate, proj_dir).replace(os.sep, '/')` is produced. These relative paths are deduplicated (first occurrence kept) into list `normalized` in iteration order, then sorted by ascending depth (number of '/' characters) and lexicographically. A collapsing pass retains only those paths that are not strictly under any already retained path: start with empty list `collapsed`; for each `path` in sorted `normalized`, add `path` to `collapsed` if `collapsed` is empty or no `p` in `collapsed` satisfies `path.startswith(p + '/')`. The function returns `collapsed`. The returned list satisfies: (a) every element is a non-empty relative path using forward slash, (b) no element is a prefix of another, (c) for every valid input `raw` that passes validation, there exists some returned element that is a prefix of the corresponding `rel` (or equals it), i.e., the returned paths are the minimal top-level subdirectories covering all specified submodules. Formally, let Norm = { rel | exists raw in submodules: raw != None and (raw or "").strip() != "" and cand = os.path.abspath(raw) if os.path.isabs(raw) else os.path.abspath(os.path.join(proj_dir, raw)) and os.path.isdir(cand) and os.path.commonpath([proj_dir, cand]) == proj_dir and cand != proj_dir and rel = os.path.relpath(cand, proj_dir).replace(os.sep, '/') }. Let L be the sequence of elements of Norm sorted by (rel.count('/'), rel). Define recursive function: Collapse(seq) = if seq empty then [] else let x = head(seq), tail = seq[1:] in [x] + Collapse([y for y in tail if not y.startswith(x + '/')]). Then result = Collapse(L).
+
+Condition B (what the specification requires):
+Returns a list of non-empty, forward-slash-separated relative directory paths. Each returned path names a directory that exists and is a strict descendant of proj_dir (not proj_dir itself). No returned path is an ancestor or descendant of any other returned path — the list is collapsed so that if one path is a prefix directory of another, only the shallower path is kept. The list contains no duplicates and is sorted by increasing directory depth (fewer path components first), with ties broken lexicographically. If submodules is None, empty, or contains only empty/whitespace strings, returns an empty list. Raises ValueError for any submodule path that is non-empty and does not name an existing directory inside proj_dir.
+
+Additional context:
+_is_under_submodules(rel: str, collapsed: list[str]) -> bool
+Pre-condition: rel is a non-empty relative path string. collapsed is a non-empty list of non-empty relative path strings produced by the collapsing loop.
+Post-condition: Returns True if rel is a descendant of any path in collapsed (i.e., any path in collapsed is a strict path-prefix of rel). Returns False otherwise.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

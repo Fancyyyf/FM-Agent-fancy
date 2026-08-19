@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/parser-py/format_spec_for_reasoner.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string composed of four sections separated by blank lines: (1) the value of spec[\"signature\"], (2) a line reading \"Pre-condition:\" followed by the value of spec[\"pre_condition\"] on the next line, (3) a line reading \"Post-condition:\" followed by the value of spec[\"post_condition\"] on the next line. The returned string always begins with the signature value and ends with the post_condition value. Every pair of adjacent sections is separated by exactly one blank line.",
+    "actual_behavior": "The function returns a string composed as follows: newline-separated concatenation of the value of key \"signature\" from spec (or empty string if missing, though pre-condition guarantees its presence), followed by the literal \"Pre-condition:\n\", the value of \"pre_condition\", then \"\n\nPost-condition:\n\", and finally the value of \"post_condition\". Formally: return_value = spec[\"signature\"] + \"\n\nRecipients: \" + \"Pre-condition:\n\" + spec[\"pre_condition\"] + \"\n\nPost-condition:\n\" + spec[\"post_condition\"]. The function has no side effects, does not mutate spec, and does not raise exceptions.",
+    "code_evidence": "Line 4: f\"{spec.get('signature', '')}\\n\\n\"\nLine 5: f\"Pre-condition:\\n{spec.get('pre_condition', '')}\\n\\n\"",
+    "trigger_condition": "When spec values end with a newline, the fixed '\\n\\n' separators produce two blank lines between sections instead of exactly one as required by the specification."
+  }
+}

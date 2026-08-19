@@ -1,0 +1,5 @@
+{
+  "signature": "call_edges(proj_dir: str) -> dict | None",
+  "pre_condition": "proj_dir is a string path to a project directory",
+  "post_condition": "When a CodeGraph index can be initialized for the project, returns a dict mapping each caller's fully-qualified name to a set of callee fully-qualified names for C++ source files within the project. When CodeGraph initialization is not possible, returns None."
+}

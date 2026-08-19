@@ -1,11 +1,11 @@
 {
   "id": "src--pipeline_setup-py--_run_generate_phases",
-  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_run_generate_phases.py",
+  "source_file": "src/pipeline_setup-py/_run_generate_phases.py",
   "function_name": "_run_generate_phases",
   "confirmation_status": "confirmed",
-  "attempts": "1",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_run_generate_phases.py",
   "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_run_generate_phases.md",
-  "probe_stdout": "CONFIRMED — mtime_changed=True, coverage_ok=False, buggy_phase_plan_ready=True, expected_phase_plan_ready=False",
-  "trigger_summary": "In incremental mode, the mtime-based OR check at lines 1034-1037 accepts a phases.json rewrite even when coverage is incomplete, bypassing the required _phases_cover_current_sources verification."
+  "probe_stdout": "[Pipeline] Stage 1/6: RESUME \u2014 phases.json found, skipping phase plan generation.\n[Pipeline] Stage 1/6: RESUME \u2014 phases.json found, skipping phase plan generation.\nDETAIL: modify path -> generic line kept: True, specialized to '/tmp/probe_run_generate_phases_4sxa8od5/fake_project': False\nDETAIL: built-in control path -> generic line kept: False, specialized: True\nCONFIRMED \u2014 modify-hook staged workflow lacks project-root specialization; still contains generic instruction: '- `phases[*].modules[*].source_files` \u2014 relative paths from repo root of all source files that belong to this module.' | expected specialization referencing: '/tmp/probe_run_generate_phases_4sxa8od5/fake_project'",
+  "trigger_summary": "When a plugin 'modify' hook supplies a workflow (plugin_stage.type='modify' with input_md), _run_generate_phases stages it via a bare shutil.copy2 and never rewrites the source_files instruction to the concrete project root \u2014 _prepare_workflow_file (which performs that specialization in the built-in flow) is not invoked, leaving the plugin author's generic repo-root placeholder in work_dir/workflow_generate_phases.md."
 }

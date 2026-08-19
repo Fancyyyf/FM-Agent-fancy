@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/tmp/project' containing file 'main.py' with submodules=None. The code yields the string 'main.py', but the specification requires a tuple like ('/tmp/project/main.py', 'main.py') and also should exclude test files.",
+  "offending_statements": "Line 20-23: yield rel",
+  "reason": "The code yields only relative path strings, violating the specification that expects (abs_path, rel_path) tuples. Additionally, the specification requires excluding test files, but no test file filtering exists in the code."
+}

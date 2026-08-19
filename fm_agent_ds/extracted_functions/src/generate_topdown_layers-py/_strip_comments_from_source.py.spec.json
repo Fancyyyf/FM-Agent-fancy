@@ -1,0 +1,5 @@
+{
+  "signature": "_strip_comments_from_source(text, lang_key) -> str",
+  "pre_condition": "text is a string containing source code in a language whose comment syntax is known to the system. lang_key is a string key identifying that language.",
+  "post_condition": "Returns a string of length len(text). For every character position i in the returned string: if text[i] lay within a comment — determined by the comment syntax rules of the language identified by lang_key — the returned character is a space; otherwise, the returned character equals text[i]. Comment syntax rules: languages whose line-comment prefix is '#' use line comments from '#' to end of line. All other languages use C-family comment syntax: line comments from '//' to end of line, and block comments delimited by '/*' and '*/'. Characters within string literals (single-quoted, double-quoted, or triple-quoted) are never interpreted as comment-starting sequences; string literals whose delimiters contain the comment prefix do not trigger comment removal."
+}

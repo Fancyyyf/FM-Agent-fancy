@@ -1,0 +1,5 @@
+{
+  "signature": "load_call_edges(path: str | os.PathLike | None) -> list[CallEdge]",
+  "pre_condition": "path is None, or identifies a file containing supplemental call edges in JSON format, or identifies a directory whose recursive contents may include JSON call-edge files.",
+  "post_condition": "When path is None, returns an empty list. When path identifies a single file, returns the CallEdge objects parsed from that file with all duplicate edges removed. When path identifies a directory, returns the CallEdge objects from every qualifying edge file found recursively under that directory, combined into a single list with all duplicate edges removed. In all non-None cases, each returned element is a CallEdge, and for any distinct pair of caller and callee specifications at most one CallEdge appears. Results derived from a directory walk are returned in a stable order consistent with the filesystem walk ordering."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "http://example.com:abc",
+  "offending_statements": "Line 2: parsed = urlparse(url)\nLine 3: if parsed.scheme not in (\"http\", \"https\") or not parsed.netloc:",
+  "reason": "The code only checks that the scheme is http/https and that netloc is non-empty, but does not validate that the netloc forms a syntactically valid authority (e.g., port must be numeric, hostname must not contain spaces). A URL like 'http://example.com:abc' (port with letters) is not syntactically valid according to RFC 3986, yet the code accepts it because urlparse sets netloc='example.com:abc' which is non-empty. The specification requires raising ConfigWizardError for any non-syntactically-valid absolute URL, so this input violates the specification."
+}

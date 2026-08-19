@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_domain_knowledge_prompt_section",
+      "signature": "_domain_knowledge_prompt_section(work_dir) -> str",
+      "pre_condition": "work_dir is a path to a directory that may contain domain-knowledge markdown files staged from the --domain-knowledge pipeline argument.",
+      "post_condition": "Returns a string that is empty when work_dir contains no domain-knowledge files. When domain-knowledge files are present, returns a formatted string suitable for inclusion in an LLM prompt, prefixed with a header line followed by the contents of each file."
+    },
+    {
+      "name": "_llm_select_json",
+      "signature": "_llm_select_json(work_dir, prompt_content, stage, validator, schema_description, trace_meta) -> dict | None",
+      "pre_condition": "work_dir is a valid directory path. prompt_content is a non-empty string. stage is a non-empty string identifying a pipeline stage. validator is a callable that accepts a dict and returns a (bool, str | None) tuple where the bool indicates validity and the second element is an error description when false. schema_description is a non-empty string describing the expected JSON output shape. trace_meta is a dict whose keys are strings and values are JSON-serializable.",
+      "post_condition": "Sends prompt_content to the configured LLM. When the LLM returns output that is parseable as JSON, conforms to schema_description, and passes validator, returns the parsed dict. When the LLM returns no output, unparseable output, or output that is not valid JSON, does not conform to schema_description, or fails validator, returns None. The exchange is traced with stage and trace_meta as identifying labels."
+    }
+  ]
+}

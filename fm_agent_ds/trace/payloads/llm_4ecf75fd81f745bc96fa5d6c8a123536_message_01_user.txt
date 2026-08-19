@@ -1,0 +1,62 @@
+Programming language: Python
+
+Pre-condition:
+The code block executes without raising an exception. The else branch is active. _prepare_workflow_file(proj_dir, work_dir, script_dir, "workflow_generate_phases.md") is called and completes successfully, placing or updating the workflow file in work_dir. Three string variables are bound: fm_reminder = "IMPORTANT: The fm_agent/ directory is NOT part of the project source code. It is a workspace for storing your output files only. Do NOT include fm_agent/ paths in phases.json. Do NOT modify any existing project files."; incremental_reminder = "IMPORTANT: An existing fm_agent/phases.json from a previous run is already present. Do NOT regenerate it from scratch. Instead, inspect the current state of the source code and UPDATE the existing fm_agent/phases.json so it reflects the current version of the code: add modules and source files that are new, remove entries whose files no longer exist, and adjust phases as needed. Preserve entries that are still accurate."; submodule_reminder is "" if submodules is falsy, otherwise it contains a list of allowed subdirectories as per lines 55–60. A for loop over attempt = 1 .. OPENCODE_MAX_RETRIES begins. If _resume_skip is true, break is executed immediately; control passes to the next statement after the loop. Otherwise, the loop runs; inside each iteration a prompt is built according to the rules: for the first attempt when resume is false a specific initial prompt is used, else a retry prompt; is_incremental extends it with incremental_reminder; if phase_plan_errors is non‑empty, schema repair instructions are included (the construction of schema_repair_prompt starts at line 79 and is assumed to be completed in the full loop body). Subsequently, a CLI command is built from that prompt (via build_llm_cli_command) and executed via run_opencode_traced, which invokes the LLM to generate or update phases.json and possibly other files in work_dir. After the loop (either by break or exhaustion of attempts), the function returns or continues to its next statement. No other persistent side‑effects occur within this block.
+
+Code block:
+```python
+Line 81:                 "partially generated, but it does not match the required schema. "
+Line 82:                 "Read the project source files and repair these problems:\n"
+Line 83:                 f"{formatted_errors}\n"
+Line 84:                 "Do not use an empty source_files array merely to satisfy the schema. "
+Line 85:                 "Use an empty array only when the module genuinely owns no source files."
+Line 86:             )
+Line 87:             prompt = f"{prompt}\n\n{schema_repair_prompt}"
+Line 88:         prompt_file = os.path.join(proj_dir, "fm_agent", "workflow_generate_phases.md")
+Line 89:         command = build_llm_cli_command(
+Line 90:             model=OPENCODE_SETUP_MODEL,
+Line 91:             prompt=prompt,
+Line 92:             cwd=proj_dir,
+Line 93:             files=[prompt_file],
+Line 94:         )
+Line 95:         try:
+Line 96:             run_opencode_traced(
+Line 97:                 proj_dir=proj_dir,
+Line 98:                 work_dir=work_dir,
+Line 99:                 command=command,
+Line 100:                 stage="generate_phases_json",
+Line 101:                 input_files=[
+Line 102:                     "fm_agent/workflow_generate_phases.md",
+Line 103:                     *list_staged_domain_knowledge_relpaths(work_dir),
+Line 104:                 ],
+Line 105:                 output_files=[
+Line 106:                     "fm_agent/phases.json",
+Line 107:                 ],
+Line 108:                 summary=f"OpenCode generate phases.json attempt {attempt}",
+Line 109:                 metadata={"attempt": attempt},
+Line 110:             )
+Line 111:         except subprocess.CalledProcessError as e:
+Line 112:             logging.warning(f"Stage 1 attempt {attempt}: opencode exited with code {e.returncode}")
+Line 113:         phase_plan_errors = (
+Line 114:             _phase_plan_schema_errors(phases_json)
+Line 115:             if os.path.exists(phases_json)
+Line 116:             else ["phases.json is missing"]
+Line 117:         )
+Line 118:         phase_plan_ready = False
+Line 119:         if not phase_plan_errors:
+Line 120:             if submodules:
+```
+
+Additional context:
+build_llm_cli_command(model, prompt, cwd, files) -> str
+Pre-condition: model is a string identifying the LLM model to use; prompt is a string containing the natural-language instruction; cwd is a valid directory path; files is a list of absolute file paths that exist and are readable
+Post-condition: Returns a CLI command string that, when executed in the environment, invokes the configured LLM backend with the given model, prompt, and file attachments
+
+run_opencode_traced(proj_dir, work_dir, command, stage, input_files, output_files, summary, metadata)
+Pre-condition: proj_dir is an existing project directory; work_dir is a writable directory; command is a valid CLI command string; stage is a string identifying the pipeline stage; input_files is a list of file paths relative to proj_dir that exist and are readable; output_files is a list of file paths relative to proj_dir that the invoked process is expected to produce
+Post-condition: Returns normally when the command executes. Upon return, output_files are expected to exist at their specified paths under proj_dir if the LLM-based process completed successfully; structured trace events are written to the trace directory
+
+run_plugin_command(cmd, plugin_root, proj_dir, label)
+Pre-condition: cmd is a non-empty string specifying a shell command; plugin_root is a valid directory path; proj_dir is an existing directory; label is a string identifying the operation for log messages
+Post-condition: Executes the command with the working directory set to plugin_root and FM_AGENT_PLUGIN_ROOT set to plugin_root in the subprocess environment. If the command exits with a non-zero code, raises CalledProcessError
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

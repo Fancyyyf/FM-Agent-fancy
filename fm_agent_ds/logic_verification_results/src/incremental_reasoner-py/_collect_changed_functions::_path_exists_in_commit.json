@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_collect_changed_functions::_path_exists_in_commit.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns True when rel_path identifies an object present at old_commit_id in the repository at proj_dir. Returns False when no such object exists at that revision or when the git command fails for any other reason. Never raises an exception.",
+    "actual_behavior": "The function returns a boolean. It returns True if and only if the git command `git -C proj_dir cat-file -e old_commit_id:rel_path` exits with a return code of 0, which indicates that the object (file or directory) at the given relative path exists in the specified commit of the repository located at `proj_dir`. If the command fails for any reason (including the path not existing or external errors), the return code is non-zero and the function returns False. No exceptions are raised. \n\nFormally: Let cmd = ['git', '-C', proj_dir, 'cat-file', '-e', f\"{old_commit_id}:{rel_path}\"]. Then _path_exists_in_commit(rel_path) == (subprocess.run(cmd, check=False, capture_output=True, text=True).returncode == 0).",
+    "code_evidence": "Line 3: return subprocess.run(\nLine 4:     [\"git\", \"-C\", proj_dir, \"cat-file\", \"-e\", f\"{old_commit_id}:{rel_path}\"],\nLine 5:     check=False,\nLine 6:     capture_output=True,\nLine 7:     text=True,\nLine 8: ).returncode == 0",
+    "trigger_condition": "The code runs a git command via subprocess.run without handling non-zero exit or OSError. If git is missing, subprocess.run raises FileNotFoundError, so the function raises an exception instead of returning False as required by the specification's 'Returns False when ... the git command fails for any other reason. Never raises an exception.'"
+  }
+}

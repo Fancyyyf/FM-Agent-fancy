@@ -1,0 +1,31 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _function_id(uri: str, label: str) -> str:
+Line 2:     try:
+Line 3:         name, arity = label.rsplit("/", 1)
+Line 4:         int(arity)
+Line 5:     except (ValueError, TypeError) as exc:
+Line 6:         raise ValueError(f"ELP function label has no valid arity: {label!r}") from exc
+Line 7:     if ":" in name and not name.startswith("'"):
+Line 8:         name = name.rsplit(":", 1)[1]
+Line 9:     module = _module_from_uri(uri)
+Line 10:     return f"{_escape_component(module)}__{_escape_component(name)}__{arity}"
+```
+
+Condition A (what the code actually does):
+If the label string contains a slash '/' and the substring after the last slash is a valid non‑negative integer, the function returns a string formed by (1) computing a module identifier from uri via `_module_from_uri(uri)`, (2) extracting a function name from the part before the last slash: if that part contains a colon ':' and does not start with a single quote, the function name is taken as the substring after the last colon; otherwise it is the entire part before the slash, (3) applying `_escape_component` to the module identifier and to the function name, and (4) concatenating them with double underscores and the integer arity: `f"{escaped_module}__{escaped_name}__{arity}"`. If the label does not contain a slash or the substring after the slash cannot be converted to a non‑negative integer, a `ValueError` is raised with the message `"ELP function label has no valid arity: {label!r}"`, chained from the original exception. The functions `_module_from_uri` and `_escape_component` are assumed to always produce a deterministic result under the given pre‑conditions; any exceptions they raise propagate directly. Formally, for all `uri`, `label` satisfying the pre‑condition: (∃ name, arity_s : label = name + '/' + arity_s ∧ arity_s ∈ ℕ) ⇒ result = concat(_escape_component(_module_from_uri(uri)), "__", _escape_component(name_without_module), "__", arity_s) where name_without_module = if (':' ∈ name ∧ name[0] ≠ ''') then rsplit(name, ':', 1)[1] else name; otherwise the function raises ValueError with the stated message.
+
+Condition B (what the specification requires):
+Returns a canonical function identifier string formed from the module identifier derived from uri, the unqualified function name extracted from label, and the arity extracted from label, joined with double underscores in the form <module>__<name>__<arity>. Each component (<module>, <name>) has any characters that would conflict with the double-underscore separator deterministically replaced. The unqualified function name is the portion of label before the final forward slash; when that portion contains a colon and does not begin with a single quote character, only the substring after the last colon is used as the unqualified name. Raises ValueError when label is not a string, label does not contain a forward slash separator, or the portion of label after the final forward slash is not parseable as a non-negative integer.
+
+Additional context:
+_module_from_uri(uri: str) -> str
+Pre-condition: uri is a non-empty string representing an absolute file path for an Erlang source file.
+Post-condition: Returns a deterministic string identifier for the module containing the source file at uri. The same uri always produces the same module identifier.
+
+_escape_component(component: str) -> str
+Pre-condition: component is a non-empty string (a module identifier or a function name).
+Post-condition: Returns a transformed version of component where any characters that would clash with the double-underscore separator in the function identifier format are deterministically replaced. Identical component values always produce identical results.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

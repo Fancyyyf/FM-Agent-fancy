@@ -1,0 +1,39 @@
+Programming language: Python
+
+Pre-condition:
+self.opencode_dir refers to a filesystem path that may or may not exist as a directory. self._opencode_offsets is a dict mapping JSONL filenames (strings) to the byte position up to which the file has been consumed.
+
+Code block:
+```python
+Line 1:     def tail_opencode(self):
+Line 2:         if not self.opencode_dir.exists():
+Line 3:             return
+Line 4:         for path in sorted(self.opencode_dir.glob("*.jsonl")):
+Line 5:             name = path.name
+Line 6:             try:
+Line 7:                 size = path.stat().st_size
+Line 8:             except OSError:
+Line 9:                 continue
+Line 10:             off = self._opencode_offsets.get(name, 0)
+Line 11:             if size < off:
+Line 12:                 off = 0
+Line 13:             if size == off:
+Line 14:                 continue
+Line 15:             with open(path, "r", encoding="utf-8") as f:
+Line 16:                 f.seek(off)
+Line 17:                 for line in f:
+Line 18:                     if not line.strip():
+Line 19:                         continue
+Line 20:                     try:
+Line 21:                         rec = json.loads(line)
+Line 22:                     except Exception:
+Line 23:                         continue
+Line 24:                     self._ingest_opencode(rec, name)
+Line 25:                 self._opencode_offsets[name] = f.tell()
+```
+
+Additional context:
+_ingest_opencode(self, rec, name)
+Pre-condition: rec is a dict parsed from a valid JSON object line in a raw OpenCode trace file identified by name (a string filename).
+Post-condition: The raw trace record rec is incorporated into the State's in-memory OpenCode trace collection. The aggregate cache_window collection — pairs of (cached_tokens, total_input_tokens) — is updated to reflect cumulative token usage across all records ingested so far.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

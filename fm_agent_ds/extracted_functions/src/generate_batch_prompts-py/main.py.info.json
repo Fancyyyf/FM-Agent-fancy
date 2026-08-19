@@ -1,0 +1,40 @@
+{
+  "callees": [
+    {
+      "name": "parse_args",
+      "signature": "parse_args() -> Namespace",
+      "pre_condition": "The process is invoked with command-line arguments including --phase, --layers, --batch-size, --output-dir, --resume, and --dry-run.",
+      "post_condition": "Returns a Namespace object whose attributes include phase (int), layers (str), batch_size (int), output_dir (str or None), resume (bool), and dry_run (bool), each reflecting the corresponding command-line argument."
+    },
+    {
+      "name": "read_json",
+      "signature": "read_json(filepath) -> dict",
+      "pre_condition": "filepath is a path to an existing, syntactically valid JSON file on the filesystem.",
+      "post_condition": "Returns the fully parsed content of the JSON file as a Python dict. Raises an error if the file does not exist or contains invalid JSON."
+    },
+    {
+      "name": "parse_layers_spec",
+      "signature": "parse_layers_spec(layers_spec) -> tuple[int, int]",
+      "pre_condition": "layers_spec is a string in one of two forms: a single non-negative integer N, or a range N-M where N and M are non-negative integers.",
+      "post_condition": "Returns a (start, end) tuple of two ints representing the inclusive layer range. For a single integer N, returns (N, N). Raises if the format is invalid or if start > end."
+    },
+    {
+      "name": "is_file_ready",
+      "signature": "is_file_ready(file_path) -> bool",
+      "pre_condition": "file_path is a path to an extracted function file.",
+      "post_condition": "Returns True when both an adjacent .spec.json file (with exactly the fields signature, pre_condition, post_condition, all strings) and an adjacent .info.json file (with exactly the field callees, containing an array of dicts each with name, signature, pre_condition, post_condition, all strings) exist; returns False otherwise."
+    },
+    {
+      "name": "chunked",
+      "signature": "chunked(iterable, chunk_size) -> Iterator[list]",
+      "pre_condition": "iterable is a finite iterable. chunk_size is a positive integer.",
+      "post_condition": "Yields consecutive, non-overlapping sub-lists of the input iterable, each of length exactly chunk_size except the final sub-list which may be shorter. Element order within and across sub-lists matches the original iterable order."
+    },
+    {
+      "name": "build_prompt",
+      "signature": "build_prompt(phase, layer_idx, is_cycle, prompt_funcs, func_to_layer, all_funcs, work_dir, fm_agent_prefix, ext_to_lang) -> str",
+      "pre_condition": "phase is a positive integer. layer_idx is a non-negative integer. is_cycle is a boolean. prompt_funcs is a list of function metadata dicts, each containing at least 'file' and 'name' keys. func_to_layer and all_funcs are dicts keyed by function name. work_dir is a Path to the fm_agent/ root. fm_agent_prefix is a relative path string for prefix-stripping. ext_to_lang maps lowercase file extensions to language names.",
+      "post_condition": "Returns a string containing the full batch prompt text, including domain context (engine overview, phase types), per-function extracted source code (read from work_dir), per-function signatures, and callee specifications drawn from earlier-layer .info.json files for each function's callers. The prompt text is self-contained and ready for LLM consumption."
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_validate_extraction(extracted_dir, registry_langs=None)",
+  "pre_condition": "extracted_dir is a path to an existing directory. Each file in the directory tree is a function extraction file with an extension. registry_langs, when provided, is a set of language key strings.",
+  "post_condition": "Returns a list of (file_path, count) tuples, one per file under extracted_dir whose extension maps to a known language key (via the global EXT_TO_LANG mapping), whose language key is absent from registry_langs (when registry_langs is provided), and for which regex-based re-parsing yields a function count not equal to 1. Files whose extension maps to no known language key produce no entry. Files whose language key appears in registry_langs produce no entry, because backend-extracted files are known to contain exactly one function by construction. Returns an empty list when every remaining re-parsed file contains exactly one function."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/home/user/project' is a valid directory containing a C++ source file 'empty.cpp' (e.g., with content 'int global_var;') that defines no functions. CodeGraphExtractor.from_proj_dir returns a valid extractor, and get_functions_by_file('cpp', proj_dir) includes 'empty.cpp' with an empty list. The function returns {\"/home/user/project/empty.cpp\": []}.",
+  "offending_statements": "Line 4: return cg.get_functions_by_file(\"cpp\", proj_dir) if cg else {}",
+  "reason": "The specification requires each value in the returned dictionary to be a non-empty list of extracted function tuples and that each key corresponds to a file containing at least one function definition. The code returns the raw output of get_functions_by_file, which can include source files that have no function definitions with empty lists, violating the specification."
+}

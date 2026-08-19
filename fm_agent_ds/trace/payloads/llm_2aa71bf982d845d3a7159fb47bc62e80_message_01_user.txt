@@ -1,0 +1,24 @@
+Programming language: Python
+
+Pre-condition:
+batches is a list of dicts, each containing a 'functions' key mapped to a list of relative file path strings. proj_dir is a string identifying an existing directory.
+
+Code block:
+```python
+Line 1: def _get_pending_batches(batches, proj_dir):
+Line 2:     """Return batches that still have at least one function without specs."""
+Line 3:     pending = []
+Line 4:     for batch in batches:
+Line 5:         for func_rel in batch.get("functions", []):
+Line 6:             full_path = os.path.join(proj_dir, func_rel)
+Line 7:             if not is_file_ready(full_path):
+Line 8:                 pending.append(batch)
+Line 9:                 break
+Line 10:     return pending
+```
+
+Additional context:
+is_file_ready(file_path)
+Pre-condition: file_path is the path to an extracted function file.
+Post-condition: Returns True iff both a .spec.json and a .info.json sidecar file exist for the function at file_path and are valid; returns False otherwise.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

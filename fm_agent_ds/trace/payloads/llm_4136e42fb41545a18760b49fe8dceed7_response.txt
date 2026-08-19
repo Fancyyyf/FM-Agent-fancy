@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "filepath points to a file containing 'def foo():\\r\\n    pass\\r\\n', lang_key='python', proj_dir=None. The file has CRLF line endings.",
+  "offending_statements": "Line 15: with open(filepath, \"r\", errors=\"replace\") as f:",
+  "reason": "The code opens the file in default text mode without newline='', causing universal newline translation. Consequently, raw_lines will have '\\n' line endings instead of the file's original '\\r\\n' endings, violating the requirement that each line preserve its trailing newline character."
+}

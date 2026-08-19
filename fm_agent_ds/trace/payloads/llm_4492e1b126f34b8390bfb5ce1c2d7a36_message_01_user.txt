@@ -1,0 +1,36 @@
+Programming language: Python
+
+Pre-condition:
+extracted_rel is a relative file path formed by joining the '::'-separated components of a valid FQN with the platform path separator, corresponding to a function extracted under the extracted_functions/ directory tree.
+
+Code block:
+```python
+Line 1: def _extracted_file_to_source_rel(extracted_rel):
+Line 2:     """Map an extracted-function file path back to its source file (relative).
+Line 3:     Inverse of the extraction layout: ``src/engine/loader-cpp/loadData.cpp``
+Line 4:     (a function file) -> ``src/engine/loader.cpp`` (the source file). Extraction
+Line 5:     builds the function directory by replacing the source filename's last dot
+Line 6:     with a hyphen (``loader.cpp`` -> ``loader-cpp``). Member functions keep the
+Line 7:     class qualifier in the flat filename (``.../loader-cpp/MyClass::method.cpp``),
+Line 8:     so the ``<base>-<ext>`` directory is the function file's immediate parent; we
+Line 9:     still locate it by scanning the path components from the right (matching a
+Line 10:     component that ends in ``-<known extension>``) so the mapping is robust.
+Line 11:     """
+Line 12:     parts = extracted_rel.split(os.sep)
+Line 13:     for i in range(len(parts) - 2, -1, -1):          
+Line 14:         comp = parts[i]
+Line 15:         hyphen = comp.rfind("-")
+Line 16:         if hyphen > 0 and comp[hyphen + 1:] in EXT_TO_LANG:
+Line 17:             src_dir = os.sep.join(parts[:i])
+Line 18:             source_base = comp[:hyphen] + "." + comp[hyphen + 1:]
+Line 19:             return os.path.join(src_dir, source_base) if src_dir else source_base
+Line 20:     # Fallback: original immediate-parent behaviour (no recognised -ext dir).
+Line 21:     func_dir = os.path.dirname(extracted_rel)
+Line 22:     src_dir = os.path.dirname(func_dir)
+Line 23:     dir_name = os.path.basename(func_dir)
+Line 24:     hyphen = dir_name.rfind("-")
+Line 25:     source_base = dir_name[:hyphen] + "." + dir_name[hyphen + 1:] if hyphen > 0 else dir_name
+Line 26:     return os.path.join(src_dir, source_base) if src_dir else source_base
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

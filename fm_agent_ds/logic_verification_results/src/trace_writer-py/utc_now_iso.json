@@ -1,0 +1,5 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/trace_writer-py/utc_now_iso.py",
+  "verdict": "MATCH",
+  "gaps": null
+}

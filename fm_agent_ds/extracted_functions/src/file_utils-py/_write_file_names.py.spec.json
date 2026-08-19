@@ -1,0 +1,5 @@
+{
+  "signature": "_write_file_names(file_names, output_path) -> list[str]",
+  "pre_condition": "file_names is a list of file path strings. output_path is a string path whose parent directory exists and is writable.",
+  "post_condition": "Returns a list of unique strings from file_names, sorted in ascending lexicographic order, with no duplicates present. Atomically updates the file at output_path to contain a JSON array of those same sorted, deduplicated strings, formatted with 2-space indentation and non-ASCII characters rendered as-is. After return, the JSON array at output_path contains the identical elements in the identical sorted order as the returned list. The file at output_path is never observable in a partially written state: either the previous file content remains intact or the new content is fully written."
+}

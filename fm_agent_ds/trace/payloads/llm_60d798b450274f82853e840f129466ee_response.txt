@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir = '/tmp/some_dir', with git not installed or not on PATH.",
+  "offending_statements": "Line 8: except subprocess.CalledProcessError:",
+  "reason": "If git is not found, subprocess.run raises FileNotFoundError (or OSError), which is not caught. The exception propagates instead of returning None as required by the specification for any git command failure."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--call_graph_edges-py--load_call_edges",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/load_call_edges.py",
+  "function_name": "load_call_edges",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--call_graph_edges-py--load_call_edges.py",
+  "detail_file": "fm_agent/bug_validation/src--call_graph_edges-py--load_call_edges.md",
+  "probe_stdout": "rglob walk order:   ['z.json', 'a.json']\nsorted(rglob) order: ['a.json', 'z.json']\nload_call_edges merged edge source: 'SOURCE_FROM_a'\nCONFIRMED — load_call_edges uses sorted order (source='SOURCE_FROM_a') instead of walk order (expected='SOURCE_FROM_z')\n",
+  "trigger_summary": "The code calls sorted() on rglob results, imposing alphabetical order instead of filesystem walk ordering as the spec requires; observable when two files with the same edge key are processed in the wrong order."
+}

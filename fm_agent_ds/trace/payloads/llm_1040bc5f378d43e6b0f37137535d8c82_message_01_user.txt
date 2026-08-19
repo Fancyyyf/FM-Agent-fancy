@@ -1,0 +1,49 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def batch_extract_all(proj_dir: str) -> tuple:
+Line 2:     """Call batch_extract for every registered language and merge results.
+Line 3:     Returns (funcs, langs) where funcs is {abs_filepath: [(func_name, body)]}
+Line 4:     and langs is the set of language keys that returned data.
+Line 5:     """
+Line 6:     funcs = {}
+Line 7:     langs = set()
+Line 8:     for lang, handler in REGISTRY.items():
+Line 9:         result = handler.batch_extract(proj_dir)
+Line 10:         if result:
+Line 11:             funcs.update(result)
+Line 12:             langs.add(lang)
+Line 13:     return funcs, langs
+```
+
+Condition A (what the code actually does):
+If no exception occurs, the function returns a tuple (funcs, langs) where:
+- funcs is a dictionary mapping absolute file paths to lists of (function_name, body_text) tuples. It is constructed by iterating over REGISTRY.items() (in the order defined by that dictionary), calling handler.batch_extract(proj_dir) for each (lang, handler), and merging every non-empty result D via funcs.update(D). Consequently, if the same absolute file path appears in multiple D’s, only the entry from the last language that handled that file is retained.
+- langs is a set containing exactly those lang keys for which handler.batch_extract(proj_dir) returned a non-empty dictionary.
+- proj_dir is not modified.
+
+If any call to handler.batch_extract(proj_dir) raises an exception, the function does not return normally; the exception is propagated unchanged.
+
+Formal logic:
+Assume REGISTRY is a global mapping from language identifiers to handler objects with a method batch_extract.
+Let (f1, l1) = ({}, set())
+For each (lang, handler) in REGISTRY.items():
+   D = handler.batch_extract(proj_dir)
+   if D:  // D is not empty
+       funcs = funcs ∪ D  (union with overwrite, i.e., for key k, funcs[k] = D[k])
+       langs = langs ∪ {lang}
+Post-condition (successful execution):
+  result = (funcs, langs) ∧
+  funcs = ⋃_{lang∈L, D_lang ≠ ∅} D_lang  (with last-write-wins on overlapping keys in iteration order) ∧
+  langs = { lang ∈ keys(REGISTRY) | handler.batch_extract(proj_dir) ≠ ∅ }
+If ∃ lang such that handler.batch_extract(proj_dir) raises exception E, the function halts with exception E.
+
+Condition B (what the specification requires):
+Returns (funcs, langs). funcs is a dict mapping each absolute file path to a non-empty list of (func_name, body_text) tuples for all functions extractable from that file across all supported languages. langs is a set of language key strings, containing exactly those language keys for which at least one function was extracted. When no function is extractable from any file in proj_dir, returns ({}, set()).
+
+Additional context:
+batch_extract(proj_dir: str) -> dict
+Pre-condition: proj_dir is a path to an existing directory containing source files.
+Post-condition: Returns a dict mapping each absolute file path to a list of (func_name, body_text) tuples for all functions that the language backend can extract from the file. Returns an empty dict when the backend is unavailable or no functions are found.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

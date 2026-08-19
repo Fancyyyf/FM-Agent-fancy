@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "block='break', language='python' (assuming _TERMINATING_PATTERNS has no entry for 'python')",
+  "offending_statements": "Line 4: pattern = r'\\b(return\\b|exit\\s*\\(|raise\\s|throw\\s|abort\\s*\\()'",
+  "reason": "The default regex pattern omits 'break' and 'continue', which are unconditional control transfer statements required by the specification. For any language not in _TERMINATING_PATTERNS, a block containing only 'break' or 'continue' causes the function to return False instead of True."
+}

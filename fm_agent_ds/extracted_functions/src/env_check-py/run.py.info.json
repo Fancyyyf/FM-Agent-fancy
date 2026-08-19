@@ -1,0 +1,52 @@
+{
+  "callees": [
+    {
+      "name": "is_cli_backend_enabled",
+      "signature": "is_cli_backend_enabled() -> bool",
+      "pre_condition": "None required.",
+      "post_condition": "Returns True when the LLM backend is configured as codex-cli or claude-cli; returns False for any other backend configuration value. No side effects."
+    },
+    {
+      "name": "_load_ignored",
+      "signature": "_load_ignored(work_dir) -> set[str]",
+      "pre_condition": "work_dir is a path to an existing directory.",
+      "post_condition": "Returns the set of check_id strings that were previously persisted as ignored in the ignored-checks file under work_dir. Returns an empty set if the ignored-checks file does not exist or contains no entries. No side effects — does not create or modify the file."
+    },
+    {
+      "name": "_check_llm_api_key",
+      "signature": "_check_llm_api_key(config) -> tuple[bool, str | None]",
+      "pre_condition": "config provides access to the llm.api_key configuration field.",
+      "post_condition": "Returns (True, None) when the configured LLM API key is non-empty and not a placeholder value. Returns (False, error_message) when the API key is empty, unset, or appears to be a placeholder. No side effects."
+    },
+    {
+      "name": "_check_oh_my_openagent",
+      "signature": "_check_oh_my_openagent() -> tuple[bool, str | None]",
+      "pre_condition": "None required.",
+      "post_condition": "Returns (True, None) when oh-my-openagent is reachable via bunx and responds within 10 seconds. Returns (False, error_message) when bunx cannot invoke oh-my-openagent for any reason. No side effects."
+    },
+    {
+      "name": "_check_comment_checker",
+      "signature": "_check_comment_checker() -> tuple[bool, str | None]",
+      "pre_condition": "None required.",
+      "post_condition": "Returns (True, None) when the comment-checker hook is disabled in the oh-my-openagent configuration. Returns (False, error_message) when the hook is enabled or the configuration file cannot be read. No side effects."
+    },
+    {
+      "name": "_check_codegraph_version",
+      "signature": "_check_codegraph_version(config) -> tuple[bool, str | None]",
+      "pre_condition": "config provides access to the pinned codegraph version and binary location configuration.",
+      "post_condition": "Returns (True, None) when the codegraph binary is installed at the pinned version specified in config. Returns (False, error_message) when the binary is not found, not executable, or its version does not match the pinned version. No side effects."
+    },
+    {
+      "name": "is_interactive",
+      "signature": "is_interactive() -> bool",
+      "pre_condition": "None required.",
+      "post_condition": "Returns True when the process's standard input is connected to a terminal (TTY); returns False otherwise. No side effects."
+    },
+    {
+      "name": "_save_ignored",
+      "signature": "_save_ignored(work_dir, ignored_set) -> None",
+      "pre_condition": "work_dir is a path to an existing directory. ignored_set is a set of check_id strings.",
+      "post_condition": "Persists every check_id in ignored_set to the ignored-checks file under work_dir. Creates the file if it does not exist; overwrites it if it does. The function does not signal errors to the caller — failures are silent."
+    }
+  ]
+}

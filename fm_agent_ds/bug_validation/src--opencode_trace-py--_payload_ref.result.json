@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--_payload_ref",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/_payload_ref.py",
+  "function_name": "_payload_ref",
+  "confirmation_status": "confirmed",
+  "attempts": "3",
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--_payload_ref.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--_payload_ref.md",
+  "probe_stdout": "Attempt 1 (public API): OK — _payload_ref returned a string\nAttempt 2 (cross-filesystem simulation): OK — result='../disk2/data/file'\nAttempt 2 (UNC-style double-slash): OK — result='../../home/user/data'\nAttempt 2 (root vs relative mix): OK — result='home/fancy/Projects_Vault/FM-Agent/relative/path'\nAttempt 2 (deeply nested): OK — result='../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/b/data'\nAttempt 2 (symlink-looking): OK — result='../../var/data'\nAttempt 2 (dot-components): OK — result='../home/data'\nCONFIRMED — pathological input 'empty path': ValueError: no path specified",
+  "trigger_summary": "os.path.relpath raises ValueError when path is empty string, violating the post-condition that _payload_ref always returns a string; on Windows, cross-drive paths also trigger ValueError."
+}

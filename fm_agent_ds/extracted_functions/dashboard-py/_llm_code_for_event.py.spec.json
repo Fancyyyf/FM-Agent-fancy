@@ -1,0 +1,5 @@
+{
+  "signature": "_llm_code_for_event(status)",
+  "pre_condition": "status is a value (typically a string or None) representing an event or verification status.",
+  "post_condition": "Returns a short display code string. Status values indicating successful matching or operation completion yield the code '200'. Status values indicating a malformed or unparseable result yield the code 'FMT'. Status values indicating a general error yield the code 'ERR'. For any other truthy status value, returns the status value unchanged. When status is falsy, returns '?'."
+}

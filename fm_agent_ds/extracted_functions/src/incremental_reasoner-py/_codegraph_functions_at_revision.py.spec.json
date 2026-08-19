@@ -1,0 +1,5 @@
+{
+  "signature": "_codegraph_functions_at_revision(proj_dir, revision, file_languages) -> tuple | None",
+  "pre_condition": "proj_dir is a path to a directory within a git repository. revision is a valid commit identifier reachable in that repository. file_languages is a dict mapping relative file paths to language key strings.",
+  "post_condition": "If a git worktree at the given revision can be created and CodeGraph can successfully index the resulting source tree, returns a tuple (functions, coverage) where functions maps each source file path to a dict of function data keyed by function name, and coverage indicates for each file in file_languages which functions were and were not observed by CodeGraph. If worktree creation fails or CodeGraph indexing fails at any point, returns None after logging a warning. In all cases — success, failure, or any exception in between — any temporary worktree and its parent directory created during the call are removed before the function returns, leaving no side effects on the filesystem."
+}

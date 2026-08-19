@@ -1,0 +1,18 @@
+Programming language: Python
+
+Pre-condition:
+self.cache_window is a non-None iterable of 2-element iterables, each representing a pair of (cached_token_count, total_input_token_count) for a segment of accumulated trace data.
+
+Code block:
+```python
+Line 1:     def cache_hit_rate(self):
+Line 2:         if not self.cache_window:
+Line 3:             return None
+Line 4:         cr_total = sum(cr for cr, _ in self.cache_window)
+Line 5:         in_total = sum(t for _, t in self.cache_window)
+Line 6:         if in_total == 0:
+Line 7:             return None
+Line 8:         return cr_total / in_total
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

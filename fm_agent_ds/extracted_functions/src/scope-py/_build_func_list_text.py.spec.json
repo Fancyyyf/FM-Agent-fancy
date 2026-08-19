@@ -1,0 +1,5 @@
+{
+  "signature": "_build_func_list_text(funcs_info, source_lines) -> str",
+  "pre_condition": "funcs_info is a non-empty list of dicts. Each dict contains at minimum a 'name' key with a string value. source_lines is a list of strings.",
+  "post_condition": "Returns a string formed by concatenating one formatted line per entry in funcs_info, separated by newline characters. For each function entry, the line contains the function's name and the source text obtained from source_lines at the 0-based index corresponding to the entry's 'start' key (a 1-based line number) with leading and trailing whitespace removed. If the entry has a non-empty 'docstring' key, the first line of the docstring value is appended, truncated to a maximum length of 120 characters; otherwise nothing additional is appended for that entry. Entries are processed in the order they appear in funcs_info. When funcs_info is empty, the result is an empty string. The result depends only on the contents of funcs_info and source_lines."
+}

@@ -1,0 +1,10 @@
+{
+  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/call_graph_edges-py/normalize_fqn_label.py",
+  "verdict": "MISMATCH",
+  "gaps": {
+    "spec_claim": "Returns a string in FM-Agent canonical FQN form: every path-segment separator ('/') is replaced by the FQN separator ('::'), and the file-extension dot immediately preceding a '::' function separator is replaced by a hyphen ('-'). The returned string contains no '/' characters and uses '::' as segment delimiters throughout.",
+    "actual_behavior": "The return value is a string derived from the input `label` by replacing every occurrence of the character '/' with the substring '::', and then replacing the file-extension dot (the last occurrence of '.' that is immediately followed by '::') with a hyphen '-'. Formally: let t = label.replace('/', '::'). If there exists an index k such that t[k:k+3] == '.::' and for all indices j > k, t[j:j+3] != '.::', then the returned string r = t[0:k] + '-' + t[k+1:]; otherwise r = t. The returned string is never empty.",
+    "code_evidence": "Line 3: return _normalize_endpoint_label(label)",
+    "trigger_condition": "The code only replaces a dot immediately followed by '::' (substring '.::'). For an input like 'path/to/file.c::func', after '/' replacement, the string becomes 'path::to::file.c::func' which does not contain '.::', so the file-extension dot is not replaced. The specification requires that the file-extension dot (e.g., before 'c') be replaced by a hyphen, producing 'path::to::file-c::func'. The output 'path::to::file.c::func' contains a dot, violating the spec."
+  }
+}

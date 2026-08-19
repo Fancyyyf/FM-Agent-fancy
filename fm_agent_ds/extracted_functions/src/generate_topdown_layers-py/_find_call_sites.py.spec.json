@@ -1,0 +1,5 @@
+{
+  "signature": "_find_call_sites(text, lang_key, known_stems, keywords) -> set",
+  "pre_condition": "text is a non-empty string containing source code in the language identified by lang_key. lang_key is a string key recognized by the language registry. known_stems is a set of non-empty function-name strings to search for. keywords is a set of non-empty strings whose members are excluded from results.",
+  "post_condition": "Returns a set of strings, each being a member of known_stems that appears in a syntactic calling position in text for the language identified by lang_key, excluding any member that also belongs to keywords. A syntactic calling position is one where a bare-name identifier is grammatically recognized as the callee of a call expression in that language. The returned set is a subset of known_stems and is disjoint from keywords."
+}

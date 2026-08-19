@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--_preview",
+  "source_file": "src/configure_llm.py",
+  "function_name": "_preview",
+  "confirmation_status": "not_confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--_preview.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--_preview.md",
+  "probe_stdout": "NOT CONFIRMED — _preview() returned a string instead of raising: 'FM-Agent LLM configuration\\n\\nProvider ID:   test-provider\\nProvider name: Test Provider\\nAPI protocol:  openai\\nBase URL:      https://api.example.com/v1\\nModel ID:      test-model\\nAPI key:       \\n\\nThe following files will be updated:\\n  - /tmp/tmphx9kgl9f/fm-agent.toml\\n  - /tmp/tmphx9kgl9f/.env\\n  - /tmp/tmphx9kgl9f/opencode.json\\n  - /home/fancy/.local/state/fm-agent/opencode/fm-agent-opencode-api-key.test-provider.793b2b6e7c'\n",
+  "trigger_summary": "With config.api_key empty, mask_secret('') returns '' instead of raising, so _preview returns a valid string rather than propagating an exception."
+}

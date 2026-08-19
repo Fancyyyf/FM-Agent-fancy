@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--merge_opencode_config",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/configure_llm-py/merge_opencode_config.py",
+  "function_name": "merge_opencode_config",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--merge_opencode_config.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--merge_opencode_config.md",
+  "probe_stdout": "CONFIRMED — actual: 'https://example.com/not-the-right-schema' | expected: 'https://opencode.ai/config.json'",
+  "trigger_summary": "When existing dict already contains a $schema key, the function preserves it instead of overwriting with SCHEMA_URL as the specification requires."
+}

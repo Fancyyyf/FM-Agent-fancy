@@ -1,0 +1,11 @@
+{
+  "id": "src--incremental_reasoner-py--_opencode_select_json",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_opencode_select_json.py",
+  "function_name": "_opencode_select_json",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_opencode_select_json.py",
+  "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_opencode_select_json.md",
+  "probe_stdout": "CONFIRMED — string: 'hello world' (type=str); integer: 42 (type=int); boolean: True (type=bool) | expected: must be dict, list, or None",
+  "trigger_summary": "The function returns raw json.load() result, which can be a string, number, or boolean — not only dict, list, or None as the spec claims."
+}

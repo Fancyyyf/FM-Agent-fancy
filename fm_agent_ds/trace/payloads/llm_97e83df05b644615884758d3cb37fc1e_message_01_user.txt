@@ -1,0 +1,24 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _record_version(commit_id, work_dir):
+Line 2:     """Append commit_id as a new line to fm_agent/version.log, building up a
+Line 3:     history of processed commits. No-op when commit_id is falsy."""
+Line 4:     if not commit_id:
+Line 5:         return
+Line 6:     version_path = os.path.join(work_dir, "version.log")
+Line 7:     with open(version_path, "a") as f:
+Line 8:         f.write(commit_id + "\n")
+```
+
+Condition A (what the code actually does):
+After execution of the code block, one of the following holds: (1) If commit_id is falsy (None or the empty string ''), the function returns immediately; no file is created or modified, and the file system is unchanged from before the call. (2) If commit_id is a non-empty string and no exception occurs, the function opens (or creates) the file at os.path.join(work_dir, 'version.log') in append mode, writes commit_id + '
+', and closes it successfully. The file then exists and its content equals its content before the call (empty if it did not exist) concatenated with commit_id + '
+'. (3) If an exception (e.g., OSError, IOError) is raised during file operations, the function does not return normally; the file may be left in a partially written or unchanged state, and no post-condition about file integrity is guaranteed. Formally: let F = os.path.join(work_dir, 'version.log'), let old(F) denote the content of F before the call (empty if F does not exist). (a) (returns ∧ (commit_id = None ∨ commit_id = '')) ⇒ filesystem unchanged ∧ F state unchanged. (b) (returns ∧ commit_id ≠ None ∧ commit_id ≠ '') ⇒ F exists ∧ Content(F) = old(F) + commit_id + '
+'. (c) (exception raised) ⇒ ¬returns ∧ F may be arbitrary.
+
+Condition B (what the specification requires):
+If commit_id is truthy: the file 'version.log' within work_dir exists after the call, and its content is the union of its pre-call content with the string representation of commit_id followed by a newline appended at the end. If the file did not exist before the call, it is created containing solely commit_id followed by a newline. If commit_id is falsy: no side effects occur, and the existence and contents of any file within work_dir remain unchanged. The function returns no value.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

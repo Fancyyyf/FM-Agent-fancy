@@ -1,0 +1,5 @@
+{
+  "signature": "_topdown_ordered_fqns(work_dir, extra_call_edges=None) -> list[str]",
+  "pre_condition": "work_dir is an existing directory containing a phases.json file with a 'phases' key whose value is a list of phase objects, each with an integer 'phase' key. extra_call_edges, if provided, is an iterable of supplemental caller/callee edge records.",
+  "post_condition": "Returns a list of FQN strings in top-down order: phases in ascending phase-number order, within each phase layers in ascending layer-number order, within each layer functions in their listed order (callers precede the callees they depend on). As a side effect, regenerates per-phase topdown layer JSON files under work_dir/spec_prompts/ via generate_topdown_layers(work_dir, extra_call_edges=extra_call_edges). Each generated file is named phase_NN_topdown_layers.json and contains a JSON object with a 'layers' array where each layer has an integer 'layer' and a 'functions' array of objects each containing a 'name' (FQN string) key. Phases whose corresponding layer JSON file does not exist after regeneration are silently skipped and contribute no functions to the result."
+}

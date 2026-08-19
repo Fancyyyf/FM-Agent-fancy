@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_run_generate_domain_context",
+  "source_file": "src/pipeline_setup.py",
+  "function_name": "_run_generate_domain_context",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_run_generate_domain_context.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_run_generate_domain_context.md",
+  "probe_stdout": "CONFIRMED — actual: '[Pipeline] ERROR: Stage 2 failed after 1 attempts. Domain context outputs missing. Check fake_project/fm_agent/trace/ for details.\\n' | expected: diagnostic message should enumerate expected output filenames (e.g. engine_overview.txt, phase_NN_types.txt)\n",
+  "trigger_summary": "When all retries are exhausted, the error message does not enumerate expected output files (engine_overview.txt, phase_NN_types.txt) as the specification requires."
+}

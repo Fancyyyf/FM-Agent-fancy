@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "proj_dir='/tmp', work_dir='/tmp/w', prompt_relpath='prompt.txt', prompt_content='Output exactly the JSON string \"hello\" without quotes. Write it to result.json.', result_relpath='result.json', stage='test', input_files=[]. The LLM subprocess (via run_opencode_traced) writes result.json containing the JSON string 'hello' and exits successfully. The function returns the Python string 'hello', which is neither dict, list, nor None.",
+  "offending_statements": "Line 61: return json.load(f)",
+  "reason": "The code returns the raw parsed JSON value from the file, which can be a string, number, or boolean, violating the specification's requirement that the return value be only a dict, a list, or None."
+}

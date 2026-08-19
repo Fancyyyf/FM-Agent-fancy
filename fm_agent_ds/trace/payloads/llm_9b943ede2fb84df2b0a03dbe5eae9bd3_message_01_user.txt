@@ -1,0 +1,33 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def local_backend_toml_updates(env_path: Path, backend: str) -> dict[str, str]:
+Line 2:     """Keep local CLI model choices when migrating dotenv settings into TOML."""
+Line 3:     validate_llm_setting("backend", backend)
+Line 4:     dotenv_settings = dotenv_values(env_path)
+Line 5:     updates = {"backend": backend}
+Line 6:     for env_key, toml_key in (("LLM_MODEL", "name"), ("LLM_EFFORT", "effort")):
+Line 7:         value = dotenv_settings.get(env_key)
+Line 8:         if value is not None:
+Line 9:             updates[toml_key] = value
+Line 10:     for key, value in updates.items():
+Line 11:         validate_llm_setting(key, value)
+Line 12:     return updates
+```
+
+Condition A (what the code actually does):
+The function either returns a dictionary d such that d['backend'] = backend, and for each env var (LLM_MODEL → name, LLM_EFFORT → effort) that is defined in the dotenv file, d contains the corresponding key with the string value from the file, provided that the value passes LLM setting validation for that key. If any such value fails validation, the function raises an exception instead of returning. If the env_path does not point to an existing file, dotenv_values returns empty, so only the 'backend' key is present and no validation of additional keys occurs, hence no exception. Formally: Let D = dotenv_values(env_path). Then let updates = {('backend', backend)} ∪ {('name', D['LLM_MODEL']) | 'LLM_MODEL' ∈ D} ∪ {('effort', D['LLM_EFFORT']) | 'LLM_EFFORT' ∈ D}. If for all (k, v) ∈ updates, validate_llm_setting(k, v) terminates normally, then the function returns the dict updates. Otherwise, the function raises the exception produced by the first failing validation.
+
+Condition B (what the specification requires):
+Returns a dict containing the key 'backend' mapped to the provided backend value. Additionally, for each environment variable name in the set of LLM model and effort variable names that map to TOML fields: if that variable is defined in the .env file at env_path, the returned dict contains the corresponding TOML field name mapped to the variable's .env value. When env_path does not identify an existing file, the returned dict contains only the 'backend' entry. Every key-value pair in the returned dict satisfies LLM setting validation for its respective key. The returned dict contains at minimum one entry (for 'backend') and at most three entries (adding 'name' and 'effort' as determined by the .env file contents).
+
+Additional context:
+validate_llm_setting(key: str, value: str) -> None
+Pre-condition: key is a non-empty string; value is a string.
+Post-condition: Returns normally when value is a valid setting for key. Raises an exception when key or value fails the LLM setting validation criteria.
+
+dotenv_values(env_path: Path) -> dict[str, str | None]
+Pre-condition: env_path is a Path.
+Post-condition: When env_path identifies an existing, readable .env file, returns a dict mapping each defined variable name to its string value. When env_path does not identify an existing file, returns an empty dict.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

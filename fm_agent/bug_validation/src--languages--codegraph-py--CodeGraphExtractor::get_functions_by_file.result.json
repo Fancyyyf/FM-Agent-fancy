@@ -1,1 +1,11 @@
-{"id": "src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file", "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::get_functions_by_file.py", "function_name": "get_functions_by_file", "confirmation_status": "confirmed", "attempts": "1", "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file.py", "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file.md", "probe_stdout": "CONFIRMED — returned dict keys are not all absolute: relative keys=['test_module.py'], absolute keys=[]", "trigger_summary": "When proj_dir is None, get_functions_by_file uses raw relative file_path as dict keys instead of absolute paths, violating the specification's absolute-path guarantee."}
+{
+  "id": "src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file",
+  "source_file": "src/languages/codegraph-py/CodeGraphExtractor::get_functions_by_file.py",
+  "function_name": "get_functions_by_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--CodeGraphExtractor::get_functions_by_file.md",
+  "probe_stdout": "CONFIRMED — bug reproduced: body_text contains a trailing newline not present in the source file\n  identifier: 'foo'\n  actual   body_text: 'def foo():\\n    return 1\\n'\n  expected body_text: 'def foo():\\n    return 1'\n  actual ends with newline: True | expected ends with newline: False",
+  "trigger_summary": "When a source file lacks a trailing newline and an indexed function span reaches the file's last line, get_functions_by_file unconditionally appends a newline to body_text, deviating from the verbatim exact source text required by the specification."
+}

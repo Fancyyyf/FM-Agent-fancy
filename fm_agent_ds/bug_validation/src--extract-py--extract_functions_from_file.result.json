@@ -1,0 +1,11 @@
+{
+  "id": "src--extract-py--extract_functions_from_file",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/extract-py/extract_functions_from_file.py",
+  "function_name": "extract_functions_from_file",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--extract-py--extract_functions_from_file.py",
+  "detail_file": "fm_agent/bug_validation/src--extract-py--extract_functions_from_file.md",
+  "probe_stdout": "CONFIRMED — CR byte stripped from function body. actual: 'def func_with_cr():\\n    return \"prefix\\n'",
+  "trigger_summary": "Literal CR byte (0x0D) inside source content is treated as line ending and stripped, corrupting the extracted function body."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_remove_trailing_commas(text: str) -> str",
+  "pre_condition": "text is a string from which JSONC comment syntax (// through end-of-line and /* through */) has already been removed.",
+  "post_condition": "Returns a string in which every comma that immediately precedes a closing bracket ']' or closing brace '}' — with only optional whitespace characters (space, tab, newline, carriage return) between the comma and the closing character — has been removed from the output. Characters inside double-quoted string literals are not treated as trailing commas and are preserved unchanged. All other characters are preserved unchanged in their original positions and order."
+}

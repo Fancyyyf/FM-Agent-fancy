@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-py--_locate_workdir",
+  "source_file": "fm_agent/extracted_functions/dashboard-py/_locate_workdir.py",
+  "function_name": "_locate_workdir",
+  "confirmation_status": "confirmed",
+  "attempts": "1",
+  "probe_script": "fm_agent/bug_validation/probe_dashboard-py--_locate_workdir.py",
+  "detail_file": "fm_agent/bug_validation/dashboard-py--_locate_workdir.md",
+  "probe_stdout": "CONFIRMED — actual (unresolved symlink): PosixPath('/tmp/probe_locate_workdir_si8n77f7/myproject/fm_agent') | expected (resolved): PosixPath('/tmp/probe_locate_workdir_si8n77f7/fm_agent_real')\n",
+  "trigger_summary": "When trace/ is absent and fm_agent is a symlink, _locate_workdir returns the unresolved symlink path instead of resolving to the real target directory."
+}

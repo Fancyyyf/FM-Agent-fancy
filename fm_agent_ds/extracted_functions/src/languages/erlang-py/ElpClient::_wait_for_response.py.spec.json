@@ -1,0 +1,5 @@
+{
+  "signature": "ElpClient._wait_for_response(self, request_id: int, deadline: float) -> Any",
+  "pre_condition": "A JSON-RPC request with the given request_id has been sent to the ELP server. deadline is a monotonic timestamp by which a response must be received.",
+  "post_condition": "Returns the 'result' field of the server's JSON-RPC response whose 'id' equals request_id and which lacks a 'method' key. If the matching response contains an 'error' object whose 'code' field equals the content-modified error code, raises _ContentModifiedError. If the matching response contains any other 'error' object, raises RuntimeError with a message describing the error. Messages from the server that do not match request_id — including server notifications identified by the presence of a 'method' key — are delegated to message handling without returning control to the caller."
+}

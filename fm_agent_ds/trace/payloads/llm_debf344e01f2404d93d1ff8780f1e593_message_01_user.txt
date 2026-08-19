@@ -1,0 +1,108 @@
+Programming language: Python
+
+Pre-condition:
+client is a callable or object providing an OpenAI-compatible chat.completions.create method that accepts model and messages keyword arguments. model is a non-empty string naming the LLM model. messages is a non-empty list where each element is a dict with keys 'role' (non-empty string) and 'content' (string).
+
+Code block:
+```python
+Line 1: def _retry_create(client, model, messages):
+Line 2:     """Call the LLM with retries. Returns (text, usage_dict).
+Line 3:     - Anthropic-family models go via the native /v1/messages endpoint.
+Line 4:     - Other models go through the OpenAI-compat client.
+Line 5:     - When LLM_API_BASE_URL matches INJECT_HOST, metadata.user_id is attached so
+Line 6:       third-party relays that support it can keep prompt-cache routing sticky.
+Line 7:     """
+Line 8:     if is_cli_backend_enabled():
+Line 9:         return run_agent_for_messages(model, messages)
+Line 10:     rate_limit_attempts = 0
+Line 11:     transient_attempts = 0
+Line 12:     use_anthropic = _is_anthropic_model(model)
+Line 13:     extra = {}
+Line 14:     if _should_inject_user_id(LLM_API_BASE_URL):
+Line 15:         extra["extra_body"] = _metadata_body()
+Line 16:     while True:
+Line 17:         try:
+Line 18:             if use_anthropic:
+Line 19:                 return _anthropic_create(model, messages)
+Line 20:             response = client.chat.completions.create(model=model, messages=messages, **extra)
+Line 21:             text = response.choices[0].message.content
+Line 22:             usage = response.usage.model_dump() if response.usage else {}
+Line 23:             return text, usage
+Line 24:         except BadRequestError:
+Line 25:             raise
+Line 26:         except urllib.error.HTTPError as exc:
+Line 27:             status = exc.code
+Line 28:             body = _read_error_body(exc)  
+Line 29:             detail = f"HTTP {status} {exc.reason}" + (f"; body={body!r}" if body else "")
+Line 30:             if status == 400:
+Line 31:                 raise
+Line 32:             if status == 429:
+Line 33:                 rate_limit_attempts += 1
+Line 34:                 if rate_limit_attempts >= _MAX_RATE_LIMIT_RETRIES:
+Line 35:                     raise RuntimeError(
+Line 36:                         f"Rate limited after {_MAX_RATE_LIMIT_RETRIES} retries: {detail}"
+Line 37:                     ) from exc
+Line 38:                 wait = min(2 ** (rate_limit_attempts - 1) * 5, 300) + random.uniform(1, 10)
+Line 39:                 logging.warning(f"LLM 429 ({detail}), sleeping {wait:.1f}s (attempt {rate_limit_attempts})")
+Line 40:                 time.sleep(wait)
+Line 41:                 continue
+Line 42:             # 5xx and other → treat as transient
+Line 43:             transient_attempts += 1
+Line 44:             if transient_attempts >= _MAX_LLM_RETRIES:
+Line 45:                 raise RuntimeError(
+Line 46:                     f"LLM request failed after {_MAX_LLM_RETRIES} retries: {detail}"
+Line 47:                 ) from exc
+Line 48:             wait = min(2 ** (transient_attempts - 1) * 5, 60) + random.uniform(1, 3)
+Line 49:             logging.warning(f"LLM {detail}, sleeping {wait:.1f}s (attempt {transient_attempts})")
+Line 50:             time.sleep(wait)
+Line 51:         except RateLimitError as exc:
+Line 52:             rate_limit_attempts += 1
+Line 53:             if rate_limit_attempts >= _MAX_RATE_LIMIT_RETRIES:
+Line 54:                 raise RuntimeError(
+Line 55:                     f"Rate limited after {_MAX_RATE_LIMIT_RETRIES} retries: {exc}"
+Line 56:                 ) from exc
+Line 57:             wait = min(2 ** (rate_limit_attempts - 1) * 5, 300) + random.uniform(1, 10)
+Line 58:             logging.warning(f"LLM rate-limited, sleeping {wait:.1f}s (attempt {rate_limit_attempts})")
+Line 59:             time.sleep(wait)
+Line 60:         except Exception as exc:
+Line 61:             transient_attempts += 1
+Line 62:             if transient_attempts >= _MAX_LLM_RETRIES:
+Line 63:                 raise RuntimeError(
+Line 64:                     f"LLM request failed after {_MAX_LLM_RETRIES} retries: {exc}"
+Line 65:                 ) from exc
+Line 66:             wait = min(2 ** (transient_attempts - 1) * 5, 60) + random.uniform(1, 3)
+Line 67:             logging.warning(
+Line 68:                 f"LLM error ({type(exc).__name__}: {str(exc)[:120]}), "
+Line 69:                 f"sleeping {wait:.1f}s (attempt {transient_attempts})")
+Line 70:             time.sleep(wait)
+```
+
+Additional context:
+is_cli_backend_enabled() -> bool
+Pre-condition: None.
+Post-condition: Returns True when the configured LLM backend is a CLI-based backend (codex-cli or claude-cli); returns False otherwise.
+
+run_agent_for_messages(model, messages) -> tuple
+Pre-condition: model is a non-empty string naming the LLM model. messages is a non-empty list of message dicts with 'role' and 'content' keys.
+Post-condition: Returns a 2-tuple (text_response, usage_dict) where text_response is the string LLM output and usage_dict is a dict with token usage information. Raises an exception on persistent failure.
+
+_is_anthropic_model(model) -> bool
+Pre-condition: model is a non-empty string.
+Post-condition: Returns True when model identifies an Anthropic-family model (by name prefix); returns False otherwise.
+
+_should_inject_user_id(base_url) -> bool
+Pre-condition: base_url is a string (may be empty) representing the LLM API base URL.
+Post-condition: Returns True when the base_url matches a configured host pattern that supports user-ID-based prompt-cache routing affinity; returns False otherwise.
+
+_metadata_body() -> dict
+Pre-condition: None.
+Post-condition: Returns a dict containing metadata fields (including user_id) suitable for injection into the API request body.
+
+_anthropic_create(model, messages) -> tuple
+Pre-condition: model is a non-empty string identifying the Anthropic model. messages is a non-empty list of message dicts with 'role' and 'content' keys.
+Post-condition: Returns a 2-tuple (text, usage) where text is the string LLM response content and usage is a dict with token usage metadata. Raises an exception on API communication failure.
+
+_read_error_body(exc) -> str | None
+Pre-condition: exc is an urllib.error.HTTPError instance.
+Post-condition: Returns the raw response body string from the HTTP error when readable; returns None when the body cannot be read.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

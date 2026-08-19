@@ -1,11 +1,11 @@
 {
   "id": "src--incremental_reasoner-py--collect_relevent_function_scope",
-  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/collect_relevent_function_scope.py",
+  "source_file": "src/incremental_reasoner-py/collect_relevent_function_scope.py",
   "function_name": "collect_relevent_function_scope",
-  "confirmation_status": "confirmed",
-  "attempts": 1,
+  "confirmation_status": "not_confirmed",
+  "attempts": 3,
   "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--collect_relevent_function_scope.py",
   "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--collect_relevent_function_scope.md",
-  "probe_stdout": "CONFIRMED — actual: [] | expected: 'non-empty list (all modules retained when LLM selection fails per spec)'\n",
-  "trigger_summary": "_llm_select_json returns None at module selection tier, causing empty-list return instead of retaining all modules as the spec requires."
+  "probe_stdout": "[S1 file-level: opencode omits changed file] changed-file participation HOLDS | returned=['src/app-py/app_fn.py', 'src/helper-py/helper_fn.py'] | missing=[]\\n[S2 module-level: LLM selects nothing, file selection fails] changed-file participation HOLDS | returned=['src/helper-py/helper_fn.py'] | missing=[]\\n[S3 module-level + file-level: LLM selects only the unrelated module, opencode omits the changed file] changed-file participation HOLDS | returned=['src/app-py/app_fn.py', 'src/helper-py/helper_fn.py'] | missing=[]\\nNOT CONFIRMED - every changed source file participated in all scenarios (module- and file-level overrides are present in the current code)",
+  "trigger_summary": "Claimed bug: when the opencode file-selection agent omits a changed source file (or the LLM omits the module containing it), the candidate-set intersection drops the changed scope; probe shows the current code instead force-includes changed files and their modules, so the drop never occurs."
 }

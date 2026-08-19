@@ -1,0 +1,75 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def run_local_backend_configuration(project_root: Path, backend: str) -> int:
+Line 2:     paths = default_paths(project_root)
+Line 3:     _updated_env, removed_overrides = remove_legacy_llm_env_overrides(
+Line 4:         _read_text_if_exists(paths.env_path)
+Line 5:     )
+Line 6:     toml_updates = local_backend_toml_updates(paths.env_path, backend)
+Line 7:     print(
+Line 8:         _preview_local_backend_configuration(
+Line 9:             backend,
+Line 10:             paths,
+Line 11:             removed_overrides,
+Line 12:             toml_updates,
+Line 13:         )
+Line 14:     )
+Line 15:     print()
+Line 16:     warn_live_llm_environment_overrides()
+Line 17:     if live_llm_environment_overrides():
+Line 18:         print()
+Line 19:     if not _prompt_yes_no("Continue?", default=True):
+Line 20:         print("Aborted.")
+Line 21:         return 1
+Line 22:     backups, removed_overrides = apply_local_backend_configuration(backend, paths)
+Line 23:     print(f"Updated {paths.toml_path}")
+Line 24:     if removed_overrides:
+Line 25:         print(f"Removed legacy LLM overrides from {paths.env_path}")
+Line 26:     for path, backup in backups:
+Line 27:         if backup is not None:
+Line 28:             print(f"Backed up {path} -> {backup}")
+Line 29:     return 0
+```
+
+Condition A (what the code actually does):
+Natural language: After the execution of `run_local_backend_configuration`, exactly one of the following outcomes occurs, depending on runtime events:
+
+1. Normal return with 0: The user confirmed the prompt. The standard output contains the preview of the local backend configuration (generated from `_preview_local_backend_configuration`), any warnings about live LLM environment overrides, the prompt `Continue?` followed by the user's affirmative response, and then the messages: `Updated {paths.toml_path}`; if legacy LLM overrides were present, `Removed legacy LLM overrides from {paths.env_path}`; and for every pair `(path, backup)` returned by `apply_local_backend_configuration` where `backup is not None`, `Backed up {path} -> {backup}`. The file system has been modified: `paths.toml_path` now contains the local backend configuration for `backend` (as produced by `local_backend_toml_updates`); `paths.env_path` (if it existed and contained legacy LLM overrides) no longer contains those overrides; and for each changed file, a backup file exists at the reported backup path with the original contents. The function returns 0.
+
+2. Normal return with 1: The user declined the prompt. The standard output contains the same preview, warnings, and the prompt, followed by `Aborted.`. No files were modified on disk. The function returns 1.
+
+3. Exceptional termination: An exception (e.g., IOError, OSError, or any exception from the called functions) is raised. The standard output includes all output generated before the exception (which may include the preview, warnings, and possibly partial apply messages). The file system may be in an inconsistent state: some backups may have been created and some file updates written, but not all intended changes are guaranteed. The function does not return to the caller; the exception propagates up the stack.
+
+Formal logic: Let FS0 be the initial file system state and STDOUT0 the empty output stream. Let `paths = default_paths(project_root)`, `env_content = _read_text_if_exists(paths.env_path)`, `(updated_env, removed_overrides0) = remove_legacy_llm_env_overrides(env_content)`, `toml_updates = local_backend_toml_updates(paths.env_path, backend)`, `preview_str = _preview_local_backend_configuration(backend, paths, removed_overrides0, toml_updates)`. Let `S_warn` be the string printed by `warn_live_llm_environment_overrides()` (may be empty if no live overrides). Define `live = live_llm_environment_overrides()`.
+
+Post-condition predicate Q over the state after the function call:
+
+Q ≡
+  (  (user_confirmed = true) 
+     ∧ stdout = STDOUT0 + preview_str + "\n" + "\n" + S_warn + ("\n" if live else "") + "Continue?" + user_input_yes + ("Updated " + paths.toml_path + "\n") + (if removed_overrides0 ≠ ∅ then "Removed legacy LLM overrides from " + paths.env_path + "\n" else "") + (for each (p,b) ∈ backups where b ≠ None: "Backed up " + p + " -> " + b + "\n")
+     ∧ ∃ backups, removed_overrides1 : (backups, removed_overrides1) = apply_local_backend_configuration(backend, paths) ∧ FS = FS0 after applying all changes:
+         paths.toml_path content = toml_updates applied to original content
+         paths.env_path content = updated_env (i.e., original without legacy overrides)
+         ∀ (p, b) ∈ backups with b ≠ None: backup file b exists with content of p before modification
+         and no other regular files in the project directory are changed.
+     ∧ return_value = 0
+  )
+  ∨ (  (user_confirmed = false)
+     ∧ stdout = STDOUT0 + preview_str + "\n" + "\n" + S_warn + ("\n" if live else "") + "Continue?" + user_input_no + "Aborted.\n"
+     ∧ FS = FS0  (no file modifications)
+     ∧ return_value = 1
+  )
+  ∨ (  ∃ exception E : E was raised during the call
+     ∧ stdout contains a prefix of one of the above outputs, up to the point of exception
+     ∧ FS may be partially updated (some backups and file changes from `apply_local_backend_configuration` may have occurred)
+     ∧ return_value is undefined (exception propagates)
+  )
+
+Here 'user_input_yes' and 'user_input_no' denote the user's typed response, and 'user_confirmed' is true iff `_prompt_yes_no("Continue?", default=True)` returns True.
+
+Condition B (what the specification requires):
+Returns 0 when the fm-agent.toml file has been updated to set the LLM backend to the provided backend value, with a backup of the original file created. Returns non-zero when the fm-agent.toml file has not been modified. No API key, .env modification, or OpenCode provider configuration is performed.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

@@ -1,0 +1,28 @@
+{
+  "callees": [
+    {
+      "name": "function_id_from_extracted_path",
+      "signature": "function_id_from_extracted_path(func_rel: str) -> str",
+      "pre_condition": "func_rel is a string representing a relative path to an extracted function file within the project.",
+      "post_condition": "Returns a string identifier that uniquely corresponds to the extracted function referenced by func_rel."
+    },
+    {
+      "name": "build_llm_cli_command",
+      "signature": "build_llm_cli_command(model, prompt, cwd, files) -> list[str]",
+      "pre_condition": "model is a string identifying the LLM model. prompt is a non-empty string containing the instruction text. cwd is a valid filesystem path. files is a list of file path strings that must be provided as context to the LLM invocation.",
+      "post_condition": "Returns an ordered list of command-line tokens that, when executed as a subprocess, invoke the configured LLM CLI backend with the given model, the given prompt as an instruction, the given cwd as working directory, and the given file paths as input context."
+    },
+    {
+      "name": "run_opencode_traced",
+      "signature": "run_opencode_traced(proj_dir, work_dir, command, stage, function_ids, input_files, output_files, summary, metadata) -> CompletedProcess",
+      "pre_condition": "proj_dir and work_dir are valid filesystem paths. command is a non-empty list of CLI tokens. stage is a string identifying the pipeline stage. function_ids is a list of string identifiers for the functions being processed. input_files and output_files are lists of relative file paths.",
+      "post_condition": "Executes the given command as a subprocess. Records a structured trace event to the workspace trace directory with timestamp, event_id, the given stage label, the function_ids, the input_files and output_files references, the summary string, and the metadata dict. Returns a CompletedProcess whose returncode is 0 on success and non-zero on failure. On subprocess failure, raises CalledProcessError containing the exit code, stdout, and stderr."
+    },
+    {
+      "name": "list_staged_domain_knowledge_relpaths",
+      "signature": "list_staged_domain_knowledge_relpaths(work_dir) -> list[str]",
+      "pre_condition": "work_dir is a valid path to the FM-Agent workspace directory where domain knowledge files may have been staged.",
+      "post_condition": "Returns a list of relative path strings for every domain knowledge file that has been staged under the workspace directory. Returns an empty list when no domain knowledge files are staged."
+    }
+  ]
+}

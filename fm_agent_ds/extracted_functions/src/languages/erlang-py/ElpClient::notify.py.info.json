@@ -1,0 +1,1 @@
+{"callees": [{"name": "_send", "signature": "_send(message: dict) -> None", "pre_condition": "self has an active connection to the ELP server. message is a JSON-serializable dict representing a JSON-RPC message to transmit.", "post_condition": "message has been transmitted to the ELP server. Raises an exception when the underlying transport fails or the connection is lost."}]}

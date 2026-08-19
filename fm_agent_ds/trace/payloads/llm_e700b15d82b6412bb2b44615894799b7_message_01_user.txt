@@ -1,0 +1,23 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def render_bugs(state):
+Line 2:     total = state.bugs_confirmed + state.bugs_not_confirmed + state.bugs_pending
+Line 3:     text = Text.from_markup(
+Line 4:         f"[green]✓ confirmed[/]      {state.bugs_confirmed}\n"
+Line 5:         f"[yellow]✗ not_confirmed[/]  {state.bugs_not_confirmed}\n"
+Line 6:         f"[dim]… pending[/]         {state.bugs_pending}\n"
+Line 7:         f"[bold]total[/]             [bold]{total}[/]"
+Line 8:     )
+Line 9:     return Panel(Align.center(text, vertical="middle"),
+Line 10:                  title="Bug Validation", border_style="yellow")
+```
+
+Condition A (what the code actually does):
+Upon successful execution, the function returns a `Panel` object with `title="Bug Validation"` and `border_style="yellow"`, whose content is the result of centering a `Text` object (constructed from a markup string summarizing `state.bugs_confirmed`, `state.bugs_not_confirmed`, `state.bugs_pending`, and their total) vertically in the middle. The argument `state` is not modified. There are no exceptional paths given the pre-condition. Formally, let `pre(s)` ≡ `s.bugs_confirmed ≥ 0 ∧ s.bugs_not_confirmed ≥ 0 ∧ s.bugs_pending ≥ 0`. Then ∀ `s` satisfying `pre(s)`, `render_bugs(s)` terminates normally and produces a return value `ret` such that: `ret = Panel(renderable = Align.center(Text.from_markup("[green]✓ confirmed[/]      " + str(s.bugs_confirmed) + "\n" + "[yellow]✗ not_confirmed[/]  " + str(s.bugs_not_confirmed) + "\n" + "[dim]… pending[/]         " + str(s.bugs_pending) + "\n" + "[bold]total[/]             [bold]" + str(s.bugs_confirmed + s.bugs_not_confirmed + s.bugs_pending) + "[/]"), vertical="middle"), title="Bug Validation", border_style="yellow")` ∧ `s' = s` (the input state remains unchanged).
+
+Condition B (what the specification requires):
+Returns a Rich renderable that visually displays the values of state.bugs_confirmed, state.bugs_not_confirmed, state.bugs_pending, and their arithmetic sum. The renderable is self-contained and suitable for embedding as a sub-component of a larger Rich Layout. The state argument is not mutated by this call.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

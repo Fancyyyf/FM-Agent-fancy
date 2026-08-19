@@ -1,0 +1,5 @@
+{
+  "signature": "_load_sidecar_json(file_path, suffix) -> dict | None",
+  "pre_condition": "file_path is a string representing a file path; suffix is a string",
+  "post_condition": "Returns the dict parsed from the JSON contents of the file whose path is the concatenation of file_path and suffix. Returns None if the concatenated path does not name a readable file or if its contents are not valid JSON."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--pipeline_setup-py--_update_module_description",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/pipeline_setup-py/_update_module_description.py",
+  "function_name": "_update_module_description",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--pipeline_setup-py--_update_module_description.py",
+  "detail_file": "fm_agent/bug_validation/src--pipeline_setup-py--_update_module_description.md",
+  "probe_stdout": "CONFIRMED — output_files=[\"fm_agent/phases.json\"] tells the LLM agent to write to work_dir/fm_agent/phases.json instead of work_dir/phases.json. After the function returned, work_dir/phases.json was NOT modified (unchanged=True), violating the spec requirement that updated descriptions be written to the phases.json at the expected path under work_dir.",
+  "trigger_summary": "The function passes output_files=[\"fm_agent/phases.json\"] to run_opencode_traced, causing the LLM agent to write to work_dir/fm_agent/phases.json instead of work_dir/phases.json, leaving the spec-required file unchanged."
+}

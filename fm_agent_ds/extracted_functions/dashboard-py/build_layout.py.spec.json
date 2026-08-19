@@ -1,0 +1,5 @@
+{
+  "signature": "build_layout(state: State) -> Layout",
+  "pre_condition": "state is a State instance whose in-memory event collection, OpenCode LLM trace counters, bug-validation summary collections, and cache-hit-rate attribute have been populated by prior data-fetching calls. state.cache_hit_rate is a numeric value between 0.0 and 1.0 inclusive.",
+  "post_condition": "Returns a Rich Layout renderable representing the complete dashboard terminal UI. The rendered output, when displayed by Rich's Live or Console, visually presents: (a) the dashboard title and project identification; (b) per-stage pipeline progress expressed as a count of processed functions versus a total for each pipeline stage; (c) cumulative token-usage and cost figures split into verification-LLM subtotals, OpenCode-subprocess subtotals, and a combined total; (d) the prompt-cache hit rate as a percentage derived from state.cache_hit_rate; (e) the current counts of confirmed, not-confirmed, and total bug-validation verdicts; and (f) the most recent structured trace events. The state argument is not mutated by this call."
+}

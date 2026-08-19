@@ -1,49 +1,61 @@
-"""Probe script for bug: src--languages--rust-py--batch_extract
+"""Probe for bug src--languages--rust-py--batch_extract.
 
-The spec claims batch_extract returns a dict (empty on init failure, full mapping
-on success). The actual code propagates exceptions from get_functions_by_file
-instead of catching them and returning a dict.
+Spec claim: the Rust batch_extract backend must return None when the
+codegraph index is unavailable (never an empty dict), so callers can record
+the language as having an unavailable backend and apply the regex fallback.
 
-Strategy: create a mock codegraph DB that exists on disk but is invalid SQLite,
-causing get_functions_by_file to raise an exception.
+Trigger: call the rust language handler's batch_extract (exposed through the
+public registry facade src.languages.registry) on a project directory that
+has no .codegraph/codegraph.db index. Buggy code returns {} instead of None.
+
+FM-Agent self-validation guard: this probe only exercises the smallest unit
+(the registry's rust batch_extract handler) with a fresh temporary fixture
+directory; it does not start any FM-Agent workflow.
 """
-import sys
+
 import os
+import sys
 import tempfile
-import traceback
 
-# Probe is at <repo>/fm_agent/bug_validation/probe_*.py
-# Go up 3 levels to reach repo root
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, _REPO_ROOT)
+# Ensure the repo root is importable regardless of the launch directory.
+_REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
+fixture = None
 try:
-    from src.languages.rust import batch_extract
+    from src.languages.registry import REGISTRY
 
-    # Create a temp directory with an invalid .codegraph/codegraph.db
-    with tempfile.TemporaryDirectory() as tmpdir:
-        codegraph_dir = os.path.join(tmpdir, ".codegraph")
-        os.makedirs(codegraph_dir)
-        db_path = os.path.join(codegraph_dir, "codegraph.db")
-        # Write something that is NOT a valid SQLite database
-        with open(db_path, "w") as f:
-            f.write("this is not a valid sqlite database file\n")
+    # Fresh temporary project directory owned by the probe; no files are
+    # written anywhere in the active repository.
+    fixture = tempfile.mkdtemp(prefix="fm_probe_rust_py_")
 
-        raised = False
-        try:
-            actual = batch_extract(tmpdir)
-        except Exception as e:
-            raised = True
-            print(f"CONFIRMED — batch_extract raised exception instead of returning a dict: {type(e).__name__}: {e}")
+    # Sanity-check the trigger precondition: no codegraph index at the
+    # fixture dir nor at its immediate parent (the two locations
+    # CodeGraphExtractor.from_proj_dir checks).
+    for candidate in (fixture, os.path.dirname(os.path.abspath(fixture))):
+        index = os.path.join(candidate, ".codegraph", "codegraph.db")
+        if os.path.exists(index):
+            print(f"ERROR: unexpected codegraph index at {index}")
+            sys.exit(1)
 
-        if not raised:
-            expected = {}
-            if actual == expected:
-                print(f"NOT CONFIRMED — actual matched expected: {actual!r}")
-            else:
-                print(f"NOT CONFIRMED — actual: {actual!r} | expected: {expected!r} (different, but no exception)")
-
+    rust_handler = REGISTRY["rust"]
+    actual = rust_handler.batch_extract(fixture)
+    expected = None  # spec: backend unavailable -> None, never {}
+    passed = actual != expected  # True -> bug reproduced
 except Exception as e:
-    print(f"ERROR: {e}")
-    traceback.print_exc()
+    print(f"ERROR: {type(e).__name__}: {e}")
     sys.exit(1)
+finally:
+    if fixture and os.path.isdir(fixture):
+        try:
+            os.rmdir(fixture)  # fixture is an empty temp dir
+        except OSError:
+            pass
+
+if passed:
+    print(f"CONFIRMED — actual: {actual!r} | expected: {expected!r}")
+else:
+    print(f"NOT CONFIRMED — actual matched expected: {actual!r}")

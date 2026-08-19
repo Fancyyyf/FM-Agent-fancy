@@ -1,0 +1,11 @@
+{
+  "id": "src--entry_reasoning_pipeline-py--_restrict_to_chains",
+  "source_file": "src/entry_reasoning_pipeline.py",
+  "function_name": "_restrict_to_chains",
+  "confirmation_status": "confirmed",
+  "attempts": 2,
+  "probe_script": "fm_agent/bug_validation/probe_src--entry_reasoning_pipeline-py--_restrict_to_chains.py",
+  "detail_file": "fm_agent/bug_validation/src--entry_reasoning_pipeline-py--_restrict_to_chains.md",
+  "probe_stdout": "CONFIRMED — D incorrectly included in output: actual={'A': ['B'], 'B': ['C'], 'C': [], 'D': ['C']} | expected (spec)=no D\n",
+  "trigger_summary": "When call_graph contains a function D that can reach an end_func C but is not reachable from entry_func A, D is incorrectly retained because the code only checks reverse reachability from end_funcs without enforcing forward reachability from entry_func."
+}

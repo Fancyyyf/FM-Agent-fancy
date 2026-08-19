@@ -1,0 +1,11 @@
+{
+  "id": "src--languages--codegraph-py--CodeGraphExtractor::from_proj_dir",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/codegraph-py/CodeGraphExtractor::from_proj_dir.py",
+  "function_name": "CodeGraphExtractor::from_proj_dir",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--languages--codegraph-py--CodeGraphExtractor::from_proj_dir.py",
+  "detail_file": "fm_agent/bug_validation/src--languages--codegraph-py--CodeGraphExtractor::from_proj_dir.md",
+  "probe_stdout": "CONFIRMED — Bug reproduced: from_proj_dir returned non-None for empty/invalid .codegraph/codegraph.db (spec requires None for databases that cannot support queries). Queries fail.\\n",
+  "trigger_summary": "from_proj_dir only checks file existence (os.path.exists) and never validates that the .codegraph/codegraph.db file is a valid CodeGraph database; placing an empty file at that path causes a non-None return while queries fail, violating the specification guarantee."
+}

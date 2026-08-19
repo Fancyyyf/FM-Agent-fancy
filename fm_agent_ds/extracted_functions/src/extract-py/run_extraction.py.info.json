@@ -1,0 +1,40 @@
+{
+  "callees": [
+    {
+      "name": "batch_extract_all",
+      "signature": "batch_extract_all(proj_dir: str) -> tuple[dict, set[str]]",
+      "pre_condition": "proj_dir is a path to an existing directory",
+      "post_condition": "Returns (funcs, langs) where funcs maps each absolute file path to a list of (func_name, body_text) tuples for all functions extracted across all registered language handlers, and langs is the set of language keys that returned non-empty results. Returns ({}, set()) when no language backend is available."
+    },
+    {
+      "name": "_is_test_file",
+      "signature": "_is_test_file(src_rel: str) -> bool",
+      "pre_condition": "src_rel is a relative file path string",
+      "post_condition": "Returns True when src_rel denotes a test file according to path-based heuristics (e.g., path component contains 'test' or filename contains test markers); returns False otherwise."
+    },
+    {
+      "name": "extract_functions_from_file",
+      "signature": "extract_functions_from_file(src_path: str, lang_key: str) -> list[tuple[str, str]]",
+      "pre_condition": "src_path is an absolute path to an existing source file; lang_key is a recognized language identifier",
+      "post_condition": "Returns a list of (func_name, body_text) tuples for all functions found in the file via regex-based extraction for the given language. Returns an empty list if no functions are found or the file cannot be parsed."
+    },
+    {
+      "name": "_safe_filename",
+      "signature": "_safe_filename(func_name: str, ext: str) -> str",
+      "pre_condition": "func_name is a function name string potentially containing path-unsafe characters; ext is a file extension string",
+      "post_condition": "Returns a filesystem-safe filename that preserves class-qualifier separators (::), maps '/' to '_', and appends ext as the extension. Returns '_function.<ext>' when func_name is empty."
+    },
+    {
+      "name": "is_file_ready",
+      "signature": "is_file_ready(out_file: str) -> bool",
+      "pre_condition": "out_file is a path to an extracted function file that exists on disk",
+      "post_condition": "Returns True if and only if the file at out_file has both a valid .spec.json sidecar and a valid .info.json sidecar adjacent to it; returns False otherwise."
+    },
+    {
+      "name": "_validate_extraction",
+      "signature": "_validate_extraction(output_base: str, registry_langs: set[str] | None = None) -> list[tuple[str, int]]",
+      "pre_condition": "output_base is a path to a directory containing extracted function files",
+      "post_condition": "Returns a list of (file_path, function_count) tuples for every extracted file under output_base that does not contain exactly one function. Returns an empty list when every extracted file contains exactly one function."
+    }
+  ]
+}

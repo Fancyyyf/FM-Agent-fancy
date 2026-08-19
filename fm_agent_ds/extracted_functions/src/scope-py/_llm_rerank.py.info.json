@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "_build_func_list_text",
+      "signature": "_build_func_list_text(funcs_info: list[dict], source_lines: list[str]) -> str",
+      "pre_condition": "funcs_info is a list of function-metadata dicts each containing at least 'name' and score keys. source_lines is a list of strings representing the source file content, one per line.",
+      "post_condition": "Returns a string representation of all functions in funcs_info suitable for embedding in an LLM prompt, including for each function: its name, the line range (start to end), and the body text excerpted from source_lines within that line range."
+    },
+    {
+      "name": "_parse_json_response",
+      "signature": "_parse_json_response(text: str) -> list[str]",
+      "pre_condition": "text is a non-empty string potentially containing a JSON array of strings, possibly surrounded by markdown formatting or extra whitespace.",
+      "post_condition": "Returns a list of non-empty strings parsed from the first JSON array found in text. Raises an exception when text does not contain a parseable JSON array of non-empty strings."
+    }
+  ]
+}

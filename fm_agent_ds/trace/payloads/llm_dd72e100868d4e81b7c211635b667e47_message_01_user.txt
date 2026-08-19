@@ -1,0 +1,17 @@
+Programming language: Python
+
+Pre-condition:
+data is a dict whose keys are a subset of {"type", "replace_cmd", "input_md", "output_process"}. When the key "type" is present, its value is a string. When the keys "replace_cmd", "input_md", or "output_process" are present, each associated value is a string or None.
+
+Code block:
+```python
+Line 1:     def from_dict(data: dict) -> "PluginStageConfig":
+Line 2:         return PluginStageConfig(
+Line 3:             type=data.get("type", ""),
+Line 4:             replace_cmd=data.get("replace_cmd"),
+Line 5:             input_md=data.get("input_md"),
+Line 6:             output_process=data.get("output_process"),
+Line 7:         )
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

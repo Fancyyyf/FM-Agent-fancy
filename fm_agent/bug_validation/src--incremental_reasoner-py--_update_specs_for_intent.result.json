@@ -1,11 +1,11 @@
 {
   "id": "src--incremental_reasoner-py--_update_specs_for_intent",
-  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent.py",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent_qwen_7d490/fm_agent/extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent.py",
   "function_name": "_update_specs_for_intent",
-  "confirmation_status": "not_confirmed",
-  "attempts": "1",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
   "probe_script": "fm_agent/bug_validation/probe_src--incremental_reasoner-py--_update_specs_for_intent.py",
   "detail_file": "fm_agent/bug_validation/src--incremental_reasoner-py--_update_specs_for_intent.md",
-  "probe_stdout": "NOT CONFIRMED — actual: 'Function _update_specs_for_intent exists and is callable (extracted file imported successfully, no IndentationError)'\n",
-  "trigger_summary": "Claims an IndentationError at line 41, but the extracted function file is valid Python with a proper def at line 1; it imports and runs without error."
+  "probe_stdout": "CONFIRMED — caller .info.json after call: size=0B valid_json=False restored=False value_error_logged=True returned=['callee.py'] actual=b'' expected=(original 181B valid sidecar)",
+  "trigger_summary": "When the caller-reconciliation LLM step returns a new_info dict whose \"callees\" field is not a list, _reconcile_caller's open(..., \"w\") truncates the caller's valid .info.json before _normalize_info_dict raises ValueError, leaving a zero-byte, schema-invalid sidecar with no rollback."
 }

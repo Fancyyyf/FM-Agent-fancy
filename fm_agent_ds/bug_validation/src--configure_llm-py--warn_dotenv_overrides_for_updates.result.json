@@ -1,0 +1,11 @@
+{
+  "id": "src--configure_llm-py--warn_dotenv_overrides_for_updates",
+  "source_file": "src/configure_llm.py",
+  "function_name": "warn_dotenv_overrides_for_updates",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--configure_llm-py--warn_dotenv_overrides_for_updates.py",
+  "detail_file": "fm_agent/bug_validation/src--configure_llm-py--warn_dotenv_overrides_for_updates.md",
+  "probe_stdout": "CONFIRMED — PermissionError raised for unreadable .env file; spec requires returning False",
+  "trigger_summary": "Pass an unreadable .env file to warn_dotenv_overrides_for_updates; spec states it should return False but a PermissionError is raised instead."
+}

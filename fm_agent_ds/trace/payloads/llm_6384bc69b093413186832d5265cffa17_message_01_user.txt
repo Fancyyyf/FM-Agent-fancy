@@ -1,0 +1,21 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def function_spans(proj_dir: str, filepath: str):
+Line 2:     """Return ELP function ranges as 0-based inclusive source-line spans."""
+Line 3:     path = os.path.abspath(filepath)
+Line 4:     return _analysis_or_empty(proj_dir).spans.get(path)
+```
+
+Condition A (what the code actually does):
+The function returns None if the absolute path of `filepath` is not a key in the `.spans` dictionary obtained from `_analysis_or_empty(proj_dir)`; otherwise it returns a list of 3-tuples `(func_name: str, start_idx: int, end_idx: int)` representing ELP function line spans (0-based inclusive) for that file. No side effects occur. Formally: Let `path = os.path.abspath(filepath)` and `S = _analysis_or_empty(proj_dir).spans`. Then `result = S.get(path)` and `∀ k ∈ S, S[k] ∈ List[(str, int, int)]` with `result ∈ (None ∪ List[(str, int, int)])`.
+
+Condition B (what the specification requires):
+Resolves filepath to an absolute path. Returns a list of (func_name, start_idx, end_idx) tuples for that file, where start_idx and end_idx are 0-based inclusive source-line indices derived from the ELP analysis of proj_dir. Returns None when the resolved path has no matching data in the ELP analysis.
+
+Additional context:
+_analysis_or_empty(proj_dir: str) -> object
+Pre-condition: proj_dir is a non-empty string identifying the project root directory.
+Post-condition: Returns an ELP analysis object whose .spans attribute is a dict mapping absolute file paths to lists of (func_name, start_idx, end_idx) tuples. Returns an object with an empty .spans dict when the ELP backend is unavailable or no analysis data exists for proj_dir.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

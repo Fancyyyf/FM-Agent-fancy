@@ -1,0 +1,98 @@
+Programming language: Python
+
+Pre-condition:
+In natural language: After execution of this code block, the incremental pipeline has been initialized. The function has defined the working directory 'work_dir' as 'proj_dir/fm_agent', computed the script directory, and set 'input_dir' and 'output_dir' to the appropriate subdirectories for extracted functions and logic verification results. The extra call edges have been loaded into 'extra_call_edges' (if the path was provided and valid, otherwise an empty list). Incremental logging has been configured to write to a log file within 'work_dir'. Any user-supplied domain knowledge files have been staged/copied into the work directory's knowledge area; their count (if any) has been logged. The pipeline has logged its start banner, the project directory, the intent file path, and the base commit ID. No return value is produced yet; the function continues execution. In formal logic: let proj_dir, intent_file_path, old_commit_id be given and satisfy pre‑conditions; then (work_dir = join(proj_dir, "fm_agent")) ∧ (script_dir = get_parent(get_parent(module_file_path))) ∧ (input_dir = join(work_dir, "extracted_functions")) ∧ (output_dir = join(work_dir, "logic_verification_results")) ∧ (extra_call_edges = load_call_edges(extra_call_edges_path)) ∧ (incremental_logging_configured(work_dir) is True) ∧ (staged_knowledge = stage_domain_knowledge_files(proj_dir, work_dir, domain_knowledge_files)) ∧ (if domain_knowledge_files ≠ None → (files_staged_in_work_dir(domain_knowledge_files, work_dir) ∧ logged_info("user domain knowledge: " + len(staged_knowledge) + " markdown file(s)."))) ∧ (logged_info("=" * 70) ∧ logged_info("INCREMENTAL PIPELINE START") ∧ logged_info("  project dir : " + proj_dir) ∧ logged_info("  intent file : " + intent_file_path) ∧ logged_info("  base commit : " + old_commit_id)) ∧ (current return value is undefined).
+
+Code block:
+```python
+Line 41:     if submodules:
+Line 42:         logging.info("  submodule scope : %s", ", ".join(submodules))
+Line 43:     logging.info("=" * 70)
+Line 44:     # 1. Check whether there is a last run to compare against; if not, fall back to a full run since we have no basis for incremental analysis.
+Line 45:     logging.info("[Stage 1/10] Checking for a previous full run to compare against...")
+Line 46:     has_last_run = check_last_run_existence(proj_dir, submodules=submodules)
+Line 47:     if not has_last_run:
+Line 48:         logging.warning(
+Line 49:             "No previous full run detected (phases.json missing or incomplete extracted_functions), so falling back to a full run rather than incremental."
+Line 50:         )
+Line 51:         run_pipeline(
+Line 52:             proj_dir,
+Line 53:             domain_knowledge_files=domain_knowledge_files,
+Line 54:             submodules=submodules,
+Line 55:             one_phase=one_phase,
+Line 56:             extra_call_edges_path=extra_call_edges_path,
+Line 57:             bug_validator_path=bug_validator_path,
+Line 58:             plugin_config=plugin_config,
+Line 59:         )
+Line 60:         return
+Line 61:     logging.info("  -> previous full run found; proceeding with incremental analysis.")
+Line 62:     # 2. Check whether the intent file is valid; if not, fail since we don't know what to analyze incrementally.
+Line 63:     logging.info("[Stage 2/10] Loading developer intent...")
+Line 64:     developer_intent = ""
+Line 65:     if not os.path.isfile(intent_file_path):
+Line 66:         logging.error("Intent file %s does not exist; cannot run incremental pipeline.", intent_file_path)
+Line 67:         return
+Line 68:     else:
+Line 69:         with open(intent_file_path, "r") as f:
+Line 70:             developer_intent = f.read().strip()
+Line 71:         if not developer_intent:
+Line 72:             logging.error("Intent file %s is empty; cannot run incremental pipeline.", intent_file_path)
+Line 73:             return
+Line 74:     logging.info("  -> intent loaded (%d chars).", len(developer_intent))
+Line 75:     # Wipe the previous run's verification artifacts. The prior full run wrote a verdict for
+Line 76:     # EVERY function into logic_verification_results/ and every confirmed bug into
+Line 77:     # bug_validation/, but this incremental run only re-verifies the changed/affected subset.
+Line 78:     # If left in place, those folders would mix stale full-run results with this run's fresh
+Line 79:     # ones, making it ambiguous which verdicts are the latest. Clear them so the folders hold
+Line 80:     # only this incremental run's output.
+```
+
+Additional context:
+load_call_edges(extra_call_edges_path: str | None) -> list
+Pre-condition: If not None, extra_call_edges_path points to a JSON file conforming to the extra-edges schema (containing an 'edges' list of {caller, callee} objects).
+Post-condition: Returns the parsed supplemental call-edge records as a list. When extra_call_edges_path is None or the file is absent, returns an empty list.
+
+check_last_run_existence(proj_dir: str, submodules: list | None) -> bool
+Pre-condition: proj_dir is the project root directory; submodules optionally constrains the scope to specific subdirectories.
+Post-condition: Returns True if phases.json exists and the extracted_functions directory contains function files for all expected phases; returns False if a previous full run cannot be verified, indicating the incremental pipeline must fall back to a full run.
+
+run_pipeline(proj_dir: str, domain_knowledge_files: list | None, submodules: list | None, one_phase: bool, extra_call_edges_path: str | None, bug_validator_path: str | None, plugin_config: dict | None) -> None
+Pre-condition: proj_dir is an existing git repository root with a valid fm-agent.toml configuration and an accessible LLM backend.
+Post-condition: Completes the full 6-stage pipeline: configuration validation, function extraction, phase planning, topdown layer generation, batch spec generation with streaming verification, and bug validation aggregation. Writes .spec.json/.info.json sidecars, verification verdicts, and bug reports to fm_agent/.
+
+_run_setup_extract(proj_dir: str, work_dir: str, script_dir: str, is_incremental: bool, submodules: list | None, one_phase: bool, plugin_config: dict | None) -> None
+Pre-condition: proj_dir contains the project source files and fm-agent.toml. script_dir is the FM-Agent source directory containing phase templates. is_incremental is True when called from the incremental pipeline.
+Post-condition: Generates or regenerates phases.json in work_dir, mapping project modules to processing phases according to the phase configuration templates. Registers extracted functions with the file tracking system.
+
+_collect_changed_functions(proj_dir: str, old_commit_id: str, submodules: list | None) -> dict
+Pre-condition: old_commit_id is a valid commit identifier in the git repository at proj_dir. submodules optionally restricts analysis to specified subdirectory paths.
+Post-condition: Returns a dict mapping changed source file paths to their change records. Each record distinguishes added, modified, and removed function names relative to old_commit_id, restricted to the submodule scope when provided.
+
+_remove_stale_extracted(proj_dir: str, changed_functions: dict) -> None
+Pre-condition: changed_functions is a dict mapping source file paths to {added, modified, removed} function lists, as produced by _collect_changed_functions.
+Post-condition: Removes extracted-function files from extracted_functions/ for every function listed as removed, and for every source file that has no remaining functions. Does not modify files for added or modified functions.
+
+collect_file_names(input_dir: str, file_list_path: str) -> list[str]
+Pre-condition: input_dir is the root of the extracted_functions tree containing function files with recognized language extensions.
+Post-condition: Returns a sorted, extension-filtered list of relative paths to extracted function files under input_dir. Writes the list to file_list_path in JSON format.
+
+_get_all_phase_files(phases_data: dict, input_dir: str) -> list[str]
+Pre-condition: phases_data conforms to the phases.json schema with a 'phases' key containing per-phase module and source-file lists. input_dir is the extracted_functions root.
+Post-condition: Returns the union of all extracted function file paths that belong to at least one configured phase, resolved against input_dir.
+
+generate_topdown_layers(work_dir: str, extra_call_edges: list) -> None
+Pre-condition: work_dir contains an extracted_functions directory with function files and a phases.json with phase definitions.
+Post-condition: Computes dependency-ordered layers from the call graph (callees ordered before callers) and writes per-layer metadata files to work_dir. Layer ordering respects the constraint that a function's callees all belong to earlier (lower-numbered) layers.
+
+collect_relevent_function_scope(proj_dir: str, developer_intent: str, changed_functions: dict) -> list[str]
+Pre-condition: developer_intent is a non-empty string describing the modification goal. changed_functions is a dict of changed file paths to {added, modified, removed} function lists.
+Post-condition: Returns a list of function-identifying strings judged relevant to developer_intent. Relevance is determined by scoring functions through multi-tier signal matching (traceback patterns, backtick identifiers, class-method references, exception types) and intra-file call-graph score propagation.
+
+_update_specs_for_intent(proj_dir: str, work_dir: str, developer_intent: str, changed_functions: dict, spec_files: list[str], extra_call_edges: list) -> list[str]
+Pre-condition: developer_intent describes the modification goal. changed_functions lists changed functions. spec_files lists functions judged relevant to the intent. extra_call_edges contains supplemental call-graph edges.
+Post-condition: Returns a list of file paths for which .spec.json and .info.json sidecars were updated. Updates specs for functions that satisfy either condition: (1) the function itself changed relative to the base commit, or (2) the function was judged relevant to the developer intent. Updated specs reflect the new intended correct behavior in light of the modification intent.
+
+_verify_incremental_functions(proj_dir: str, work_dir: str, changed_functions: dict, updated_spec_files: list[str], submodules: list | None, bug_validator_path: str | None) -> list[str]
+Pre-condition: changed_functions records which functions changed. updated_spec_files lists functions whose specs were regenerated. submodules optionally constrains the verification scope. bug_validator_path optionally provides custom bug-validation instructions.
+Post-condition: Returns a sorted list of relative paths to functions with confirmed bugs. A function is verified if: (1) it changed, (2) its spec was updated, or (3) any of its callees' specs were updated. For each verified function, runs the reasoner; on MISMATCH, dispatches bug validation to independently confirm the violation via a probe script. Only functions where bug validation confirms the MISMATCH are included in the returned list. Writes verification verdicts to logic_verification_results/ and confirmed bug reports to bug_validation/<bug_id>.md.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

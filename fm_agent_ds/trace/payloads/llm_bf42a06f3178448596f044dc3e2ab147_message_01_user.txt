@@ -1,0 +1,26 @@
+Programming language: Python
+
+Pre-condition:
+fqn is a non-empty string representing a fully-qualified function name whose components are separated by '::'.
+
+Code block:
+```python
+Line 1: def _fqn_to_ident(fqn):
+Line 2:     """Return a function's class-qualified identifier: the FQN tail after the
+Line 3:     ``<base>-<ext>`` source-file component.
+Line 4:         src::storage-cpp::LocalStorage::Flush -> LocalStorage::Flush
+Line 5:         src::checkpoint-cpp::RunCheckpoint     -> RunCheckpoint
+Line 6:     This is exactly the name run_extraction wrote (as the flat filename stem)
+Line 7:     and _function_spans reports, so trim keeps/removes the right same-name method
+Line 8:     instead of collapsing LocalStorage::Flush and WriteAheadLog::Flush together.
+Line 9:     """
+Line 10:     parts = fqn.split("::")
+Line 11:     for i in range(len(parts) - 1, -1, -1):
+Line 12:         comp = parts[i]
+Line 13:         hyphen = comp.rfind("-")
+Line 14:         if hyphen > 0 and comp[hyphen + 1:] in EXT_TO_LANG:
+Line 15:             return "::".join(parts[i + 1:])
+Line 16:     return parts[-1]
+```
+
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

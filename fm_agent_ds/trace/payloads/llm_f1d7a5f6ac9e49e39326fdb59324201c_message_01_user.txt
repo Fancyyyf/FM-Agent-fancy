@@ -1,0 +1,27 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def wait_opencode_traced(record, timeout_seconds=OPENCODE_TIMEOUT_SECONDS):
+Line 2:     exit_code, error = _wait_opencode_process(
+Line 3:         record.proc,
+Line 4:         record.command,
+Line 5:         record.stage,
+Line 6:         timeout_seconds=timeout_seconds,
+Line 7:     )
+Line 8:     if error or record.error is None:
+Line 9:         record.error = error
+Line 10:     return exit_code
+```
+
+Condition A (what the code actually does):
+The function returns an integer `exit_code` derived from `_wait_opencode_process(record.proc, record.command, record.stage, timeout_seconds=timeout_seconds)`. After the call, `record.proc` has been waited on: if the process completed within `timeout_seconds`, `exit_code` is its exit code and the error string `error` is None; if the process timed out, it was sent SIGTERM, then after a 10‑second grace period SIGKILL, and `exit_code` is its eventual exit code (or -15 if the original exit code would have been 0), with `error` being a descriptive timeout message string. `record.error` is updated as follows: if `error` is not None or `record.error` was None before the call, then `record.error = error`; otherwise `record.error` retains its original value. The fields `record.command`, `record.stage`, and `timeout_seconds` remain unchanged. The function completes normally without raising an exception, and the return value is the integer `exit_code`.
+
+Condition B (what the specification requires):
+Blocks until the process in record.proc completes. If the process exits within timeout_seconds, returns the process's exit code. If the process does not exit within timeout_seconds, the process is terminated (and force-killed if termination does not complete within a grace period), returns a non-zero exit code, and stores a timeout error message on record.error. On normal (non-timeout) completion, record.error is set to the error string if one is produced by the wait; otherwise record.error retains its prior value if it was already non-None.
+
+Additional context:
+_wait_opencode_process(proc, command, stage, timeout_seconds) -> (int, str | None)
+Pre-condition: proc is a running subprocess.Popen instance; command is a non-empty list of strings; stage is a non-empty string; timeout_seconds is a positive integer.
+Post-condition: Waits for proc to complete up to timeout_seconds. Returns a 2-tuple (exit_code, error). On normal completion within the timeout, exit_code is the process's exit code and error is None. On timeout, proc is terminated (SIGTERM), then force-killed (SIGKILL) if termination does not complete within a 10-second grace period; exit_code is the process's exit code after termination (or -15 if the exit code would be 0), and error is a descriptive timeout message string.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

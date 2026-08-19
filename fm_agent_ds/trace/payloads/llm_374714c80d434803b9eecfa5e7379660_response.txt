@@ -1,0 +1,3 @@
+{
+  "post_condition": "The function returns a `pathlib.Path` object derived from the input `filepath`. Let `result` be the returned value. Then `result` satisfies: `isinstance(result, Path) and str(result) == str(filepath) + '.spec.json'`. No external state is modified, and no exceptions are raised under normal conditions."
+}

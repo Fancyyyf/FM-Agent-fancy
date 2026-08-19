@@ -1,0 +1,5 @@
+{
+  "signature": "_parse_post_condition_json(data) -> str",
+  "pre_condition": "data is expected to be a structured response dict from the LLM representing one block's post-condition",
+  "post_condition": "Returns the value of the 'post_condition' key as a non-empty string with leading and trailing whitespace removed. Raises ValueError when data is not a dict, or when data is a dict but lacks a non-empty string value for the 'post_condition' key."
+}

@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "An ElpClient instance with an active connection to a reachable ELP server. bootstrap_path = 'file:///test.py', bootstrap_source = None, self.timeout = 30. When the server receives the 'initialize' request, it responds with a valid JSON-RPC error message: {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found\"},\"id\":1}.",
+  "offending_statements": "Line 2:         result = self.request(",
+  "reason": "The specification lists only three specific conditions under which an exception is raised: server unreachable, server does not reach running status before deadline, or malformed server message. The code raises an exception when the server returns a JSON-RPC error response (e.g., 'Method not found') which does not fall under any of those conditions. According to the specification, the method should return server_info in all other cases, so a JSON-RPC error leads to a mismatch."
+}

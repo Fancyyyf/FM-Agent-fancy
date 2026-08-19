@@ -1,0 +1,5 @@
+{
+  "signature": "live_llm_environment_overrides() -> tuple[str, ...]",
+  "pre_condition": "None required.",
+  "post_condition": "Returns a tuple of environment variable name strings that satisfy both conditions: (1) the variable name belongs to the set of LLM-related environment variable names defined in the LLM section mapping, and (2) the variable is currently set in the process environment. Returns an empty tuple when no such variable satisfies both conditions. The result depends solely on the state of the process environment at call time; no file is read and no file is modified. The returned tuple order is deterministic."
+}

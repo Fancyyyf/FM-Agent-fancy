@@ -1,0 +1,5 @@
+{
+  "signature": "_detect_lang_from_ext(filepath) -> str | None",
+  "pre_condition": "filepath is a string.",
+  "post_condition": "Returns the language key string from the fixed extension-to-language registry whose registered extension matches the suffix of filepath's terminal name component following (and excluding) the last '.' character. Returns None when the terminal name component of filepath contains no '.' character. Returns None when the extracted suffix does not match any registered extension in the registry. The directory portion of filepath preceding the terminal name component does not affect the result."
+}

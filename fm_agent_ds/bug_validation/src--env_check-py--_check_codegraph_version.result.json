@@ -1,0 +1,11 @@
+{
+  "id": "src--env_check-py--_check_codegraph_version",
+  "source_file": "src/env_check-py/_check_codegraph_version.py",
+  "function_name": "_check_codegraph_version",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--env_check-py--_check_codegraph_version.py",
+  "detail_file": "fm_agent/bug_validation/src--env_check-py--_check_codegraph_version.md",
+  "probe_stdout": "CONFIRMED — actual: (True, None) | expected: (False, error_message); bug: True returned despite codegraph missing in bin_dir '/tmp/bugprobe_7p3r4_7c/empty_bin'",
+  "trigger_summary": "_codegraph_cmd() falls back to PATH when bin_dir binary is missing, and _check_codegraph_version does not verify the binary location, so True is returned even when the configured bin_dir has no codegraph."
+}

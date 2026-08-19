@@ -1,10 +1,5 @@
 {
-  "function": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/languages/go-py/function_spans.py",
-  "verdict": "MISMATCH",
-  "gaps": {
-    "spec_claim": "When the CodeGraph backend can index the specified Go source file, returns a list of (name, start_idx, end_idx) tuples, one tuple per function defined in the file. name is the canonicalized function name, and start_idx and end_idx are 0-indexed inclusive line indices marking the function's span. When the CodeGraph backend is unavailable or does not index the file, returns None.",
-    "actual_behavior": "If the function completes normally, the return value is either None or a list of tuples. The return value is None if and only if the CodeGraph index is unavailable (CodeGraphExtractor.from_proj_dir(proj_dir) returns None) or the file is not indexed by the backend (get_function_spans('go', filepath) returns None). Otherwise, the return value is a list of (name, start_idx, end_idx) tuples, where name is a string and start_idx, end_idx are inclusive 0based line indices of the function definition; the list contains one such tuple for each function found in the file (the list may be empty if the file contains no functions). No side effects are caused beyond internal state of a transient CodeGraphExtractor instance. Formal post-condition:\nlet cg = CodeGraphExtractor.from_proj_dir(proj_dir) in\n  (cg = None  ret = None)\n   (cg  None  ret = cg.get_function_spans(\"go\", filepath))\n   (ret  None  (ret is list   e  ret : e = (name, start, end)  name is str  start, end are ints  0  start  end))\n   (ret = None  (cg = None  cg.get_function_spans(\"go\", filepath) = None)).",
-    "code_evidence": "Line 8: return cg.get_function_spans(\"go\", filepath) if cg else None",
-    "trigger_condition": "The code uses 'if cg' to test whether the CodeGraphExtractor instance was obtained, but this will evaluate to False for a non-None instance that is falsy (e.g., due to a custom __bool__). In such a case, the function returns None even though the backend is available and can index the file, violating the specification which requires a non-None list when the backend can index the file."
-  }
+  "function": "/tmp/fm_agent_wt_FM-Agent_6olacvfc/snapshot/fm_agent/extracted_functions/src/languages/go-py/function_spans.py",
+  "verdict": "MATCH",
+  "gaps": null
 }

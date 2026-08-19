@@ -1,0 +1,5 @@
+{
+  "signature": "_collect_project_source_files(proj_dir, submodules=None) -> set",
+  "pre_condition": "proj_dir is an existing directory path; submodules, if not None, is a non-empty sequence of subdirectory paths relative to proj_dir",
+  "post_condition": "Returns a set of normalized forward-slash relative file paths for all non-test project source files discoverable under proj_dir. When submodules is not None, the returned set is restricted to files whose paths fall under at least one of the specified submodule directories. Every returned path corresponds to an existing file relative to proj_dir and uses forward-slash directory separators."
+}

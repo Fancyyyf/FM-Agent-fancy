@@ -1,0 +1,5 @@
+{
+  "signature": "_make_run_copy(proj_dir, run_dir) -> None",
+  "pre_condition": "proj_dir is an existing filesystem directory.",
+  "post_condition": "run_dir exists and contains a complete replica of proj_dir's file tree, excluding version-control metadata directories. If run_dir existed before the call, any prior contents are removed. Symbolic links in proj_dir are preserved as symbolic links in the copy. proj_dir is unmodified."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "src--verification-py--streaming_reasoner",
+  "source_file": "src/verification.py",
+  "function_name": "streaming_reasoner",
+  "confirmation_status": "confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--verification-py--streaming_reasoner.py",
+  "detail_file": "fm_agent/bug_validation/src--verification-py--streaming_reasoner.md",
+  "probe_stdout": "Functions pending verification: 1\nWARNING:root:Spec generation process(es) exited (codes [1]) but no .spec.json/.info.json sidecar pairs were created.\nCONFIRMED -- file with ready sidecars was NOT in processed set: False | expected: True\n",
+  "trigger_summary": "The unready computation at line 224 uses expected_files minus processed without checking is_file_ready(), causing files with ready sidecars to be incorrectly marked as pending when spec_procs finish before the scanning loop picks them up."
+}

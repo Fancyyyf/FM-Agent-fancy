@@ -1,0 +1,16 @@
+{
+  "callees": [
+    {
+      "name": "ElpClient._send",
+      "signature": "ElpClient._send(self, message: dict) -> None",
+      "pre_condition": "self has an active connection to the ELP server. message is a dict forming a well-formed JSON-RPC 2.0 request with 'jsonrpc', 'id', 'method', and 'params' fields.",
+      "post_condition": "The message has been serialized to JSON and written to the ELP server process's stdin. Raises an exception when the server is unreachable or the write fails."
+    },
+    {
+      "name": "ElpClient._wait_for_response",
+      "signature": "ElpClient._wait_for_response(self, request_id: int, deadline: float) -> Any",
+      "pre_condition": "A JSON-RPC request with the given request_id has been sent to the ELP server. deadline is a monotonic timestamp by which a response must arrive.",
+      "post_condition": "Returns the 'result' field of the server's JSON-RPC response matching the given request_id. Raises an exception when the response indicates a content-modified error, when the server returns a JSON-RPC error response, when the deadline is exceeded without a matching response, or when the connection is lost."
+    }
+  ]
+}

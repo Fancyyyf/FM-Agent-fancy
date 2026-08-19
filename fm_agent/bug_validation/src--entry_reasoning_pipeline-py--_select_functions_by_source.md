@@ -1,6 +1,6 @@
 # Bug Report: _select_functions_by_source
 
-**Source file:** `/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_select_functions_by_source.py`
+**Source file:** `/home/fancy/Projects_Vault/FM-Agent_qwen_7d490/fm_agent/extracted_functions/src/entry_reasoning_pipeline-py/_select_functions_by_source.py`
 **Verdict:** MISMATCH
 **Confirmation status:** not_confirmed
 
@@ -12,175 +12,194 @@ The following actual behavior cannot satisfy the specification.
 
 ### Specification Claim
 
-Returns a pair (all_by_source, keep_by_source). all_by_source maps each source file path relative to proj_dir to the set of all function identifiers extracted from that file. keep_by_source maps each source file path to the set of function identifiers from that file that lie on directed call-graph paths originating from entry_func. When end_funcs is None or empty, keep_by_source contains all functions reachable from entry_func in the call graph. When end_funcs is non-empty, keep_by_source contains only functions on directed call-graph paths from entry_func to at least one FQN in end_funcs. Every function identifier in keep_by_source also appears in all_by_source under the same source file key. proj_dir is never modified. All temporary state is removed before returning. Raises ValueError when entry_func is not found among extracted functions, when no extractable source files or functions exist in proj_dir, or when end_funcs is non-empty and none of its FQNs are reachable from entry_func.
+Returns two mappings keyed by project-relative source-file path, each value being the set of distinct function identifiers (names as they appear in the source) contributed by that file: (1) the first maps every source file that contributed at least one extracted function to the identifiers of ALL extractable functions of that file across the whole project; (2) the second maps source files to the identifiers of exactly those functions reachable from entry_func in the project call graph  including entry_func itself, with reachability evaluated over the call graph augmented by any supplemental edges  further narrowed to functions lying on a call chain from entry_func to at least one member of end_funcs whenever end_funcs is non-empty. Every reachable function is included regardless of call-chain depth, and a file appears in a mapping only if it contributes at least one function to that mapping. proj_dir is read but never modified: extraction, index building, and all scratch state used for selection are confined to a temporary copy of the project created beside proj_dir, which is removed in full before return whether selection succeeds or raises. Raises ValueError when no extractable source files exist under proj_dir, when no extractable functions are found, when entry_func is not among the extracted functions, or when end_funcs is non-empty and none of its members is reachable from entry_func; when at least one member of end_funcs is reachable, individually unreachable members are tolerated and do not cause failure.
 
 ---
 
 ### Actual Behavior
 
-After execution of `_select_functions_by_source(proj_dir, entry_func, end_funcs, extra_call_edges)` completes (normal return or exception), the following holds:
-
-- **Normal return**: The function returns a tuple `(all_by_source, keep_by_source)` where each is a `dict` whose keys are the source file paths (strings) discovered in `proj_dir`. For each source file `f`:
-  - `all_by_source[f]` is a list of FQN strings of **every extractable function** defined in `f`.
-  - `keep_by_source[f]` is a sublist of `all_by_source[f]` containing only those functions that are **reachable** from `entry_func` in the call graph built over the whole project, with optional early stopping at functions in `end_funcs` (if `end_funcs` is non-empty) and with added edges from `extra_call_edges` (if provided).
-- **Filesystem**: `proj_dir` and all its contents are **completely unmodified**. A temporary sibling directory `sel_dir = proj_dir + ".fm-entry-select"` is created during execution and used for extraction and call-graph construction. That directory is **guaranteed to be removed** (i.e., does not exist) when the function returns, regardless of whether the return is normal or exceptional (provided `sel_dir` was created after a successful `_make_run_copy`).
-- **Exceptional scenarios**:
-  - If no extractable source files are found in the project copy, a `ValueError` is raised.
-  - If the underlying extraction, codegraph initialisation, or filesystem operations fail, other exceptions (e.g., `OSError`, `subprocess.CalledProcessError`) may propagate.
-  - In every exception case, `proj_dir` remains unchanged and any created `sel_dir` is cleaned up.
+Upon successful return the function yields a 2-tuple (all_by_source, keep_by_source). all_by_source is a dict mapping each project-relative source-file path to the collection of every extractable function defined in that file across the entire project. keep_by_source is a dict mapping each project-relative source-file path to the collection of selected functions, i.e. those reachable from entry_func in the call graph; when end_funcs is a non-empty sequence the selection is further restricted to functions lying on at least one call chain from entry_func to some member of end_funcs (via _restrict_to_chains), and when end_funcs is None or empty the selection comprises all functions reachable from entry_func. extra_call_edges, when not None, are merged into the call graph before reachability analysis. The temporary selection directory at proj_dir + '.fm-entry-select' (and all its contents including the codegraph index, the fm_agent workspace, and phases.json) has been removed before the function returns. proj_dir is never modified. Formally: let CG = _build_call_graph(phase_files, work_dir, extra_call_edges); let reachable = BFS/DFS closure from entry_func over CG; let selected = reachable if (end_funcs is None or len(end_funcs)==0) else _restrict_to_chains(CG, entry_func, end_funcs); then keep_by_source = group_by_source(selected) and all_by_source = group_by_source(all_extracted).  path p: p  proj_dir-tree  p unchanged. The sibling directory proj_dir + '.fm-entry-select' does not exist after return. Exception paths: (1) If _enumerate_source_files returns an empty list, a ValueError is raised with a message referencing proj_dir; the selection directory is still cleaned up. (2) If _build_call_graph or run_extraction raises, the exception propagates after cleanup of the selection directory. (3) If entry_func is not present as a key in the built call graph, the behaviour follows _restrict_to_chains or reachability semantics (empty keep_by_source or KeyError depending on implementation). In all cases, proj_dir remains unmodified and the selection copy is discarded.
 
 ---
 
 ## Code Evidence
 
-Line 26: if not source_files:
-            raise ValueError(f"no extractable source files found under {proj_dir!r}")
+Line 38: run_extraction(sel_dir, work_dir=work_dir, force=True)
+Line 39: phase_files = _collect_phase_files(work_dir, phase)
+Line 40: if not phase_files:
 
 ---
 
 ## Trigger Condition
 
-Specification requires ValueError when entry_func is not found among extracted functions. Code only raises ValueError when no source files exist (Line 26) and does not validate entry_func presence; with the given input, source_files is non-empty, extraction succeeds, and the function returns normally with empty keep_by_source, violating the required exception.
+Condition B explicitly requires: 'Raises ValueError when  entry_func is not among the extracted functions.' Condition A, however, states: 'If entry_func is not present as a key in the built call graph, the behaviour follows _restrict_to_chains or reachability semantics (empty keep_by_source or KeyError depending on implementation).' No ValueError is raised. A concrete input: a project with one file defining only 'foo', called with entry_func='nonexistent_func'. The code proceeds to build the call graph, finds no key for 'nonexistent_func', and either returns an empty keep_by_source or propagates a KeyErrorneither of which is the ValueError mandated by the specification. The visible code (lines 38-40) performs extraction and collects phase files but never validates that entry_func appears among the extracted functions before continuing to call-graph construction and reachability analysis.
 
 ---
 
 ## How to trigger the bug
 
-The bug existed in the original implementation where the entry_func validation check (now at line 406-409 in `src/entry_reasoning_pipeline.py`) was absent. It was introduced in commit `8b158b3` and fixed in commit `f9d3ea5` ("Fix entry-function span detection: use codegraph for selection and trimming"). The current code includes the check at lines 406-409:
+The reported trigger is a project with one file defining only `foo`, calling
+the entry-point-scoped pipeline with `entry_func='nonexistent_func'`. The
+report claims the code never validates that `entry_func` appears among the
+extracted functions, so the call would return an empty `keep_by_source` or
+propagate a `KeyError` instead of the spec-mandated `ValueError`.
 
-```python
+Three probe attempts exercised exactly this path through the public entry
+point (`main.run_entry_pipeline`, with the FM-Agent workflow driver
+`main.run_pipeline` stubbed per the self-validation guard). In every attempt
+the code raised the spec-mandated `ValueError` before any call-graph
+reachability work, because the current source validates the entry point
+(`src/entry_reasoning_pipeline.py`, in `_select_functions_by_source`):
+
+```py
+all_fqns = {_file_to_fqn(fp, work_dir) for fp, _mod in phase_files}
+
 if entry_func not in all_fqns:
     raise ValueError(
         f"entry_func {entry_func!r} not found among extracted functions under proj_dir"
     )
 ```
 
-The probe confirms that the current code correctly raises `ValueError` when `entry_func` is not found among extracted functions.
+The bug therefore could not be reproduced: the implemented behavior already
+satisfies the specification clause under test.
 
 ### Inputs
 
-| Parameter | Value |
-|-----------|-------|
-| proj_dir | Temporary directory containing a minimal Python project (`example.py` with functions `foo` and `bar`) |
-| entry_func | `nonexistent::example-py::foo` (not present in the project) |
-| end_funcs | `None` (no end function restriction) |
+| Parameter | Value (attempt 1) | Value (attempt 2) | Value (attempt 3, final) |
+|-----------|-------------------|-------------------|--------------------------|
+| `proj_dir` | fresh temp dir with `foo.py` defining only `foo` | fresh temp dir with `foo.py` (`foo` calls `bar`) and `baz.py` (defines `bar`) | same as attempt 2 |
+| `entry_func` | `'nonexistent_func'` | `'foo-py::nonexistent_func'` (FQN-shaped) | `'bar'` (bare name of an extracted function whose FQN is `'baz-py::bar'`) |
+| `end_funcs` | `None` | `None` | `['foo-py::foo']` (proves the entry check fires before chain restriction) |
+| `extra_call_edges` | `None` | `None` | `None` |
 
 ### Expected (spec-correct) Output
 
-`ValueError` raised with message indicating `entry_func` was not found among extracted functions.
+`ValueError` whose message reports that `entry_func` is not found among the
+extracted functions under `proj_dir`.
 
 ### Actual (buggy) Output
 
-In the original buggy version: function returns normally with `(all_by_source, keep_by_source)` where `keep_by_source` is empty. In the current (fixed) version: `ValueError` is raised correctly.
+No buggy output was observable. All attempts raised the spec-correct
+`ValueError`; the final attempt produced:
+`ValueError: entry_func 'bar' not found among extracted functions under proj_dir`
+— identical in kind and intent to the expected output, so the reported bug did
+not reproduce.
 
 ### How to Reproduce
 
-Step-by-step instructions to trigger the bug manually:
-
 1. Navigate to the repo root.
-2. Run the following snippet (uses the package entry point):
+2. Run the following snippet (uses the package entry point; the workflow
+   driver is stubbed so no FM-Agent workflow starts):
 
-```python
-import tempfile, os, subprocess
-from src.entry_reasoning_pipeline import _select_functions_by_source
+```py
+import os, sys, tempfile
+import main
 
-tmpdir = tempfile.mkdtemp(dir="/tmp")
-with open(os.path.join(tmpdir, "example.py"), "w") as f:
-    f.write("def foo():\n    pass\n\ndef bar():\n    foo()\n")
-subprocess.run(["git", "init"], cwd=tmpdir, capture_output=True)
-subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=tmpdir, capture_output=True)
-subprocess.run(["git", "config", "user.name", "test"], cwd=tmpdir, capture_output=True)
-subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
-subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
+main.run_pipeline = lambda *a, **k: None  # guard: never start an FM-Agent workflow
 
-# Buggy version: returns normally with empty keep_by_source (ValueError not raised)
-# Fixed version:  raises ValueError("entry_func 'nonexistent::example-py::foo' not found...")
-result = _select_functions_by_source(tmpdir, "nonexistent::example-py::foo", None)
-# actual (buggy) output: (all_by_source, keep_by_source) -- keep_by_source is empty
-# expected (correct) output: ValueError
+proj_dir = os.path.join(tempfile.mkdtemp(), "proj")
+os.makedirs(proj_dir)
+with open(os.path.join(proj_dir, "foo.py"), "w") as f:
+    f.write("def foo():\n    return 1\n")
+
+try:
+    main.run_entry_pipeline(proj_dir, entry_func="nonexistent_func", end_funcs=None)
+    print("returned normally (bug reproduced)")
+except ValueError as e:
+    print(f"ValueError raised (spec-correct): {e}")
+# actual output: ValueError raised (spec-correct): entry_func 'nonexistent_func' not found among extracted functions under proj_dir
+# expected (buggy) output claimed by the report: returns normally with empty keep_by_source, or raises KeyError
 ```
 
 ---
 
 ## Probe Script
 
-```python
-"""Probe script for bug: _select_functions_by_source returns normally when entry_func is not found instead of raising ValueError.
+```py
+"""Probe for bug `src--entry_reasoning_pipeline-py--_select_functions_by_source`.
 
-Spec claims: Raises ValueError when entry_func is not found among extracted functions.
-Actual: Code returns normally with empty keep_by_source (buggy versions lacked the entry_func check).
+Attempt 3 — different inputs: entry_func='bar' is the BARE name of a real
+function in the fixture (baz.py defines bar), while extracted identities are
+FQNs ('baz-py::bar'), so 'bar' is not among the extracted functions; the
+strict-membership check must still raise ValueError. end_funcs is non-empty to
+prove the entry_func validation fires before any chain restriction.
+
+Spec claim under test: the pipeline MUST raise ValueError when entry_func is
+not among the extracted functions. Reported actual behavior: no validation —
+the function proceeds and either returns an empty keep_by_source or raises
+KeyError.
+
+FM-Agent self-validation guard: main.run_pipeline is stubbed with a recording
+no-op so no FM-Agent workflow (LLM/OpenCode) can start. All fixtures live in a
+fresh temporary directory owned by this probe.
 """
-import sys
 import os
-import tempfile
-import subprocess
 import shutil
+import sys
+import tempfile
 
-# This project uses a flat package layout (package=false in pyproject.toml).
-# src/ modules import from 'src.xxx', so the repo root must be on the path.
-_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _repo_root not in sys.path:
-    sys.path.insert(0, _repo_root)
+_REPO_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
+probe_tmp = None
 try:
-    from src.entry_reasoning_pipeline import _select_functions_by_source
-except ImportError as e:
-    print(f"ERROR: Could not import _select_functions_by_source: {e}")
-    sys.exit(1)
+    import main
 
-tmpdir = tempfile.mkdtemp(dir="/tmp")
-try:
-    # Create a minimal Python project with a simple source file
-    with open(os.path.join(tmpdir, "example.py"), "w") as f:
-        f.write("def foo():\n    pass\n\ndef bar():\n    foo()\n")
+    workflow_calls = []
 
-    # Initialize git (required by _make_run_copy via shutil.copytree expecting a valid repo)
-    subprocess.run(["git", "init"], cwd=tmpdir, capture_output=True)
-    subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=tmpdir, capture_output=True)
-    subprocess.run(["git", "config", "user.name", "test"], cwd=tmpdir, capture_output=True)
-    subprocess.run(["git", "add", "."], cwd=tmpdir, capture_output=True)
-    subprocess.run(["git", "commit", "-m", "init"], cwd=tmpdir, capture_output=True)
+    def _workflow_stub(*args, **kwargs):
+        workflow_calls.append((args, kwargs))
+        return None
 
-    # Call with a non-existent entry_func that is NOT in the project.
-    # The spec requires ValueError; the bug is that it returns normally.
-    expected = "ValueError"
-    passed = False
-    actual = None
+    main.run_pipeline = _workflow_stub
 
-    try:
-        result = _select_functions_by_source(
-            tmpdir,
-            "nonexistent::example-py::foo",  # not found in the project
-            None,  # no end_funcs restriction
-        )
-        # Reached here means NO ValueError was raised -- bug reproduced.
-        actual = f"returned normally: all_by_source has {len(result[0])} key(s), keep_by_source has {len(result[1])} key(s)"
-        passed = True
-    except ValueError as e:
-        # Correct behavior: ValueError raised as spec requires.
-        actual = f"ValueError: {e}"
-        passed = False
-    except Exception as e:
-        actual = f"{type(e).__name__}: {e}"
-        passed = True  # Wrong exception type is also a bug
-
+    # Fresh fixture project: foo.py calls bar(), defined in baz.py.
+    probe_tmp = tempfile.mkdtemp(prefix="fm_probe_entry_select_")
+    proj_dir = os.path.join(probe_tmp, "proj")
+    os.makedirs(proj_dir)
+    with open(os.path.join(proj_dir, "foo.py"), "w") as f:
+        f.write("def foo():\n    return bar()\n")
+    with open(os.path.join(proj_dir, "baz.py"), "w") as f:
+        f.write("def bar():\n    return 42\n")
 except Exception as e:
-    print(f"ERROR: Setup failed: {e}")
+    print(f"ERROR: probe setup failed: {type(e).__name__}: {e}")
     sys.exit(1)
+
+expected = "ValueError stating entry_func is not among the extracted functions"
+passed = False
+outcome = None
+try:
+    result = main.run_entry_pipeline(
+        proj_dir, entry_func="bar", end_funcs=["foo-py::foo"]
+    )
+    outcome = (
+        f"returned normally: {result!r} "
+        f"(workflow stub invocations: {len(workflow_calls)})"
+    )
+    passed = True  # spec mandates ValueError; a plain return reproduces the bug
+except ValueError as e:
+    msg = str(e)
+    if "entry_func" in msg:
+        outcome = f"raised ValueError: {msg}"
+        passed = False  # spec-correct behavior
+    else:
+        print(f"ERROR: unrelated ValueError before reaching the check: {msg}")
+        shutil.rmtree(probe_tmp, ignore_errors=True)
+        sys.exit(1)
+except Exception as e:
+    outcome = f"raised {type(e).__name__} instead of ValueError: {e}"
+    passed = True  # spec mandates ValueError; any other outcome reproduces the bug
 finally:
-    # Clean up leftover .fm-entry-select directory if the function crashed mid-way
-    sel_dir = tmpdir + ".fm-entry-select"
-    if os.path.exists(sel_dir):
-        shutil.rmtree(sel_dir, ignore_errors=True)
-    shutil.rmtree(tmpdir, ignore_errors=True)
+    shutil.rmtree(probe_tmp, ignore_errors=True)
 
 if passed:
-    expected_str = str(expected)
-    actual_str = repr(actual)
-    print(f"CONFIRMED -- actual: {actual_str} | expected: {expected_str}")
+    print(f"CONFIRMED — actual: {outcome} | expected: {expected}")
 else:
-    actual_str = repr(actual)
-    print(f"NOT CONFIRMED -- actual matched expected: {actual_str}")
+    print(f"NOT CONFIRMED — actual matched expected: {outcome}")
+
 ```
 
 ### Probe Output
@@ -189,5 +208,5 @@ else:
 [Pipeline] Building codegraph index...
 [Pipeline] codegraph index built.
 Extraction complete: 2 written, 0 skipped.
-NOT CONFIRMED -- actual matched expected: "ValueError: entry_func 'nonexistent::example-py::foo' not found among extracted functions under proj_dir"
+NOT CONFIRMED — actual matched expected: raised ValueError: entry_func 'bar' not found among extracted functions under proj_dir
 ```

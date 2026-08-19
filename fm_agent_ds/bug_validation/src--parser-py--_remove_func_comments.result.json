@@ -1,0 +1,11 @@
+{
+  "id": "src--parser-py--_remove_func_comments",
+  "source_file": "fm_agent/extracted_functions/src/parser-py/_remove_func_comments.py",
+  "function_name": "_remove_func_comments",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--parser-py--_remove_func_comments.py",
+  "detail_file": "fm_agent/bug_validation/src--parser-py--_remove_func_comments.md",
+  "probe_stdout": "PASS: TC-A: # inside string preserved\nPASS: TC-B: \\n escape + # in string (BUG)\nPASS: TC-C: multi escapes + # in string\nPASS: TC-D: # at start of line kept\nPASS: TC-E: inline # comment removed\nPASS: TC-F: \\ continuation, # not removed\n\nNOT CONFIRMED — All test cases pass. The # character inside a string\nis correctly preserved after escaped newlines. The reported bug\ndoes not reproduce.",
+  "trigger_summary": "Backslash-escaped newline inside string literal followed by # on next line — # preserved correctly; bug not reproducible."
+}

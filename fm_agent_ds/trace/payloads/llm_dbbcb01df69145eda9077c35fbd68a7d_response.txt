@@ -1,0 +1,6 @@
+{
+  "verdict": "MISMATCH",
+  "counterexample": "paths.toml_path points to an existing file with no read permission (e.g., chmod 000). backend is a valid non-empty string not equal to 'opencode'.",
+  "offending_statements": "Line 5: toml_text = _read_text_if_exists(paths.toml_path)",
+  "reason": "When the file is not readable, _read_text_if_exists may raise an exception (such as PermissionError) that is not caught. The code does not raise ConfigWizardError, violating the specification's requirement that ConfigWizardError be raised when the toml file is not readable."
+}

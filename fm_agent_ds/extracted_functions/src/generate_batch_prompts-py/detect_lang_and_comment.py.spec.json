@@ -1,0 +1,5 @@
+{
+  "signature": "detect_lang_and_comment(file_rel, ext_to_lang) -> (str, str)",
+  "pre_condition": "file_rel is a file path string. ext_to_lang is a dict whose keys are lowercase file extension strings (without leading dot) and whose values are language name strings.",
+  "post_condition": "Returns a tuple (language_name, comment_prefix). language_name is the value from ext_to_lang for the lowercase file extension of file_rel (without the leading dot), or the extension itself when the extension is non-empty but not a key in ext_to_lang, or \"unknown\" when the file path has no extension. comment_prefix is the single-line comment delimiter string for language_name per COMMENT_PREFIX_BY_LANG, defaulting to \"//\" when language_name is not a key in COMMENT_PREFIX_BY_LANG."
+}

@@ -1,0 +1,119 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def _phase_plan_schema_errors(phases_path):
+Line 2:     """Return human-readable schema errors for phases.json."""
+Line 3:     try:
+Line 4:         with open(phases_path, "r") as f:
+Line 5:             data = json.load(f)
+Line 6:     except OSError as exc:
+Line 7:         return [f"phases.json could not be read: {exc}"]
+Line 8:     except json.JSONDecodeError as exc:
+Line 9:         return [f"phases.json is not valid JSON: {exc}"]
+Line 10:     if not isinstance(data, dict):
+Line 11:         return ["the top-level value must be an object"]
+Line 12:     phases = data.get("phases")
+Line 13:     if not isinstance(phases, list):
+Line 14:         return ['top-level field "phases" must be an array']
+Line 15:     errors = []
+Line 16:     for phase_index, phase in enumerate(phases):
+Line 17:         phase_path = f"phases[{phase_index}]"
+Line 18:         if not isinstance(phase, dict):
+Line 19:             errors.append(f"{phase_path} must be an object")
+Line 20:             continue
+Line 21:         modules = phase.get("modules")
+Line 22:         if not isinstance(modules, list):
+Line 23:             errors.append(f"{phase_path}.modules must be an array")
+Line 24:             continue
+Line 25:         for module_index, module in enumerate(modules):
+Line 26:             module_path = f"{phase_path}.modules[{module_index}]"
+Line 27:             if not isinstance(module, dict):
+Line 28:                 errors.append(f"{module_path} must be an object")
+Line 29:                 continue
+Line 30:             module_name = module.get("name", "")
+Line 31:             context = (
+Line 32:                 f"{module_path} ({module_name!r})"
+Line 33:                 if module_name
+Line 34:                 else module_path
+Line 35:             )
+Line 36:             if "source_files" not in module:
+Line 37:                 errors.append(f"{context}.source_files is missing")
+Line 38:                 continue
+Line 39:             source_files = module["source_files"]
+Line 40:             if not isinstance(source_files, list):
+Line 41:                 errors.append(f"{context}.source_files must be an array")
+Line 42:                 continue
+Line 43:             for source_index, source_file in enumerate(source_files):
+Line 44:                 if not isinstance(source_file, str):
+Line 45:                     errors.append(
+Line 46:                         f"{context}.source_files[{source_index}] must be a string"
+Line 47:                     )
+Line 48:     return errors
+```
+
+Condition A (what the code actually does):
+The function returns a list of strings describing schema errors found in the file at phases_path. The behavior is deterministic and covers all exceptions internally, never propagating them.
+
+In natural language:
+- If the file cannot be opened (OSError), the result is a single-element list with a message starting with 'phases.json could not be read: ' and the exception string.
+- If the file is opened but contains invalid JSON (JSONDecodeError), the result is a single-element list with a message starting with 'phases.json is not valid JSON: ' and the exception string.
+- Otherwise, the JSON is successfully decoded into a Python value D.
+  - If D is not a dictionary, the result is ['the top-level value must be an object'].
+  - Else if D lacks a 'phases' key or its value is not a list, the result is ['top-level field "phases" must be an array'].
+  - Else D['phases'] is a list. The function initializes an empty errors list and iterates over each phase by index i:
+    - If the phase is not a dict, appends 'phases[i] must be an object' and continues to the next phase.
+    - Else, checks the 'modules' key. If missing or not a list, appends 'phases[i].modules must be an array' and continues.
+    - Else, for each module at index j:
+      - If the module is not a dict, appends 'phases[i].modules[j] must be an object' and continues to the next module.
+      - Else, determines the context string: module_path = 'phases[i].modules[j]'; if module.get('name') is truthy, context becomes "phases[i].modules[j] ('name')", else context is just module_path.
+      - If 'source_files' is missing from the module, appends '{context}.source_files is missing' and continues.
+      - Else, let source_files = module['source_files']. If source_files is not a list, appends '{context}.source_files must be an array' and continues.
+      - Else, for each source_file at index k, if it is not a string, appends '{context}.source_files[k] must be a string'.
+  - Finally, the function returns the accumulated errors list (possibly empty).
+
+Formal logic (using D for decoded JSON, P for phases_path):
+Let file_readable_JSON(P,D) mean the file at P is successfully opened and its contents decode to D.
+Let exc be the caught exception instance.
+
+( ∃ OSError exc. open(P) raises exc ) ⇒
+  return = [ 'phases.json could not be read: ' + str(exc) ]
+∧ ( file is opened ∧ json.load(P) raises json.JSONDecodeError exc ) ⇒
+  return = [ 'phases.json is not valid JSON: ' + str(exc) ]
+∧ ( file_readable_JSON(P, D) ) ⇒
+  ( ¬ isinstance(D, dict) ⇒
+      return = [ 'the top-level value must be an object' ] )
+  ∧ ( isinstance(D, dict) ∧ ( 'phases' not in D ∨ ¬ isinstance(D['phases'], list) ) ⇒
+      return = [ 'top-level field "phases" must be an array' ] )
+  ∧ ( isinstance(D, dict) ∧ isinstance(D['phases'], list) ) ⇒
+      let phases = D['phases'];
+      errors = [];
+      ∀ i ∈ [0, len(phases)-1]:
+        phase = phases[i]
+        ( ¬ isinstance(phase, dict) ⇒ errors.append('phases['+str(i)+'] must be an object') )
+        ∧ ( isinstance(phase, dict) ⇒
+            ( ¬ isinstance(phase.get('modules'), list) ⇒ errors.append('phases['+str(i)+'].modules must be an array') )
+            ∧ ( isinstance(phase.get('modules'), list) ⇒
+                ∀ j ∈ [0, len(phase['modules'])-1]:
+                  module = phase['modules'][j]
+                  ( ¬ isinstance(module, dict) ⇒ errors.append('phases['+str(i)+'].modules['+str(j)+'] must be an object') )
+                  ∧ ( isinstance(module, dict) ⇒
+                      let c = 'phases['+str(i)+'].modules['+str(j)+']';
+                      context = c if not module.get('name') else c + " ('" + module['name'] + "')";
+                      ( 'source_files' not in module ⇒ errors.append(context + '.source_files is missing') )
+                      ∧ ( 'source_files' in module ⇒
+                          ( ¬ isinstance(module['source_files'], list) ⇒ errors.append(context + '.source_files must be an array') )
+                          ∧ ( isinstance(module['source_files'], list) ⇒
+                              ∀ k ∈ [0, len(module['source_files'])-1]:
+                                ( ¬ isinstance(module['source_files'][k], str) ⇒ errors.append(context + '.source_files['+str(k)+'] must be a string') )
+                          )
+                      )
+                  )
+            )
+        );
+      return = errors
+
+Condition B (what the specification requires):
+Returns a list of human-readable error strings. The returned list is empty (falsy) if and only if all of the following hold: (1) a regular file exists at phases_path and can be opened for reading, (2) the file content is syntactically valid JSON, (3) the top-level JSON value is an object, (4) that object contains a key named "phases" whose value is an array, (5) every element of the "phases" array is an object, (6) every phase object contains a key named "modules" whose value is an array, (7) every element of a "modules" array is an object, (8) every module object contains a key named "source_files" whose value is an array, and (9) every element of a "source_files" array is a string. The returned list is non-empty (truthy) otherwise, with at least one element describing the first encountered blocking failure or all accumulated non-blocking structural violations.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

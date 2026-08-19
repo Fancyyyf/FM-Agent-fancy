@@ -1,0 +1,26 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def extract_info_block(filepath: Path) -> Optional[dict]:
+Line 2:     """Read the adjacent .info.json object when it is usable."""
+Line 3:     info_path = _info_json_path(filepath)
+Line 4:     try:
+Line 5:         with info_path.open("r", encoding="utf-8") as file:
+Line 6:             info = json.load(file)
+Line 7:     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+Line 8:         return None
+Line 9:     return info if isinstance(info, dict) else None
+```
+
+Condition A (what the code actually does):
+The function returns None if the file at the path derived from filepath by appending '.info.json' cannot be opened, read, decoded from UTF-8, or parsed as JSON due to OSError, UnicodeDecodeError, or json.JSONDecodeError, or if the root of the parsed JSON is not a dictionary. The function returns a dictionary (the parsed JSON object) if and only if the file is successfully opened, read, decoded, parsed, and the root element is a dictionary. In all execution paths, any opened file is closed before the function returns.
+
+Condition B (what the specification requires):
+Returns the Python dict parsed from the JSON content of the adjacent .info.json sidecar file when that sidecar exists, is readable as UTF-8 text, and parses to a JSON object. Returns None when the sidecar does not exist, cannot be opened or read, cannot be decoded as UTF-8, contains syntactically invalid JSON, or parses to a JSON value that is not a dict.
+
+Additional context:
+_info_json_path(filepath: Path) -> Path
+Pre-condition: filepath is a Path object.
+Post-condition: Returns a Path whose string representation equals the string representation of filepath with the literal suffix '.info.json' appended.
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

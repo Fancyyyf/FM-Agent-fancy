@@ -1,0 +1,5 @@
+{
+  "signature": "ElpClient.open_document(self, path: str, source: str | None = None) -> None",
+  "pre_condition": "self has an active connection to the ELP server. path is a string representing a filesystem path to an Erlang source file.",
+  "post_condition": "The ELP server has been notified via an LSP 'textDocument/didOpen' notification that the text document at the resolved absolute path is open. When source is not None, the server has received the provided source text as the document content. When source is None, the server has received the on-disk file content read as UTF-8 with replacement characters substituted for any undecodable bytes. The opened document is registered with languageId 'erlang' and version 1. Raises an exception when the server is unreachable, the server rejects the notification, or the connection is lost."
+}

@@ -1,0 +1,5 @@
+{
+  "signature": "_resolve_command(cmd: str, plugin_root: Path) -> str",
+  "pre_condition": "cmd is a non-empty string containing a shell command; plugin_root is a pathlib.Path pointing to an existing directory.",
+  "post_condition": "Returns a string formed by processing each whitespace-delimited token of cmd independently. For each token that starts with \"/\" or \"$\": the token is preserved unchanged. For each remaining token: if plugin_root / token resolves to an existing regular file on the filesystem, the token is replaced by the string representation of its absolute path; otherwise, the token is preserved unchanged. The relative order of tokens in the returned string matches the order in cmd."
+}

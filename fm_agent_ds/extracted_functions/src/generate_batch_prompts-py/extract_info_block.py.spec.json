@@ -1,0 +1,5 @@
+{
+  "signature": "extract_info_block(filepath: Path) -> Optional[dict]",
+  "pre_condition": "filepath is a Path object.",
+  "post_condition": "Returns the Python dict parsed from the JSON content of the adjacent .info.json sidecar file when that sidecar exists, is readable as UTF-8 text, and parses to a JSON object. Returns None when the sidecar does not exist, cannot be opened or read, cannot be decoded as UTF-8, contains syntactically invalid JSON, or parses to a JSON value that is not a dict."
+}

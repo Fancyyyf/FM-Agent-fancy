@@ -1,0 +1,11 @@
+{
+  "id": "src--opencode_trace-py--start_opencode_traced",
+  "source_file": "/home/fancy/Projects_Vault/FM-Agent/fm_agent/extracted_functions/src/opencode_trace-py/start_opencode_traced.py",
+  "function_name": "start_opencode_traced",
+  "confirmation_status": "not_confirmed",
+  "attempts": 1,
+  "probe_script": "fm_agent/bug_validation/probe_src--opencode_trace-py--start_opencode_traced.py",
+  "detail_file": "fm_agent/bug_validation/src--opencode_trace-py--start_opencode_traced.md",
+  "probe_stdout": "NOT CONFIRMED — actual: has error attr=True, error_value=None | expected: has error attr=True, error_value=None\n",
+  "trigger_summary": "The specification requires error=None, but the dataclass default (error: str | None = None) already supplies None so the attribute is present and correct."
+}

@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "_strip_angle_brackets",
+      "signature": "_strip_angle_brackets(text: str) -> str",
+      "pre_condition": "text is a string that may contain angle-bracket-delimited regions such as template or generic parameter lists.",
+      "post_condition": "Returns text with each outermost balanced '<...>' region removed: both the delimiting angle brackets and all content between them are stripped. Nesting is resolved — a '<' encountered between an outer '<' and its matching '>' belongs to the inner region and does not terminate the outer region. All characters outside any balanced '<...>' region are preserved in their original relative order."
+    }
+  ]
+}

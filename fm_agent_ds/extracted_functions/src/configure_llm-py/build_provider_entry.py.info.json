@@ -1,0 +1,10 @@
+{
+  "callees": [
+    {
+      "name": "adapter_for_api_style",
+      "signature": "adapter_for_api_style(api_style: ApiStyle) -> str",
+      "pre_condition": "api_style is an ApiStyle enum value — one of the two valid styles supported by the OpenCode provider adapter.",
+      "post_condition": "Returns a non-empty string that names the OpenCode npm provider-adapter package corresponding to the given API style. Each distinct valid api_style value maps to a distinct, non-empty package name."
+    }
+  ]
+}

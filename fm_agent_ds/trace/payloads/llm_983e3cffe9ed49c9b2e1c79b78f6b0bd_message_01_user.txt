@@ -1,0 +1,37 @@
+Programming language: Python
+
+Code block:
+```python
+Line 1: def detect_opencode_config_path(home: Path | None = None) -> Path:
+Line 2:     custom_config = os.environ.get("OPENCODE_CONFIG")
+Line 3:     if custom_config:
+Line 4:         return Path(custom_config).expanduser()
+Line 5:     custom_config_dir = os.environ.get("OPENCODE_CONFIG_DIR")
+Line 6:     if custom_config_dir:
+Line 7:         config_dir = Path(custom_config_dir).expanduser()
+Line 8:         jsonc = config_dir / "opencode.jsonc"
+Line 9:         return jsonc if jsonc.exists() else config_dir / "opencode.json"
+Line 10:     home = home or Path.home()
+Line 11:     if os.name == "nt":
+Line 12:         appdata = os.environ.get("APPDATA")
+Line 13:         config_dir = (
+Line 14:             Path(appdata) / "opencode"
+Line 15:             if appdata
+Line 16:             else home / "AppData" / "Roaming" / "opencode"
+Line 17:         )
+Line 18:     else:
+Line 19:         xdg = os.environ.get("XDG_CONFIG_HOME")
+Line 20:         config_dir = Path(xdg) / "opencode" if xdg else home / ".config" / "opencode"
+Line 21:     jsonc = config_dir / "opencode.jsonc"
+Line 22:     if jsonc.exists():
+Line 23:         return jsonc
+Line 24:     return config_dir / "opencode.json"
+```
+
+Condition A (what the code actually does):
+The return value is a Path object p. If the environment variable 'OPENCODE_CONFIG' was set at function entry, then p = Path(os.environ['OPENCODE_CONFIG']).expanduser(). Otherwise, let base_dir be computed as: if 'OPENCODE_CONFIG_DIR' was set, base_dir = Path(os.environ['OPENCODE_CONFIG_DIR']).expanduser(); else, let home_dir = home if home is not None else Path.home(); then if os.name == 'nt', if 'APPDATA' is set, base_dir = Path(os.environ['APPDATA']) / 'opencode', else base_dir = home_dir / 'AppData' / 'Roaming' / 'opencode'; else (non-Windows), if 'XDG_CONFIG_HOME' is set, base_dir = Path(os.environ['XDG_CONFIG_HOME']) / 'opencode', else base_dir = home_dir / '.config' / 'opencode'. Then, if base_dir / 'opencode.jsonc' exists, p = base_dir / 'opencode.jsonc', else p = base_dir / 'opencode.json'. No files are created or modified, and the state of environment variables is unchanged. The input home, if not None, is a Path referring to a directory.
+
+Condition B (what the specification requires):
+Returns a Path identifying a candidate location for the OpenCode configuration file. The returned path is determined by the first matching rule in this precedence: (1) when the OPENCODE_CONFIG environment variable is set and non-empty, the variable value expanded as a user path; (2) when the OPENCODE_CONFIG_DIR environment variable is set and non-empty, opencode.jsonc within that directory if the file exists, otherwise opencode.json within that directory; (3) otherwise, opencode.jsonc within the platform-specific OpenCode configuration directory if the file exists, otherwise opencode.json within that same directory. The platform-specific configuration directory is: on Windows, the value of the APPDATA environment variable appended with opencode when set, otherwise the home directory joined with AppData/Roaming/opencode; on other platforms, the value of the XDG_CONFIG_HOME environment variable appended with opencode when set, otherwise the home directory joined with .config/opencode. When home is not None, it replaces Path.home() in the default home directory derivation for the platform-specific case only. The returned path may refer to a file that does not yet exist.
+
+Is there a concrete valid input where the code's behavior violates the specification? Enumerate all cases required by condition B and check if condition A covers each one. Provide a specific counterexample if any case is missing. Return only the JSON object.

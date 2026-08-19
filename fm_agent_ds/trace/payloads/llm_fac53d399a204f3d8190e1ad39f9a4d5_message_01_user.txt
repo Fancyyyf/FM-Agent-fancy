@@ -1,0 +1,25 @@
+Programming language: Python
+
+Pre-condition:
+proj_dir is an existing directory path; submodules, if not None, is a non-empty sequence of subdirectory paths relative to proj_dir
+
+Code block:
+```python
+Line 1: def _collect_project_source_files(proj_dir, submodules=None):
+Line 2:     """Return non-test source files currently present in proj_dir, relative to proj_dir."""
+Line 3:     files = set()
+Line 4:     for rel in _iter_project_source_files(proj_dir, submodules):
+Line 5:         if not _is_test_file(rel):
+Line 6:             files.add(rel)
+Line 7:     return files
+```
+
+Additional context:
+_iter_project_source_files(proj_dir, submodules=None)
+Pre-condition: proj_dir is an existing directory path; submodules, if not None, is a non-empty sequence of subdirectory paths relative to proj_dir
+Post-condition: Yields normalized forward-slash relative file paths for all project source files discoverable under proj_dir. When submodules is not None, yields only files whose paths fall under at least one of the specified submodule directories.
+
+_is_test_file(rel)
+Pre-condition: rel is a normalized forward-slash relative file path string
+Post-condition: Returns True if and only if rel identifies a test file; returns False for all other project source files.
+Generate the post-condition. Return only a valid JSON object with this required field: {"post_condition": "..."}. Do not include Markdown, tags, or prose outside the JSON object.

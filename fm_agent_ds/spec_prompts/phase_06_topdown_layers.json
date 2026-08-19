@@ -1,0 +1,2091 @@
+{
+  "phase": 6,
+  "phase_name": "Reasoning & Verification Engine",
+  "total_functions": 146,
+  "total_layers": 8,
+  "layers": [
+    {
+      "layer": 0,
+      "functions": [
+        {
+          "name": "dashboard-py::State::cache_hit_rate",
+          "file": "extracted_functions/dashboard-py/State::cache_hit_rate.py",
+          "unit": "orchestration",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::main",
+          "file": "extracted_functions/dashboard-py/main.py",
+          "unit": "orchestration",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "dashboard-py::State::__init__",
+            "dashboard-py::State::scan_bugs",
+            "dashboard-py::State::tail_events",
+            "dashboard-py::State::tail_opencode",
+            "dashboard-py::build_layout"
+          ],
+          "all_callees": [
+            "dashboard-py::State::__init__",
+            "dashboard-py::State::scan_bugs",
+            "dashboard-py::State::tail_events",
+            "dashboard-py::State::tail_opencode",
+            "dashboard-py::build_layout"
+          ]
+        },
+        {
+          "name": "main-py::_normalize_submodules",
+          "file": "extracted_functions/main-py/_normalize_submodules.py",
+          "unit": "orchestration",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_under_submodules"
+          ]
+        },
+        {
+          "name": "main-py::_resolve_bug_validator_path",
+          "file": "extracted_functions/main-py/_resolve_bug_validator_path.py",
+          "unit": "orchestration",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::run_entry_pipeline",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/run_entry_pipeline.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
+            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner"
+          ],
+          "all_callees": [
+            "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
+            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner",
+            "src::file_utils-py::add_test_file_exemption",
+            "src::file_utils-py::clear_test_file_exemptions"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_StdoutTee::__getattr__",
+          "file": "extracted_functions/src/incremental_reasoner-py/_StdoutTee::__getattr__.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_StdoutTee::flush",
+          "file": "extracted_functions/src/incremental_reasoner-py/_StdoutTee::flush.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_StdoutTee::write",
+          "file": "extracted_functions/src/incremental_reasoner-py/_StdoutTee::write.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_update_specs_for_intent::_order_key",
+          "file": "extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent::_order_key.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_update_specs_for_intent::_plan_spec_update",
+          "file": "extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent::_plan_spec_update.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_collect_caller_context",
+            "src::incremental_reasoner-py::_llm_check_spec_update",
+            "src::incremental_reasoner-py::_normalize_info_dict",
+            "src::incremental_reasoner-py::_normalize_spec_dict",
+            "src::incremental_reasoner-py::_opencode_generate_spec"
+          ],
+          "all_callees": [
+            "src::incremental_reasoner-py::_collect_caller_context",
+            "src::incremental_reasoner-py::_llm_check_spec_update",
+            "src::incremental_reasoner-py::_normalize_info_dict",
+            "src::incremental_reasoner-py::_normalize_spec_dict",
+            "src::incremental_reasoner-py::_opencode_generate_spec"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_update_specs_for_intent::_reconcile_caller",
+          "file": "extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent::_reconcile_caller.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_llm_check_caller_info_update",
+            "src::incremental_reasoner-py::_normalize_info_dict"
+          ],
+          "all_callees": [
+            "src::incremental_reasoner-py::_llm_check_caller_info_update",
+            "src::incremental_reasoner-py::_normalize_info_dict"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_validate_caller_info_update",
+          "file": "extracted_functions/src/incremental_reasoner-py/_validate_caller_info_update.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_normalize_info_dict"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_valid_info_json",
+            "src::incremental_reasoner-py::_normalize_info_dict"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_validate_module_selection",
+          "file": "extracted_functions/src/incremental_reasoner-py/_validate_module_selection.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_verify_incremental_functions::_validate",
+          "file": "extracted_functions/src/incremental_reasoner-py/_verify_incremental_functions::_validate.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "src::verification-py::_validate_single_bug"
+          ],
+          "all_callees": [
+            "src::verification-py::_validate_single_bug"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_verify_incremental_functions::_verify",
+          "file": "extracted_functions/src/incremental_reasoner-py/_verify_incremental_functions::_verify.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "src::verification-py::_verify_single_file"
+          ],
+          "all_callees": [
+            "src::verification-py::_verify_single_file"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::run_incremental_pipeline",
+          "file": "extracted_functions/src/incremental_reasoner-py/run_incremental_pipeline.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [],
+          "phase6_callees": [
+            "main-py::run_pipeline",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_collect_changed_functions",
+            "src::incremental_reasoner-py::_remove_stale_extracted",
+            "src::incremental_reasoner-py::_setup_incremental_logging",
+            "src::incremental_reasoner-py::_update_specs_for_intent",
+            "src::incremental_reasoner-py::_verify_incremental_functions",
+            "src::incremental_reasoner-py::check_last_run_existence",
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "all_callees": [
+            "main-py::run_pipeline",
+            "src::call_graph_edges-py::load_call_edges",
+            "src::domain_knowledge-py::stage_domain_knowledge_files",
+            "src::extract-py::run_extraction",
+            "src::file_utils-py::_get_all_phase_files",
+            "src::file_utils-py::_write_file_names",
+            "src::file_utils-py::collect_file_names",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_collect_changed_functions",
+            "src::incremental_reasoner-py::_remove_stale_extracted",
+            "src::incremental_reasoner-py::_setup_incremental_logging",
+            "src::incremental_reasoner-py::_update_specs_for_intent",
+            "src::incremental_reasoner-py::_verify_incremental_functions",
+            "src::incremental_reasoner-py::check_last_run_existence",
+            "src::incremental_reasoner-py::collect_relevent_function_scope",
+            "src::languages::codegraph-py::try_codegraph_init",
+            "src::pipeline_setup-py::_run_setup_extract"
+          ]
+        },
+        {
+          "name": "src::spec_generation_and_verification-py::_run_spec_generation_batch",
+          "file": "extracted_functions/src/spec_generation_and_verification-py/_run_spec_generation_batch.py",
+          "unit": "spec_orchestrator",
+          "phase6_callers": [],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::function_id_from_extracted_path",
+            "src::opencode_trace-py::run_opencode_traced"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 1,
+      "functions": [
+        {
+          "name": "dashboard-py::State::__init__",
+          "file": "extracted_functions/dashboard-py/State::__init__.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::main"
+          ],
+          "phase6_callees": [
+            "dashboard-py::_locate_workdir"
+          ],
+          "all_callees": [
+            "dashboard-py::_locate_workdir"
+          ]
+        },
+        {
+          "name": "dashboard-py::State::scan_bugs",
+          "file": "extracted_functions/dashboard-py/State::scan_bugs.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::main"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::State::tail_events",
+          "file": "extracted_functions/dashboard-py/State::tail_events.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::main"
+          ],
+          "phase6_callees": [
+            "dashboard-py::State::_ingest_event"
+          ],
+          "all_callees": [
+            "dashboard-py::State::_ingest_event"
+          ]
+        },
+        {
+          "name": "dashboard-py::State::tail_opencode",
+          "file": "extracted_functions/dashboard-py/State::tail_opencode.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::main"
+          ],
+          "phase6_callees": [
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "all_callees": [
+            "dashboard-py::State::_ingest_opencode"
+          ]
+        },
+        {
+          "name": "dashboard-py::build_layout",
+          "file": "extracted_functions/dashboard-py/build_layout.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::main"
+          ],
+          "phase6_callees": [
+            "dashboard-py::render_bugs",
+            "dashboard-py::render_cache",
+            "dashboard-py::render_header",
+            "dashboard-py::render_llm_status",
+            "dashboard-py::render_recent",
+            "dashboard-py::render_stages",
+            "dashboard-py::render_tokens"
+          ],
+          "all_callees": [
+            "dashboard-py::render_bugs",
+            "dashboard-py::render_cache",
+            "dashboard-py::render_header",
+            "dashboard-py::render_llm_status",
+            "dashboard-py::render_recent",
+            "dashboard-py::render_stages",
+            "dashboard-py::render_tokens"
+          ]
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_run_entry_pipeline_inner.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::run_entry_pipeline"
+          ],
+          "phase6_callees": [
+            "main-py::run_pipeline",
+            "src::entry_reasoning_pipeline-py::_count_mismatches",
+            "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
+            "src::entry_reasoning_pipeline-py::_make_run_copy",
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+            "src::entry_reasoning_pipeline-py::_trim_project_in_place"
+          ],
+          "all_callees": [
+            "main-py::run_pipeline",
+            "src::call_graph_edges-py::load_call_edges",
+            "src::entry_reasoning_pipeline-py::_count_mismatches",
+            "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
+            "src::entry_reasoning_pipeline-py::_make_run_copy",
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+            "src::entry_reasoning_pipeline-py::_trim_project_in_place",
+            "src::languages::codegraph-py::try_codegraph_init"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_collect_caller_context",
+          "file": "extracted_functions/src/incremental_reasoner-py/_collect_caller_context.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent::_plan_spec_update"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::generate_batch_prompts-py::extract_callee_spec_from_info",
+            "src::generate_batch_prompts-py::extract_info_block",
+            "src::generate_batch_prompts-py::extract_spec_block"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_collect_changed_functions",
+          "file": "extracted_functions/src/incremental_reasoner-py/_collect_changed_functions.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::run_incremental_pipeline"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_codegraph_functions_at_revision",
+            "src::incremental_reasoner-py::_codegraph_functions_by_file",
+            "src::incremental_reasoner-py::_codegraph_legacy_coverage",
+            "src::incremental_reasoner-py::_collect_changed_functions::_funcs_from_commit",
+            "src::incremental_reasoner-py::_collect_changed_functions::_git",
+            "src::incremental_reasoner-py::_collect_changed_functions::_is_workspace_file",
+            "src::incremental_reasoner-py::_collect_changed_functions::_path_exists_in_commit",
+            "src::incremental_reasoner-py::_normalized_relative_path"
+          ],
+          "all_callees": [
+            "src::extract-py::extract_functions_from_file",
+            "src::file_utils-py::_is_test_file",
+            "src::file_utils-py::_is_under_submodules",
+            "src::incremental_reasoner-py::_codegraph_functions_at_revision",
+            "src::incremental_reasoner-py::_codegraph_functions_by_file",
+            "src::incremental_reasoner-py::_codegraph_legacy_coverage",
+            "src::incremental_reasoner-py::_collect_changed_functions::_funcs_from_commit",
+            "src::incremental_reasoner-py::_collect_changed_functions::_git",
+            "src::incremental_reasoner-py::_collect_changed_functions::_is_workspace_file",
+            "src::incremental_reasoner-py::_collect_changed_functions::_path_exists_in_commit",
+            "src::incremental_reasoner-py::_normalized_relative_path"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_llm_check_caller_info_update",
+          "file": "extracted_functions/src/incremental_reasoner-py/_llm_check_caller_info_update.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent::_reconcile_caller"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_domain_knowledge_prompt_section",
+            "src::incremental_reasoner-py::_llm_select_json"
+          ],
+          "all_callees": [
+            "src::incremental_reasoner-py::_domain_knowledge_prompt_section",
+            "src::incremental_reasoner-py::_llm_select_json"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_llm_check_spec_update",
+          "file": "extracted_functions/src/incremental_reasoner-py/_llm_check_spec_update.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent::_plan_spec_update"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_domain_knowledge_prompt_section",
+            "src::incremental_reasoner-py::_llm_select_json"
+          ],
+          "all_callees": [
+            "src::incremental_reasoner-py::_domain_knowledge_prompt_section",
+            "src::incremental_reasoner-py::_llm_select_json"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_opencode_generate_spec",
+          "file": "extracted_functions/src/incremental_reasoner-py/_opencode_generate_spec.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent::_plan_spec_update"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_opencode_select_json",
+            "src::incremental_reasoner-py::_validate_spec_update"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::incremental_reasoner-py::_opencode_select_json",
+            "src::incremental_reasoner-py::_validate_spec_update"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_remove_stale_extracted",
+          "file": "extracted_functions/src/incremental_reasoner-py/_remove_stale_extracted.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::run_incremental_pipeline"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_load_phases",
+            "src::incremental_reasoner-py::_reconcile_extracted_dir"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_load_phases",
+            "src::incremental_reasoner-py::_reconcile_extracted_dir"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_setup_incremental_logging",
+          "file": "extracted_functions/src/incremental_reasoner-py/_setup_incremental_logging.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::run_incremental_pipeline"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_StdoutTee::__init__"
+          ],
+          "all_callees": [
+            "src::incremental_reasoner-py::_StdoutTee::__init__"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_update_specs_for_intent",
+          "file": "extracted_functions/src/incremental_reasoner-py/_update_specs_for_intent.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::run_incremental_pipeline"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::incremental_reasoner-py::_modified_function_targets",
+            "src::incremental_reasoner-py::_project_call_graph",
+            "src::incremental_reasoner-py::_resolve_callee_fqns",
+            "src::incremental_reasoner-py::_topdown_ordered_fqns"
+          ],
+          "all_callees": [
+            "src::file_utils-py::is_file_ready",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::incremental_reasoner-py::_modified_function_targets",
+            "src::incremental_reasoner-py::_project_call_graph",
+            "src::incremental_reasoner-py::_resolve_callee_fqns",
+            "src::incremental_reasoner-py::_topdown_ordered_fqns"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_verify_incremental_functions",
+          "file": "extracted_functions/src/incremental_reasoner-py/_verify_incremental_functions.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::run_incremental_pipeline"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_modified_function_targets",
+            "src::verification-py::_generate_validation_summary"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_under_submodules",
+            "src::incremental_reasoner-py::_modified_function_targets",
+            "src::verification-py::_generate_validation_summary"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::check_last_run_existence",
+          "file": "extracted_functions/src/incremental_reasoner-py/check_last_run_existence.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::run_incremental_pipeline"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_metadata_sidecar",
+            "src::file_utils-py::_is_under_submodules",
+            "src::file_utils-py::is_file_ready"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::collect_relevent_function_scope",
+          "file": "extracted_functions/src/incremental_reasoner-py/collect_relevent_function_scope.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::run_incremental_pipeline"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_load_phases",
+            "src::incremental_reasoner-py::_extracted_files_by_method",
+            "src::incremental_reasoner-py::_extracted_func_dir",
+            "src::incremental_reasoner-py::_llm_select_json",
+            "src::incremental_reasoner-py::_opencode_select_json",
+            "src::incremental_reasoner-py::collect_relevent_function_scope::_record",
+            "src::scope-py::_parse_issue_signals",
+            "src::scope-py::rank_functions_in_file"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_metadata_sidecar",
+            "src::generate_topdown_layers-py::_load_phases",
+            "src::incremental_reasoner-py::_extracted_files_by_method",
+            "src::incremental_reasoner-py::_extracted_func_dir",
+            "src::incremental_reasoner-py::_llm_select_json",
+            "src::incremental_reasoner-py::_opencode_select_json",
+            "src::incremental_reasoner-py::collect_relevent_function_scope::_record",
+            "src::scope-py::_parse_issue_signals",
+            "src::scope-py::rank_functions_in_file"
+          ]
+        },
+        {
+          "name": "src::verification-py::_validate_single_bug",
+          "file": "extracted_functions/src/verification-py/_validate_single_bug.py",
+          "unit": "verification",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_verify_incremental_functions::_validate"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::domain_knowledge-py::format_domain_knowledge_bullets",
+            "src::domain_knowledge-py::list_staged_domain_knowledge_relpaths",
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::function_id_from_result_path",
+            "src::opencode_trace-py::run_opencode_traced"
+          ]
+        },
+        {
+          "name": "src::verification-py::_verify_single_file",
+          "file": "extracted_functions/src/verification-py/_verify_single_file.py",
+          "unit": "verification",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_verify_incremental_functions::_verify"
+          ],
+          "phase6_callees": [
+            "src::reasoner-py::_parse_spec_conditions",
+            "src::reasoner-py::_sanitize_strings",
+            "src::reasoner-py::reasoner"
+          ],
+          "all_callees": [
+            "src::domain_knowledge-py::load_staged_domain_knowledge_text",
+            "src::parser-py::parse_input_function",
+            "src::reasoner-py::_parse_spec_conditions",
+            "src::reasoner-py::_sanitize_strings",
+            "src::reasoner-py::reasoner"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 2,
+      "functions": [
+        {
+          "name": "dashboard-py::State::_ingest_event",
+          "file": "extracted_functions/dashboard-py/State::_ingest_event.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::tail_events"
+          ],
+          "phase6_callees": [
+            "dashboard-py::State::_push_llm_status",
+            "dashboard-py::State::_push_recent",
+            "dashboard-py::_cost_from_usage",
+            "dashboard-py::_llm_code_for_event",
+            "dashboard-py::_parse_iso"
+          ],
+          "all_callees": [
+            "dashboard-py::State::_push_llm_status",
+            "dashboard-py::State::_push_recent",
+            "dashboard-py::_cost_from_usage",
+            "dashboard-py::_llm_code_for_event",
+            "dashboard-py::_parse_iso"
+          ]
+        },
+        {
+          "name": "dashboard-py::State::_ingest_opencode",
+          "file": "extracted_functions/dashboard-py/State::_ingest_opencode.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::tail_opencode"
+          ],
+          "phase6_callees": [
+            "dashboard-py::State::_push_llm_status",
+            "dashboard-py::_cost_from_usage",
+            "dashboard-py::_get_nested",
+            "dashboard-py::_parse_iso",
+            "dashboard-py::_strip_star",
+            "dashboard-py::_trace_value"
+          ],
+          "all_callees": [
+            "dashboard-py::State::_push_llm_status",
+            "dashboard-py::_cost_from_usage",
+            "dashboard-py::_get_nested",
+            "dashboard-py::_parse_iso",
+            "dashboard-py::_strip_star",
+            "dashboard-py::_trace_value"
+          ]
+        },
+        {
+          "name": "dashboard-py::_locate_workdir",
+          "file": "extracted_functions/dashboard-py/_locate_workdir.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::__init__"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::render_bugs",
+          "file": "extracted_functions/dashboard-py/render_bugs.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::build_layout"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::render_cache",
+          "file": "extracted_functions/dashboard-py/render_cache.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::build_layout"
+          ],
+          "phase6_callees": [
+            "dashboard-py::_price_for",
+            "dashboard-py::render_cache::bar_line"
+          ],
+          "all_callees": [
+            "dashboard-py::_price_for",
+            "dashboard-py::render_cache::bar_line"
+          ]
+        },
+        {
+          "name": "dashboard-py::render_header",
+          "file": "extracted_functions/dashboard-py/render_header.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::build_layout"
+          ],
+          "phase6_callees": [
+            "dashboard-py::State::elapsed",
+            "dashboard-py::_fmt_duration"
+          ],
+          "all_callees": [
+            "dashboard-py::State::elapsed",
+            "dashboard-py::_fmt_duration"
+          ]
+        },
+        {
+          "name": "dashboard-py::render_llm_status",
+          "file": "extracted_functions/dashboard-py/render_llm_status.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::build_layout"
+          ],
+          "phase6_callees": [
+            "dashboard-py::_llm_status_style"
+          ],
+          "all_callees": [
+            "dashboard-py::_llm_status_style"
+          ]
+        },
+        {
+          "name": "dashboard-py::render_recent",
+          "file": "extracted_functions/dashboard-py/render_recent.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::build_layout"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::render_stages",
+          "file": "extracted_functions/dashboard-py/render_stages.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::build_layout"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::render_tokens",
+          "file": "extracted_functions/dashboard-py/render_tokens.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::build_layout"
+          ],
+          "phase6_callees": [
+            "dashboard-py::_fmt_cost",
+            "dashboard-py::_fmt_tokens",
+            "dashboard-py::_price_for",
+            "dashboard-py::render_tokens::row"
+          ],
+          "all_callees": [
+            "dashboard-py::_fmt_cost",
+            "dashboard-py::_fmt_tokens",
+            "dashboard-py::_price_for",
+            "dashboard-py::render_tokens::row"
+          ]
+        },
+        {
+          "name": "main-py::run_pipeline",
+          "file": "extracted_functions/main-py/run_pipeline.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner",
+            "src::incremental_reasoner-py::run_incremental_pipeline"
+          ],
+          "phase6_callees": [
+            "main-py::_clean_previous_run",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ],
+          "all_callees": [
+            "main-py::_clean_previous_run",
+            "src::call_graph_edges-py::load_call_edges",
+            "src::domain_knowledge-py::stage_domain_knowledge_files",
+            "src::extract-py::run_extraction",
+            "src::file_utils-py::_get_all_phase_files",
+            "src::file_utils-py::_has_source_code",
+            "src::file_utils-py::_write_file_names",
+            "src::file_utils-py::collect_file_names",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::languages::codegraph-py::try_codegraph_init",
+            "src::pipeline_setup-py::_post_process_phases",
+            "src::pipeline_setup-py::_run_generate_domain_context",
+            "src::pipeline_setup-py::_run_generate_phases",
+            "src::plugin-py::PluginConfig::get_stage",
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ]
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_count_mismatches",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_count_mismatches.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_select_functions_by_source.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner"
+          ],
+          "phase6_callees": [
+            "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
+            "src::entry_reasoning_pipeline-py::_enumerate_source_files",
+            "src::entry_reasoning_pipeline-py::_fqn_to_ident",
+            "src::entry_reasoning_pipeline-py::_make_run_copy",
+            "src::entry_reasoning_pipeline-py::_restrict_to_chains",
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_file_to_fqn"
+          ],
+          "all_callees": [
+            "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
+            "src::entry_reasoning_pipeline-py::_enumerate_source_files",
+            "src::entry_reasoning_pipeline-py::_fqn_to_ident",
+            "src::entry_reasoning_pipeline-py::_make_run_copy",
+            "src::entry_reasoning_pipeline-py::_restrict_to_chains",
+            "src::extract-py::run_extraction",
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::languages::codegraph-py::try_codegraph_init"
+          ]
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_trim_project_in_place",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_trim_project_in_place.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner"
+          ],
+          "phase6_callees": [
+            "src::entry_reasoning_pipeline-py::_trim_source_file"
+          ],
+          "all_callees": [
+            "src::entry_reasoning_pipeline-py::_trim_source_file"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_StdoutTee::__init__",
+          "file": "extracted_functions/src/incremental_reasoner-py/_StdoutTee::__init__.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_setup_incremental_logging"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_codegraph_functions_at_revision",
+          "file": "extracted_functions/src/incremental_reasoner-py/_codegraph_functions_at_revision.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_collect_changed_functions"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_codegraph_functions_by_file",
+            "src::incremental_reasoner-py::_codegraph_legacy_coverage"
+          ],
+          "all_callees": [
+            "src::incremental_reasoner-py::_codegraph_functions_by_file",
+            "src::incremental_reasoner-py::_codegraph_legacy_coverage",
+            "src::languages::codegraph-py::try_codegraph_init",
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_collect_changed_functions::_funcs_from_commit",
+          "file": "extracted_functions/src/incremental_reasoner-py/_collect_changed_functions::_funcs_from_commit.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_collect_changed_functions"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_collect_changed_functions::_git"
+          ],
+          "all_callees": [
+            "src::extract-py::extract_functions_from_file",
+            "src::incremental_reasoner-py::_collect_changed_functions::_git"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_collect_changed_functions::_is_workspace_file",
+          "file": "extracted_functions/src/incremental_reasoner-py/_collect_changed_functions::_is_workspace_file.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_collect_changed_functions"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_collect_changed_functions::_path_exists_in_commit",
+          "file": "extracted_functions/src/incremental_reasoner-py/_collect_changed_functions::_path_exists_in_commit.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_collect_changed_functions"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_domain_knowledge_prompt_section",
+          "file": "extracted_functions/src/incremental_reasoner-py/_domain_knowledge_prompt_section.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_llm_check_caller_info_update",
+            "src::incremental_reasoner-py::_llm_check_spec_update"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::domain_knowledge-py::load_staged_domain_knowledge_text"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_extracted_func_dir",
+          "file": "extracted_functions/src/incremental_reasoner-py/_extracted_func_dir.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_llm_select_json",
+          "file": "extracted_functions/src/incremental_reasoner-py/_llm_select_json.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_llm_check_caller_info_update",
+            "src::incremental_reasoner-py::_llm_check_spec_update",
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::llm_client-py::_llm_json_call"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_modified_function_targets",
+          "file": "extracted_functions/src/incremental_reasoner-py/_modified_function_targets.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent",
+            "src::incremental_reasoner-py::_verify_incremental_functions"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::incremental_reasoner-py::_extracted_files_by_method",
+            "src::incremental_reasoner-py::_src_rel_to_func_dir"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::incremental_reasoner-py::_extracted_files_by_method",
+            "src::incremental_reasoner-py::_src_rel_to_func_dir"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_opencode_select_json",
+          "file": "extracted_functions/src/incremental_reasoner-py/_opencode_select_json.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_opencode_generate_spec",
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::llm_client-py::build_llm_cli_command",
+            "src::opencode_trace-py::run_opencode_traced"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_project_call_graph",
+          "file": "extracted_functions/src/incremental_reasoner-py/_project_call_graph.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_load_phases"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_load_phases"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_reconcile_extracted_dir",
+          "file": "extracted_functions/src/incremental_reasoner-py/_reconcile_extracted_dir.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_remove_stale_extracted"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_src_rel_to_func_dir"
+          ],
+          "all_callees": [
+            "src::extract-py::_function_spans",
+            "src::incremental_reasoner-py::_src_rel_to_func_dir"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_resolve_callee_fqns",
+          "file": "extracted_functions/src/incremental_reasoner-py/_resolve_callee_fqns.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_topdown_ordered_fqns",
+          "file": "extracted_functions/src/incremental_reasoner-py/_topdown_ordered_fqns.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_load_phases",
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_load_phases",
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_validate_spec_update",
+          "file": "extracted_functions/src/incremental_reasoner-py/_validate_spec_update.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_opencode_generate_spec"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_normalize_info_dict",
+            "src::incremental_reasoner-py::_normalize_spec_dict"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_is_valid_info_json",
+            "src::file_utils-py::_is_valid_spec_json",
+            "src::incremental_reasoner-py::_normalize_info_dict",
+            "src::incremental_reasoner-py::_normalize_spec_dict"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::collect_relevent_function_scope::_record",
+          "file": "extracted_functions/src/incremental_reasoner-py/collect_relevent_function_scope::_record.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_sanitize_strings",
+          "file": "extracted_functions/src/reasoner-py/_sanitize_strings.py",
+          "unit": "reasoner",
+          "phase6_callers": [
+            "src::verification-py::_verify_single_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::reasoner",
+          "file": "extracted_functions/src/reasoner-py/reasoner.py",
+          "unit": "reasoner",
+          "phase6_callers": [
+            "src::verification-py::_verify_single_file"
+          ],
+          "phase6_callees": [
+            "src::reasoner-py::_has_terminating_statement",
+            "src::reasoner-py::_parse_spec_conditions",
+            "src::reasoner-py::_split_into_blocks_braced"
+          ],
+          "all_callees": [
+            "src::prompts-py::_check_post_implies_spec",
+            "src::prompts-py::_generate_block_post_condition",
+            "src::reasoner-py::_has_terminating_statement",
+            "src::reasoner-py::_parse_spec_conditions",
+            "src::reasoner-py::_split_into_blocks_braced"
+          ]
+        },
+        {
+          "name": "src::scope-py::_parse_issue_signals",
+          "file": "extracted_functions/src/scope-py/_parse_issue_signals.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_extract_backtick_idents"
+          ],
+          "all_callees": [
+            "src::scope-py::_extract_backtick_idents"
+          ]
+        },
+        {
+          "name": "src::scope-py::rank_functions_in_file",
+          "file": "extracted_functions/src/scope-py/rank_functions_in_file.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_llm_rerank",
+            "src::scope-py::_parse_file",
+            "src::scope-py::_rank_functions"
+          ],
+          "all_callees": [
+            "src::scope-py::_llm_rerank",
+            "src::scope-py::_parse_file",
+            "src::scope-py::_rank_functions"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 3,
+      "functions": [
+        {
+          "name": "dashboard-py::State::_push_llm_status",
+          "file": "extracted_functions/dashboard-py/State::_push_llm_status.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::_ingest_event",
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::State::_push_recent",
+          "file": "extracted_functions/dashboard-py/State::_push_recent.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::_ingest_event"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::State::elapsed",
+          "file": "extracted_functions/dashboard-py/State::elapsed.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::render_header"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_cost_from_usage",
+          "file": "extracted_functions/dashboard-py/_cost_from_usage.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::_ingest_event",
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "phase6_callees": [
+            "dashboard-py::_price_for"
+          ],
+          "all_callees": [
+            "dashboard-py::_price_for"
+          ]
+        },
+        {
+          "name": "dashboard-py::_fmt_cost",
+          "file": "extracted_functions/dashboard-py/_fmt_cost.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::render_tokens"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_fmt_duration",
+          "file": "extracted_functions/dashboard-py/_fmt_duration.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::render_header"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_get_nested",
+          "file": "extracted_functions/dashboard-py/_get_nested.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_llm_code_for_event",
+          "file": "extracted_functions/dashboard-py/_llm_code_for_event.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::_ingest_event"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_llm_status_style",
+          "file": "extracted_functions/dashboard-py/_llm_status_style.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::render_llm_status"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_parse_iso",
+          "file": "extracted_functions/dashboard-py/_parse_iso.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::_ingest_event",
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_strip_star",
+          "file": "extracted_functions/dashboard-py/_strip_star.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_trace_value",
+          "file": "extracted_functions/dashboard-py/_trace_value.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::State::_ingest_opencode"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::render_cache::bar_line",
+          "file": "extracted_functions/dashboard-py/render_cache::bar_line.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::render_cache"
+          ],
+          "phase6_callees": [
+            "dashboard-py::_cache_rate",
+            "dashboard-py::_fmt_tokens"
+          ],
+          "all_callees": [
+            "dashboard-py::_cache_rate",
+            "dashboard-py::_fmt_tokens"
+          ]
+        },
+        {
+          "name": "dashboard-py::render_tokens::row",
+          "file": "extracted_functions/dashboard-py/render_tokens::row.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::render_tokens"
+          ],
+          "phase6_callees": [
+            "dashboard-py::_fmt_tokens"
+          ],
+          "all_callees": [
+            "dashboard-py::_fmt_tokens"
+          ]
+        },
+        {
+          "name": "main-py::_clean_previous_run",
+          "file": "extracted_functions/main-py/_clean_previous_run.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "main-py::run_pipeline"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_entry_func_source_rel",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_entry_func_source_rel.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner",
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+            "src::entry_reasoning_pipeline-py::run_entry_pipeline"
+          ],
+          "phase6_callees": [
+            "src::entry_reasoning_pipeline-py::_extracted_file_to_source_rel"
+          ],
+          "all_callees": [
+            "src::entry_reasoning_pipeline-py::_extracted_file_to_source_rel"
+          ]
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_enumerate_source_files",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_enumerate_source_files.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_test_file"
+          ]
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_fqn_to_ident",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_fqn_to_ident.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_make_run_copy",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_make_run_copy.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_run_entry_pipeline_inner",
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_restrict_to_chains",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_restrict_to_chains.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_trim_source_file",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_trim_source_file.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_trim_project_in_place"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::extract-py::_function_spans"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_codegraph_functions_by_file",
+          "file": "extracted_functions/src/incremental_reasoner-py/_codegraph_functions_by_file.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_codegraph_functions_at_revision",
+            "src::incremental_reasoner-py::_collect_changed_functions"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_normalized_relative_path"
+          ],
+          "all_callees": [
+            "src::incremental_reasoner-py::_normalized_relative_path",
+            "src::languages::codegraph-py::CodeGraphExtractor::from_proj_dir",
+            "src::languages::codegraph-py::CodeGraphExtractor::get_functions_by_file"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_codegraph_legacy_coverage",
+          "file": "extracted_functions/src/incremental_reasoner-py/_codegraph_legacy_coverage.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_codegraph_functions_at_revision",
+            "src::incremental_reasoner-py::_collect_changed_functions"
+          ],
+          "phase6_callees": [
+            "src::incremental_reasoner-py::_bare_function_name",
+            "src::incremental_reasoner-py::_normalized_function_source",
+            "src::incremental_reasoner-py::_normalized_relative_path"
+          ],
+          "all_callees": [
+            "src::extract-py::extract_functions_from_file",
+            "src::incremental_reasoner-py::_bare_function_name",
+            "src::incremental_reasoner-py::_normalized_function_source",
+            "src::incremental_reasoner-py::_normalized_relative_path"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_collect_changed_functions::_git",
+          "file": "extracted_functions/src/incremental_reasoner-py/_collect_changed_functions::_git.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_collect_changed_functions",
+            "src::incremental_reasoner-py::_collect_changed_functions::_funcs_from_commit"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::languages::erlang-py::_JsonRpcReader::run"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_extracted_files_by_method",
+          "file": "extracted_functions/src/incremental_reasoner-py/_extracted_files_by_method.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_modified_function_targets",
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_metadata_sidecar"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_normalize_info_dict",
+          "file": "extracted_functions/src/incremental_reasoner-py/_normalize_info_dict.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent::_plan_spec_update",
+            "src::incremental_reasoner-py::_update_specs_for_intent::_reconcile_caller",
+            "src::incremental_reasoner-py::_validate_caller_info_update",
+            "src::incremental_reasoner-py::_validate_spec_update"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_normalize_spec_dict",
+          "file": "extracted_functions/src/incremental_reasoner-py/_normalize_spec_dict.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_update_specs_for_intent::_plan_spec_update",
+            "src::incremental_reasoner-py::_validate_spec_update"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_src_rel_to_func_dir",
+          "file": "extracted_functions/src/incremental_reasoner-py/_src_rel_to_func_dir.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_modified_function_targets",
+            "src::incremental_reasoner-py::_reconcile_extracted_dir"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_has_terminating_statement",
+          "file": "extracted_functions/src/reasoner-py/_has_terminating_statement.py",
+          "unit": "reasoner",
+          "phase6_callers": [
+            "src::reasoner-py::reasoner"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_parse_spec_conditions",
+          "file": "extracted_functions/src/reasoner-py/_parse_spec_conditions.py",
+          "unit": "reasoner",
+          "phase6_callers": [
+            "src::reasoner-py::reasoner",
+            "src::verification-py::_verify_single_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_split_into_blocks_braced",
+          "file": "extracted_functions/src/reasoner-py/_split_into_blocks_braced.py",
+          "unit": "reasoner",
+          "phase6_callers": [
+            "src::reasoner-py::reasoner"
+          ],
+          "phase6_callees": [
+            "src::reasoner-py::_compute_brace_depth_per_line",
+            "src::reasoner-py::_split_into_blocks"
+          ],
+          "all_callees": [
+            "src::reasoner-py::_compute_brace_depth_per_line",
+            "src::reasoner-py::_split_into_blocks"
+          ]
+        },
+        {
+          "name": "src::scope-py::_extract_backtick_idents",
+          "file": "extracted_functions/src/scope-py/_extract_backtick_idents.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_issue_signals"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_extract_backtick_idents::_add"
+          ],
+          "all_callees": [
+            "src::scope-py::_extract_backtick_idents::_add"
+          ]
+        },
+        {
+          "name": "src::scope-py::_llm_rerank",
+          "file": "extracted_functions/src/scope-py/_llm_rerank.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::rank_functions_in_file"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_build_func_list_text"
+          ],
+          "all_callees": [
+            "src::llm_client-py::_parse_json_response",
+            "src::scope-py::_build_func_list_text"
+          ]
+        },
+        {
+          "name": "src::scope-py::_parse_file",
+          "file": "extracted_functions/src/scope-py/_parse_file.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::rank_functions_in_file"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_parse_generic_file",
+            "src::scope-py::_parse_python_file"
+          ],
+          "all_callees": [
+            "src::scope-py::_parse_generic_file",
+            "src::scope-py::_parse_python_file"
+          ]
+        },
+        {
+          "name": "src::scope-py::_rank_functions",
+          "file": "extracted_functions/src/scope-py/_rank_functions.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::rank_functions_in_file"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_base_score",
+            "src::scope-py::_score_class"
+          ],
+          "all_callees": [
+            "src::scope-py::_base_score",
+            "src::scope-py::_score_class"
+          ]
+        },
+        {
+          "name": "src::spec_generation_and_verification-py::run_spec_generation_and_verification",
+          "file": "extracted_functions/src/spec_generation_and_verification-py/run_spec_generation_and_verification.py",
+          "unit": "spec_orchestrator",
+          "phase6_callers": [
+            "main-py::run_pipeline"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::spec_generation_and_verification-py::_get_pending_batches",
+            "src::verification-py::streaming_reasoner"
+          ],
+          "all_callees": [
+            "src::file_utils-py::_get_incomplete_verification_files",
+            "src::file_utils-py::_get_phase_files",
+            "src::file_utils-py::is_file_ready",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::languages::erlang-py::_JsonRpcReader::run",
+            "src::spec_generation_and_verification-py::_get_pending_batches",
+            "src::verification-py::streaming_reasoner"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 4,
+      "functions": [
+        {
+          "name": "dashboard-py::_cache_rate",
+          "file": "extracted_functions/dashboard-py/_cache_rate.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::render_cache::bar_line"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_fmt_tokens",
+          "file": "extracted_functions/dashboard-py/_fmt_tokens.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::render_cache::bar_line",
+            "dashboard-py::render_tokens",
+            "dashboard-py::render_tokens::row"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "dashboard-py::_price_for",
+          "file": "extracted_functions/dashboard-py/_price_for.py",
+          "unit": "orchestration",
+          "phase6_callers": [
+            "dashboard-py::_cost_from_usage",
+            "dashboard-py::render_cache",
+            "dashboard-py::render_tokens"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::entry_reasoning_pipeline-py::_extracted_file_to_source_rel",
+          "file": "extracted_functions/src/entry_reasoning_pipeline-py/_extracted_file_to_source_rel.py",
+          "unit": "entry_pipeline",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_entry_func_source_rel"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::generate_topdown_layers",
+          "file": "extracted_functions/src/generate_topdown_layers-py/generate_topdown_layers.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "main-py::run_pipeline",
+            "src::incremental_reasoner-py::_topdown_ordered_fqns",
+            "src::incremental_reasoner-py::run_incremental_pipeline",
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_compute_layers",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_load_phases"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::_collect_phase_files",
+            "src::generate_topdown_layers-py::_compute_layers",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_load_phases"
+          ]
+        },
+        {
+          "name": "src::incremental_reasoner-py::_bare_function_name",
+          "file": "extracted_functions/src/incremental_reasoner-py/_bare_function_name.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_codegraph_legacy_coverage"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_normalized_function_source",
+          "file": "extracted_functions/src/incremental_reasoner-py/_normalized_function_source.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_codegraph_legacy_coverage"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::incremental_reasoner-py::_normalized_relative_path",
+          "file": "extracted_functions/src/incremental_reasoner-py/_normalized_relative_path.py",
+          "unit": "incremental_pipeline",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_codegraph_functions_by_file",
+            "src::incremental_reasoner-py::_codegraph_legacy_coverage",
+            "src::incremental_reasoner-py::_collect_changed_functions"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_compute_brace_depth_per_line",
+          "file": "extracted_functions/src/reasoner-py/_compute_brace_depth_per_line.py",
+          "unit": "reasoner",
+          "phase6_callers": [
+            "src::reasoner-py::_split_into_blocks_braced"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::reasoner-py::_split_into_blocks",
+          "file": "extracted_functions/src/reasoner-py/_split_into_blocks.py",
+          "unit": "reasoner",
+          "phase6_callers": [
+            "src::reasoner-py::_split_into_blocks_braced"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_base_score",
+          "file": "extracted_functions/src/scope-py/_base_score.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_rank_functions"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_fuzzy_name_score",
+            "src::scope-py::_name_parts"
+          ],
+          "all_callees": [
+            "src::scope-py::_fuzzy_name_score",
+            "src::scope-py::_name_parts"
+          ]
+        },
+        {
+          "name": "src::scope-py::_build_func_list_text",
+          "file": "extracted_functions/src/scope-py/_build_func_list_text.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_llm_rerank"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_extract_backtick_idents::_add",
+          "file": "extracted_functions/src/scope-py/_extract_backtick_idents::_add.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_extract_backtick_idents"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_parse_generic_file",
+          "file": "extracted_functions/src/scope-py/_parse_generic_file.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_file"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_generic_func_info"
+          ],
+          "all_callees": [
+            "src::extract-py::_function_spans",
+            "src::scope-py::_generic_func_info"
+          ]
+        },
+        {
+          "name": "src::scope-py::_parse_python_file",
+          "file": "extracted_functions/src/scope-py/_parse_python_file.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_file"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_collect_calls",
+            "src::scope-py::_collect_func_idents",
+            "src::scope-py::_extract_classes"
+          ],
+          "all_callees": [
+            "src::scope-py::_collect_calls",
+            "src::scope-py::_collect_func_idents",
+            "src::scope-py::_extract_classes"
+          ]
+        },
+        {
+          "name": "src::scope-py::_score_class",
+          "file": "extracted_functions/src/scope-py/_score_class.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_rank_functions"
+          ],
+          "phase6_callees": [
+            "src::scope-py::_name_parts"
+          ],
+          "all_callees": [
+            "src::scope-py::_name_parts"
+          ]
+        },
+        {
+          "name": "src::spec_generation_and_verification-py::_get_pending_batches",
+          "file": "extracted_functions/src/spec_generation_and_verification-py/_get_pending_batches.py",
+          "unit": "spec_orchestrator",
+          "phase6_callers": [
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::file_utils-py::is_file_ready"
+          ]
+        },
+        {
+          "name": "src::verification-py::streaming_reasoner",
+          "file": "extracted_functions/src/verification-py/streaming_reasoner.py",
+          "unit": "verification",
+          "phase6_callers": [
+            "src::spec_generation_and_verification-py::run_spec_generation_and_verification"
+          ],
+          "phase6_callees": [
+            "src::verification-py::_generate_validation_summary",
+            "src::verification-py::_spec_task_done",
+            "src::verification-py::_spec_task_exit_code"
+          ],
+          "all_callees": [
+            "src::file_utils-py::is_file_ready",
+            "src::verification-py::_generate_validation_summary",
+            "src::verification-py::_spec_task_done",
+            "src::verification-py::_spec_task_exit_code"
+          ]
+        }
+      ]
+    },
+    {
+      "layer": 5,
+      "functions": [
+        {
+          "name": "src::generate_topdown_layers-py::_build_call_graph",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_build_call_graph.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_project_call_graph"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
+            "src::generate_topdown_layers-py::_detect_lang_from_ext",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_find_call_sites",
+            "src::generate_topdown_layers-py::_get_keywords_for_lang",
+            "src::generate_topdown_layers-py::_resolve_extra_call_edges"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_add_resolved_extra_edge",
+            "src::generate_topdown_layers-py::_detect_lang_from_ext",
+            "src::generate_topdown_layers-py::_file_to_fqn",
+            "src::generate_topdown_layers-py::_find_call_sites",
+            "src::generate_topdown_layers-py::_get_keywords_for_lang",
+            "src::generate_topdown_layers-py::_resolve_extra_call_edges",
+            "src::languages::registry-py::call_edges_all"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_collect_phase_files",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_collect_phase_files.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_project_call_graph"
+          ],
+          "phase6_callees": [],
+          "all_callees": [
+            "src::file_utils-py::_is_metadata_sidecar"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_compute_layers",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_compute_layers.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::generate_topdown_layers"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_tarjan_scc"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_tarjan_scc"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_load_phases",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_load_phases.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_project_call_graph",
+            "src::incremental_reasoner-py::_remove_stale_extracted",
+            "src::incremental_reasoner-py::_topdown_ordered_fqns",
+            "src::incremental_reasoner-py::collect_relevent_function_scope"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_collect_calls",
+          "file": "extracted_functions/src/scope-py/_collect_calls.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_collect_func_idents",
+          "file": "extracted_functions/src/scope-py/_collect_func_idents.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_extract_classes",
+          "file": "extracted_functions/src/scope-py/_extract_classes.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_python_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_fuzzy_name_score",
+          "file": "extracted_functions/src/scope-py/_fuzzy_name_score.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_base_score"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_generic_func_info",
+          "file": "extracted_functions/src/scope-py/_generic_func_info.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_parse_generic_file"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::scope-py::_name_parts",
+          "file": "extracted_functions/src/scope-py/_name_parts.py",
+          "unit": "scope_analysis",
+          "phase6_callers": [
+            "src::scope-py::_base_score",
+            "src::scope-py::_score_class"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::verification-py::_generate_validation_summary",
+          "file": "extracted_functions/src/verification-py/_generate_validation_summary.py",
+          "unit": "verification",
+          "phase6_callers": [
+            "src::incremental_reasoner-py::_verify_incremental_functions",
+            "src::verification-py::streaming_reasoner"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::verification-py::_spec_task_done",
+          "file": "extracted_functions/src/verification-py/_spec_task_done.py",
+          "unit": "verification",
+          "phase6_callers": [
+            "src::verification-py::streaming_reasoner"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::verification-py::_spec_task_exit_code",
+          "file": "extracted_functions/src/verification-py/_spec_task_exit_code.py",
+          "unit": "verification",
+          "phase6_callers": [
+            "src::verification-py::streaming_reasoner"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 6,
+      "functions": [
+        {
+          "name": "src::generate_topdown_layers-py::_add_resolved_extra_edge",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_add_resolved_extra_edge.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_detect_lang_from_ext",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_detect_lang_from_ext.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_file_to_fqn",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_file_to_fqn.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::entry_reasoning_pipeline-py::_select_functions_by_source",
+            "src::generate_topdown_layers-py::_build_call_graph",
+            "src::generate_topdown_layers-py::generate_topdown_layers",
+            "src::incremental_reasoner-py::_modified_function_targets",
+            "src::incremental_reasoner-py::_update_specs_for_intent"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_find_call_sites",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_find_call_sites.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase6_callees": [
+            "src::generate_topdown_layers-py::_get_call_regex",
+            "src::generate_topdown_layers-py::_strip_comments_from_source"
+          ],
+          "all_callees": [
+            "src::generate_topdown_layers-py::_get_call_regex",
+            "src::generate_topdown_layers-py::_strip_comments_from_source"
+          ]
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_get_keywords_for_lang",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_get_keywords_for_lang.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_resolve_extra_call_edges",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_resolve_extra_call_edges.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::_build_call_graph"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_tarjan_scc",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_tarjan_scc.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::_compute_layers"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        }
+      ]
+    },
+    {
+      "layer": 7,
+      "functions": [
+        {
+          "name": "src::generate_topdown_layers-py::_get_call_regex",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_get_call_regex.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::_find_call_sites"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        },
+        {
+          "name": "src::generate_topdown_layers-py::_strip_comments_from_source",
+          "file": "extracted_functions/src/generate_topdown_layers-py/_strip_comments_from_source.py",
+          "unit": "topdown_layers",
+          "phase6_callers": [
+            "src::generate_topdown_layers-py::_find_call_sites"
+          ],
+          "phase6_callees": [],
+          "all_callees": []
+        }
+      ]
+    }
+  ]
+}
