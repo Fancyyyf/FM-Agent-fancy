@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Resume is True, and a file already exists at the computed output path containing valid JSON but no 'verdict' key (e.g., {\"function\": \"dummy\"}). The code loads the JSON, uses .get('verdict', 'ERROR') to obtain a default verdict 'ERROR', and skips verification. The specification requires that the resume shortcut be taken only when the existing result file is well-formed, i.e., contains a 'verdict' key, so such a file should not trigger the shortcut.",
-  "offending_statements": "Line 6: if resume and os.path.exists(output_path):\nLine 10: verdict = existing.get(\"verdict\", \"ERROR\")",
-  "reason": "The code does not check that the loaded JSON contains the required 'verdict' key; it unconditionally takes the shortcut when any valid JSON file exists, disregarding the specification's 'well-formed' requirement."
-}

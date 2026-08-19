@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "{\"verdict\": \"MATCH\", \"counterexample\": \"some counterexample\", \"offending_statements\": null, \"reason\": \"All good\"}",
-  "offending_statements": "Line 47: if _nonempty_string(counterexample) or _nonempty_string(offending_statements):\nLine 48:         raise ValueError(\nLine 49:             \"spec-check MATCH JSON must not include counterexample or offending_statements\"\nLine 50:         )",
-  "reason": "The code raises a ValueError for a valid MATCH verdict with non-empty counterexample, but the specification does not require MATCH verdicts to have empty counterexample/offending_statements. This rejects a valid input."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "source = 'a', lsp_range = {'start': {'line': 2, 'character': 0}, 'end': {'line': 2, 'character': 1}}. Expected: specification (B) requires clamping out-of-range positions to source boundaries, yielding offsets (1, 1) and an empty string. Actual: the code delegates to _SourceIndex, which likely raises an exception or returns an incorrect substring for an out-of‑range line, violating the requirement to return a string.",
-  "offending_statements": "Line 3: return _SourceIndex.build(source).source_for_range(lsp_range)",
-  "reason": "The code does not handle out-of-range positions; it blindly delegates to _SourceIndex. The specification requires clamping out-of-range positions to source boundaries, guaranteeing a string result. For line=2 (past the end of 'a'), _SourceIndex may fail or return an offset that does not clamp, causing a mismatch."
-}

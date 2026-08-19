@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string representing a file path. Let trace_dir = _trace_dir(work_dir) and payload_dir = _payload_dir(trace_dir). The return value ret satisfies: ret == os.path.join(payload_dir, f\"{event_id}_opencode.log\"). The returned string is a concatenation of the payload directory path and the filename composed of the event_id and the suffix '_opencode.log', using the OS-specific path separator."
-}

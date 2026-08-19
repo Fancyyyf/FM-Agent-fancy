@@ -1,8 +1,0 @@
-` will be a JSON object.```json
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input: funcs_info = [{'name': 'foo'}, {'name': 'bar'}], top_k = 1, with a valid LLM response that parses to ['foo', 'bar']. The function returns ['foo', 'bar'] whereas the specification requires at most 1 name.",
-  "offending_statements": "Line 29: names = _parse_json_response(text)\nLine 30: if not isinstance(names, list) or not all(\nLine 31:     isinstance(name, str) and name.strip() for name in names\nLine 32: ):\nLine 33:     raise ValueError(\"LLM rerank response must be a JSON array of non-empty function names\")\nLine 34: return [name.strip() for name in names]",
-  "reason": "The code only ensures the response is a JSON array of non-empty strings. It fails to check that the returned list has length ≤ top_k, contains no duplicates, or includes only names present in funcs_info, any of which would violate the specification."
-}
-```

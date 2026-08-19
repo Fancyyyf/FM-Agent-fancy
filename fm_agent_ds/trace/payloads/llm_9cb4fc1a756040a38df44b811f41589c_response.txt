@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir contains a dangling symbolic link named 'link' (e.g., created by os.symlink('/nonexistent', proj_dir+'/link')). all_by_source = {'link': ['func1']}, keep_by_source = {} (or keep_by_source={'link': set()}). The specification requires the file 'link' to be deleted, but the code skips it because os.path.isfile() returns False for a broken symlink, leaving it untouched.",
-  "offending_statements": "Line 12: if not os.path.isfile(src_path):\nLine 13:             continue",
-  "reason": "The code only acts on entries in all_by_source if their path is a regular file (isfile). The specification unconditionally requires deletion when keep_by_source has no entry or an empty set for that key, and modification when it has a non-empty set. A dangling symlink is a valid file path but not a regular file, leading to a violation."
-}

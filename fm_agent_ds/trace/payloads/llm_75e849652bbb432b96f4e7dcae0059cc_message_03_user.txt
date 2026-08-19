@@ -1,1 +1,0 @@
-Your previous response was invalid: post-condition JSON requires a non-empty string field: post_condition. Return only valid JSON matching this schema: {"post_condition": "non-empty string"}. Do not include Markdown, tags, or prose.

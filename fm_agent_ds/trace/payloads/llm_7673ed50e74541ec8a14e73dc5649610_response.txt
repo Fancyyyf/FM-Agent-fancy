@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "src_path = Path('existing_file.c'), lang_key = 'nonexistent_lang', proj_dir = None. Assume _function_spans does not raise an exception (returns valid spans and raw_lines).",
-  "offending_statements": "Line 22: lang_cfg = LANG_CONFIG[lang_key]\nLine 23-26: [ _generic_func_info(name, start0, end0, source_lines, lang_cfg) for name, start0, end0 in spans ]",
-  "reason": "When the language key is not registered in LANG_CONFIG and _function_spans unexpectedly succeeds, the code raises a KeyError because LANG_CONFIG[lang_key] is not guarded by a try-except. The specification requires all failure paths to return (None, None, None) and forbids raising exceptions."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Set is_incremental=True, submodules=False, prev_mtime to an old timestamp, and provide a phases.json file that was just rewritten by the LLM (so its mtime differs from prev_mtime) but whose content fails _phases_cover_current_sources (e.g., a new source file appeared that is not referenced). Ensure phase_plan_errors is empty so that the readiness block is reached. The code will then set phase_plan_ready = True because os.path.getmtime(phases_json) != prev_mtime, even though _phases_cover_current_sources returns False. The loop breaks, and the stage finishes without requiring an up‑to‑date phases.json.",
-  "offending_statements": "Line 125:                 phase_plan_ready = (\nLine 126:                     os.path.getmtime(phases_json) != prev_mtime\nLine 127:                     or _phases_cover_current_sources(phases_json, proj_dir)\nLine 128:                 )",
-  "reason": "In incremental mode the specification demands that the updated phases.json reflect the current source state. The code uses an mtime-based check as an alternative to the coverage check, so a mere rewrite of the file (even with incomplete coverage) is accepted as ready, violating the required guarantee."
-}

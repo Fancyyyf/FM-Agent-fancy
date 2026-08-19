@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/proj', work_dir='/tmp/work', command=['true'], stage='test', input_files=['dummy.txt'], other optional arguments None. The subprocess 'true' exits with code 0 very quickly, causing the stdin feeding thread to hit a BrokenPipeError. _wait_opencode_process detects this abnormal condition and returns (0, 'Broken pipe'). The code raises subprocess.CalledProcessError(returncode=0), and in the finally block records an event with status='success' because exit_code == 0. According to the specification, when an error occurs the status must be 'error' even if the exit code is 0.",
-  "offending_statements": "Line 45:             status=\"success\" if exit_code == 0 else \"error\",",
-  "reason": "The code determines the event status solely by comparing exit_code to 0. The specification requires status 'error' whenever exit_code≠0 or an error is present. Here the process exits with code 0 but _wait_opencode_process reports an error string, so status should be 'error', not 'success'."
-}

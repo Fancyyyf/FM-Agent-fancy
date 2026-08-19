@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a new string equal to the original source with every occurrence of '\\r\\n' replaced by '\\n', and then every remaining '\\r' replaced by '\\n'. The return type is string, and no exception is raised. Formally, let result be the returned value: result is str ∧ result == source.replace('\\r\\n', '\\n').replace('\\r', '\\n'). The original source is unchanged."
-}

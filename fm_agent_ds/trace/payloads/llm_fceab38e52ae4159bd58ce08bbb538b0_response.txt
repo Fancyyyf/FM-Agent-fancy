@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "An object where self._console.flush() raises an exception (e.g., IOError due to a broken pipe) and self._log_stream is open (not closed) and contains buffered data. Calling flush() on this object causes self._console.flush() to raise, preventing the execution of self._log_stream.flush(). The log stream data is never flushed.",
-  "offending_statements": "Line 2: self._console.flush()",
-  "reason": "The specification requires that after the call, all buffered data in the log stream is flushed (unless the log stream is closed). The code does not flush the log stream when the console flush raises an exception, violating that post-condition."
-}

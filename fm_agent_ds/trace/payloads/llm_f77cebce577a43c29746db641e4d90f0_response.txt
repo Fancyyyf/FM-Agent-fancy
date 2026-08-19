@@ -1,3 +1,0 @@
-{
-  "post_condition": "The method returns an instance of cls initialized with the path to an existing `.codegraph/codegraph.db` file found by checking first in `proj_dir` itself, and then in its parent directory (the directory of the absolute path of `proj_dir`). If neither location contains that file, it returns `None`. The filesystem is not altered. Formal logic: Let candidates = [proj_dir, os.path.dirname(os.path.abspath(proj_dir))] and define db_path(d) = os.path.join(d, '.codegraph', 'codegraph.db'). The return value R satisfies: if ∃ d ∈ candidates such that os.path.exists(db_path(d)), then R = cls(db_path(d₀)) where d₀ is the first element of candidates with existing db_path; otherwise R = None."
-}

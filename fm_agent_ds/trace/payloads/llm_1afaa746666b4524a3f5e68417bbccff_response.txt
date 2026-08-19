@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns `True` if and only if there exists at least one target in the list returned by `_inject_targets()` such that `_matches_inject_target(url, target)` is `True`, where `url` is the string resulting from evaluating `(base_url or \"\").rstrip(\"/\")`. If no such target exists, the function returns `False`. No side effects occur.\n\nFormally: Let `T = _inject_targets()` and `u = (base_url or \"\").rstrip(\"/\")`. Then `_should_inject_user_id(base_url)` ⇔ (∃ target ∈ T : `_matches_inject_target(u, target)` = True)."
-}

@@ -1,3 +1,0 @@
-{
-  "post_condition": "func is unchanged from its pre-state (the dictionary is not modified). The return value r is of type None or str, and it satisfies: (r is None) if and only if for every key k in func, either not k.startswith(\"phase\") or not k.endswith(\"_callee_info_names_by_caller\"). If there exists at least one key k in func with k.startswith(\"phase\") and k.endswith(\"_callee_info_names_by_caller\"), then r is such a key; moreover, if the specific key \"phase{phase}_callee_info_names_by_caller\" (where {phase} is the given positive integer) is present in func, then r equals that key. No exceptions are raised; the function terminates normally."
-}

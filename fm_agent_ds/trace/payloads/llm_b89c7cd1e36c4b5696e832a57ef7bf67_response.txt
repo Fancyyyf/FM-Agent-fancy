@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/empty_project' (a directory with no .erl files)",
-  "offending_statements": "Line 5: return ErlangAnalysis(functions={}, edges={})",
-  "reason": "The specification requires the returned ErlangAnalysis to have attributes .functions, .edges, .spans, and .server_info. The code returns an object with only .functions and .edges, missing .spans and .server_info. This occurs even when no Erlang files are found."
-}

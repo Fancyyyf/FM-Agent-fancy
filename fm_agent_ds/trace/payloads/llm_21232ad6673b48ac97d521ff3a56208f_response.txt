@@ -1,1 +1,0 @@
-{"verdict": "MATCH", "counterexample": "", "offending_statements": "", "reason": "The code returns None for unregistered lang_key, and otherwise returns the result of handler.function_spans, which by contract returns a list or None, matching the specification."}

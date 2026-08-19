@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A project with a single phase where a caller function `mod.caller` depends on callee `mod.callee` and both belong to the same layer. `generate_topdown_layers` writes the layer file with callee first (`[{\"name\": \"mod.callee\"}, {\"name\": \"mod.caller\"}]`). The code returns `[\"mod.callee\", \"mod.caller\"]`, while the specification requires `[\"mod.caller\", \"mod.callee\"]`.",
-  "offending_statements": "Line 24: for func in layer.get(\"functions\", []):\nLine 25:     ordered.append(func[\"name\"])",
-  "reason": "The returned list preserves the order from the generated JSON layer files, which (per `generate_topdown_layers`) places callees before callers. The specification mandates top-down order with callers preceding callees, so the output order is inverted within each layer."
-}

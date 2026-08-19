@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input: 'XMLHttpRequest'\nExpected set (per specification): {'xmlhttprequest', 'xmlhttp', 'request'}\nActual set (from code): {'xmlhttprequest', 'http', 'request'}",
-  "offending_statements": "Line 19: for p in re.sub(r'([A-Z])', r'_\\1', name).lower().strip('_').split('_'):",
-  "reason": "The code uses CamelCase splitting that inserts underscores before every uppercase letter, which breaks uppercase acronyms into single-character fragments that are filtered out (e.g., 'XMLHttp' becomes single letters 'x','m','l','http', only 'http' survives). The specification requires splitting only at transitions from a lowercase letter to an uppercase letter, so 'XMLHttp' should be kept intact as 'xmlhttp'."
-}

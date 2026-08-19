@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "url = \"http://EXAMPLE.COM\", target = \"example.com\"",
-  "offending_statements": "Line 5: host = urllib.parse.urlparse(url).hostname or \"\"\nLine 8: return host == target or host.endswith(\".\" + target)",
-  "reason": "Hostnames are case-insensitive, but the code performs a case-sensitive equality check. When target is \"example.com\" (no scheme) and url is \"http://EXAMPLE.COM\", urllib.parse.urlparse(url).hostname returns \"EXAMPLE.COM\". The code then compares \"EXAMPLE.COM\" == \"example.com\" (False) and \"EXAMPLE.COM\".endswith(\".example.com\") (False), returning False. According to the specification, the hostname \"EXAMPLE.COM\" belongs to the address space of \"example.com\", so the function should return True."
-}

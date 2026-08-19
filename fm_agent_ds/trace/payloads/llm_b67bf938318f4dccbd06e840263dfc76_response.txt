@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string derived from the base name of the input absolute file path. If the base name contains a dot ('.') at an index greater than zero, the returned string consists of the substring before that last dot, followed by a hyphen ('-'), followed by the substring after the last dot. If there is no dot or the only dot is at the beginning of the base name (e.g., hidden files on Unix), the entire base name is returned unchanged. Formal post-condition: Let base = os.path.basename(path). Let dot = base.rfind('.'). Then returns base[:dot] + '-' + base[dot+1:] if dot > 0 else base. The function has no side effects and raises no exceptions for the given pre-condition."
-}

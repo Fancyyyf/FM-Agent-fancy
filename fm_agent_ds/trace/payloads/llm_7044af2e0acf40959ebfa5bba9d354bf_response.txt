@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "paths=['~/doc.md'], base_dir='/tmp', fallback_base_dir=None, and a file '/home/user/doc.md' exists as a valid Markdown file (e.g., '.md' in VALID_DOMAIN_KNOWLEDGE_EXTENSIONS).",
-  "offending_statements": "Line 10: expanded = os.path.expanduser(raw_path); Line 12: if os.path.isabs(expanded):",
-  "reason": "The code applies os.path.expanduser, treating paths like '~/doc.md' as absolute after expansion, and thus bypasses base_dir resolution; according to the specification, such a leaf is not absolute and should be resolved against base_dir first."
-}

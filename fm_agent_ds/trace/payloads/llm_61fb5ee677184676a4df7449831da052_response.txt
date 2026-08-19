@@ -1,1 +1,0 @@
-{"post_condition": "The function returns True if the lowercased version of the given model string (treating a falsy value as the empty string) starts with 'claude' or 'anthropic/', and False otherwise. Formally, let m = (model if model else '').lower(), then result = (m.startswith('claude') or m.startswith('anthropic/'))."}

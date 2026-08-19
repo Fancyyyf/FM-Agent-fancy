@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string result such that result is the relative path from the parent directory of trace_dir to path. No side effects occur. Formal: result = os.path.relpath(path, os.path.dirname(trace_dir)) ∧ type(result) = str."
-}

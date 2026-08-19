@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Consider phase_fqns = {'A', 'B'} and callers_map = {'B': {'A'}}, meaning A calls B. This input has no cycles, so Tarjan returns SCCs [[A],[B]] (order may vary but both separate). The code will assign A to layer 0 and B to layer 1, resulting in layers: [{'layer':0, 'functions':['A'], 'cycle_resolution':False}, {'layer':1, 'functions':['B'], 'cycle_resolution':False}]. The specification requires that for caller A and callee B, callee B's layer must be strictly less than caller A's layer, i.e., B should be in an earlier layer (0) than A (1). The code does the opposite.",
-  "offending_statements": "Line 47: for caller_fqn in callers_map.get(fqn, set()) & remaining: (this treats callers as dependencies that must be placed earlier, via the SCC DAG built on lines 48-50 and the topological readiness check on lines 56-59).",
-  "reason": "The code uses callers_map to build a DAG where an SCC's callers must be assigned before the SCC itself, leading to caller layers being lower than callee layers. The specification requires callee layers to be lower than caller layers. Thus any input with at least one call edge yields a mismatch."
-}

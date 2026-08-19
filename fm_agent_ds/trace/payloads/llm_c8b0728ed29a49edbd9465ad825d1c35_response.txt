@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir contains extracted_functions/src1.py/foo.py (tracked) and extracted_functions/src2.py/bar.py (untracked). phases.json lists only src1.py. modified_functions = {} (empty). After executing _remove_stale_extracted, src1.py's extracted directory will be reconciled, but src2.py's extracted directory will remain, leaving an orphaned extracted file for a source file that is not a tracked source file, violating the specification that no orphaned extracted function files remain.",
-  "offending_statements": "Line 14: srcs = set(modified_functions)  ;  Line 23: for abs_src in srcs:  ;  Line 24:         _reconcile_extracted_dir(proj_dir, abs_src)",
-  "reason": "The code only reconciles source file paths present in the union of modified_functions keys and the phases.json source files. It does not visit or clean up extracted directories for source files that are no longer tracked (not in the pipeline and not present in modified_functions). The specification requires that after reconciliation every remaining file under extracted_functions/ corresponds to a source function that exists in a tracked source file, i.e., no orphaned extracted function files remain. By failing to remove extracted directories for untracked source files, the code's behavior (Condition A) violates Condition B."
-}

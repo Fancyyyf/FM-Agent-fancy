@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/test_project' (existing directory containing a file main.py), resume=False, required_source_files=None, domain_knowledge_files=None, submodules=None, one_phase=False, extra_call_edges_path=None, only_spec=False, bug_validator_path=None, plugin_config=None",
-  "offending_statements": "Line 40: domain_knowledge_relpaths = stage_domain_knowledge_files(proj_dir, work_dir, domain_knowledge_files)\nAfter Line 40 the function returns without executing _run_generate_phases, _run_generate_domain_context, run_extraction, generate_topdown_layers, run_spec_generation_and_verification as required by the specification.",
-  "reason": "The provided code block only performs initial setup. It creates the fm_agent/ directory but does not produce phases.json, extracted functions, specifications, verification results, or any of the other outputs mandated by the specification. Any valid input will violate the specification."
-}

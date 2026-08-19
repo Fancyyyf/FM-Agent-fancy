@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "OPENCODE_MAX_RETRIES=1, plugin_stage.type='modify', _resume_skip=False, and the LLM invocation produces no output files, causing all attempts to fail.",
-  "offending_statements": "Line 93:             print(\nLine 94:                 f\"[Pipeline] ERROR: Stage 2 failed after {OPENCODE_MAX_RETRIES} attempts. \"\nLine 95:                 f\"Domain context outputs missing. \"\nLine 96:                 f\"Check {os.path.basename(proj_dir)}/fm_agent/trace/ for details.\"\nLine 97:             )",
-  "reason": "The specification requires that when the process exits after exhausting retries, the diagnostic message must enumerate the expected output files. The code's error message (lines 93-97) only states outputs are missing and refers to the trace directory, without listing the concrete required files (e.g., engine_overview.txt and phase_NN_types.txt for each phase in phases.json)."
-}

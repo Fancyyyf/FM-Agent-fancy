@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "config = LLMConfigInput(provider_id='p1', provider_name='P1', api_style='openai', base_url='http://example.com', model_id='m1', api_key='k'); paths = WizardPaths(toml_path=Path('/tmp/fm-agent.toml'), env_path=Path('/tmp/.env'), opencode_config_path=Path('/tmp/opencode.json')); assume /tmp/fm-agent.toml exists with minimal valid TOML content.",
-  "offending_statements": "Line 30-38: backups = [ ... ] (the order of the list differs from the write order)",
-  "reason": "The specification requires the returned list to be ordered by the sequence in which the files were written (toml, env, secret, opencode config). The code returns the list in the order toml, env, opencode config, secret, which is the order of backup creation, not the write order."
-}

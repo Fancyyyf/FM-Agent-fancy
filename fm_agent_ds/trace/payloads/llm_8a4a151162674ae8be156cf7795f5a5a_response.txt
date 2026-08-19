@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "text = '\"my_function()\"', lang_key = 'python', known_stems = {'my_function'}, keywords = set()",
-  "offending_statements": "Line 4: regex = _get_call_regex(lang_key)\nLine 6: for m in regex.finditer(cleaned):",
-  "reason": "The regex matches identifiers inside string literals because only comments are stripped, leading to false positives. In this input, 'my_function' appears only within a string literal, not a syntactic calling position, yet the code returns it, violating the specification that only syntactic call-site identifiers are included."
-}

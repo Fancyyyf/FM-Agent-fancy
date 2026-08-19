@@ -1,1 +1,0 @@
-Return only valid JSON with schema: {"verdict": "MATCH|MISMATCH", "counterexample": string|null, "offending_statements": string|null, "reason": string}. For MISMATCH, all evidence fields must be non-empty strings. For MATCH, counterexample and offending_statements must be null or empty, and reason may be empty.

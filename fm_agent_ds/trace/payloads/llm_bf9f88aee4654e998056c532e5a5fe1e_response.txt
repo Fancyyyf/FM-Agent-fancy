@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/nonexistent/path' (a nonexistent directory causing from_proj_dir to raise an exception)",
-  "offending_statements": "Line 3: cg = CodeGraphExtractor.from_proj_dir(proj_dir)",
-  "reason": "The specification requires returning an empty dict when CodeGraph initialization fails, which includes any exception from from_proj_dir. The code directly calls from_proj_dir without exception handling, so if it raises (e.g., FileNotFoundError for an invalid path), batch_extract propagates the exception instead of returning {}. This violates the specification."
-}

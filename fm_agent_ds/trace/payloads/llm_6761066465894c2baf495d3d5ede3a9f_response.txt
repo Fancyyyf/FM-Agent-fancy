@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "existing = {\"$schema\": \"https://old-schema\", \"provider\": {}}; config = LLMConfigInput(provider_id=\"p1\", api_style=\"openai\", base_url=\"https://api.example.com\", model_id=\"gpt-4\"); opencode_secret_path = Path(\"/secret\")",
-  "offending_statements": "Line 8: if \"$schema\" not in merged:\nLine 9: merged[\"$schema\"] = SCHEMA_URL",
-  "reason": "The specification requires the returned dict to always include a '$schema' key set to a fixed schema URL, regardless of any existing value. The code only sets it when not already present, so an existing '$schema' is preserved instead of being overwritten."
-}

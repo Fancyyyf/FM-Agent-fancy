@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string composed of the input prefix (or default 'evt'), followed by an underscore, followed by a 32-character hexadecimal UUID. No side effects occur. Natural language: After execution, the returned string matches the pattern `prefix + '_' + uuid.uuid4().hex`, where prefix is the given string parameter and hex UUID is a random 32-character lowercase hexadecimal string. Formal logic: ∀ prefix ∈ str, let result = new_event_id(prefix); then result = prefix + '_' + h, where h ∈ [0-9a-f]{32} and result ∈ str. Also, result length equals len(prefix) + 33."
-}

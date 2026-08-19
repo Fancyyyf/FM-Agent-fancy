@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "data = 123 (or any non-dict value)",
-  "offending_statements": "Line 4: raise ValueError(\"spec-update JSON must be an object\")",
-  "reason": "The specification requires returning None when data is not a dict, but the code raises a ValueError. This is a concrete violation for all non-dict inputs."
-}

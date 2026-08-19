@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "commit_id=42, work_dir=\"/tmp/test_versions\"",
-  "offending_statements": "Line 8: f.write(commit_id + \"\\n\")",
-  "reason": "The specification requires that for any truthy commit_id, the string representation of the id is appended. The code only handles string inputs; a non-string truthy value (e.g., integer 42) causes a TypeError at line 8, leaving the file in an undefined state instead of appending '42\\n'. This violates the specification."
-}

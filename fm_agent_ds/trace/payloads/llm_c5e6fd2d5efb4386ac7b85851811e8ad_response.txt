@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "/* a\\n*/b",
-  "offending_statements": "Line 37: if text[i] in \"\\r\\n\":\nLine 38: out.append(text[i])",
-  "reason": "The code appends newline characters (\\r, \\n) that appear inside block comments to the output, but the specification requires the entire comment to be removed. For input \"/* a\\n*/b\", the code outputs \"\\nb\" instead of the expected \"b\"."
-}

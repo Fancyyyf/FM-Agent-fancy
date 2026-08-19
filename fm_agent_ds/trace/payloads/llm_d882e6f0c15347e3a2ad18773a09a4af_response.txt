@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "self.lines = ['\\U0001F600']; self.line_offsets = [0]; self.source = '\\U0001F600'; position = {'line': 0, 'character': 2}; self.position_to_offset(position) returns 1, but the specification requires the byte offset after the line, which is 4 (e.g., for UTF-8 encoding).",
-  "offending_statements": "Line 16: return base + index",
-  "reason": "The code treats the offset as a character-based index added to a byte-offset base. This only yields correct byte offsets when all characters are single‑byte (ASCII). With multi‑byte characters, the return value is not the required byte offset within self.source. For a character above U+FFFF, such as U+1F600 ('😀'), len(line)=1 but its byte length is 4, so base + index = 0 + 1 = 1, which violates the specification that expects 4."
-}

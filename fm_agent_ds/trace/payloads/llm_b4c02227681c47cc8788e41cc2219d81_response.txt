@@ -1,3 +1,0 @@
-{
-  "post_condition": "After the function returns, no global state has been modified. The return value is the language key string corresponding to the file extension extracted from the input filepath, or None if the extension is not present in the EXT_TO_LANG dictionary. The extension is the substring after the last dot in the basename of filepath, or an empty string if there is no dot. Formally: let b = os.path.basename(filepath); let ext = b.rsplit('.', 1)[-1] if '.' in b else ''; the result = EXT_TO_LANG.get(ext)."
-}

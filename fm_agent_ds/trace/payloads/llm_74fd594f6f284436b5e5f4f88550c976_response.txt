@@ -1,3 +1,0 @@
-{
-  "post_condition": "If the call to CodeGraphExtractor.from_proj_dir(proj_dir) raises an exception, the function batch_extract terminates abnormally with that exception. If no exception occurs, let cg = CodeGraphExtractor.from_proj_dir(proj_dir). Then the function returns: if cg is None, the value {} (empty dictionary); otherwise, the value cg.get_functions_by_file(\"go\", proj_dir), which is a dictionary mapping absolute file paths (str) to lists of (func_name, body) tuples for all Go source files under the project root. Formally: (¬ Exception) ⟹ ((cg = None) ⟹ result = {}) ∧ ((cg ≠ None) ⟹ result = cg.get_functions_by_file(\"go\", proj_dir) ∧ ∀k,v ∈ result: isinstance(k, str) ∧ isabs(k) ∧ isinstance(v, list) ∧ ∀t ∈ v: isinstance(t, tuple) ∧ len(t)=2)."
-}

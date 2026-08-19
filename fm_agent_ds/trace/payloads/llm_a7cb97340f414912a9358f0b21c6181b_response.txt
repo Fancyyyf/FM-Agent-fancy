@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "merged_opencode = {'provider': {'p1': {}}, 'non_serializable': object()}; config is any valid LLMConfigInput; updated_toml = 'key = \"value\"'.",
-  "offending_statements": "Line 9: json.dumps(merged_opencode) and Line 10: tomllib.loads(updated_toml)",
-  "reason": "Specification requires raising ConfigWizardError when merged_opencode is not JSON-serializable or updated_toml is invalid TOML, but the code raises TypeError/ValueError or TOMLDecodeError respectively, not ConfigWizardError."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir points to a valid project directory with a usable CodeGraph index; lang_keys contains a string that is not a recognized CodeGraph language key, e.g., ['invented_lang'].",
-  "offending_statements": "Line 12: for abs_path, functions in extractor.get_functions_by_file(\nLine 13: lang_key, proj_dir\nLine 14: ).items():",
-  "reason": "The specification requires returning a dict mapping files matching any key in lang_keys, or None if no index. When lang_keys contains an unrecognized key, get_functions_by_file may raise an exception due to its precondition (lang_key recognized), causing the function to propagate the exception instead of returning a dict or None. This violates the specification."
-}

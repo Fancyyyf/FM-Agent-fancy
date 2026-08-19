@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "cmd='pwd', plugin_root=Path('/tmp/plugin'), proj_dir='/home/user', label=''",
-  "offending_statements": "Line 11: subprocess.run(resolved, shell=True, check=True, cwd=proj_dir, env=env)",
-  "reason": "The specification requires the subprocess to run with working directory set to plugin_root, but the code sets cwd=proj_dir. For any input where proj_dir != plugin_root, the working directory differs, violating the specification. For example, with the given input, the command 'pwd' would output '/home/user' instead of '/tmp/plugin'."
-}

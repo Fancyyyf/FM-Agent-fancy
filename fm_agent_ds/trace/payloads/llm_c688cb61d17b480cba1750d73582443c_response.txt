@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "spec = {'pre_condition': 'x>0', 'post_condition': 'y>0'}",
-  "offending_statements": "Line 2: pre_match = re.search(r'Pre-condition:\\s*\\n(.*?)(?=\\nPost-condition:|\\Z)', spec, re.DOTALL)\nLine 3: post_match = re.search(r'Post-condition:\\s*\\n(.*)', spec, re.DOTALL)",
-  "reason": "The code calls re.search on spec, which expects a string, but the specification requires spec to be a dict. Any dict input causes a TypeError, never returning the required (pre, post) tuple. For example, with {'pre_condition': 'x>0', 'post_condition': 'y>0'}, the specification expects ('x>0', 'y>0') but the code raises TypeError."
-}

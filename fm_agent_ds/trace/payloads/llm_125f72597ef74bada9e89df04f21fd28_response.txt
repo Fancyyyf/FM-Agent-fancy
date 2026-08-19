@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string `fqn` such that, letting `extracted_base = os.path.join(proj_dir, \"extracted_functions\")`, `rel = os.path.relpath(filepath, extracted_base)`, `stem = os.path.splitext(rel)[0]`, and `parts = pathlib.PurePath(stem).parts` (or equivalently `Path(stem).parts` using the filesystem path separator), we have `fqn = \"::\".join(parts)`. No exceptions are raised, and the function terminates normally. In formal notation: \n\n`result = \"::\".join(PurePath(splitext(relpath(filepath, proj_dir + os.sep + \"extracted_functions\"))[0]).parts)`"
-}

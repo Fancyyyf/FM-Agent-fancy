@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "text = '[llm]\\n\"api_key\" = \"old_value\"\\n', updates = {'api_key': 'new_value'}",
-  "offending_statements": "Line 37: kv_match = _KV_RE.match(line)\nLine 38: if kv_match and kv_match.group(2) in target:",
-  "reason": "The code uses a regex (_KV_RE) to identify key-value lines. When a key is quoted (e.g., \"api_key\"), the regex may not match, causing the original line to be treated as a non-key line. The key is not recognized, so the original line is preserved unchanged and the new key-value pair is appended later (lines 44-47). The output contains duplicate keys, which is invalid TOML and does not replace the field as required by the specification."
-}

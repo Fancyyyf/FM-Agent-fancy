@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string representing n: if n >= 1,000,000, it returns the string f\"{n/1_000_000:.2f}M\"; if 1,000 <= n < 1,000,000, it returns f\"{n/1_000:.1f}K\"; otherwise (0 <= n < 1,000) it returns str(n). Formally, let result be the return value. Then: (n >= 1000000 ⇒ result = f\"{n/1000000:.2f}M\") ∧ (1000 ≤ n < 1000000 ⇒ result = f\"{n/1000:.1f}K\") ∧ (0 ≤ n < 1000 ⇒ result = str(n))."
-}

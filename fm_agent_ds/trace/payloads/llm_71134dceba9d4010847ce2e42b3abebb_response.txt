@@ -1,1 +1,0 @@
-{"post_condition": "After execution, the global mutable collection `_TEST_FILE_EXEMPTIONS` is empty (no elements), and the function returns `None`. Formally: `len(_TEST_FILE_EXEMPTIONS) == 0` and `ret == None`."}

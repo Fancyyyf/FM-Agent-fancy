@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A valid work_dir where the ignored-checks file exists, is readable, but contains bytes that cannot be decoded by the default text encoding (e.g., a file containing the byte 0xFF when the default encoding is UTF-8), causing a UnicodeDecodeError during reading.",
-  "offending_statements": "Line 7: except IOError:",
-  "reason": "Specification B requires returning an empty set when the file cannot be read, which includes decoding errors. The code only catches IOError, so a UnicodeDecodeError (a subclass of ValueError, not OSError) will propagate, violating the post-condition that an empty set is returned."
-}

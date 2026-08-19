@@ -1,1 +1,0 @@
-{"verdict": "MISMATCH", "counterexample": "`_add('foo_')`", "offending_statements": "Line 2: t = token.lower().strip('_')", "reason": "The code uses strip('_') which removes trailing underscores. The specification requires removing only leading underscores, so for token 'foo_', the code inserts 'foo' instead of the required 'foo_'."}

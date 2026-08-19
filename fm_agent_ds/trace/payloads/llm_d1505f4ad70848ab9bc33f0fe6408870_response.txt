@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "When the configuration string contains the word 'server' as a separate argument, e.g., `settings.erlang.command = 'elp server'` on a POSIX system.",
-  "offending_statements": "Line 6: return [*argv, \"server\"]",
-  "reason": "The returned list becomes ['elp', 'server', 'server'], which does not form a platform-appropriate invocation because the preceding elements now contain a duplicate 'server' that could confuse ELP. The specification requires that the arguments before the final 'server' constitute a correct invocation; the duplicate 'server' violates this requirement."
-}

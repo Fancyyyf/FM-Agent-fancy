@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns the HTTP status code (an integer) from exc.code if exc is an instance of urllib.error.HTTPError; otherwise it returns None. Formally: ret = (exc.code if isinstance(exc, urllib.error.HTTPError) else None)."
-}

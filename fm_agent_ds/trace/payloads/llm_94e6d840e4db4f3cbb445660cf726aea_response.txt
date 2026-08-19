@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string R that merges target_desc and source_desc according to the following rules, where S = source_desc.strip(): (i) if S is empty or S is a substring of target_desc, then R = target_desc; (ii) otherwise, if target_desc is empty, then R = S; (iii) otherwise, R = target_desc + '\n\n' + S. Formally: R = (if (S == '' or S in target_desc) then target_desc else (if target_desc == '' then S else target_desc + '\n\n' + S))."
-}

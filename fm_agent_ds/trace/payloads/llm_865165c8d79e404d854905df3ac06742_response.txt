@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "d is an instance of a dict subclass where 'b' not in d is True but d.get('b') returns a non-None value (e.g., 42) and keys = ('b',). The call _get_nested(d, 'b') returns 42 instead of None.",
-  "offending_statements": "Line 6: cur = cur.get(k)",
-  "reason": "The code uses cur.get(k) to retrieve the value for the next key, assuming that a missing key always yields None. However, a dict subclass can override get() to return a non-None value even when the key is missing (i.e., when __contains__ returns False). The specification requires returning None whenever the current dict does not contain the key, which is violated by this input because the code returns the non-None get() value instead of None."
-}

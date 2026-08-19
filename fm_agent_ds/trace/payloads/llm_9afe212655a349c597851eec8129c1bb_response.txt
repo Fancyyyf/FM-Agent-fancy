@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir = 'my_rust_project' where the project contains at least one function call and CodeGraphExtractor.from_proj_dir returns a truthy backend. The code returns a dict like {('my_func', 'my_module'): {'called_func'}}, with keys as tuples of stem and module, and values as sets of bare stems. The specification requires a dict whose keys are caller identifiers in canonicalized FQN format (e.g., 'crate::my_module::my_func') and whose values are sets of callee identifiers also in FQN format, not tuples and bare stems.",
-  "offending_statements": "Line 4: return cg.get_call_edges(\"rust\") if cg else None",
-  "reason": "The specification explicitly requires that both caller and callee identifiers use the canonicalized FQN format, but the code (as documented and implemented) returns caller identifiers as (caller_stem, caller_module) tuples and callee identifiers as bare stems, violating the required output format."
-}

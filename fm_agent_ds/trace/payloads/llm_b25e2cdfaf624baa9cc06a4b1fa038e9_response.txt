@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "funcs_info = [{'name': 'foo', 'start': 1}]\nsource_lines = ['def foo(): pass']\nExpected output: a line containing 'foo' and 'def foo(): pass', with nothing appended. Actual output: '- foo | def foo(): pass | '",
-  "offending_statements": "Line 8: lines.append(f\"- {f['name']} | {sig_line} | {doc}\")",
-  "reason": "The specification states that if the entry does not have a non-empty 'docstring' key, nothing additional is appended. However, the code always appends ' | ' followed by the (possibly empty) docstring. When docstring is missing or empty, the line still ends with ' | ', violating the requirement that nothing additional be appended."
-}

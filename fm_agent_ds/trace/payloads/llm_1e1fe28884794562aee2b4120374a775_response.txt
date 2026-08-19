@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "settings.llm.effort = '   ' (a non-empty string consisting only of whitespace)",
-  "offending_statements": "Line 2:     return settings.llm.effort.strip()",
-  "reason": "For input '   ', code returns '' (empty string) after stripping, violating the specification requirement that the returned string is non-empty."
-}

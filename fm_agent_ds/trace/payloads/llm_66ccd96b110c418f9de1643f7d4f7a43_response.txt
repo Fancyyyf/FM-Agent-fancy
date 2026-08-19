@@ -1,1 +1,0 @@
-{"post_condition": "After execution, the state of `self` is unchanged. The return value `result` satisfies: if `stage_name` is a key in the mapping `self.stages`, then `result` is the corresponding `PluginStageConfig` value; otherwise, `result` is `None`. Formally: `self = old(self) ∧ result = self.stages.get(stage_name)`."}

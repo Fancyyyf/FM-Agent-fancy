@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns normally with value None. The input list `lines` is not modified. Internally, the loop has processed all lines, so `i == len(lines)` and `functions == []`. The state of `in_block_comment` depends on the content of the last lines but is unchanged externally. Formal: ensures result = None ∧ ∀j ∈ [0, len(lines)-1] . lines[j] = old(lines[j])"
-}

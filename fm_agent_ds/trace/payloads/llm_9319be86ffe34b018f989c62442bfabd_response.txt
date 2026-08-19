@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function always returns an ErlangAnalysis object. If _analyze_project(proj_dir) completes without raising an exception, the returned object equals its result with .functions, .edges, and .spans populated with the ELP analysis data for proj_dir. If any exception is caught, the returned object has .functions set to an empty dictionary and .edges set to an empty dictionary. The function never propagates an exception."
-}

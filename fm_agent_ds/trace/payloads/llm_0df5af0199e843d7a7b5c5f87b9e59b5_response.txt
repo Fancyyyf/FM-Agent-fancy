@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns either None if initializing a CodeGraphExtractor from the given existing directory `proj_dir` fails, or a dictionary that maps each (caller_stem, caller_module) tuple of strings to a set of callee stem strings, representing all direct Python invocations extracted from the project. The original directory `proj_dir` is not modified. Formally: `(result = None) ∨ (result ∈ Dict[Tuple[str, str], Set[str]])`."
-}

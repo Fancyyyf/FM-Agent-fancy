@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "func -> int",
-  "offending_statements": "Line 43: m = re.search(r'(?:^|::|\\.)(\\w+)$', name)\nLine 45: return m.group(1)",
-  "reason": "For input 'func -> int', the code returns 'int' (the last word) but the specification requires returning the first identifier token before trailing type annotations, i.e., 'func'."
-}

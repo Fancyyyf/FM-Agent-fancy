@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a list of strings R. Let s = (qualified_name or '').strip(). If s == '' or not s.endswith(name): R = [name]. Otherwise, define scope = s[:-len(name)].rstrip(':.'). If scope == '': R = [name]. Else, let parts be the non-empty segments obtained by splitting scope on occurrences of '::' or '.' (using re.split); then R = parts + [name]. No exceptions are raised, and the list contains at least one element (name). Formally, R ∈ [name] ∪ ({[p for p in re.split(r'::|\\.', scope) if p] + [name]} where scope = (qualified_name or '').strip()[:-len(name)].rstrip(':.') and (qualified_name or '').strip().endswith(name))."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/proj', work_dir='/tmp/work', markdown_paths=['doc.md'] (assuming necessary directories and source file exist)",
-  "offending_statements": "Line 36: shutil.rmtree(target_dir, ignore_errors=True)\nLine 37: os.replace(tmp_dir, target_dir)",
-  "reason": "The specification requires that the directory be 'atomically cleared and repopulated', meaning there should be no observable intermediate state where the directory is empty. The code deletes the target directory on Line 36 before replacing it on Line 37. This creates a window where the directory does not exist, violating the atomicity requirement. Any non-empty markdown_paths input triggers this violation."
-}

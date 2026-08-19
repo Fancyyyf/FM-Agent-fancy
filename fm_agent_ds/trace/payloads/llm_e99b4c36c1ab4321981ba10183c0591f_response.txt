@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "work_dir='/tmp/test_project', USER_KNOWLEDGE_REL_DIR='.knowledge', the directory '/tmp/test_project/.knowledge' exists but contains a subdirectory 'hidden' with mode 000 (unreadable), and no matching markdown files exist; then a call to list_staged_domain_knowledge_relpaths(work_dir) raises PermissionError instead of returning the empty list required by the specification.",
-  "offending_statements": "Line 7: for root, _dirs, files in os.walk(knowledge_dir):",
-  "reason": "The specification requires the function to always return a (possibly empty) sorted list of path strings; it never permits an exception. The implementation can raise OSError (e.g., PermissionError) when `os.walk` encounters an unreadable subdirectory, which violates the post‑condition that a list must be returned. A concrete example is a staging directory with a permission‑restricted subdirectory."
-}

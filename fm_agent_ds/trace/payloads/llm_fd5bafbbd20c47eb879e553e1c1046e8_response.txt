@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "<",
-  "offending_statements": "Line 6: if ch == '<':\nLine 7: depth += 1",
-  "reason": "The code unconditionally removes '<' characters, even when they are unmatched and not part of any balanced region. The specification (Condition B) requires preservation of unmatched '<', as only balanced outermost '<...>' regions (and unmatched '>') should be removed. For the input '<', the code returns '' but the specification requires '<'."
-}

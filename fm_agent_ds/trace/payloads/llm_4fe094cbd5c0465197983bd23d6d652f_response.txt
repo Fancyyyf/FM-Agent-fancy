@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "work_dir='/tmp', event_id='../../malicious'",
-  "offending_statements": "Line 2: return os.path.join(_payload_dir(_trace_dir(work_dir)), f\"{event_id}_opencode.log\")",
-  "reason": "The specification requires the returned path to be within the trace directory structure. With event_id='../../malicious', the returned path escapes the trace directory, violating the requirement."
-}

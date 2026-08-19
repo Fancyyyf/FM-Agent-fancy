@@ -1,1 +1,0 @@
-{"post_condition": "(api_style = 'anthropic' => returns '@ai-sdk/anthropic') ∧ (api_style = 'openai' => returns '@ai-sdk/openai-compatible') ∧ (api_style ∉ {'anthropic','openai'} => raises ConfigWizardError with message 'Unsupported API style: ' + api_style)"}

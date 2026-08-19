@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string that represents the current UTC date and time in ISO 8601 format with the UTC offset '+00:00' replaced by 'Z'. The returned string matches the regular expression ^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$ and satisfies: parsing the string with 'Z' replaced by '+00:00' using datetime.fromisoformat yields a datetime object that equals the result of datetime.now(timezone.utc) at the moment datetime.now() was called (ignoring negligible execution time)."
-}

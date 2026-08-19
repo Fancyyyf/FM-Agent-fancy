@@ -1,3 +1,0 @@
-{
-  "post_condition": "The FM-Agent runtime configuration remains loaded. The function returns True if the value of resolve_model_backend() is either 'codex-cli' or 'claude-cli', and False otherwise. Formally: loaded \u2227 (\\result = (resolve_model_backend() \u2208 {\"codex-cli\", \"claude-cli\"}))."
-}

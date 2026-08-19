@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a boolean indicating whether `data` conforms to the required .info.json format. It returns `True` if and only if `data` is a dictionary with exactly the key \"callees\", its value is a list, and every element of that list is a dictionary whose keys are exactly those in `_CALLEE_FIELDS` and whose values are all strings. Otherwise it returns `False`. The input `data` is not modified. Formally: returns == (isinstance(data, dict) ∧ set(data) == {\"callees\"} ∧ isinstance(data[\"callees\"], list) ∧ ∀ callee ∈ data[\"callees\"] : (isinstance(callee, dict) ∧ set(callee) == _CALLEE_FIELDS ∧ ∀ f ∈ _CALLEE_FIELDS : isinstance(callee[f], str)))"
-}

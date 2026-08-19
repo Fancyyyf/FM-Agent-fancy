@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "phases_json contains JSON: {\"phases\": [{\"phase\": 1, \"modules\": [{\"name\": \"A\", \"source_files\": [\"f1.txt\"]}, {\"name\": \"A\", \"source_files\": []}]}]}. modified_modules = [{\"phase\": 1, \"module\": \"A\"}].",
-  "offending_statements": "Line 17: source_files_by_key[(phase.get(\"phase\"), module.get(\"name\", \"\"))] = list(\nLine 18: module.get(\"source_files\", [])\nLine 19: )\nLine 22: if not source_files_by_key.get((m[\"phase\"], m[\"module\"])):",
-  "reason": "The dictionary source_files_by_key uses (phase, module name) as key, which is not guaranteed unique. Duplicate modules in the same phase cause earlier entries with source files to be overwritten by later ones without. In the counterexample, the first 'A' module with source files is replaced by the second empty one, causing the module to be considered as having no source files, so None is returned. Specification requires listing modules that own source files, but the code misses the one with files due to overwrite."
-}

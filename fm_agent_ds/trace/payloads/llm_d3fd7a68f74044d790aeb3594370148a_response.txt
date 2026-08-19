@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a list of strings representing the argument vector. If `command` is an instance of `AgentCommand`, the returned list is `command.argv`. Otherwise, the returned list is `list(command)`, a new list containing all items from `command`, which is an iterable of strings. No exceptions are raised and no side effects occur. Formal post-condition: (isinstance(command, AgentCommand) ⇒ result = command.argv ∧ isinstance(result, list) ∧ ∀ e ∈ result, isinstance(e, str)) ∧ (¬isinstance(command, AgentCommand) ⇒ result = list(command) ∧ isinstance(result, list) ∧ ∀ e ∈ result, isinstance(e, str))."
-}

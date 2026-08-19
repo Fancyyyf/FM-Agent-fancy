@@ -1,1 +1,0 @@
-{"verdict": "MISMATCH", "counterexample": "n = 1000000", "offending_statements": "Line 5: return f\"{n/1_000_000:.2f}M\"", "reason": "Code returns '1.00M' with two decimal places, but specification requires at most one decimal place for values >= 1,000,000."}

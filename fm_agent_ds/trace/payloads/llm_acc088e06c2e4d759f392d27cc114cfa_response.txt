@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "func_dir = '/root' on a Linux system where the current user is not root (so the directory exists, is a directory, but reading is denied).",
-  "offending_statements": "Line 14: for root, _dirs, fnames in os.walk(func_dir):",
-  "reason": "Specification requires returning a dict when func_dir exists as a directory. However, os.walk('/root') raises PermissionError for an unprivileged user, which the code propagates. This violates the specification because a dict is never returned."
-}

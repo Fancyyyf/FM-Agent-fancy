@@ -1,1 +1,0 @@
-{"verdict": "MISMATCH", "counterexample": "handle = None", "offending_statements": "Line 7: return True", "reason": "Condition B requires returning False when handle is None, but the code returns True."}

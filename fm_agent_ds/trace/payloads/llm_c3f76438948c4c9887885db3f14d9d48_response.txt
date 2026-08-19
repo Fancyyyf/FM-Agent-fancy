@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "call_graph = {\"entry_func\": [\"a\"], \"a\": [], \"x\": [\"y\"], \"y\": []}, entry_func = \"entry_func\", end_funcs = [\"y\"]",
-  "offending_statements": "Line 24: on_chain = set()\nLine 25: queue = deque(ef for ef in end_funcs if ef in call_graph)\nLine 26: while queue:\nLine 27:     fqn = queue.popleft()\nLine 28:     if fqn in on_chain:\nLine 29:         continue\nLine 30:     on_chain.add(fqn)\nLine 31:     for caller in callers.get(fqn, ()):\nLine 32:         if caller not in on_chain:\nLine 33:             queue.append(caller)",
-  "reason": "The specification requires that only functions on a path from entry_func to an end_func are retained. The code computes on_chain solely by reverse reachability from end_funcs, without checking reachability from entry_func. In a call_graph containing a disconnected component (nodes not reachable from entry_func) that can still reach an end_func, those disconnected nodes are incorrectly included in the output, violating the specification."
-}

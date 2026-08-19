@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "name = 'test', plugin_dir = Path('/tmp/plugin_dir') (exists), data = {'name': 'test', 'version': '1.0', 'stages': {'s1': {'type': 'modify', 'input_md': ''}}}, assuming PluginStageConfig.from_dict and validated() accept this data.",
-  "offending_statements": "Line 35: if stage.type == \"modify\" and stage.input_md:",
-  "reason": "The code only checks the existence of input_md when stage.input_md is truthy. The specification requires rejecting any modify stage whose input_md does not exist as a regular file, regardless of whether input_md is truthy. An empty input_md produces a path that is not a regular file, so the function should return None, but the code returns a PluginConfig."
-}

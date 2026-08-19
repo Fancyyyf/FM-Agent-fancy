@@ -1,3 +1,0 @@
-{
-  "post_condition": "After execution, the set `result` is updated as follows: let `t = token.lower().strip('_')`. If `len(t) >= 2` and `t ∉ _PY_KEYWORDS` and `t ∉ _STOP`, then `result = result_old ∪ {t}`, otherwise `result = result_old`, where `result_old` denotes the set `result` immediately before the call."
-}

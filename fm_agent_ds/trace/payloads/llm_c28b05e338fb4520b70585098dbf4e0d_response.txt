@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string that is the result of stripping leading and trailing whitespace from `settings.llm.effort`. The value of `settings.llm.effort` is unchanged and remains a non-empty string. The function raises no exceptions. Formally: `result = settings.llm.effort.strip() ∧ settings.llm.effort = old(settings.llm.effort) ∧ settings.llm.effort ≠ \"\"`."
-}

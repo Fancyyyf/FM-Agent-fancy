@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "text = \"FM_AGENT_SECRET_KEY=old\\nOTHER=val\\nFM_AGENT_SECRET_KEY=old2\\n\"\napi_key = \"newkey\"",
-  "offending_statements": "Line 21: if env_key == ENV_SECRET_KEY:\nLine 22: new_lines.append(f\"{export_prefix}{ENV_SECRET_KEY}={api_key}\\n\")\nLine 23: key_written = True\nLine 24: continue",
-  "reason": "The code replaces every occurrence of ENV_SECRET_KEY, producing multiple output lines for the secret key when the input contains more than one. The specification requires exactly one line of that key in the output."
-}

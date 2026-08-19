@@ -1,1 +1,0 @@
-{"verdict": "MATCH", "counterexample": null, "offending_statements": null, "reason": "The code correctly returns the stdin attribute for AgentCommand instances and None for all other inputs, exactly as specified."}

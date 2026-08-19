@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "ensure_changes = {\"augmented\": {\"invalid\": \"value\"}}, change_sets = ()",
-  "offending_statements": "Line 15-17: for phase_num in ensure_changes.get(\"augmented\", {}): if phase_num is not None: phases.add(phase_num)",
-  "reason": "The code adds any non-None key from the 'augmented' mapping into the result set without verifying that the key is an integer. The specification mandates that the returned set consist exclusively of integer phase numbers. Input {\"augmented\": {\"invalid\": \"value\"}} causes the code to include the non-integer key \"invalid\", resulting in a set that contains a string, which violates the specification."
-}

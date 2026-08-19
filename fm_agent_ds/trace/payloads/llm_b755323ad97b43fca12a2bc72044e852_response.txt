@@ -1,3 +1,0 @@
-{
-  "post_condition": "After successful execution, the function returns the string `payload_dir` equal to `os.path.join(trace_dir, 'payloads')`. The directory at `trace_dir` exists as a directory, and the directory at `payload_dir` exists as a directory. The function has no other side effects. Formally: (exists_dir(trace_dir) ∧ exists_dir(payload_dir) ∧ payload_dir = trace_dir / 'payloads' ∧ return_value = payload_dir)."
-}

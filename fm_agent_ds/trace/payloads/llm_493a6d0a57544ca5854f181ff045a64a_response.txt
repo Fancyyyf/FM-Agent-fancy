@@ -1,1 +1,0 @@
-{"post_condition": "After execution, the instance attribute `self._console` holds a reference to the writable stream object passed as `console`, and `self._log_stream` holds a reference to the writable stream object passed as `log_stream`. Formally: `self._console is console` and `self._log_stream is log_stream`. Both objects remain writable streams."}

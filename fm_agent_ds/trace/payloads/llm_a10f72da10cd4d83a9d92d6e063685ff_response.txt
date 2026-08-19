@@ -1,1 +1,0 @@
-{"verdict": "MATCH", "counterexample": null, "offending_statements": null, "reason": "The code correctly maps the FQN to a source file path using the helper and normalizes separators to forward slashes. All valid inputs produce a path that satisfies the specification, with no leading/trailing whitespace. No violation exists."}

@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a dictionary containing module-qualified Erlang call edges in registry format derived from the project directory `proj_dir`. If `proj_dir` does not exist, contains no analyzable Erlang sources, or an internal error occurs, an empty dictionary is returned. No exceptions propagate and no mutable global state is modified. Formally: ∀ proj_dir ∈ str, let result = call_edges(proj_dir); then isinstance(result, dict) ∧ (filesystem_contains_analyzable_erlang(proj_dir) ⇒ result = edges(analysis_or_empty(callgraph_project_root(proj_dir)))) ∧ (¬filesystem_contains_analyzable_erlang(proj_dir) ⇒ result = {}) ∧ execution terminates normally."
-}

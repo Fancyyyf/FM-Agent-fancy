@@ -1,6 +1,0 @@
-{
-  "verdict": "MATCH",
-  "counterexample": null,
-  "offending_statements": null,
-  "reason": "The code properly returns None when CodeGraph initialization fails (from_proj_dir returns None) and delegates to get_function_spans that returns list or None, exactly matching specification B."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A record object where: record.stdin_thread=None, record.log_thread=None, record.stderr_thread=<a threading.Thread object that is still running and capturing process stderr>, record.work_dir='/tmp/trace' (with trace/ subdir), record.event_id='ev1', record.stage='done', record.started='2024-01-01T00:00:00Z', record.command='ls', record.function_ids=None, record.input_files=None, record.output_files=None, record.error=None, record.summary=None, record.metadata=None, record.opencode_log_path=None, record.opencode_trace_path=None, record.proc.returncode=0.",
-  "offending_statements": "Line 2: if record.stdin_thread:\nLine 3:         record.stdin_thread.join()\nLine 4:     if record.log_thread:\nLine 5:         record.log_thread.join()",
-  "reason": "The specification requires that every background thread responsible for capturing process output has terminated and flushed before the trace event is committed. The code only joins stdin_thread and log_thread, ignoring any other output-capturing thread such as stderr_thread. In the counterexample, record.stderr_thread is a non-None thread that is not awaited, so the trace event is committed while stderr may not yet be fully captured, violating the guarantee."
-}

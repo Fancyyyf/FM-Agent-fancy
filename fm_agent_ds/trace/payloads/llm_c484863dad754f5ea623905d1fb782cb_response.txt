@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "source = \"a\\nb\", position = {\"line\": 0, \"character\": 1}",
-  "offending_statements": "Line 3: return _SourceIndex.build(source).position_to_offset(position)",
-  "reason": "Specification requires that when the character value is at or beyond the end of the target line, the function returns the byte offset of the last byte of that line. For source = \"a\\nb\", line 0 is \"a\" (1 code unit). With character = 1 (beyond the line), the expected offset is 0 (the byte offset of 'a'). However, the code delegates to _SourceIndex.position_to_offset, which, according to Condition A, computes the offset of the first code unit at the given line and column and then clamps it between 0 and len(source). Since the column is beyond the line, offset_of_position likely returns the offset of the newline (1) or the start of the next line (2), which after clamping would be 1 or 2, violating the specification."
-}

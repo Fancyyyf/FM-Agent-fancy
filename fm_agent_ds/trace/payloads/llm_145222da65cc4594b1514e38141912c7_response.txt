@@ -1,6 +1,0 @@
-{
-  "verdict": "MATCH",
-  "counterexample": null,
-  "offending_statements": null,
-  "reason": "The code implements the specification exactly: for any string s, it returns (order_index.get(s, len(order_index)), s), which provides the required position (explicit value if key exists, otherwise the total number of entries) and ensures lexicographic tuple comparison yields the desired total order (explicit positions sort before missing ones, ties sorted by FQN). No conformance-violating input exists."
-}

@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string constructed as follows: if the original `name` is empty, the safe stem is '_function'; otherwise the safe stem is `name` with every occurrence of '/' replaced by '_'. The returned string is this safe stem concatenated with '.' and then the string `ext`. Formally: result = ('_function' if name == '' else name.replace('/', '_')) + '.' + ext."
-}

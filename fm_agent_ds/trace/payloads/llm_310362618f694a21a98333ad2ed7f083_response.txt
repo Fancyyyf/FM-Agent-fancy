@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/test_project' containing a single Python file 'empty.py' with content '# just a comment' (no function definitions). If from_proj_dir succeeds and returns a non‑None CodeGraphExtractor, then cg.get_functions_by_file('python', proj_dir) returns {} (an empty dict with no keys) because no functions were found. The code returns {}. However, the specification requires a dictionary with key '/tmp/test_project/empty.py' and value [].",
-  "offending_statements": "Line 4: return cg.get_functions_by_file(\"python\", proj_dir) if cg else {}",
-  "reason": "The specification mandates that every Python file in the project is a key, with an empty list if no functions are present. The implementation relies on get_functions_by_file, which may only include files that contain at least one function, thus omitting files without functions."
-}

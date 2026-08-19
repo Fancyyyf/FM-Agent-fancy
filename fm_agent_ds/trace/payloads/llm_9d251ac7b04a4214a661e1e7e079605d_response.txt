@@ -1,3 +1,0 @@
-{
-  "post_condition": "The method returns a string result such that result == self.source[start:end], where start = self.position_to_offset(lsp_range['start']) and end = self.position_to_offset(lsp_range['end']). Because the pre-condition guarantees that lsp_range['start'] does not lexicographically follow lsp_range['end'] relative to the source contents, we have start <= end. The slicing operation self.source[start:end] yields the substring from offset start (inclusive) to end (exclusive); if start equals end, the empty string is returned. No exceptions are raised."
-}

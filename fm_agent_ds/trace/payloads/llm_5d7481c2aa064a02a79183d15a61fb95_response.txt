@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "lines = ['func main() {', '/*', '}', '*/', '}'] with start_idx = 0",
-  "offending_statements": "Line 49: if ch == '/' and j + 1 < len(line) and line[j + 1] == '*': (the block comment handler only searches for '*/' on the same line)",
-  "reason": "The code only skips single-line block comments, but the specification requires skipping any block comment (possibly multi-line). A multi-line block comment containing a '}' causes an incorrect early return."
-}

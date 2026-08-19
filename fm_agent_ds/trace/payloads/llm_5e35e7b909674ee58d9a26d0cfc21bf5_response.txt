@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "work_dir is a symbolic link pointing to an existing directory (e.g., /tmp/link -> /tmp/realdir).",
-  "offending_statements": "Line 3:     if os.path.isdir(work_dir):\nLine 4:         shutil.rmtree(work_dir)",
-  "reason": "os.path.isdir follows symlinks, so a symlink to a directory is considered a directory and the condition is true. However, shutil.rmtree removes the symlink itself, not the target directory. The target directory and its contents remain, violating the requirement that the directory and all its contents are recursively removed."
-}

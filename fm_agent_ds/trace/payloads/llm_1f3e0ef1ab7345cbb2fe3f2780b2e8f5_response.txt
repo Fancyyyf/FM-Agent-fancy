@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "resume=False, result_json_rel='some/path/result.json', bug_id='some_func', work_dir='/tmp/work', proj_dir='/project', user_knowledge_section='', base_content=''",
-  "offending_statements": "Line 41: through Line 80: The code block only performs prompt setup and a skip check; it never dispatches the bug-validation agent, never writes the validated bug report to <work_dir>/bug_validation/<bug_id>.md, and never writes the result marker file <work_dir>/bug_validation/<bug_id>.result.json upon completion of validation as required by the specification.",
-  "reason": "The specification requires that when resume is False or the result marker does not exist, a bug-validation agent is dispatched, leading to production of a bug report and a result marker. Condition A describes post‑states where either an exception occurs (no dispatch) or the function returns early (skip) or enters a retry loop without executing any dispatch. In none of these scenarios does the code perform the mandated side effects."
-}

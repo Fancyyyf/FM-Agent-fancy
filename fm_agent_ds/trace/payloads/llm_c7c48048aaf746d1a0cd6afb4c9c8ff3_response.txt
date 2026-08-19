@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "console=sys.stdout, log_stream=sys.stderr",
-  "offending_statements": "Line 1: def __init__(self, console, log_stream):\nLine 2:     self._console = console\nLine 3:     self._log_stream = log_stream",
-  "reason": "The __init__ method only stores references; it does not provide the write() method needed to forward strings to both streams. After construction, calling instance.write('test') raises AttributeError, failing to forward to console and log_stream as required."
-}

@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "a/b.c/::func",
-  "offending_statements": "Line 4: path, _func = label.rsplit(\"::\", 1)\nLine 5: return \"/\" in path and \".\" in PurePosixPath(path).name",
-  "reason": "The specification requires checking the substring after the last '/' literally, which is empty for a trailing slash. The code uses PurePosixPath(path).name, which strips trailing slashes and returns the last non‑empty component. For label='a/b.c/::func', the substring before '::' is 'a/b.c/', its final POSIX‑path component per spec is '' (no '.'), so spec returns False. The code returns True because PurePosixPath('a/b.c/').name is 'b.c', which contains '.'. Thus a violation occurs."
-}

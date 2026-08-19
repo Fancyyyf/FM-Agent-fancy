@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "{1: 'a'}",
-  "offending_statements": "Line 5: return {(k[1:] if k.startswith(\"*\") else k): v for k, v in d.items()}",
-  "reason": "The code unconditionally calls k.startswith(\"*\") for every key k. When k is a non-string (e.g., the integer 1), it raises an AttributeError because integers do not have a startswith method. The specification requires that non-string keys be left unchanged, which would result in the dictionary {1: 'a'} being returned without an error. Thus the code's behavior (raising an exception) violates the specification for the valid input {1: 'a'}."
-}

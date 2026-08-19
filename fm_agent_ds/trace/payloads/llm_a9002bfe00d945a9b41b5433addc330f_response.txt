@@ -1,1 +1,0 @@
-{"post_condition": "The function returns a Path object whose string representation is the string representation of filepath with '.info.json' appended. The input filepath is unchanged. Formally: return_value == Path(str(filepath) + '.info.json')."}

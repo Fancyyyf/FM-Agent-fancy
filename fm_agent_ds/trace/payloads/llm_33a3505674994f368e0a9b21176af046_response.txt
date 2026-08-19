@@ -1,6 +1,0 @@
-{
-  "verdict": "MATCH",
-  "counterexample": null,
-  "offending_statements": null,
-  "reason": "The code's loop correctly identifies the rightmost path component that ends in '-<ext>' where ext is a key in EXT_TO_LANG, reconstructing the source file by replacing that hyphen‑extension suffix with a dot‑extension. This matches the extraction directory convention. The fallback handles legacy or missing cases. For any valid extracted‑function path that originates from the extraction layout, the behavior satisfies the specification, including stability for all function files from the same source."
-}

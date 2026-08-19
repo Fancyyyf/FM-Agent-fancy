@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir = '/path/to/existing/project' where the CodeGraph index file is corrupted (e.g., invalid JSON), causing CodeGraphExtractor.from_proj_dir to raise an exception instead of returning None.",
-  "offending_statements": "Line 4: return cg.get_call_edges(\"javascript\") if cg else None",
-  "reason": "The code does not wrap the call to from_proj_dir in a try-except, so any exception raised during initialization (e.g., IndexError, JSONDecodeError) propagates. The specification requires that all initialization failures result in None being returned, not an exception."
-}

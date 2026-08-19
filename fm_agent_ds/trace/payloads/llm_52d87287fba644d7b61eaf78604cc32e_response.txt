@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "settings.llm.backend = 'unknown_backend', no relevant environment variables are set",
-  "offending_statements": "Line 2: backend = _normalize_backend(settings.llm.backend)\nLine 3: if backend != \"auto\":\nLine 4:     return backend",
-  "reason": "The specification requires the return value to be from the set {\"codex-cli\", \"claude-cli\", \"opencode\"}. However, when an explicit backend is configured (not \"auto\") and _normalize_backend does not map it to one of those allowed values, the code returns the normalized value unchanged. For example, with backend='unknown_backend', _normalize_backend returns 'unknown_backend', and the function returns it, violating the specification."
-}

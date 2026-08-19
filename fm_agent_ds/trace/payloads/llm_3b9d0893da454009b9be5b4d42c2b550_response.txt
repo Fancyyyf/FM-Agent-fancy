@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function definition contains a syntax error (missing indented block for the 'for' loop on line 40). Python raises an IndentationError when the code block is parsed; the function `_update_specs_for_intent` is never created. All passed arguments (`proj_dir`, `work_dir`, `developer_intent`, `changed_functions`, `relevant_rel_files`, `extra_call_edges`) remain unchanged, and no local variables (`extracted_dir`, `callees_map`, `callers_map`, `file_map`, `edge_aliases_map`, `seed`, `changed_targets`) are assigned. The program state after the code block is identical to the given pre-condition, except that a runtime exception is propagated."
-}

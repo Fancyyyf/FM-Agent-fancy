@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir = '/path/to/project/with/python/source/files' where CodeGraph backend is installed and initializes successfully (from_proj_dir returns a non‑None CodeGraphExtractor instance), but the C‑language backend is not installed or unavailable.",
-  "offending_statements": "Line 4: return cg.get_call_edges(\"c\") if cg else None",
-  "reason": "When the overall CodeGraph backend is available but the C backend is not, the specification requires returning None. The code calls cg.get_call_edges('c') unconditionally if cg is not None; if 'c' is not a supported language key, get_call_edges may raise an exception or return a non‑dict value, violating the specification's requirement to return None for an unavailable C backend."
-}

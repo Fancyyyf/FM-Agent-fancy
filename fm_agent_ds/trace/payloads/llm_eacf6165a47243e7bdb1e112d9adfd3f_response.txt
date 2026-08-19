@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a new Panel instance. Its renderable is a Text object whose markup string equals: '[bold cyan]FM-Agent Dashboard[/]' + '  •  ' + '[dim]workdir:[/] ' + str(state.workdir) + '  •  ' + '[dim]model:[/] ' + str(state.model_seen or '?') + '  •  ' + '[dim]elapsed:[/] ' + _fmt_duration(state.elapsed()). The panel's border_style is 'cyan'. The state argument is not modified. Formally: return.type == Panel ∧ return.renderable.type == Text ∧ return.renderable.markup == '[bold cyan]FM-Agent Dashboard[/]  •  [dim]workdir:[/] ' + str(state.workdir) + '  •  [dim]model:[/] ' + str(state.model_seen or '?') + '  •  [dim]elapsed:[/] ' + _fmt_duration(state.elapsed()) ∧ return.border_style == 'cyan' ∧ state == old(state)."
-}

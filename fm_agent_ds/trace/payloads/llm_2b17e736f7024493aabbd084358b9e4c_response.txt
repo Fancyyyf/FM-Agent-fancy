@@ -1,1 +1,0 @@
-{"post_condition": "The function returns the Python value obtained by parsing the JSON content of the file at `path`. No exceptions are raised, the file remains unchanged, and the file is closed after reading. Formally, if `content = path.read_text()` before the call, then the return value `r` satisfies `r == json.loads(content)`."}

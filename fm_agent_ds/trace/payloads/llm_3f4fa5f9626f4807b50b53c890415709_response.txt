@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "plugins_dir = Path('/tmp/plugins') where /tmp/plugins exists as a directory and contains a subdirectory named 'badplugin' (not starting with '.' and not '__pycache__'). The file /tmp/plugins/badplugin/plugin.json is missing or invalid, causing validate_plugin to return None. The function skips 'badplugin' without printing any error reason.",
-  "offending_statements": "Line 13: config = validate_plugin(entry)\nLine 14: if config is not None:\nLine 15:     plugins[config.name] = config",
-  "reason": "The specification states: \"Each subdirectory that fails validation is skipped after printing its error reason.\" The code never prints the error reason when validate_plugin returns None."
-}

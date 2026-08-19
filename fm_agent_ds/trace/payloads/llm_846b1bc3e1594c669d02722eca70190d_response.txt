@@ -1,3 +1,0 @@
-{
-  "post_condition": "If `ts` is falsy (e.g., `None`, empty string, or any other false value), the function returns `None`. If `ts` is a truthy string (a non-empty string), then before parsing, any trailing 'Z' is replaced by '+00:00'. The function then attempts to call `datetime.fromisoformat` on that resulting string. If the call succeeds without raising an exception, the function returns the created `datetime` object. If any exception is raised (for example, due to an invalid ISO-8601 format), the function catches it and returns `None`. Formally: result = (None if not ts else (let s = ts[:-1] + '+00:00' if ts.endswith('Z') else ts in (datetime.fromisoformat(s) if no exception occurs else None)))."
-}

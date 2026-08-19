@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "[]",
-  "offending_statements": "Line 10:     if not isinstance(loaded, dict):\nLine 11:         raise ConfigWizardError(\nLine 12:             \"Existing OpenCode config must be a JSON object at the top level.\"\nLine 13:         )",
-  "reason": "Specification requires returning a dict for any non-empty text containing valid JSON after stripping, but for text='[]' the code raises ConfigWizardError because the parsed value is a list, not a dict."
-}

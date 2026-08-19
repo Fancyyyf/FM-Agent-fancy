@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "_MODEL_COST = {\"model\": {\"price\": 0.10}}; model = \"/model\"",
-  "offending_statements": "Line 8: if \"/\" in key:",
-  "reason": "The code strips everything after the first '/' and tries to match the remainder, even when the prefix before '/' is empty (e.g., '/model'). The specification requires a leading '<provider>/' segment with a non-empty provider. The input '/model' is not a recognized identifier because it lacks a provider, but the code incorrectly matches the bare 'model' and returns its pricing instead of None."
-}

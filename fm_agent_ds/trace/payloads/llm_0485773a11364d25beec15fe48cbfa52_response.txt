@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "rel = 'func.py'; extracted_dir contains func.py but no func.spec.json or func.info.json (i.e., sidecars are absent).",
-  "offending_statements": "Line 4:         _, verdict = _verify_single_file(fpath, extracted_dir, output_dir, language, work_dir=work_dir)",
-  "reason": "Specification B requires returning (rel, None) when required sidecar files are absent or malformed. The code unconditionally calls _verify_single_file, which when sidecars are missing raises an exception (e.g., FileNotFoundError) that propagates unmodified, violating the specification."
-}

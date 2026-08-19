@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "User enters '5' (or any string not in {'1','2','3','4'}) when prompted.",
-  "offending_statements": "Line 15:     try:\nLine 16:         return backends[selected]\nLine 17:     except KeyError as exc:\nLine 18:         raise ConfigWizardError(\"Backend selection must be 1, 2, 3, or 4.\") from exc",
-  "reason": "The specification requires the function to not return until a valid selection is obtained, meaning it must repeatedly prompt. The code instead raises ConfigWizardError on any invalid input, terminating without retrying, which violates the 'does not return until a valid selection is obtained' contract."
-}

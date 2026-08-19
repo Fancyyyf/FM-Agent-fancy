@@ -1,6 +1,0 @@
-{
-  "verdict": "MATCH",
-  "counterexample": null,
-  "offending_statements": null,
-  "reason": "The code directly delegates attribute access to self._console using getattr, which returns the attribute value if present and raises AttributeError if not, matching the specification exactly."
-}

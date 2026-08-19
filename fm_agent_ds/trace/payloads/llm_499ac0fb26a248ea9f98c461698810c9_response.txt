@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "model='gpt-4', prompt='Test prompt', cwd='/home/user', files=None, with global configuration setting is_cli_backend_enabled() == True (e.g., backend is codex-cli or claude-cli).",
-  "offending_statements": "Line 8: return build_agent_command(model=model, prompt=prompt, cwd=cwd, files=files)",
-  "reason": "The specification explicitly requires the function to return a list of command-line argument strings. When the CLI backend is enabled, the code returns an AgentCommand object (which is not a list), directly violating the specified return type."
-}

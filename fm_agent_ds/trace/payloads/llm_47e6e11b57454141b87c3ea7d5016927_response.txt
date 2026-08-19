@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "trace_dir='/tmp/test', event={(1,2): 'value'}",
-  "offending_statements": "Line 4: line = json.dumps(event, ensure_ascii=False)",
-  "reason": "The code calls json.dumps(event) on the input dict unconditionally. If the event dict contains a top-level key that is not a valid JSON key (e.g., a tuple), json.dumps raises TypeError. The specification (B) only allows for OSError propagation on filesystem write failure and does not account for TypeError. The input event={(1,2): 'value'} is a valid dict, yet the code’s behavior (TypeError) violates the specified post-condition, which does not include this exceptional outcome."
-}

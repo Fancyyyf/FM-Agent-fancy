@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input: filepath = 'Makefile'. Suppose the global dictionary EXT_TO_LANG contains an entry mapping empty string to a language, e.g., EXT_TO_LANG = {'': 'plaintext'}. The function call _detect_lang_from_ext('Makefile') returns 'plaintext' (via Lines 3-5: base = 'Makefile', no dot -> ext = '', EXT_TO_LANG.get('') = 'plaintext'). Specification requires returning None because the terminal name component 'Makefile' contains no '.' character.",
-  "offending_statements": "Line 4: ext = base.rsplit('.', 1)[-1] if '.' in base else ''; Line 5: return EXT_TO_LANG.get(ext)",
-  "reason": "The specification mandates None for any filename whose terminal name component lacks a dot, regardless of the registry contents. The code delegates the decision to EXT_TO_LANG.get(''), so if the registry has an empty-string key, it returns a language instead of None, violating the specification."
-}

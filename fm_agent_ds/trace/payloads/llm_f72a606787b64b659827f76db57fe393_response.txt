@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "With sys.stdin closed (e.g., after executing `sys.stdin.close()` or when stdin file descriptor is invalid), calling `is_interactive()` raises `ValueError` (\"I/O operation on closed file\") instead of returning `False` as required by the specification.",
-  "offending_statements": "Line 2: return sys.stdin.isatty()",
-  "reason": "The specification requires the function to return `True` when stdin is connected to a terminal and `False` otherwise. It does not allow raising exceptions. The code unconditionally delegates to `sys.stdin.isatty()`, which can raise exceptions (e.g., when stdin is closed or not a proper file object). In such cases, the code fails to meet the specification by propagating the exception instead of returning `False`."
-}

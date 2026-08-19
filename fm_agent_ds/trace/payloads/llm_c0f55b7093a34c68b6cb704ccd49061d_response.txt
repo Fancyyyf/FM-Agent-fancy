@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/project', abs_src='/project/deleted.py'. The source file does not exist. The extracted-function directory (as returned by _src_rel_to_func_dir) exists and contains a file 'foo.py'. After _reconcile_extracted_dir runs, 'foo.py' is removed but the directory itself remains empty. The specification requires the entire directory to be removed.",
-  "offending_statements": "Line 25-33: The deletion and pruning logic removes files and empty subdirectories but never removes func_dir itself when abs_src does not exist.",
-  "reason": "The specification explicitly states: 'When abs_src does not exist on disk, removes the entire corresponding extracted-function directory and all files within it.' The code only empties the directory, leaving an empty directory behind, which violates this requirement."
-}

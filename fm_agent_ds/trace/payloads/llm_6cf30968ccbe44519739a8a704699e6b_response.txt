@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A file at path 'test.bin' that exists and is readable, but contains the single byte 0x80 (which is not a valid UTF-8 sequence).",
-  "offending_statements": "Line 4: return path.read_text(encoding=\"utf-8\")",
-  "reason": "The specification requires that when the file exists and the process has permission to read it, the function returns the file's contents decoded as UTF‑8 text. For a file containing invalid UTF‑8 bytes, read_text raises a UnicodeDecodeError instead of returning a string, violating the specification's return guarantee."
-}

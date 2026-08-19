@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "args=(), kwargs={'capture_output': False} (with git command exiting successfully)",
-  "offending_statements": "Line 2-5: subprocess.run(...).stdout.strip()",
-  "reason": "The specification states that the default for capturing stdout is overridable via kwargs. If a caller overrides capture_output=False, the function attempts to access .stdout.strip() on the returned CompletedProcess, but .stdout is None, raising an AttributeError. This violates the specification because the function does not properly handle the overridden default."
-}

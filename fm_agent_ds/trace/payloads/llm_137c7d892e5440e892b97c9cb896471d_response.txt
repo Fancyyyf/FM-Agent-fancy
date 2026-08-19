@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "name='foo', qualified_name='::foo'",
-  "offending_statements": "Line 15: return \"::\".join(\nLine 16:     canonicalize(_bare_function_name(p))\nLine 17:     for p in _qualified_parts(name, qualified_name)\nLine 18: )",
-  "reason": "When qualified_name starts with '::' (e.g., '::foo'), _qualified_parts splits on '::' boundaries yielding an empty first component. The code includes this empty component in the joined result, producing '::foo'. The specification requires the number of components to equal the number of identifier segments (i.e., non-empty parts), so the expected result is 'foo'."
-}

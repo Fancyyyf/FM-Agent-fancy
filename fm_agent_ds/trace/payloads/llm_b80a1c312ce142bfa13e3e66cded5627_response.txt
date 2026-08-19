@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/proj', file_languages={'src/f.cpp': 'cpp'}, codegraph_functions={'src/f.cpp': {'foo()': 'int foo() { return 0; }'}}. The file exists and extract_functions_from_file returns [('foo_1', 'int foo() { return 0; }')] (dedup suffix added by legacy extractor). The code strips the '_1' via _bare_function_name, matching bare name 'foo' against codegraph's 'foo()', producing coverage True. The specification requires matching on the unqualified function name as produced by the extractor, i.e., 'foo_1' ≠ 'foo()', so correct result should be False.",
-  "offending_statements": "Line 28:                 _bare_function_name(identifier) == legacy_bare_name",
-  "reason": "The code uses _bare_function_name, which strips trailing dedup suffixes (e.g., '_1'), to compare identifiers. The specification requires that 'unqualified function name' refers to the name without only qualifiers, keeping any dedup suffix added by the legacy extractor. Consequently, a legacy name like 'foo_1' and a CodeGraph name like 'foo()' are considered equal by the code (both become 'foo') but should be considered unequal per the specification, leading to an incorrect True verdict when a False verdict is required."
-}

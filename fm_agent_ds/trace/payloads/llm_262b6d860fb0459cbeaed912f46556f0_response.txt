@@ -1,3 +1,0 @@
-{
-  "post_condition": "After execution, the function returns a tuple (ok, msg). ok is True if and only if config.LLM_API_KEY is a truthy string and is not one of the placeholder values: the empty string, 'YOUR_LLM_API_KEY', or 'sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'. msg equals the string 'LLM_API_KEY is not set in .env file' when ok is False, and msg is None when ok is True. The state of config is unmodified, and no exceptions are raised. Formally: let key = config.LLM_API_KEY; let S = {'', 'YOUR_LLM_API_KEY', 'sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}. Then ok := (key ≠ None ∧ key ∉ S) ∧ msg := ('LLM_API_KEY is not set in .env file' if ¬ok else None)."
-}

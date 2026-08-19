@@ -1,3 +1,0 @@
-{
-  "post_condition": "After the function executes, it returns a triple (ratio, cr_sum, in_sum) where cr_sum is the sum of all first elements (cache_read_count) of the tuples in rows, and in_sum is the sum of all second elements (total_count). If in_sum is 0, ratio is None; otherwise ratio is cr_sum divided by in_sum (as a float). No exceptions are raised and no external state is modified. Formally, given rows = [(c_i, t_i)] with 0 ≤ c_i ≤ t_i, define CR = Σ c_i and IN = Σ t_i. The return value r satisfies r[1] = CR, r[2] = IN, and (IN == 0 ⇒ r[0] = None) ∧ (IN > 0 ⇒ r[0] = CR / IN)."
-}

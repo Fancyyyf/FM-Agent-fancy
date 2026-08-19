@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns None if the absolute path of `filepath` is not a key in the `.spans` dictionary obtained from `_analysis_or_empty(proj_dir)`; otherwise it returns a list of 3-tuples `(func_name: str, start_idx: int, end_idx: int)` representing ELP function line spans (0-based inclusive) for that file. No side effects occur. Formally: Let `path = os.path.abspath(filepath)` and `S = _analysis_or_empty(proj_dir).spans`. Then `result = S.get(path)` and `∀ k ∈ S, S[k] ∈ List[(str, int, int)]` with `result ∈ (None ∪ List[(str, int, int)])`."
-}

@@ -1,8 +1,0 @@
-```json
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Input: self._stream is an empty io.BytesIO() (immediate EOF); self._messages is an object with a put() method that raises ValueError('queue closed'). Trace: run() calls readline() which returns b'', immediately raising EOFError('ELP closed its stdout') at line 8. Execution enters the except block at line 19. Line 20 calls self._messages.put(exc), which raises ValueError. This ValueError propagates out of run(), violating the requirement that the method never raises an exception to its caller.",
-  "offending_statements": "Line 20: self._messages.put(exc)",
-  "reason": "The specification (B) states 'The method never raises an exception to its caller.' The code's except block calls self._messages.put(exc) without a try/except. If that put() call raises an exception, it will propagate to the caller, directly contradicting the specification."
-}
-```

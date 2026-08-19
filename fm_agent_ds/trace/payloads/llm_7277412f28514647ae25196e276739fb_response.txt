@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "phases.json contains a single phase with a non-empty description: {\"phases\": [{\"phase\": 1, \"name\": \"Test\", \"description\": \"A description.\", \"modules\": []}]}.",
-  "offending_statements": "Line 10: f\"Phase {phase['phase']} ({phase['name']}): {phase_description}\"",
-  "reason": "The specification requires the merged description to be just the stripped, non-empty descriptions of all phases joined by a blank line. The code incorrectly inserts a prefix (e.g., 'Phase 1 (Test): ') before each description, changing the content."
-}

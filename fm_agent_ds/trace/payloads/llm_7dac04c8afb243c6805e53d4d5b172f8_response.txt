@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "Suppose phases_data = {'phases': [{'phase': 1, 'modules': [{'source_files': ['dir/file.cpp', 'dir/file.cpp']}]}]}, phase_num = 1, input_dir = '/tmp'. The directory '/tmp/dir/file-cpp' exists and contains a regular file 'func.cpp' that is not a metadata sidecar. The code processes 'dir/file.cpp' twice, each time walking the same extracted directory, resulting in phase_files = ['dir/file-cpp/func.cpp', 'dir/file-cpp/func.cpp']. This list contains duplicate identifiers, which violates the specification's requirement that no file identifier appears more than once.",
-  "offending_statements": "Line 24: phase_files.append(os.path.relpath(fpath, input_dir))",
-  "reason": "The code never removes duplicates. If the same extracted directory is visited multiple times (e.g., because source_files contains duplicate entries), the same relative path is appended multiple times. The specification forbids any duplicate file identifiers."
-}

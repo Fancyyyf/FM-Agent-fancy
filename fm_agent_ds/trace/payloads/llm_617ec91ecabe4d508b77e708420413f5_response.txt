@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a list of strings. Each string is a non-empty, stripped path extracted from the input string value, where paths were originally separated by either newline characters or the system path separator (os.pathsep). Empty or whitespace-only parts are omitted, and the order of paths is preserved. If the input string is empty, or consists solely of separators and whitespace, an empty list is returned. Formally, let sep be the value of os.pathsep. Define normalized = value with all newline characters replaced by sep. Then the result is [ s.strip() for s in normalized.split(sep) if s.strip() ]. If value is empty, the result is an empty list, which is consistent with the expression."
-}

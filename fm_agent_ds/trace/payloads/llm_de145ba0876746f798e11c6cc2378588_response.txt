@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "A project directory 'work_dir' contains a phases.json with a single phase, one module, and a source file 'src/main.py' that defines a function 'my::func' that calls 'other::helper'. The extracted-function file for 'my::func' is present. The value of extra_call_edges is [{'caller': 'my::func', 'callee': 'other::helper'}]. The static analysis will detect 'my::func' -> 'other::helper', and the extra edge specifies the same pair. _build_call_graph combines both into the callees_map list for 'my::func', resulting in ['other::helper', 'other::helper']. This list is returned as the callees_map value, which is not a set as required by the specification (it contains a duplicate entry).",
-  "offending_statements": "Line 19: (... ) = _build_call_graph(... ), Line 31: return callees_map, callers_map, file_map, edge_aliases_map",
-  "reason": "The specification requires callees_map to map each caller to a set of FQNs (no duplicates). The implementation returns the lists produced by _build_call_graph without deduplication, so when static edges and extra_call_edges overlap, the same callee can appear multiple times, violating the set requirement."
-}

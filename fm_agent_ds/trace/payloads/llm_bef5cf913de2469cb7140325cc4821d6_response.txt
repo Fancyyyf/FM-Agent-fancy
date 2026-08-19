@@ -1,3 +1,0 @@
-{
-  "post_condition": "The function returns a string obtained by iterating over each character `c` in `value` (in order) and appending either `c` itself (if `c` is an ASCII character and either `c.isalnum()` is `True` or `c` equals `'_'`) or the string “_” followed by the lowercase zero‑padded (minimum width 2) hexadecimal representation of `ord(c)`. Formally: let `process(c) = c` if `c.isascii() and (c.isalnum() or c == '_')` else `'_' + f'{ord(c):02x}'`. Then the returned string equals `''.join(process(c) for c in value)`. The output is always non‑empty because at least one character contributes at least one character."
-}

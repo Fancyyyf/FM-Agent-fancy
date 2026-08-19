@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir='/tmp/existing_dir' where '/tmp/existing_dir' exists but does not contain an 'fm_agent/trace/' subdirectory.",
-  "offending_statements": "Line 9: if not state.trace_dir.exists():\nLine 10:     print(f\"trace dir not found: {state.trace_dir}\", file=sys.stderr)\nLine 11:     print(\"Has the pipeline started yet? (waiting…)\", file=sys.stderr)\nLine 13: with Live(console=console, refresh_per_second=max(1.0, 1.0 / args.refresh),\nLine 14:               screen=True) as live:\nLine 15:         try:\nLine 16:             while True:\nLine 17:                 state.tail_events()",
-  "reason": "When trace_dir does not exist, the specification requires printing a message to stderr and then continuing (i.e., entering the infinite loop). The code prints the message but then calls state.tail_events(), which raises FileNotFoundError (uncaught), crashing the program instead of continuing. This violates the 'returns only upon KeyboardInterrupt' requirement."
-}

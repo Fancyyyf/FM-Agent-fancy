@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "proj_dir points to a project with a phases.json containing at least one module (e.g., a 'auth' module with one source file). developer_intent is any non‑empty string, changed_functions is empty, range is None. The LLM call inside `collect_relevent_function_scope` that selects modules fails (returns None). Condition A states the function returns an empty list. Condition B requires that when automated selection at any tier fails, the full scope at that tier is retained, so all modules should be processed, leading to a non‑empty list of extracted‑function paths (assuming the source file contains localizable functions).",
-  "offending_statements": "Line 19-20: 'Returns an empty list when phases.json has no modules or opencode selects none / fails to produce a result.'",
-  "reason": "The specification explicitly mandates that when automated selection (module, file, or function tier) fails to produce a result, the full scope at that tier is retained—no functions are silently excluded. Condition A instead returns an empty list whenever any selection process fails, which silently drops all functions and violates the 'no functions excluded' guarantee."
-}

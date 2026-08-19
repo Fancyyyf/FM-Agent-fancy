@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "trace_dir='/tmp/trace', event_id='1', name='../../hacked', content='data', binary=False",
-  "offending_statements": "Line 3: path = os.path.join(payload_dir, f\"{event_id}_{name}\")\nLine 4: tmp_path = path + \".tmp\"",
-  "reason": "If event_id or name contains path separators (e.g., name='../../hacked'), the constructed path escapes the payload subdirectory (e.g., /tmp/trace/.trace/hacked). The specification requires the file to be stored within the trace payload subdirectory, but the code does not enforce this, allowing writes to arbitrary locations."
-}

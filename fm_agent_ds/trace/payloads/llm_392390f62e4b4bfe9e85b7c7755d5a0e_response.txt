@@ -1,9 +1,0 @@
-{
-  "post_condition": "After normal execution, the directory `work_dir` exists and is writable. A new log file with name `incremental_YYYYMMDD_HHMMSS.log` (timestamp taken at call time) is created in `work_dir`; its full path is returned. The root logger's level is set to `logging.INFO`, all handlers previously attached to it are removed, and exactly two new handlers are added: a `FileHandler` writing to the newly created log file and a `StreamHandler` writing to the real console stream (the original `sys.stdout` before any `_StdoutTee` wrapping). The standard output stream `sys.stdout` is replaced by a `_StdoutTee` instance that duplicates every write to both the real console stream and the log file's underlying stream; this ensures that bare `print()` calls are mirrored into the log. The new `_StdoutTee` stores the real console stream in its `_console` attribute, enabling future unwrapping. No output is lost and no duplicate handler entries exist. Formal: ∀ function invocation with pre-condition `is_valid_dir_action(work_dir)` (i.e., `work_dir` exists writable or can be created), the following holds at the return point:  
-(1) `os.path.isdir(work_dir) ∧ os.access(work_dir, os.W_OK)`  
-(2) `let ts = datetime.now().strftime('%Y%m%d_%H%M%S') in log_path = os.path.join(work_dir, 'incremental_' + ts + '.log') ∧ os.path.isfile(log_path) ∧ return_value = log_path`  
-(3) `logging.getLogger().level = logging.INFO`  
-(4) `let h = logging.getLogger().handlers in h = [hf, hc]` where `hf` is a `logging.FileHandler` with `hf.baseFilename = log_path` and `hc` is a `logging.StreamHandler` with `hc.stream = console_stream`, and `console_stream` is the value obtained as `getattr(sys.stdout, '_console', sys.stdout)` at the start of the call  
-(5) `sys.stdout` is an instance of `_StdoutTee` with `sys.stdout._console = console_stream ∧ sys.stdout._file = hf.stream`  
-(6) No exception propagates out of the function."
-}

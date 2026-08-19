@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "item = {'caller': 'invalid', 'callee': {'fqn': 'func', 'info_names': []}, 'evidence': []}, source = 'src123'",
-  "offending_statements": "Line 2: caller = _parse_caller(item.get('caller'), source)\nLine 3: callee = _parse_callee(item.get('callee'), source)",
-  "reason": "The function does not validate that item['caller'] and item['callee'] are dicts or None before passing them to _parse_caller and _parse_callee. If a sub-object is of an incorrect type (e.g., a string), the helper functions' behavior is unspecified; they might not raise an error, or might raise an error without the source string, violating the requirement that a malformed sub-object raises an error whose message includes source."
-}

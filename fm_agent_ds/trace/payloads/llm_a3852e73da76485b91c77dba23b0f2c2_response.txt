@@ -1,1 +1,0 @@
-{"post_condition": "If the file at path = _memory_path(work_dir) exists and can be opened for reading without raising IOError, then the function returns the set {line.strip() for line in file(path) if line.strip() != ''}. Otherwise, the function returns the empty set. The function has no side effects: work_dir and the file system are unmodified, and no exception propagates."}

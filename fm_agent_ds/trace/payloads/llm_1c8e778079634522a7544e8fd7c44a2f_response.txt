@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "response = 'He said, \"{\"a\": 1}\"'",
-  "offending_statements": "Line 17: object_start = text.find(\"{\", index)\nLine 18: array_start = text.find(\"[\", index)\nLine 22: start = min(starts)\nLine 24: data, end = decoder.raw_decode(text, start)\nLine 28: if isinstance(data, (dict, list)): values.append(data)",
-  "reason": "The scanning logic finds any '{' or '[' character without considering whether it is inside a JSON string, causing it to extract a valid JSON object that appears inside a quoted string. The specification requires structural parsing that respects string boundaries, so a JSON object embedded in a string should not be considered a match. In this counterexample, the code returns {'a': 1} while the specification would raise a ValueError because no standalone JSON object/array exists."
-}

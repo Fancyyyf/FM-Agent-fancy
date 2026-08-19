@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "message = {\"method\": \"elp/status\"}",
-  "offending_statements": "Line 4:         if params is None:\nLine 5:             params = {}\nLine 7:             self._status = params.get(\"status\")",
-  "reason": "The specification requires self._status to be updated only when the message contains a 'params' key. The code defaults a missing 'params' to an empty dict, causing self._status to be unconditionally set to None (or another falsy value) even when no 'params' key is present, which violates the specification."
-}

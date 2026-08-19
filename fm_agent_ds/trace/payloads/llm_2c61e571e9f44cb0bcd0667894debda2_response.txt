@@ -1,1 +1,0 @@
-{"post_condition": "The function returns True if the file extension of `path` (case-insensitive) is '.json', and False otherwise. The file on disk remains unchanged. Formally: \\result = (path.suffix.lower() == '.json')."}

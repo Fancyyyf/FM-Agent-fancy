@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "file_path = 'test', suffix = '.json', file 'test.json' contains raw bytes 0x80 (invalid UTF-8).",
-  "offending_statements": "Line 6: except (OSError, json.JSONDecodeError):",
-  "reason": "The specification requires returning None when the file contents are not valid JSON. If the file contains invalid UTF-8, json.load raises a UnicodeDecodeError, which is not caught by the code. The code propagates the exception instead of returning None, violating the contract."
-}

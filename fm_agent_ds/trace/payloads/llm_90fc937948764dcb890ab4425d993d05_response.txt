@@ -1,3 +1,0 @@
-{
-  "post_condition": "After execution, the global/module-level set `_TEST_FILE_EXEMPTIONS` contains the normalized relative path (with forward slashes instead of backslashes) derived from `rel_path`. No other program state is modified, the function raises no exceptions, and `rel_path` itself remains unchanged. Formally: Let `S` be the value of `_TEST_FILE_EXEMPTIONS` before the call. Then after the call, `_TEST_FILE_EXEMPTIONS = S ∪ {rel_path.replace('\\\\', '/')}`."
-}

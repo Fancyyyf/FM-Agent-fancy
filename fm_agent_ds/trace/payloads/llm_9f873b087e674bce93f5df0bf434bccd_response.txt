@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "value = {'fqn': 'foo', 'info_names': 123}, source = 'test'",
-  "offending_statements": "Line 5:     info_names = _string_list(value.get(\"info_names\", []), \"callee.info_names\", source)",
-  "reason": "The specification requires that if the 'info_names' field is present, the function must produce a tuple of string names from that field. For an integer value like 123, the code silently treats it as an empty tuple and returns a CalleeTarget, ignoring the invalid field. The specification expects that such invalid input should be rejected (e.g., raise an error) because it cannot yield a tuple of string names."
-}

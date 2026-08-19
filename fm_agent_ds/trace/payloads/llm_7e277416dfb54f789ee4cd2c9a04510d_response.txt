@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "self.opencode_dir = Path('existing_file.txt') where 'existing_file.txt' exists and is a regular file (not a directory).",
-  "offending_statements": "Line 2: if not self.opencode_dir.exists():",
-  "reason": "Specification requires: if self.opencode_dir does not exist as a directory, return immediately with no side effects. The code only checks .exists(), which returns True for any path (file, symlink, etc.). If self.opencode_dir is a file, the code proceeds to .glob('*.jsonl'), which raises NotADirectoryError (or similar), thus not returning immediately and causing an exception side effect."
-}

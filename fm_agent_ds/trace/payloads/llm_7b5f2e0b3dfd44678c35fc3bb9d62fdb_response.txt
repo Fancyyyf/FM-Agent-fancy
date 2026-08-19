@@ -1,1 +1,0 @@
-{"post_condition": "After execution, the instance attribute `_db` is initialized with the value of `db_path`, making `self._db == db_path` and both are strings."}

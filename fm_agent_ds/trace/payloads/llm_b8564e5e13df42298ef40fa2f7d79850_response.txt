@@ -1,3 +1,0 @@
-{
-  "post_condition": "The method returns an integer offset r with no side effects. Let line_number = max(0, int(position.get('line', 0))) and utf16_target = max(0, int(position.get('character', 0))). If line_number >= len(self.lines), then r = len(self.source). Otherwise, let base = self.line_offsets[line_number] and L = self.lines[line_number]. Define unit(c) = 2 if ord(c) > 0xFFFF else 1. Let index = max { k ∈ [0, len(L)] | Σ_{i=0}^{k-1} unit(L[i]) <= utf16_target }. Then r = base + index. The mapping from position to offset uses character-based indexing on a line, adding to a byte-offset base, which may not correspond to the true byte offset if source contains multi-byte characters."
-}

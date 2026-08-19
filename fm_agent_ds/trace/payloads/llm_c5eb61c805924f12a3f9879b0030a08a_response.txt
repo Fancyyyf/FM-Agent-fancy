@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "phases_json = 'test.json', file contains {\"phases\":[{\"phase\":1,\"modules\":[{\"name\":\"m1\",\"source_files\":[\"file.txt\"]}]}]}, submodules = ['other_dir'], file permissions set to read-only (0o444).",
-  "offending_statements": "Line 30: with open(phases_json, \"w\") as f:\nLine 31:     json.dump(data, f, indent=2)",
-  "reason": "When at least one file is removed, the specification requires that phases.json is rewritten. With the given input, file.txt is removed (not under 'other_dir'), triggering the write attempt. Because the file is read-only, open(..., 'w') raises PermissionError, the function terminates without rewriting the file, and the specification is violated."
-}

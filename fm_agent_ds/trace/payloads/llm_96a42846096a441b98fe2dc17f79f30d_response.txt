@@ -1,6 +1,0 @@
-{
-  "verdict": "MATCH",
-  "counterexample": null,
-  "offending_statements": null,
-  "reason": "The code's behavior identically matches the specification. For any input, the result of checking startswith after lowercasing is exactly as required."
-}

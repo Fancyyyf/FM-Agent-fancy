@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "attempt = 2, batch_info = {\"file\": \"batch1.txt\", \"functions\": [\"path/to/func.py\"]}. The project contains a valid .spec.json for that function (matches the schema) but no .info.json. The code's prompt tells the subprocess: \"rewrite the complete .spec.json and .info.json files for that function.\" This discards the valid .spec.json. The specification requires preserving the valid .spec.json and only regenerating the missing .info.json.",
-  "offending_statements": "Line 36:             f\"is missing, malformed, or schema-invalid, rewrite the complete \"\nLine 37:             f\".spec.json and .info.json files for that function. \"\nLine 38:             f\"Do not modify the function source files. {fm_reminder}\"",
-  "reason": "For attempt > 1, the specification states: \"preserve those whose content matches the schema ... and regenerate only those that are missing, unparseable, or schema-nonconforming.\" This requires preserving each individually valid sidecar file. The prompt in the code, however, instructs the subprocess to rewrite both .spec.json and .info.json for a function whenever either sidecar is missing/invalid, failing to preserve a still-valid partner file."
-}

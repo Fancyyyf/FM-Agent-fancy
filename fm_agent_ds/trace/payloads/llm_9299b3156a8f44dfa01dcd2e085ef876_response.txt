@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "uri='dummy.erl', label='foo/-1'",
-  "offending_statements": "Line 4: int(arity)",
-  "reason": "The code does not validate that the arity substring represents a non-negative integer. int('-1') succeeds, so label='foo/-1' returns a string containing '__-1__' instead of raising ValueError as required. Additionally, the code does not handle the case where label is not a string (e.g., label=42) and raises AttributeError instead of ValueError."
-}

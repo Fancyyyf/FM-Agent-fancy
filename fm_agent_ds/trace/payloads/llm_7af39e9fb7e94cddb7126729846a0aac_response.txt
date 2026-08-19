@@ -1,3 +1,0 @@
-{
-  "post_condition": "Returns a list of (name, start_idx, end_idx) tuples, each describing a function in filepath, where name is a string, start_idx and end_idx are 0‑indexed inclusive line numbers. The list includes exactly the functions indexed by the project’s CodeGraph. Pre‑condition guarantees the index is present and filepath is indexed, so the return is never None."
-}

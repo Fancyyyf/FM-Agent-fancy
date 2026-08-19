@@ -1,3 +1,0 @@
-{
-  "post_condition": "After execution of `get_field_value`, a `NotImplementedError` is unconditionally raised; the method never returns a value and the program state is unchanged except that the exception is set. Formally: for any input state `S`, the execution results in an exceptional state `S'` such that `S'` has raised `NotImplementedError` and no return value is produced."
-}

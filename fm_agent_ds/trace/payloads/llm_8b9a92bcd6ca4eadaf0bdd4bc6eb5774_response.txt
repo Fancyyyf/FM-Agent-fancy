@@ -1,6 +1,0 @@
-.{
-  "verdict": "MISMATCH",
-  "counterexample": "Input: d={\"a\": 0}, keys=[\"a\"]; code returns 0 (because 'a' exists as key), specification requires None (because 0 is not truthy).",
-  "offending_statements": "Line 7: if candidate in d:\nLine 8: return d[candidate]",
-  "reason": "The code checks key existence in d, but the specification requires the field to have a truthy value. A falsy value for an existing key causes code to return that falsy value, while the specification expects it to be skipped."
-}

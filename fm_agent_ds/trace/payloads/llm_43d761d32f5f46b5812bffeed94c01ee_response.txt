@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "fqn = 'mylib.myfunc'; file_map contains 'mylib.myfunc' -> '/path/to/myfunc.py' with file existing; extension 'py' maps to a recognized language in EXT_TO_LANG; the files myfunc.py.spec.json and myfunc.py.info.json do not exist (so old_spec and old_info are None); _opencode_generate_spec returns None (fails to generate).",
-  "offending_statements": "Line 42:         if not result or not result.get(\"spec_updated\"):\nLine 43:             return None",
-  "reason": "Specification requires returning None only when conditions (a), (b), or (c) hold. When no prior specification exists, condition (c) does not apply, and (a) and (b) are false. Thus the function must return a plan dict. The code returns None because result is falsy, violating the specification."
-}

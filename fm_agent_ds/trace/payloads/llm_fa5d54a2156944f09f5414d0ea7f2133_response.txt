@@ -1,3 +1,0 @@
-{
-  "post_condition": "If the pre-condition holds, the function returns a CallEdge instance whose 'caller' is the CallerSelector obtained by parsing item['caller'] with _parse_caller, whose 'callee' is the CalleeTarget obtained by parsing item['callee'] with _parse_callee, and whose 'source' is the provenance string returned by _edge_source(item, source). No exceptions are raised. Formally: ∀ item, source satisfying Pre ⇒ (∃ e ∈ CallEdge (e.caller = _parse_caller(item['caller'], source) ∧ e.callee = _parse_callee(item['callee'], source) ∧ e.source = _edge_source(item, source) ∧ _edge_from_mapping(item, source) returns e ∧ no exception is raised))."
-}

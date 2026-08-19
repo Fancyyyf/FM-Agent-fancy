@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "   ",
-  "offending_statements": "Line 4: if total <= GRANULARITY:\nLine 5:         return [func.strip()]",
-  "reason": "For an input consisting solely of whitespace (e.g., three spaces), func.strip() yields an empty string. The code returns a single-element list containing that empty block, which violates the specification's requirement that no returned block is empty."
-}

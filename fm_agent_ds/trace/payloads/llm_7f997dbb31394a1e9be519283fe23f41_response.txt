@@ -1,6 +1,0 @@
-{
-  "verdict": "MISMATCH",
-  "counterexample": "backend = 'claude-cli', project_root/fm-agent.toml exists but is not writable (e.g., permissions 0444).",
-  "offending_statements": "Line 10: return run_local_backend_configuration(project_root, backend)",
-  "reason": "Specification requires that unrecoverable errors such as unwritable configuration paths raise ConfigWizardError. The code instead returns a non-zero value from run_local_backend_configuration, which does not raise the required exception."
-}
